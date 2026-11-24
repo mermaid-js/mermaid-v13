@@ -118,5 +118,29 @@
     "reason": "Core's YAML reader rejects anchors and aliases (`&k`, `*k`) in `@{ … }`, as it does for flowchart's shape data and front matter; js-yaml resolved them (spec #523, a listed difference).",
     "owner": "#546",
     "since": "2026-11-09"
+  },
+  {
+    "id": "agentflow-cases/header-comment-direction",
+    "inputHash": "sha256:696b461026172e88",
+    "kind": "accept",
+    "reason": "A comment before the header is a comment whatever it holds; mermaid@12.2.0 tried its `direction` and `LINK_ID` rules before `COMMENT`, so it read `direction_lr` there and rejected the diagram (D691).",
+    "owner": "D691",
+    "since": "2026-11-24"
+  },
+  {
+    "id": "agentflow-cases/header-comment-direction-text",
+    "inputHash": "sha256:1d802259ad439bfb",
+    "kind": "accept",
+    "reason": "A comment before the header is a comment whatever it holds; mermaid@12.2.0 tried its `direction` and `LINK_ID` rules before `COMMENT`, so it read `direction_lr` there and rejected the diagram (D691).",
+    "owner": "D691",
+    "since": "2026-11-24"
+  },
+  {
+    "id": "agentflow-cases/header-comment-link-id",
+    "inputHash": "sha256:0d55a605375cf2b7",
+    "kind": "accept",
+    "reason": "A comment before the header is a comment whatever it holds; mermaid@12.2.0 tried its `direction` and `LINK_ID` rules before `COMMENT`, so it read `LINK_ID` there and rejected the diagram (D691).",
+    "owner": "D691",
+    "since": "2026-11-24"
   }
 ]

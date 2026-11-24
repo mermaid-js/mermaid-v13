@@ -2642,11 +2642,12 @@ no per-call options (D319, D302).
   in detection order, after `architecture` and before `c4`. `agentflow` alone and
   `agentflow-betas` are not agentflow diagrams.
 - **Syntax** is v12's (the grammar is in [syntax/agentflow.md](./syntax/agentflow.md)), and
-  every error is reported, not only the first (R-PARSE-4). Two inputs read differently: the
+  every error is reported, not only the first (R-PARSE-4). Three inputs read differently: the
   short input form `a[/x/]` is a parallelogram of kind `input` (D462), as v12 drew it after
-  12.2.0 (12.2.0 drew a rounded box and warned `SHAPE_UNSUPPORTED`); and a lone `%` in a label
+  12.2.0 (12.2.0 drew a rounded box and warned `SHAPE_UNSUPPORTED`); a lone `%` in a label
   (`a[50% done]`) is label text (D463), where 12.2.0 rejected the diagram; `%%` is still a
-  comment.
+  comment; and a comment before the header is skipped whatever it holds (D691), where 12.2.0
+  rejected `%% direction LR` and `%%x@y` there.
 - **Metadata** in `@{ … }` is read by v13's YAML reader instead of js-yaml, as flowchart's is:
   anchors, aliases and tags (`&`, `*`, `!`) are a syntax error, and a prototype key
   (`__proto__`, `constructor`, `prototype`) is dropped with one `YAML_UNSAFE_KEY` warning (v12

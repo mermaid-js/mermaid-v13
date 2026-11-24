@@ -165,6 +165,12 @@ export default {
         }
       ],
       [
+        "(?<![^\\n])[ \\t]*%%(?!\\{)[^\\n]*(?=\\n(?:[^\\S\\n]*(?:%%[^\\n]*)?\\n)*[^\\S\\n]*agentflow-beta\\b)",
+        {
+          "token": "comment"
+        }
+      ],
+      [
         ".*direction\\s+TB[^\\n]*",
         {
           "token": "keyword"

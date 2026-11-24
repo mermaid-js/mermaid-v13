@@ -18,6 +18,10 @@ no rule outside a label matches; a line break appended; and `}` with blanks befo
 read as `}` and the line break. Past `maxTextSize` (50,000 by default) v12 removed the comment
 lines and trimmed the leading blanks instead, as flowchart's lexer input does.
 
+**A comment before the header** is a comment whatever it holds (D691): mermaid@12.2.0 read
+`%% direction LR` there as a `direction` and `%%x@y` as a link id, and rejected the diagram. After
+the header both still read so.
+
 **A lone `%` in a label** is label text (D463): v12's rules say so, though mermaid@12.2.0 built
 them into a lexical error.
 
@@ -367,6 +371,7 @@ Modes: `INITIAL`, `string`, `md_string`, `acc_title`, `acc_descr`, `acc_descr_mu
 | INITIAL | LINK_TARGET | `(?:_self\|_blank\|_parent\|_top)\b` |  |  |
 | dir | NODIR | `(?:\r?\n)*\s*\n` | pop | The header's direction, or a line break for none. |
 | dir | DIR | `\s*(?:LR\|RL\|TB\|BT\|TD\|BR)\b\|\s*[<>^]\|\s*v\b` | pop |  |
+| INITIAL | COMMENT | `(?<![^\n])[ \t]*%%(?!\{)[^\n]*(?=\n(?:[^\S\n]*(?:%%[^\n]*)?\n)*[^\S\n]*agentf…` |  | A `%%` comment on a line before the header, whatever it holds (D691): only blank and comment lines, then the header, follow it. mermaid@12.2.0 tried the next six rules first there. The lookbehind keeps TextMate, which searches every offset of a line, linear. |
 | INITIAL | direction_tb | `.*direction\s+TB[^\n]*` |  | `direction TB` inside a flow: the whole line is one token, a `%%` before it included. |
 | INITIAL | direction_bt | `.*direction\s+BT[^\n]*` |  |  |
 | INITIAL | direction_rl | `.*direction\s+RL[^\n]*` |  |  |

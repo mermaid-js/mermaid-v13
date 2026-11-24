@@ -71,6 +71,30 @@ describe('agentflow lexer', () => {
     ]);
   });
 
+  it('lexes a `%%` comment before the header as a comment whatever it holds (D691)', () => {
+    // 12.2.0 read `direction_lr` and `LINK_ID` here, which its grammar rejects before the header.
+    for (const c of [
+      '%% direction LR',
+      '%%x@y',
+      '\t%% intent: direction  TB flow',
+      '%%direction BT',
+    ])
+      expect(names(c + '\nagentflow-beta\n a').slice(0, 4)).toEqual([
+        `COMMENT:${c}`,
+        'NEWLINE:\n',
+        'GRAPH:agentflow-beta',
+        'NODIR:\n',
+      ]);
+    // `direction\s+LR` does not run over the line break out of the comment.
+    expect(names('%% the direction\nLR').slice(0, 2)).toEqual([
+      'COMMENT:%% the direction',
+      'NEWLINE:\n',
+    ]);
+    // After the header v12's rules hold.
+    expect(names(H + '%% direction LR').slice(2, 3)).toEqual(['direction_lr:%% direction LR']);
+    expect(names(H + '%%x@y').slice(2, 3)).toEqual(['LINK_ID:%%x@']);
+  });
+
   it('lexes the agentflow keywords with jison’s word boundaries and trailing blanks', () => {
     expect(names(H + 'flow f\nend \t\nglobal  \nconnector gh\nflowx\nflow-x').slice(2)).toEqual([
       'flow:flow',

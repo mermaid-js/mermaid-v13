@@ -428,6 +428,18 @@
     "source": "agentflow-beta\n%% direction LR\n a"
   },
   {
+    "id": "agentflow-cases/header-comment-direction",
+    "source": "%% direction LR\nagentflow-beta TB\n  a --> b"
+  },
+  {
+    "id": "agentflow-cases/header-comment-direction-text",
+    "source": "\n  %% intent: direction LR flow\n\t%% c\n\nagentflow-beta\n  a --> b"
+  },
+  {
+    "id": "agentflow-cases/header-comment-link-id",
+    "source": "%%x@y\nagentflow-beta TB\n  a --> b"
+  },
+  {
     "id": "agentflow-cases/comment-keywords",
     "source": "agentflow-beta\n%% flow f\n%% a --> b\n%% end"
   },

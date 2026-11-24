@@ -61,6 +61,25 @@ export const braceBlanks = (src: string): string =>
 /** The cases (`corpus/agentflow-cases.json`): each corpus gap, quirk and rejection v12 has. */
 export const agentflowCases = (): CorpusItem[] => corpusJson('agentflow-cases.json');
 
+/**
+ * D691: the cases with a comment before the header that 12.2.0 read as a `direction` or a link
+ * id and rejected, where v13 and the grammar read a comment; and their variants.
+ */
+export const HEADER_COMMENT_CASE =
+  /^agentflow-cases\/header-comment-(?:direction(?:-text)?|link-id)(?= \(|$)/;
+
+/** The text before the header line of `src`, and the rest. */
+export function splitAtHeader(src: string): [head: string, rest: string] {
+  const at = /^[^\S\n]*agentflow-beta/m.exec(src)?.index ?? 0;
+  return [src.slice(0, at), src.slice(at)];
+}
+
+/** D691: whether `src` has such a comment before its header. */
+export const hasHeaderComment = (src: string): boolean =>
+  /^[^\S\n]*%%(?:[^\n]*direction\s+(?:TB|BT|RL|LR|TD)|[^\s"]+@(?![{"]))/m.test(
+    splitAtHeader(src)[0]
+  );
+
 /** The agentflow corpus: the e2e fixtures and the v12 spec and syntax-page strings. */
 export const agentflowCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('agentflow');
 

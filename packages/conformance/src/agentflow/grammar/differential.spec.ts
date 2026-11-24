@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from '../../oracle.ts';
-import { agentflowGateCorpus } from '../corpus.ts';
+import { agentflowGateCorpus, HEADER_COMMENT_CASE } from '../corpus.ts';
 import { detectAgentflow } from '../v13.ts';
 import { handWrittenVerdict, v12Syntax, referenceVerdict } from './reference.ts';
 
@@ -9,9 +9,10 @@ import { handWrittenVerdict, v12Syntax, referenceVerdict } from './reference.ts'
  * `grammar/agentflow.ebnf` and the hand-written parser agree on accept/reject and on the AST
  * shape (statement, node and link types, nesting and source ranges), and the grammar agrees
  * with mermaid\@12 on accept/reject, over the lexer gate's corpus (the e2e fixtures, the v12
- * spec strings and the cases, each in its generated variants). D463's lone `%` in a label is
- * the one listed difference from mermaid\@12: there 12.2.0 failed to lex what both v13 sides
- * read as label text.
+ * spec strings and the cases, each in its generated variants). The listed differences from
+ * mermaid\@12 are D463's lone `%` in a label, which 12.2.0 failed to lex and both v13 sides read
+ * as label text, and D691's comments before the header, which 12.2.0 read as a `direction` or a
+ * link id and both v13 sides read as comments.
  */
 const LONE_PERCENT =
   /^agentflow-cases\/percent-(?:diamond|pipe|round|text|text-end|text-start|trap|two)\b/;
@@ -27,7 +28,8 @@ describe('agentflow grammar differential', () => {
       const ref = referenceVerdict(item.source);
       const hand = handWrittenVerdict(item.source);
       const v12 = await oracle.parse(item.source);
-      if (v12Syntax(v12) === !ref.accepted && !(ref.accepted && LONE_PERCENT.test(item.id))) {
+      const listed = LONE_PERCENT.test(item.id) || HEADER_COMMENT_CASE.test(item.id);
+      if (v12Syntax(v12) === !ref.accepted && !(ref.accepted && listed)) {
         diffs.push(
           `${item.id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${ref.accepted ? 'rejects' : 'accepts'}`
         );

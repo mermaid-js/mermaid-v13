@@ -4,7 +4,7 @@ import { loadDivergences } from '../divergences.ts';
 import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem, ObservedDivergence } from '../types.ts';
-import { agentflowGateCorpus, AGENTFLOW_VARIANTS } from './corpus.ts';
+import { agentflowGateCorpus, AGENTFLOW_VARIANTS, HEADER_COMMENT_CASE } from './corpus.ts';
 import { agentflowAdapter } from './v13.ts';
 
 /**
@@ -16,6 +16,8 @@ import { agentflowAdapter } from './v13.ts';
  * diverges as the source does, or core's YAML reader reads a line separator:
  *
  * - D463: a lone `%` in a label, which mermaid\@12.2.0 failed to lex (the cases below);
+ * - D691: a comment before the header that mermaid\@12.2.0 read as a `direction` or a link id and
+ *   rejected;
  * - D462: `[/…/]`, a parallelogram of kind input after v12's fix (the sources below), where
  *   only the shape and its diagnostic differ;
  * - core's YAML reader (shared with flowchart's `@{ … }` and front matter) reads U+2028 and
@@ -60,7 +62,7 @@ const SEPARATED_YAML = new Set([
 
 const ANCHORS = 'agentflow-cases/model-yaml-anchors';
 
-type Kind = 'D463' | 'D462' | 'separated YAML' | 'YAML anchors';
+type Kind = 'D463' | 'D691' | 'D462' | 'separated YAML' | 'YAML anchors';
 
 /** Why a gate variant diverges, or undefined when it is not one of the kinds above. */
 function classify(d: ObservedDivergence, source: string): Kind | undefined {
@@ -68,6 +70,7 @@ function classify(d: ObservedDivergence, source: string): Kind | undefined {
   const base = m ? d.id.slice(0, m.index) : d.id;
   const variant = m?.[1];
   if (d.kind === 'accept' && LONE_PERCENT.has(base)) return 'D463';
+  if (d.kind === 'accept' && HEADER_COMMENT_CASE.test(base)) return 'D691';
   if (d.kind === 'reject' && base === ANCHORS && d.detail.startsWith('SHAPE_DATA'))
     return 'YAML anchors';
   if (
@@ -113,6 +116,12 @@ describe('agentflow oracle parity with mermaid@12 over the gate corpus', () => {
     expect(unclassified).toEqual([]);
     expect(report.disappeared).toEqual([]);
     expect(report.results.length).toBe(items.length);
-    expect(counts).toEqual({ D463: 50, D462: 46, 'separated YAML': 26, 'YAML anchors': 6 });
+    expect(counts).toEqual({
+      D463: 50,
+      D691: 24,
+      D462: 46,
+      'separated YAML': 26,
+      'YAML anchors': 6,
+    });
   }, 600_000);
 });
