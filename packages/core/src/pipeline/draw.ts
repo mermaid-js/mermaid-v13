@@ -50,6 +50,9 @@ const VIEW_BOX = /^<svg\b[^>]*?\sviewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+
  */
 export type EdgeStep = <W extends StreamSvgWriter | TreeSvgWriter>(w: W) => W;
 
+/** The writer as it is: a render without line hops. */
+const plainEdges: EdgeStep = (w) => w;
+
 /** Layout, then the `postLayout` hooks with the profile's units (D86). */
 function laidOut<M, L>(
   plugin: DiagramPlugin<M, L>,
@@ -69,7 +72,7 @@ export function drawDiagram<M, L>(
   model: M,
   ctx: RenderContext,
   hooks?: DrawHooks,
-  edges: EdgeStep = (w) => w
+  edges: EdgeStep = plainEdges
 ): Drawn {
   let svg: string;
   try {

@@ -151,7 +151,7 @@ export function drawSvg(
   const edges = k.registry.hops(a);
   const drawHooks = run && { run, ast: parse.lean ? undefined : parse.ast };
   const drawn = drawDiagram(a.plugin, parse.model, ctx, drawHooks, edges);
-  warnHtmlDropped(ctx);
+  if (ctx.inline.dropped.size > 0) warnHtmlDropped(ctx);
   // Binds the run's interactions, then each block's in its own nested root (#669).
   return { drawn, ctx, warnings, mount: mounter<RenderResult>(run) };
 }
@@ -190,6 +190,6 @@ export function draw(
 ): RenderResult | TextRenderResult {
   const queued = k.skipped.length;
   const result = drawWith(k, text, s, options, prepared);
-  k.skipped.splice(0, queued);
+  if (queued > 0) k.skipped.splice(0, queued);
   return result;
 }
