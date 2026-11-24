@@ -142,6 +142,103 @@ describe('arrowheads fade with a styled line', () => {
   });
 });
 
+describe('edge animation (#1196, D606)', () => {
+  const animate = (seconds: number) =>
+    `<animate attributeName="stroke-dashoffset" from="900" to="0" dur="${seconds}" repeatCount="indefinite"/>`;
+
+  /** An animated edge's `<animate>`, its line's start tag and its heads; undefined for any other. */
+  function animated(svg: string, id: string) {
+    const m = new RegExp(`<g>(<animate [^>]*/>)(<path [^>]*data-id="${id}"[^>]*/>)(.*?)</g>`).exec(
+      svg
+    );
+    return m ? { animate: m[1]!, line: m[2]!, heads: m[3]! } : undefined;
+  }
+
+  it('moves an edge with animate or animation: fast in 20 s, slow in 50 s', async () => {
+    const { svg, warnings } = await renderAgentflowForTest(`agentflow-beta LR
+  a e1@--> b
+  b e2@--> c
+  c e3@--> d
+  e1@{ animate: true }
+  e2@{ animation: fast }
+  e3@{ animation: slow }
+`);
+    expect(animated(svg, 'e1')?.animate).toBe(animate(20));
+    expect(animated(svg, 'e2')?.animate).toBe(animate(20));
+    expect(animated(svg, 'e3')?.animate).toBe(animate(50));
+    expect(animated(svg, 'e1')?.line).toContain('edge-animation-fast');
+    expect(animated(svg, 'e3')?.line).toContain('edge-animation-slow');
+    expect(warnings).toEqual([]);
+  });
+
+  it('reads animate: false as v12 did: still alone, animated with an animation', async () => {
+    const { svg } = await renderAgentflowForTest(`agentflow-beta LR
+  a e1@--> b
+  b e2@--> c
+  e1@{ animate: false }
+  e2@{ animate: false, animation: slow }
+`);
+    expect(animated(svg, 'e1')).toBeUndefined();
+    expect(animated(svg, 'e2')?.animate).toBe(animate(50));
+    expect(elements(svg, 'animate')).toHaveLength(1);
+  });
+
+  it('gives the line 9,5 dashes and round caps, a dotted one too, and keeps its heads', async () => {
+    const { svg } = await renderAgentflowForTest(`agentflow-beta LR
+  a e1@--> b
+  b e2@--x c
+  c e3@-.- d
+  e1@{ animate: true }
+  e2@{ animate: true }
+  e3@{ animate: true }
+`);
+    for (const id of ['e1', 'e2', 'e3']) {
+      const { line, heads } = animated(svg, id)!;
+      expect(line, id).toContain('stroke-dasharray="9,5"');
+      expect(line, id).not.toContain('stroke-linecap');
+      // The dashes are the line's own, never its head's.
+      expect(heads, id).not.toContain('stroke-dash');
+      expect(elements(heads, 'path'), id).toHaveLength(id === 'e3' ? 0 : 1);
+    }
+  });
+
+  it('replaces linkStyle dashes, and drops a dash offset that would stop them moving', async () => {
+    const { svg } = await renderAgentflowForTest(`agentflow-beta LR
+  a e1@--> b
+  e1@{ animate: true }
+  linkStyle 0 stroke:#ff0000,stroke-dasharray:3 3,stroke-dashoffset:7
+`);
+    const { line } = animated(svg, 'e1')!;
+    expect(line).toContain('stroke="#ff0000"');
+    expect(line).toContain('stroke-dasharray="9,5"');
+    expect(line).not.toContain('stroke-dashoffset');
+  });
+
+  it('draws an edge that does not move as before: no group, its own dashes', async () => {
+    const { svg } = await renderAgentflowForTest(`agentflow-beta LR
+  a e1@--> b
+  c --> d
+  e -.- f
+  e1@{ animate: true }
+`);
+    const still = svg.replace(/<g><animate .*?<\/g>/, '');
+    expect(still).not.toContain('<g>');
+    expect(byClass(still, 'path', 'flowchart-link').map((e) => e['stroke-dasharray'])).toEqual([
+      undefined,
+      '2',
+    ]);
+  });
+
+  it('keeps data-id and data-ast on the line, not on its group (D468)', async () => {
+    const { svg } = await renderAgentflowForTest(`agentflow-beta LR
+  a e1@--> b
+  e1@{ animate: true }
+`);
+    expect(animated(svg, 'e1')?.line).toContain('data-ast="e:a&gt;b"');
+    expect(svg.match(/data-id="e1"/g)).toHaveLength(1);
+  });
+});
+
 describe('shapes on the layout outlines (D446)', () => {
   it('draws each polygon shape with the outline the layout ends edges on', async () => {
     const { svg, layout } = await renderAgentflowForTest(EVERY);

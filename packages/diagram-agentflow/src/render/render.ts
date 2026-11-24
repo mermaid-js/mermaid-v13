@@ -3,7 +3,8 @@
  * `g.cluster.flow-cluster` (the frame and its title), edges as `path.flowchart-link` with inline
  * arrowheads, vertices as `g.node.default.af-kind-<kind>`, a collapsed flow as a `g.node` card
  * (`rect.flow-collapsed`, `line.collapsed-separator`, three `circle.collapsed-indicator`), and the
- * front-matter title as `text.agentflowTitleText` (D218). `data-ast` goes on each `g.node`, flow
+ * front-matter title as `text.agentflowTitleText` (D218). An animated edge's line and heads are
+ * in a plain `g` with its `<animate>` (D606). `data-ast` goes on each `g.node`, flow
  * `g.cluster` and edge `path`; labels carry `data-id` only (D468, R-PARSE-8). Edge ends are on
  * the drawn outlines already: the layout put them there (`layout/ends.ts`).
  */
@@ -18,6 +19,8 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import {
+  ANIMATED_DASH,
+  animateEdge,
   cls,
   openSvgRoot,
   placeTitle,
@@ -199,7 +202,29 @@ function edgeClass(e: AgentflowEdgeView, animated: boolean): string {
   return `flowchart-link edge-thickness-normal edge-pattern-${pattern}${animation}${cls(edge.classes)}`;
 }
 
-/** One edge: its `path` (with `data-ast`) and its arrowhead after it. */
+/** The edge's line: its pattern, then the author's style, then an animation's dashes. */
+function edgeLine(e: AgentflowEdgeView, d: Attrs['d'], animated: boolean): Attrs {
+  const dotted = e.edge.stroke === 'dotted';
+  return {
+    class: edgeClass(e, animated),
+    'data-id': e.edge.id,
+    'data-ast': e.edge.ast,
+    d,
+    'stroke-dasharray': dotted ? DOTTED : undefined,
+    // v12 drew dotted edges with butt caps; animated edges keep round ones.
+    'stroke-linecap': dotted && !animated ? 'butt' : undefined,
+    ...e.style.shape,
+    // The moving dashes replace the edge's own pattern and any `linkStyle` one, as in v12. The
+    // offset is inherited from the group, so the line sets none.
+    ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
+    fill: 'none',
+  };
+}
+
+/**
+ * One edge: its `path` (with `data-ast`) and its arrowhead after it. An animated edge's are in a
+ * plain group, since its `<animate>` needs an element to move that holds the line (D606).
+ */
 function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
   const route = layout.edges.get(e.id);
   if (!route || route.points.length < 2) return;
@@ -211,19 +236,12 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
     markerTrim(e.start, paint.heads),
     markerTrim(e.end, paint.heads)
   );
-  const dotted = edge.stroke === 'dotted';
   const animated = edge.animate === true || edge.animation !== undefined;
-  w.outline('edge', 'path', {
-    class: edgeClass(e, animated),
-    'data-id': edge.id,
-    'data-ast': edge.ast,
-    d: path.d,
-    'stroke-dasharray': dotted ? DOTTED : undefined,
-    // v12 drew dotted edges with butt caps; animated edges keep round ones.
-    'stroke-linecap': dotted && !animated ? 'butt' : undefined,
-    ...e.style.shape,
-    fill: 'none',
-  });
+  if (animated) {
+    w.open('g');
+    animateEdge(w, edge);
+  }
+  w.outline('edge', 'path', edgeLine(e, path.d, animated));
   // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
   const headPaint: MarkerPaint = {
     fill: e.style.shape.stroke ?? paint.node.arrow,
@@ -234,6 +252,7 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
   marker(w, e.start, start, headPaint, paint.heads, true);
   const end = { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy };
   marker(w, e.end, end, headPaint, paint.heads, true);
+  if (animated) w.close();
 }
 
 /** An edge's label as a tag, bordered in the edge's own stroke (D626, D627). */
