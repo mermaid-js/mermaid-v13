@@ -1,0 +1,7 @@
+erDiagram
+  %% PARENT's loop and its label sit on its right, and the room laid out for them is on that
+  %% side only (#1173): PERSON on the left stays one node spacing from PARENT, and the drawing
+  %% has no empty band on either side.
+  FAMILY ||--o{ PERSON : has
+  FAMILY ||--o{ PARENT : has
+  PARENT ||--o{ PARENT : parents

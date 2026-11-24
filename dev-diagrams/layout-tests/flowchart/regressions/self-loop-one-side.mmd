@@ -1,0 +1,5 @@
+flowchart LR
+  %% Across the flow is down here, so the loop on B and its label hang below it, and the room
+  %% laid out for them is below only (#1173): no empty band above B, and A, B and C stay in line.
+  A --> B --> C
+  B -->|retry| B
