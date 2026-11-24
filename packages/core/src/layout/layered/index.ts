@@ -237,15 +237,30 @@ function groupModels(
 }
 
 // A self-loop sits beside its node, across the flow; the room laid out for the node grows to hold
-// it. `round` keeps the box's own size and puts the room round it (`loopW/H`): groups always, so
-// the loop stays inside their parent, and every node on the grid, so ports and edges from its
-// group see the box itself.
-function reserveLoop(c: CNode, below: boolean, label: number, round: boolean, M: LayoutMetrics) {
-  const room = 2 * (M.loop + (label > 0 ? label + M.loopGap : 0));
-  if (below && round) c.loopH += room;
-  else if (below) c.h += room;
-  else if (round) c.loopW += room;
-  else c.w += room;
+// it. `round` keeps the box's own size and puts the room round it (`loopW/H`), on both sides:
+// groups always (a composite state's loop among them), so the loop stays inside their parent,
+// and every node on the grid, so ports and edges from its group see the box itself. Any other
+// node grows on the side `selfLoop` draws the loop on, the far one when `far` (D692), and the
+// middle of its room moves that way (`biasX/Y`).
+function reserveLoop(
+  c: CNode,
+  below: boolean,
+  label: number,
+  round: boolean,
+  far: boolean,
+  M: LayoutMetrics
+) {
+  const room = M.loop + (label > 0 ? label + M.loopGap : 0);
+  const shift = (far ? -room : room) / 2;
+  if (below && round) c.loopH += 2 * room;
+  else if (round) c.loopW += 2 * room;
+  else if (below) {
+    c.h += room;
+    c.biasY += shift;
+  } else {
+    c.w += room;
+    c.biasX += shift;
+  }
 }
 
 // The direction of the nearest group around node `i` that names one.
@@ -333,10 +348,17 @@ function loopsFor(n: number): Loops {
   };
 }
 
-// Reserves the room of self-loop `e` on its node (`reserveLoop`), and gives the side it goes
-// on: 2 below the node, 1 beside it.
-function loopRoom(c: CNode, e: LayoutEdge, below: boolean, round: boolean, M: LayoutMetrics) {
-  reserveLoop(c, below, (below ? e.label?.height : e.label?.width) ?? 0, round, M);
+// Reserves the room of self-loop `e` on its node (`reserveLoop`), on the far side when `far`, and
+// gives the side it goes on: 2 below the node, 1 beside it.
+function loopRoom(
+  c: CNode,
+  e: LayoutEdge,
+  below: boolean,
+  round: boolean,
+  far: boolean,
+  M: LayoutMetrics
+) {
+  reserveLoop(c, below, (below ? e.label?.height : e.label?.width) ?? 0, round, far, M);
   return below ? 2 : 1;
 }
 
@@ -424,7 +446,9 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
       loops ??= loopsFor(cnodes.length);
       loops.count[src]!++;
       const round = src >= nodeCount || hooks !== undefined;
-      loops.side[src] = loopRoom(cnodes[src]!, e, sideways(src), round, M);
+      // `selfLoop` puts every other loop on the far side (D618).
+      const far = (loops.count[src]! & 1) === 0;
+      loops.side[src] = loopRoom(cnodes[src]!, e, sideways(src), round, far, M);
     }
     // An end label next to a middle label keeps `endLabelAlong` from it too (D607).
     return toCEdge(graph, e, src, dst, e.label ? M.endLabelAlong : 0);

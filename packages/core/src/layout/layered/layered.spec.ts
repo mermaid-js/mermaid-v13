@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Dir, LayoutGraph, LayoutModel, Point } from '../types.ts';
+import { pxProfile } from '../units.ts';
 import { countCrossings, validateLayout } from '../validate.ts';
 import { hits, rectOf, type Rect } from './end-markers.ts';
 import { layered } from './index.ts';
@@ -38,7 +39,8 @@ describe('layered: DDLT checks on fixtures', () => {
 });
 
 // #768 (D618): several self-loops on one node each get their own route. The second is mirrored to
-// the far side, later ones nest outward, alternating sides, in the room reserveLoop already keeps.
+// the far side, later ones nest outward, alternating sides, in the room reserveLoop keeps for each
+// on its own side (#1173).
 describe('layered: several self-loops on one node (#768, D618)', () => {
   const LABELS = [
     { width: 84, height: 24 },
@@ -60,12 +62,17 @@ describe('layered: several self-loops on one node (#768, D618)', () => {
     spacing: { node: 50, rank: 50, edge: 20 },
     diagramPadding: 8,
   });
-  // The drawing's size before #768: the room for every loop was already kept.
-  const SIZE: Record<string, [number, number]> = {
-    'TB 2': [616, 106],
-    'LR 2': [176, 330],
-    'TB 4': [1056, 106],
-    'LR 4': [176, 586],
+  const M = pxProfile.engine;
+  // The node and the margin, with the room of each loop across the flow, once (#1173).
+  const size = (g: LayoutGraph): [number, number] => {
+    const node = g.nodes[0]!;
+    const across = g.direction === 'TB' ? 'width' : 'height';
+    let rooms = 0;
+    for (const e of g.edges) rooms += M.loop + (e.label ? e.label[across] + M.loopGap : 0);
+    const pad = 2 * (g.diagramPadding ?? 0);
+    return g.direction === 'TB'
+      ? [node.width + rooms + pad, node.height + pad]
+      : [node.width + pad, node.height + rooms + pad];
   };
   const segments = (points: readonly Point[]): Rect[] =>
     points.slice(1).map((q, i) => {
@@ -81,7 +88,7 @@ describe('layered: several self-loops on one node (#768, D618)', () => {
     r.x0 >= -1e-6 && r.y0 >= -1e-6 && r.x1 <= m.width + 1e-6 && r.y1 <= m.height + 1e-6;
 
   describe.each(['TB', 'LR'] as const)('%s', (dir) => {
-    it.each([2, 4])('%i labelled loops: own routes, labels clear, inside, same size', (n) => {
+    it.each([2, 4])('%i labelled loops: own routes, labels clear, inside, own room', (n) => {
       const g = loops(dir, n);
       const m = layered(g);
       const routes = g.edges.map((e) => m.edges.get(e.id)!);
@@ -99,7 +106,7 @@ describe('layered: several self-loops on one node (#768, D618)', () => {
             expect(hits(labels[i]!, s), `label ${i} on loop ${j}`).toBe(false);
         }
       }
-      expect([m.width, m.height]).toEqual(SIZE[`${dir} ${n}`]);
+      expect([m.width, m.height]).toEqual(size(g));
       expect(validateLayout(g, m)).toEqual([]);
     });
 
