@@ -1,0 +1,123 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`layered: end places along a side > LR > a fan of ends, one arriving, on a short side 1`] = `
+{
+  "edges": {
+    "hub-p": "128,88 -> 178,18",
+    "hub-p2": "128,88 -> 178,18",
+    "hub-r": "128,88 -> 178,88",
+    "hub-s": "128,88 -> 178,158",
+    "q-hub": "48,88 -> 98,88",
+  },
+  "size": [
+    226,
+    176,
+  ],
+}
+`;
+
+exports[`layered: end places along a side > LR > a single end on each side stays in the middle 1`] = `
+{
+  "edges": {
+    "ab": "88,28 -> 138,28",
+  },
+  "size": [
+    206,
+    56,
+  ],
+}
+`;
+
+exports[`layered: end places along a side > LR > ends held by member edges of a group divide its free ends 1`] = `
+{
+  "edges": {
+    "G-o": "84,49 -> 134,24.45",
+    "G-p": "84,119 -> 134,103",
+    "G-q": "84,157 -> 134,181.55",
+    "x-o": "56,33 -> 134,24.45",
+    "y-p": "56,103 -> 134,103",
+    "z-q": "56,173 -> 134,181.55",
+  },
+  "size": [
+    202,
+    206,
+  ],
+}
+`;
+
+exports[`layered: end places along a side > LR > several ends that leave a side with no room between them share one place 1`] = `
+{
+  "edges": {
+    "hub-p": "10,158 -> 60,18",
+    "hub-q": "10,158 -> 60,88",
+    "hub-r": "10,158 -> 60,158",
+    "hub-s": "10,158 -> 60,228",
+    "hub-t": "10,158 -> 60,298",
+  },
+  "size": [
+    108,
+    316,
+  ],
+}
+`;
+
+exports[`layered: end places along a side > TB > a fan of ends, one arriving, on a short side 1`] = `
+{
+  "edges": {
+    "hub-p": "118,108 -> 20,158",
+    "hub-p2": "118,108 -> 36,158",
+    "hub-r": "118,108 -> 118,158",
+    "hub-s": "118,108 -> 208,158",
+    "q-hub": "118,28 -> 118,78",
+  },
+  "size": [
+    236,
+    186,
+  ],
+}
+`;
+
+exports[`layered: end places along a side > TB > a single end on each side stays in the middle 1`] = `
+{
+  "edges": {
+    "ab": "48,48 -> 48,98",
+  },
+  "size": [
+    96,
+    136,
+  ],
+}
+`;
+
+exports[`layered: end places along a side > TB > ends held by member edges of a group divide its free ends 1`] = `
+{
+  "edges": {
+    "G-o": "74,64 -> 53.73,114",
+    "G-p": "164,64 -> 164,114",
+    "G-q": "222,64 -> 242.27,114",
+    "x-o": "58,36 -> 37.73,114",
+    "y-p": "148,36 -> 148,114",
+    "z-q": "238,36 -> 258.27,114",
+  },
+  "size": [
+    296,
+    152,
+  ],
+}
+`;
+
+exports[`layered: end places along a side > TB > several ends that leave a side with no room between them share one place 1`] = `
+{
+  "edges": {
+    "hub-p": "208,10 -> 28,60",
+    "hub-q": "208,10 -> 118,60",
+    "hub-r": "208,10 -> 208,60",
+    "hub-s": "208,10 -> 298,60",
+    "hub-t": "208,10 -> 388,60",
+  },
+  "size": [
+    416,
+    88,
+  ],
+}
+`;

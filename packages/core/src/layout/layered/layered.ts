@@ -672,7 +672,7 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
     return { width: 0, height: 0, crossings, declared };
   }
 
-  if (EFK && ETK) spread(g, nodes, EFK, ETK);
+  const sides = EFK && ETK ? spread(g, nodes, EFK, ETK) : undefined;
 
   const xs = position(g, opt);
   if (!opt.grid) pullToHeld(g, opt, xs, EFH, ETH);
@@ -681,7 +681,7 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
   if (EFK && ETK) {
     const free = freeEnds(g, EFK, ETK);
     alignLabels(g, nodes, xs, free, opt, empty);
-    settle(g, nodes, xs, EFK, ETK, free, empty);
+    settle(g, nodes, xs, EFK, ETK, free, empty, sides!);
     snap(g, xs, empty, opt);
     writeBackEnds(edges, direct, firstSeg, lastSeg, g);
   }
@@ -1239,9 +1239,22 @@ function sideEnds(
   return total * pitch;
 }
 
+/** The ends on one side of a node, as `settle` goes over them; `sideEnds` gives `ids` and `room`. */
+interface Side {
+  v: number;
+  side: number;
+  span: number;
+  ids: number[];
+  room: number[];
+  all: number[];
+}
+
 // Gives the edges that meet one side of a node places of their own along it, around its middle.
-function spread(g: Graph, nodes: LNode[], EFK: Uint8Array, ETK: Uint8Array): void {
-  const { real, W, EFD, ETD } = g;
+// Returns the sides with ends that may move, for `settle`: the lists and kinds do not change
+// between the two.
+function spread(g: Graph, nodes: LNode[], EFK: Uint8Array, ETK: Uint8Array): Side[] {
+  const { real, W, EFD, ETD, succStart, succE, predStart, predE } = g;
+  const sides: Side[] = [];
   for (let v = 0; v < real; v++) {
     const span = Math.min(nodes[v]!.span, W[v]!);
     if (span <= 0 || nodes[v]!.kind !== Kind.Node) continue;
@@ -1249,15 +1262,25 @@ function spread(g: Graph, nodes: LNode[], EFK: Uint8Array, ETK: Uint8Array): voi
       const ids: number[] = [];
       const room: number[] = [];
       const total = sideEnds(g, v, side, span, side === 0 ? ETK : EFK, ids, room);
-      if (total === 0) continue;
-      const dx = side === 0 ? ETD : EFD;
-      let at = -total / 2;
-      for (let k = 0; k < ids.length; k++) {
-        at += room[k]!;
-        dx[ids[k]!] = at;
+      if (ids.length === 0) continue;
+      if (total !== 0) {
+        const dx = side === 0 ? ETD : EFD;
+        let at = -total / 2;
+        for (let k = 0; k < ids.length; k++) {
+          at += room[k]!;
+          dx[ids[k]!] = at;
+        }
       }
+      if (ids.length === 1) room[0] = 0;
+      const start = side === 0 ? predStart : succStart;
+      const list = side === 0 ? predE : succE;
+      // Left to right, as `ids` is (`sortNeighbours`).
+      const all: number[] = [];
+      for (let k = start[v]!; k < start[v + 1]!; k++) all.push(list[k]!);
+      sides.push({ v, side, span, ids, room, all });
     }
   }
+  return sides;
 }
 
 // The segment of an edge that reaches the next point held in place, on the way up from segment
@@ -1462,9 +1485,10 @@ function settle(
   EFK: Uint8Array,
   ETK: Uint8Array,
   free: [Int32Array, Int32Array],
-  empty: Uint8Array | undefined
+  empty: Uint8Array | undefined,
+  sides: Side[]
 ): void {
-  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, M } = g;
+  const { real, W, EF, ET, EFD, ETD, M } = g;
   // Where the end of segment `e` on node `v` should be, from the middle of its side. The edge is
   // followed up from the segment (side 0) or down, past the bends in ranks that hold nothing
   // else, to where it next comes to a point that is held in place or to another node's side.
@@ -1499,32 +1523,8 @@ function settle(
     const place = (xs[v]! * width + middle * span) / (width + span);
     return Math.max(lo, Math.min(hi, place)) - xs[v]!;
   };
-  // End order and spacing stay fixed across passes; held ends divide free ends into runs.
-  const sides: {
-    v: number;
-    side: number;
-    span: number;
-    ids: number[];
-    room: number[];
-    all: number[];
-  }[] = [];
-  for (let v = 0; v < real; v++) {
-    const span = Math.min(nodes[v]!.span, W[v]!);
-    if (span <= 0 || nodes[v]!.kind !== Kind.Node) continue;
-    for (let side = 0; side < 2; side++) {
-      const start = side === 0 ? predStart : succStart;
-      const list = side === 0 ? predE : succE;
-      const ids: number[] = [];
-      const room: number[] = [];
-      sideEnds(g, v, side, span, side === 0 ? ETK : EFK, ids, room);
-      if (ids.length === 0) continue;
-      if (ids.length === 1) room[0] = 0;
-      // Left to right, as `ids` is (`sortNeighbours`).
-      const all: number[] = [];
-      for (let k = start[v]!; k < start[v + 1]!; k++) all.push(list[k]!);
-      sides.push({ v, side, span, ids, room, all });
-    }
-  }
+  // End order and spacing stay fixed across passes (`spread` found them); held ends divide free
+  // ends into runs.
   // The ends of an edge follow each other, so the nodes are gone over until none moves: a few
   // times at most, in practice.
   for (let pass = 0, moved = true; moved && pass < 6; pass++) {
@@ -2595,7 +2595,7 @@ function pullToHeld(
 // in `succE` and in `predE` are put in the order of where their other ends sit in the next or the
 // previous rank (`pos`), ties by segment. Nothing reorders the nodes or the lists after this, so
 // what reads them takes that order as given: `position` reads the medians off directly, and
-// `sideEnds` (for `spread` and `settle`) and `settle` take the ends on a side left to right.
+// `spread` (through `sideEnds`) takes the ends on a side left to right, and `settle` keeps its order.
 // Called once in `layOut`, between `reduceCrossings` and the first of those.
 function sortNeighbours({ n, EF, ET, succStart, succE, predStart, predE, pos }: Graph): void {
   const segments = EF.length;

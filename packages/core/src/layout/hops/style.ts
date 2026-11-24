@@ -33,6 +33,8 @@ export function hopStyle(
     section === undefined
       ? undefined
       : lineHopsOf((config as Readonly<Record<string, unknown>>)[section]);
+  // Neither value draws hops, so no author layer can pick one that does.
+  if (!own && !config.lineHops) return false;
   const shared = setIn(layers, (l) => l);
   if (shared && config.lineHops === false) return false;
   let v: unknown = own ?? config.lineHops;

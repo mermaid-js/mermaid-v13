@@ -179,7 +179,8 @@ export function honourSides(
     for (let n = 0; p !== undefined && p !== outer && n < graph.groups.length; n++) p = parent(p);
     return p === outer;
   };
-  const nodes = [...model.nodes.values()].map((b) => rectOf(b, b));
+  // Every node is an obstacle to a route, made at the first route.
+  let nodes: Rect[] | undefined;
   const drawn: Point[] = [];
   for (const e of graph.edges) {
     if (!e.sides || within(e.source, e.target) || within(e.target, e.source)) continue;
@@ -187,6 +188,7 @@ export function honourSides(
     const [t, tMoved] = place(e, 'target', model, graph.nodes[at(e.target)]?.anchorY);
     // A loop with both ends on one side keeps layered's loop.
     if ((!sMoved && !tMoved) || (e.source === e.target && s[1] === t[1])) continue;
+    nodes ??= Array.from(model.nodes.values(), (b) => rectOf(b, b));
     const redrawn = route(e, [s, t], model, nodes, M, graph.headRoom ?? 0);
     model.edges.set(e.id, redrawn);
     drawn.push(...redrawn.points);

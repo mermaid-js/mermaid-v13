@@ -14,7 +14,7 @@ export interface Analysis {
   readonly plugin: AnyPlugin;
   readonly prepared: Omit<Prepared, 'parse'> & { readonly parse: LeanParseResult<unknown> };
   /** The front-matter title, for text output (D82). */
-  readonly title?: string;
+  readonly title: string | undefined;
   /** The author's config layers (`initialize`, front matter, directives), for line hops (D537). */
   readonly sources: readonly (Readonly<Record<string, unknown>> | undefined)[];
   /** Whether its SVG draws write `data-ast` (`RenderContext.dataAst`). */

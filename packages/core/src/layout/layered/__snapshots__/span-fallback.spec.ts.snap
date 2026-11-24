@@ -1,0 +1,41 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`layered: node spans > a span given, in a group that turns the flow sideways 1`] = `
+{
+  "hub-p": "136,81 -> 186,26",
+  "hub-q": "136,96 -> 186,96",
+  "hub-r": "136,111 -> 186,166",
+}
+`;
+
+exports[`layered: node spans > a span left to the engine at the top level spreads the ends 1`] = `
+{
+  "hub-p": "102,48 -> 28,98",
+  "hub-q": "118,48 -> 118,98",
+  "hub-r": "134,48 -> 208,98",
+}
+`;
+
+exports[`layered: node spans > a span left to the engine, in a group that turns the flow sideways 1`] = `
+{
+  "hub-p": "136,88 -> 186,26",
+  "hub-q": "136,96 -> 186,96",
+  "hub-r": "136,104 -> 186,166",
+}
+`;
+
+exports[`layered: node spans > a span zero, in a group that turns the flow sideways 1`] = `
+{
+  "hub-p": "136,96 -> 186,26",
+  "hub-q": "136,96 -> 186,96",
+  "hub-r": "136,96 -> 186,166",
+}
+`;
+
+exports[`layered: node spans > an explicit zero span puts every end in the middle of its side 1`] = `
+{
+  "hub-p": "118,48 -> 28,98",
+  "hub-q": "118,48 -> 118,98",
+  "hub-r": "118,48 -> 208,98",
+}
+`;

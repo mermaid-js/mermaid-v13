@@ -7,7 +7,7 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
-import { arrowheads, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
+import { pointTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   FOLDED_TYPE_SIZE,
@@ -259,7 +259,7 @@ function nodeViews(
     if (sg) measureNode(view, sg.title, sg.labelType === 'markdown', m);
     else if (v) {
       measureNode(view, v.text, v.labelType === 'markdown', m, v);
-      turnBar(view, nest.flowDir(view.id), m.cells);
+      turnBar(view, nest, m.cells);
     }
   }
   for (const view of groups) {
@@ -341,8 +341,9 @@ function measureNode(
 }
 
 /** A fork or join bar lies across the flow: 10 × 70 where it runs sideways (v12, D604). */
-function turnBar(view: NodeView, flow: Dir, cells: boolean): void {
-  if (view.shape === 'fork' && !cells && sideways(flow)) [view.w, view.h] = [view.h, view.w];
+function turnBar(view: NodeView, nest: Nesting, cells: boolean): void {
+  if (view.shape === 'fork' && !cells && sideways(nest.flowDir(view.id)))
+    [view.w, view.h] = [view.h, view.w];
 }
 
 /** One view per drawn edge; edges into a collapsed subgraph end at it, and a loop it hides goes. */
@@ -409,7 +410,8 @@ function layoutGraph(
   // Node spacing runs across the flow and rank spacing along it.
   // D601: a literal rank gap stays literal, but never below an arrowhead and its lead, so the
   // edge between two subframes stays visible (#399).
-  const head = markerTrim('arrow_point', arrowheads(m.ctx.theme)) + LEAD;
+  const { theme } = m.ctx;
+  const head = pointTrim(theme.number('arrowheadGap'), theme.number('arrowheadLength')) + LEAD;
   const spacing = graphSpacing(
     units,
     rootDir,

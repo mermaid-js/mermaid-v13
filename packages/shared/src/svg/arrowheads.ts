@@ -48,11 +48,14 @@ export interface LineEnd {
  * arrowhead, so the line never shows between the tip and the node.
  */
 export function markerTrim(type: string, g: Arrowheads): number {
-  if (type === 'arrow_point') return g.gap + Math.max(0, g.length - 1);
+  if (type === 'arrow_point') return pointTrim(g.gap, g.length);
   if (type === 'arrow_circle') return g.circleGap + g.circleSize / 2;
   if (type === 'arrow_cross') return g.crossGap + g.crossSize / 2;
   return 0;
 }
+
+/** `markerTrim` of a point head, from its gap and length alone. */
+export const pointTrim = (gap: number, length: number): number => gap + Math.max(0, length - 1);
 
 /** The attributes a marker takes from its paint; no other attribute may be given. */
 export type MarkerPaintKey = 'fill' | 'opacity' | 'fill-opacity';

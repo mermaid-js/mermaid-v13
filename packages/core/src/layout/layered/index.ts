@@ -309,26 +309,31 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
 
   const sideways = (i: number): boolean => runsAcross(directionOf(cnodes, i) ?? rootDir);
   graph.nodes.forEach((n, i) => {
-    const across = sideways(i) ? n.height : n.width;
-    cnodes[i]!.span = n.span ?? Math.max(0, across - 2 * M.corner);
+    cnodes[i]!.span = n.span ?? Math.max(0, (sideways(i) ? n.height : n.width) - 2 * M.corner);
   });
 
   // A self-loop sits beside its node, across the flow; the box laid out grows to hold it.
-  const loopSide = new Uint8Array(cnodes.length);
   // How many self-loops each node has, and how many have been placed: on the grid each takes
-  // its own pair of cells along the side.
-  const loopCount = new Int32Array(cnodes.length);
-  const loopsSeen = new Int32Array(cnodes.length);
-  // Off the grid, how far out the loops already placed on each side of a node reach (#768).
-  const loopUsed = new Float64Array(2 * cnodes.length);
+  // its own pair of cells along the side. Off the grid, how far out the loops already placed on
+  // each side of a node reach (#768). Made at the first loop.
+  let loopSide: Uint8Array | undefined;
+  let loopCount: Int32Array | undefined;
+  let loopsSeen: Int32Array | undefined;
+  let loopUsed: Float64Array | undefined;
   const cedges: CEdge[] = graph.edges.map((e, k) => {
     const [src, dst] = ends[k]!;
     const labelW = e.label?.width ?? 0;
     const labelH = e.label?.height ?? 0;
     // An end label next to a middle label keeps `endLabelAlong` from it too (D607).
     const gap = e.label ? M.endLabelAlong : 0;
-    if (src === dst) loopCount[src]!++;
     if (src === dst) {
+      if (!loopCount) {
+        loopSide = new Uint8Array(cnodes.length);
+        loopCount = new Int32Array(cnodes.length);
+        loopsSeen = new Int32Array(cnodes.length);
+        loopUsed = new Float64Array(2 * cnodes.length);
+      }
+      loopCount[src]!++;
       const below = sideways(src);
       reserveLoop(
         cnodes[src]!,
@@ -337,7 +342,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
         src >= nodeCount || hooks !== undefined,
         M
       );
-      loopSide[src] = below ? 2 : 1;
+      loopSide![src] = below ? 2 : 1;
     }
     return toCEdge(graph, e, src, dst, gap);
   });
@@ -360,7 +365,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
   const margin = hooks ? Math.ceil(graph.diagramPadding ?? 0) : (graph.diagramPadding ?? 0);
   const pad = margin - cell / 2; // on the grid, a coordinate is a cell index (D78)
   const nodes = new Map<string, LayoutModelNode>();
-  // The boxes of the nodes, then the groups, by index: what `box` gives, for reading only.
+  // The boxes of the nodes, then the groups, by index, for reading only.
   const boxes: LayoutModelNode[] = [];
   graph.nodes.forEach((n, i) => {
     const c = cnodes[i]!;
@@ -368,24 +373,19 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
   });
   const groups = groupModels(graph, cnodes.slice(nodeCount), bands, pad, boxes);
 
-  const box = (i: number): LayoutModelNode => {
-    const c = cnodes[i]!;
-    const size = i < nodeCount ? graph.nodes[i]! : { width: c.w, height: c.h };
-    return { x: c.x + pad, y: c.y + pad, width: size.width, height: size.height };
-  };
   const edges = new Map<string, LayoutModelEdge>();
   graph.edges.forEach((e, k) => {
     const ce = cedges[k]!;
     const [src, dst] = ends[k]!;
     if (src === dst) {
-      const nth = loopsSeen[src]!++;
-      const slot = { nth, count: loopCount[src]! };
-      const below = loopSide[src] === 2;
+      const nth = loopsSeen![src]!++;
+      const slot = { nth, count: loopCount![src]! };
+      const below = loopSide![src] === 2;
       edges.set(
         e.id,
         hooks
-          ? hooks.loop(box(src), below, e.label, M, slot)
-          : selfLoop(box(src), below, e.label, M, nth, loopUsed.subarray(2 * src))
+          ? hooks.loop(boxes[src]!, below, e.label, M, slot)
+          : selfLoop(boxes[src]!, below, e.label, M, nth, loopUsed!.subarray(2 * src))
       );
       return;
     }

@@ -23,7 +23,13 @@ import {
   type Detection,
   type Parsed,
 } from './analysis-cache.ts';
-import { directiveConfig, type SiteConfigs, type Snapshot } from './config-snapshot.ts';
+import {
+  directiveConfig,
+  textConfig,
+  type SiteConfigs,
+  type Snapshot,
+  type TextConfigs,
+} from './config-snapshot.ts';
 import type { BlockHost } from './embeds.ts';
 import { toWarning, unsupportedDiagram } from './errors.ts';
 import type { AnyPlugin, Detected, Registry } from './registry.ts';
@@ -41,6 +47,12 @@ export function sectionOf(detected: Detected, plugin?: AnyPlugin): string | stri
   return detected.section && detected.section !== own ? [detected.section, own!] : own;
 }
 
+/** Whether `diagnostics` hold an error: only then does `errorFromDiagnostics` make one. */
+function hasError(diagnostics: readonly Diagnostic[]): boolean {
+  for (const d of diagnostics) if (d.severity === 'error') return true;
+  return false;
+}
+
 /** Hands the warnings among `diagnostics` to `warn`. */
 function warnOf(diagnostics: readonly Diagnostic[], warn: (w: Warning) => void): void {
   for (const d of diagnostics) if (d.severity === 'warning') warn(d);
@@ -49,6 +61,8 @@ function warnOf(diagnostics: readonly Diagnostic[], warn: (w: Warning) => void):
 export class Analyser {
   /** The analyses of recent texts, each valid only for the snapshot it was made with. */
   readonly cache = new AnalysisCache<Analysis>();
+  /** The configs of recent diagram-text configs, by value, over each site config. */
+  private texts: TextConfigs = new WeakMap();
 
   /**
    * `claims`: what the registered extensions claim of a parse, read at each parse because the
@@ -65,6 +79,7 @@ export class Analyser {
   /** Drops every parsed text: a registration changes how texts detect, resolve and parse. */
   invalidate(): void {
     this.cache.clear();
+    this.texts = new WeakMap();
   }
 
   /** The author's config layers and the config they resolve to, over the site's and a host's. */
@@ -84,10 +99,9 @@ export class Analyser {
     // An embedded diagram (ADR-15) sets only its own options, with one warning for the rest.
     if (host) ({ front, directives } = host.layers(front, directives, hit.site, warn));
     // An embedded diagram starts from its host's config, and takes its theme.
-    let config: ResolvedConfig = resolveText(hit.site, front, directives, {
-      warn,
-      under: host?.config,
-    });
+    let config: ResolvedConfig = host
+      ? resolveText(hit.site, front, directives, { warn, under: host.config })
+      : textConfig(this.texts, hit, front, directives, warn);
     if (host) config = host.resolve(config, [section ?? []].flat());
     return { config, sources: [hit.site.site, front, ...directives] };
   }
@@ -124,15 +138,14 @@ export class Analyser {
     const outside = outsideBlocks(pre, parse);
     if (outside !== pre)
       return this.analyse(text, snap, plugin, { detected, pre: outside }, host, full);
-    const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
-    if (error) throw error;
+    if (hasError(pre.diagnostics) || hasError(parse.diagnostics))
+      throw errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics])!;
     warnOf(parse.diagnostics, warn);
-    const title = pre.frontMatter?.title;
     const analysis: Analysis = {
       detected,
       plugin,
       prepared: { diagramType: detected.type, config, parse, warnings },
-      ...(title !== undefined ? { title } : {}),
+      title: pre.frontMatter?.title,
       sources,
       dataAst,
       full: () => fullParse(plugin, text, ctx),
@@ -144,11 +157,7 @@ export class Analyser {
     // DESIGN §3 step 1: the source limit, before the text is read at all.
     checkSource(text, s.limits);
     const pre = preprocess(text);
-    const error = errorFromDiagnostics(
-      text,
-      pre.diagnostics.filter((d) => d.severity === 'error')
-    );
-    if (error) throw error;
+    if (hasError(pre.diagnostics)) throw errorFromDiagnostics(text, pre.diagnostics)!;
     return {
       detected: this.registry.detect(text, pre, s.config as Readonly<Record<string, unknown>>),
       pre,
@@ -170,10 +179,12 @@ export class Analyser {
 
   /** `detect`, for a type with a plugin package that can draw `ascii` when that is asked for. */
   detectSupported(text: string, s: Snapshot, ascii: boolean): Found {
-    const { detected, pre } = this.detect(text, s);
+    const found = this.detect(text, s);
+    const { detected } = found;
     if (detected.id === undefined) throw unsupportedDiagram(detected.type);
     if (ascii) this.checkText(detected);
-    return { detected: { ...detected, id: detected.id }, pre };
+    // The registry's row itself, its id now known to be set: nothing writes it (readonly).
+    return found as Found;
   }
 
   /**

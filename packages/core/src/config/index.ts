@@ -12,6 +12,7 @@ export type { KeyNote, KeyTree } from './keys.ts';
 /** The schema's key tree: every section's keys, for routing config between sections (D534). */
 export { KEY_TREE } from './generated/keys.ts';
 export { checkFragment, type ConfigAlias, type ConfigFragment } from './fragment.ts';
+export { dataKey } from './data-key.ts';
 export {
   INTEGRATOR_ONLY_KEYS,
   resolveConfig,

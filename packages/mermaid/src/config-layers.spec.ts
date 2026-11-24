@@ -2,12 +2,14 @@
  * The per-render config layers against their old forms, kept here as references: `directiveConfig`
  * as it was (sections spread with `flat`, no early return) and `SiteConfigs` keyed by one joined
  * string. Then the public seam: two config snapshots used alternately by one API object give
- * what a fresh object gives for each, warnings and resolved config included.
+ * what a fresh object gives for each, warnings and resolved config included. Last, `textConfig`
+ * against `resolveText` itself: a kept text config is what resolving it again would give.
  */
 import {
   CORE_DEFAULTS,
   KEY_TREE,
   resolveSite,
+  resolveText,
   type ConfigFragment,
   type ConfigInput,
   type MermaidConfig,
@@ -22,10 +24,12 @@ import {
   mergeInto,
   SiteConfigs,
   snapshot,
+  textConfig,
   type Plain,
   type Sections,
   type SiteConfig,
   type Snapshot,
+  type TextConfigs,
 } from './config-snapshot.ts';
 import { createMermaid } from './index.ts';
 import type { AnyPlugin, Detected } from './registry.ts';
@@ -231,5 +235,130 @@ describe('config snapshots used alternately by one API object', () => {
         for (const [i, c] of configs.entries()) {
           expect(await outcome(shared, text, c)).toEqual(fresh.get(`${i}\0${text}`));
         }
+  });
+});
+
+describe('textConfig against resolveText', () => {
+  const site = (config: MermaidConfig, fragments: readonly ConfigFragment[] = []): SiteConfig => ({
+    site: resolveSite(CORE_DEFAULTS, config, { flowchart: {} } as MermaidConfig, {
+      section: 'flowchart',
+      ...(fragments.length > 0 ? { fragments } : {}),
+    }),
+    warnings: [],
+  });
+  const sites = [
+    site({}),
+    site({ theme: 'dark', secure: ['theme'] } as MermaidConfig),
+    site({ look: 'handDrawn' } as unknown as MermaidConfig),
+  ];
+  const FRONT = [
+    '',
+    '---\nconfig:\n  layout: elk\n---\n',
+    '---\nconfig:\n  theme: forest\n  flowchart:\n    curve: linear\n---\n',
+    '---\nconfig:\n  look: handDrawn\n  securityLevel: loose\n  notAKey: 2\n---\n',
+    '---\nconfig:\n  themeVariables:\n    primaryColor: "#fff"\n    lineColor: "url(x)"\n---\n',
+    '---\ntitle: t\n---\n',
+  ];
+  const resolveOf = (hit: SiteConfig, pre: PreprocessResult) => {
+    const warnings: Warning[] = [];
+    const config = resolveText(
+      hit.site,
+      pre.frontMatter?.config,
+      directiveConfig(pre, 'flowchart'),
+      {
+        warn: (w) => void warnings.push(w),
+      }
+    );
+    return { config, warnings };
+  };
+
+  it('gives what resolveText gives, warnings replayed, over a long mixed sequence', () => {
+    const texts: TextConfigs = new WeakMap();
+    const seen = new Set<unknown>();
+    let kept = 0;
+    for (let t = 0; t < 2000; t++) {
+      let src = pick(FRONT);
+      for (let n = next(3); n > 0; n--) src += `${pick(DIRECTIVES)}\n`;
+      src += 'flowchart TD\nA-->B\n';
+      const pre = preprocess(src);
+      const hit = pick(sites);
+      const warnings: Warning[] = [];
+      const config = textConfig(
+        texts,
+        hit,
+        pre.frontMatter?.config,
+        directiveConfig(pre, 'flowchart'),
+        (w) => void warnings.push(w)
+      );
+      const want = resolveOf(hit, pre);
+      expect(config).toEqual(want.config);
+      expect(JSON.stringify(config)).toBe(JSON.stringify(want.config));
+      expect(warnings).toEqual(want.warnings);
+      expect(Object.isFrozen(config)).toBe(true);
+      kept += seen.has(config) ? 1 : 0;
+      seen.add(config);
+    }
+    // Many texts repeat a text config still kept for the same site.
+    expect(kept).toBeGreaterThan(300);
+  });
+
+  it('keeps an entry for equal values only', () => {
+    const texts: TextConfigs = new WeakMap();
+    const hit = sites[0]!;
+    const get = (front: ConfigInput | undefined, directives: ConfigInput[] = []) =>
+      textConfig(texts, hit, front, directives, () => undefined);
+    const a = get({ layout: 'elk', theme: 'dark' });
+    expect(get({ layout: 'elk', theme: 'dark' })).toBe(a);
+    // Key order is part of the value: merges follow it.
+    expect(get({ theme: 'dark', layout: 'elk' })).not.toBe(a);
+    // Front matter and a directive with the same object are different layers.
+    const f = get({ flowchart: { curve: 'step' } });
+    expect(get(undefined, [{ flowchart: { curve: 'step' } }])).not.toBe(f);
+    // Values that print alike are different values.
+    const pairs: [unknown, unknown][] = [
+      [0, -0],
+      [Number.NaN, null],
+      [1, '1'],
+      [true, 'true'],
+      [undefined, null],
+      [[1], { 0: 1 }],
+      ['a,b', ['a', 'b']],
+    ];
+    for (const [x, y] of pairs) {
+      const cx = get({ flowchart: { padding: x } });
+      const cy = get({ flowchart: { padding: y } });
+      expect(cy).not.toBe(cx);
+      expect(get({ flowchart: { padding: x } })).toBe(cx);
+    }
+    expect(get({ flowchart: { padding: -0 } }).flowchart?.padding).toBe(-0);
+    expect(get({ flowchart: { padding: 0 } }).flowchart?.padding).toBe(0);
+  });
+
+  it('keeps a few entries per site, the oldest dropped first', () => {
+    const texts: TextConfigs = new WeakMap();
+    const get = (hit: SiteConfig, n: number) =>
+      textConfig(texts, hit, { flowchart: { padding: n } }, [], () => undefined);
+    const first = get(sites[0]!, 0);
+    for (let n = 1; n < 8; n++) get(sites[0]!, n);
+    expect(get(sites[0]!, 0)).toBe(first);
+    // Another site keeps its own entries, and none of the first site's.
+    expect(get(sites[1]!, 0)).not.toBe(first);
+    for (let n = 8; n < 16; n++) get(sites[0]!, n);
+    expect(get(sites[0]!, 0)).not.toBe(first);
+  });
+
+  it('resolves values that are not plain data every time', () => {
+    const texts: TextConfigs = new WeakMap();
+    const hit = sites[0]!;
+    const date = new Date(0);
+    const a = textConfig(texts, hit, { flowchart: { padding: date } }, [], () => undefined);
+    const b = textConfig(texts, hit, { flowchart: { padding: date } }, [], () => undefined);
+    expect(b).not.toBe(a);
+    expect(b).toEqual(a);
+  });
+
+  it('gives the site config itself for a text without config', () => {
+    const texts: TextConfigs = new WeakMap();
+    expect(textConfig(texts, sites[1]!, undefined, [], () => undefined)).toBe(sites[1]!.site.plain);
   });
 });
