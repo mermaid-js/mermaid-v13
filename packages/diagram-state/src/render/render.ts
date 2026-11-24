@@ -39,7 +39,7 @@ import type {
 } from '../layout/index.ts';
 import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
-import type { StateLink, StateModel } from '../parser/index.ts';
+import type { StateLink, StateModel, StateNode } from '../parser/index.ts';
 import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawFramed } from '@mermaid-js/core/svg/framed';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
@@ -98,6 +98,18 @@ interface Paints {
 }
 
 /**
+ * Whether a state has a class or a style, other than one whose every declaration the style check
+ * dropped (a misspelt colour, #1195). `declares` holds the classes that have declarations.
+ */
+function isStyled(st: StateNode, declares: ReadonlySet<string>, s: StatePrepared): boolean {
+  if (st.classes.length === 0 && st.styles.length === 0) return false;
+  const given = st.styles.length > 0 || st.classes.some((c) => declares.has(c));
+  const kept = s.views.get(st.id)?.style;
+  if (!given || !kept) return true;
+  return Object.keys(kept.shape).length > 0 || Object.keys(kept.text).length > 0;
+}
+
+/**
  * Per-composite palette colour (v12 `colorSlotFor`, `state/styles.js` `genColor`). On only when
  * the theme carries a non-empty `borderColorArray`, never by theme name (D152). Each composite
  * takes the next slot in declaration order; a styled one (`class`, `:::`, `style`) spends its
@@ -111,12 +123,13 @@ function compositeSlots(
 ): Map<string, PaletteTint> {
   const slots = new Map<string, PaletteTint>();
   const slotOf = paletteSlots(theme);
+  const declares = new Set(model.classes.filter((c) => c.styles.length > 0).map((c) => c.id));
   let next = 0;
   for (const st of model.states) {
     if (st.kind !== 'composite') continue;
     const tint = slotOf(next++);
     if (!tint) return slots;
-    if (st.classes.length > 0 || st.styles.length > 0) continue;
+    if (isStyled(st, declares, s)) continue;
     slots.set(st.id, tint);
     for (const r of s.regions.get(st.id) ?? []) slots.set(r, tint);
   }

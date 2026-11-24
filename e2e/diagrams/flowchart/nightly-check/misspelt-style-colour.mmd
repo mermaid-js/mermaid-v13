@@ -1,0 +1,17 @@
+---
+description: >-
+  #1195: misspelt colours in style, classDef and linkStyle (`redd`, `lightgren`, five hex digits)
+  are ignored with STYLE_VALUE_DROPPED; node, text, subgraph and link keep their theme colours,
+  and the rest of each style (the 4px outlines) is drawn
+---
+flowchart LR
+  classDef typo fill:lightgren,stroke:#12345,stroke-width:4px
+  subgraph s [Subgraph]
+    a[Style] --> b[Class]
+  end
+  b --> c[Spelt right]
+  class b typo
+  style a fill:redd,color:bluu,stroke-width:4px
+  style s fill:redd
+  style c fill:lightgreen,stroke:darkgreen
+  linkStyle 0 stroke:redd,stroke-width:4px

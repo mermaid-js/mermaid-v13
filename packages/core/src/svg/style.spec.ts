@@ -85,6 +85,74 @@ describe('checkStyle', () => {
     '"red"',
   ];
 
+  it('drops a misspelt colour, with a warning, and keeps the rest (#1195)', () => {
+    for (const v of [
+      'redd',
+      'lightgren',
+      'notacolour',
+      '#12',
+      '#12345',
+      '#1234567',
+      '#ggg',
+      'red blue',
+      'red,blue',
+      '12',
+      'none none',
+    ]) {
+      const { warnings, warn } = collect();
+      const s = checkStyle([`fill:${v}`, `stroke:${v}`, `color:${v}`, 'stroke-width:2px'], warn);
+      expect(s, v).toEqual({ shape: { 'stroke-width': '2px' }, text: {} });
+      expect(
+        warnings.map((w) => w.code),
+        v
+      ).toEqual(['STYLE_VALUE_DROPPED', 'STYLE_VALUE_DROPPED', 'STYLE_VALUE_DROPPED']);
+    }
+  });
+
+  it('keeps an earlier colour when a later one is misspelt, as CSS does', () => {
+    expect(checkStyle(['fill:red', 'fill:redd']).shape).toEqual({ fill: 'red' });
+  });
+
+  it('keeps every form of colour CSS knows, as written (#1195)', () => {
+    for (const v of [
+      'red',
+      'LightGreen',
+      'lightslategrey',
+      'RebeccaPurple',
+      'none',
+      'transparent',
+      'currentColor',
+      'inherit',
+      'initial',
+      'unset',
+      'revert',
+      'revert-layer',
+      'CanvasText',
+      'ButtonFace',
+      'Window',
+      '#f9f',
+      '#f9f8',
+      '#ff99ff',
+      '#FF99FF80',
+      'rgb(1, 2, 3)',
+      'rgba(0,0,0,.5)',
+      'hsl(none 0% 0%)',
+      'hwb(1turn 0% 0%)',
+      'oklch(70% 0.1 200)',
+      'color-mix(in srgb, red 50%, blue)',
+      'light-dark(red, blue)',
+      'var(--mermaid-primaryColor)',
+      'var(--_pf, #fff)',
+    ]) {
+      const { warnings, warn } = collect();
+      expect(checkStyle([`fill:${v}`, `color:${v}`], warn), v).toEqual({
+        shape: { fill: v },
+        text: { fill: v },
+      });
+      expect(warnings, v).toEqual([]);
+    }
+  });
+
   it('drops CSS injection in colour values, with a warning', () => {
     for (const v of INJECTIONS) {
       const { warnings, warn } = collect();
