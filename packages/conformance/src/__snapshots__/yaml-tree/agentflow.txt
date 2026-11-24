@@ -50,7 +50,7 @@ e2e/diagrams/agentflow/pr-check/should-render-every-container-kind.mmd 7 49c89a3
 e2e/diagrams/agentflow/pr-check/should-render-several-collapsed-containers.mmd 5 d7895eb6227a557e
 e2e/diagrams/agentflow/visual-check/01-basic-example.mmd 5 3916b17ea26ec257
 e2e/diagrams/agentflow/visual-check/02-nodes-and-shapes.mmd 6 938f75e07c6c0d51
-e2e/diagrams/agentflow/visual-check/03-edges.mmd 5 9e24e621c0ebf4d4
+e2e/diagrams/agentflow/visual-check/03-edges.mmd 11 9de14ff2c4d4f8c1
 e2e/diagrams/agentflow/visual-check/04-containers.mmd 3 d59151a69aa55007
 e2e/diagrams/agentflow/visual-check/05-the-global-block.mmd 4 2759f5dee8463a8a
 e2e/diagrams/agentflow/visual-check/06-collapsing-a-container.mmd 7 800ada885807fe80
