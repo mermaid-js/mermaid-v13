@@ -59,6 +59,21 @@ function endOffset(
   return isVertical(level) ? port.px - nodes[item]!.w / 2 : port.py - nodes[item]!.h / 2;
 }
 
+// A node's bias across the flow of a level that runs down (`vertical`) or across.
+function biasAcross(node: CNode, vertical: boolean): number {
+  return vertical ? node.biasX : node.biasY;
+}
+
+// The layout node for the room laid out for `node` in a level, across the flow first: its box
+// with any room kept round it (`loopW`, `loopH`), and the bias of its middle.
+function roomNode(node: CNode, vertical: boolean): LNode {
+  const sw = node.w + node.loopW;
+  const sh = node.h + node.loopH;
+  const ln = lnode(vertical ? sw : sh, vertical ? sh : sw);
+  ln.bias = biasAcross(node, vertical);
+  return ln;
+}
+
 function layerNodes(c: Compound, level: Level, sized: boolean): LNode[] {
   const { nodes, local, key, M, hooks } = c;
   const vertical = isVertical(level);
@@ -66,9 +81,7 @@ function layerNodes(c: Compound, level: Level, sized: boolean): LNode[] {
   level.items.forEach((item, i) => {
     local[item] = i;
     const node = nodes[item]!;
-    const sw = node.w + node.loopW;
-    const sh = node.h + node.loopH;
-    const ln = sized ? lnode(vertical ? sw : sh, vertical ? sh : sw) : lnode(0, 0);
+    const ln = sized ? roomNode(node, vertical) : lnode(0, 0);
     // On the grid a group's ends may use its whole side off the corners, which it grows for.
     const inset = hooks ? M.corner : node.padX;
     ln.span = node.isGroup
@@ -213,7 +226,9 @@ function groupSlots(nodes: CNode[]): { group: Int32Array; parent: number[] } {
 
 // A leaf's layout node, across the flow first.
 function flatLeaf(node: CNode, vertical: boolean): LNode {
-  return lnode(vertical ? node.w : node.h, vertical ? node.h : node.w);
+  const ln = lnode(vertical ? node.w : node.h, vertical ? node.h : node.w);
+  ln.bias = biasAcross(node, vertical);
+  return ln;
 }
 
 // The flat graph's edges, between leaves only, and the place of each among them (-1 for none).
