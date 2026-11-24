@@ -433,6 +433,37 @@ describe('journey render: legend, title and activity line', () => {
     ]);
   });
 
+  it('draws a refused actor colour as that slot has it, and moves no other (D690)', () => {
+    const many = journey(undefined, section('S'), task('T', 3, 'a', 'b', 'c', 'd'));
+    for (const bad of ['redd', '#12345', 'url(x)']) {
+      const fills = (actorColours: string[]) => {
+        const { tree, warnings } = render(many, { config: { actorColours } });
+        expect(warnings.map((w) => [w.code, w.path])).toEqual([
+          ['STYLE_VALUE_DROPPED', 'journey.actorColours'],
+        ]);
+        return byClass(tree, 'legend-entry').map((e) => tree.getAttr(tree.children(e)[0]!, 'fill'));
+      };
+      expect(fills([bad, '#222'])).toEqual(['#8FBC8F', '#222', '#00FFFF', '#222']);
+      expect(fills([bad])).toEqual(['#8FBC8F', '#7CFC00', '#00FFFF', '#20B2AA']);
+    }
+  });
+
+  it('draws the names of a refused section colour in textColor, and moves no other (D690)', () => {
+    const two = journey('A', section('S'), task('T', 3, 'a'), section('U'), task('V', 3, 'a'));
+    const { svg, tree, warnings } = render(two, {
+      config: { sectionColours: ['redd', '#222'], titleColor: 'bluu' },
+      themeVariables: { textColor: '#345678' },
+      cssVariables: false,
+    });
+    expect(svg).not.toMatch(/redd|bluu/);
+    const text = byClass(tree, 'journey-section').map((g) =>
+      tree.getAttr(tree.children(g).at(-1)!, 'fill')
+    );
+    expect(text).toEqual(['#345678', '#222']);
+    expect(tree.getAttr(byClass(tree, 'journey-title')[0]!, 'fill')).toBe('#345678');
+    expect(warnings.map((w) => w.path)).toEqual(['journey.sectionColours', 'journey.titleColor']);
+  });
+
   it('colours section and task names from sectionColours only when set (D225)', () => {
     const plain = render(fixture('working-day')).tree;
     for (const n of byClass(plain, 'task-label'))

@@ -18,7 +18,7 @@
  * render naming each.
  */
 import type { Warning } from '@mermaid-js/core';
-import { checkColor, type Paint, type SafeValue } from '@mermaid-js/core/svg';
+import { checkColor, checkCssColor, type Paint, type SafeValue } from '@mermaid-js/core/svg';
 import { parseColor, type Rgba } from '@mermaid-js/core/theme';
 import { C4_COLOR_INVALID } from '../codes.ts';
 import { c4Default, c4Section } from '../config.ts';
@@ -114,7 +114,7 @@ export class Colours {
    */
   checked(value: unknown, where: string, ast?: string): Paint | undefined {
     if (value === undefined || value === '') return undefined;
-    const colour = typeof value === 'string' ? checkColor(value) : undefined;
+    const colour = typeof value === 'string' ? checkCssColor(value) : undefined;
     const given = JSON.stringify(value);
     if (colour === undefined && !this.dropped.some((d) => d.where === where && d.value === given))
       this.dropped.push({ where, value: given, ...(ast ? { ast } : {}) });

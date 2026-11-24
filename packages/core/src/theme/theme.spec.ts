@@ -65,6 +65,60 @@ describe('createTheme: CSS variables (R-THEME-2, -4)', () => {
     ]);
   });
 
+  it('drops a misspelt colour with a warning and keeps the theme value (D690)', () => {
+    for (const given of ['redd', '#12345', 'red blue', 'calculated']) {
+      const warnings: ThemeWarning[] = [];
+      const t = createTheme(base, {
+        themeVariables: {
+          primaryColor: given,
+          mainBkg: given,
+          cScale0: given,
+          cScaleLabel: ['red', given],
+        },
+        cssVariables: false,
+        warn: (w) => warnings.push(w),
+      });
+      const plain = createTheme(base, { cssVariables: false });
+      for (const name of ['primaryColor', 'mainBkg', 'nodeBorder'])
+        expect(t.color(name), `${name} ${given}`).toBe(plain.color(name));
+      // One refused entry drops its whole list (D545).
+      for (const name of ['cScale', 'cScaleLabel'] as const)
+        expect(t.palette(name), `${name} ${given}`).toEqual(plain.palette(name));
+      expect(
+        warnings.map((w) => [w.code, /^themeVariables\.(\w+)/.exec(w.message)?.[1]]).sort()
+      ).toEqual(
+        ['cScale0', 'cScaleLabel', 'mainBkg', 'primaryColor'].map((n) => [
+          'THEME_VARIABLE_DROPPED',
+          n,
+        ])
+      );
+    }
+  });
+
+  it('keeps every form of colour CSS knows', () => {
+    for (const given of [
+      'LightSlateGrey',
+      'transparent',
+      'none',
+      'currentColor',
+      'inherit',
+      'CanvasText',
+      '#f9f8',
+      'color-mix(in srgb, red 50%, blue)',
+      'var(--mermaid-primaryColor)',
+    ]) {
+      const warnings: ThemeWarning[] = [];
+      const t = createTheme(base, {
+        themeVariables: { mainBkg: given, cScale0: given },
+        cssVariables: false,
+        warn: (w) => warnings.push(w),
+      });
+      expect(t.color('mainBkg')).toBe(given);
+      expect(t.palette('cScale')[0]).toBe(given);
+      expect(warnings).toEqual([]);
+    }
+  });
+
   it('accepts the colour functions on the allow-list, leaving them to CSS', () => {
     const t = createTheme(base, { themeVariables: { primaryColor: 'oklch(70% 0.1 200)' } });
     t.color('mainBkg');

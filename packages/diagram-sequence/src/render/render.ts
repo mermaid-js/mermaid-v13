@@ -4,7 +4,7 @@
 // their lifelines, activations, fragment frames, notes and messages. Every element drawn from
 // an AST node carries `data-id` and `data-ast` (R-PARSE-8); labels carry `data-id` only.
 import type { RenderContext } from '@mermaid-js/core';
-import { checkColor, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { checkCssColor, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { SequenceModel } from '../model.ts';
 import { sequenceMetrics, type SequenceMetrics } from '../layout/index.ts';
@@ -104,7 +104,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
 /** An author colour (`rect`, `box`), checked; a refused one warns and takes `fallback`. */
 function authorColor(scene: Scene, color: string, ast: string, fallback: Paint): Paint {
   if (color.trim() === '') return fallback;
-  const safe = checkColor(color);
+  const safe = checkCssColor(color);
   if (safe) return safe;
   scene.ctx.warn({
     code: 'STYLE_VALUE_DROPPED',

@@ -174,10 +174,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     // v12 passes every ER label through `createText` with Markdown on (D565).
     label: (text, f, max, bits = 0) =>
       layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline, markup: 'emphasis' }),
-    styleOf: styleCache(
-      new Map(model.classes.map((c) => [c.name, [...c.styles, ...c.textStyles]])),
-      (w) => ctx.warn(w)
-    ),
+    styleOf: styleCache(new Map(model.classes.map((c) => [c.name, c.styles])), (w) => ctx.warn(w)),
   };
   const minWidth = sizeKey(units, length, 'minEntityWidth');
   const nest = nesting(model);

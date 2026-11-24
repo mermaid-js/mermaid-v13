@@ -4,7 +4,7 @@
 // nothing depends on a theme name or `look` (D152), and there is no shadow or gradient (D227).
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import {
-  checkColor,
+  checkCssColor,
   checkStyle,
   type Attrs,
   type Paint,
@@ -95,17 +95,18 @@ function dropped(warn: (w: Warning) => void, key: string, value: unknown): void 
   });
 }
 
-/** A config colour list, checked; undefined when unset. A refused entry warns and is left out. */
-function colourList(ctx: PaintContext, key: string): Paint[] | undefined {
+/**
+ * A config colour list, checked; empty when unset. A refused entry warns and is undefined, so the
+ * entries after it keep their places (D690).
+ */
+function colourList(ctx: PaintContext, key: string): (Paint | undefined)[] {
   const raw = (ctx.config.journey as Readonly<Record<string, unknown>> | undefined)?.[key];
-  if (!Array.isArray(raw)) return undefined;
-  const out: Paint[] = [];
-  for (const c of raw as unknown[]) {
-    const safe = typeof c === 'string' ? checkColor(c) : undefined;
-    if (safe) out.push(safe);
-    else dropped(ctx.warn, key, c);
-  }
-  return out;
+  if (!Array.isArray(raw)) return [];
+  return (raw as unknown[]).map((c) => {
+    const safe = typeof c === 'string' ? checkCssColor(c) : undefined;
+    if (!safe) dropped(ctx.warn, key, c);
+    return safe;
+  });
 }
 
 export interface Paints {
@@ -139,16 +140,17 @@ export function paints(ctx: PaintContext, l: JourneyLayout): Paints {
     if (!fills.has(s)) fills.set(s, theme.color(FILL_TYPES[s % SECTION_SLOTS]!));
   const sectionColours = colourList(ctx, 'sectionColours');
   const configured = colourList(ctx, 'actorColours');
-  const palette: readonly Paint[] =
-    configured && configured.length > 0 ? configured : V12_ACTOR_COLOURS.map(fixedPaint);
+  const actorColour = (slot: number): Paint =>
+    configured[slot % configured.length] ??
+    fixedPaint(V12_ACTOR_COLOURS[slot % V12_ACTOR_COLOURS.length]!);
   const actors = new Map<number, Paint>();
   for (const dot of [...l.legend.map((e) => e.dot), ...l.tasks.flatMap((t) => t.dots)])
     if (!actors.has(dot.slot))
-      actors.set(dot.slot, authorActor(theme, dot.slot) ?? palette[dot.slot % palette.length]!);
+      actors.set(dot.slot, authorActor(theme, dot.slot) ?? actorColour(dot.slot));
   let title = text;
   const tc = cfg.titleColor;
   if (l.title && typeof tc === 'string' && tc.trim() !== '') {
-    const safe = checkColor(tc);
+    const safe = checkCssColor(tc);
     if (safe) title = safe;
     else dropped(ctx.warn, 'titleColor', tc);
   }
@@ -159,9 +161,7 @@ export function paints(ctx: PaintContext, l: JourneyLayout): Paints {
     text,
     fillOf: (slot) => fills.get(slot)!,
     labelOf: (band) =>
-      band === undefined || !sectionColours || sectionColours.length === 0
-        ? text
-        : sectionColours[band % sectionColours.length]!,
+      (band === undefined ? undefined : sectionColours[band % sectionColours.length]) ?? text,
     face: l.tasks.length > 0 ? theme.color('faceColor') : text,
     actorOf: (slot) => actors.get(slot)!,
     title,

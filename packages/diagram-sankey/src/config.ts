@@ -25,7 +25,7 @@ import type {
   SankeyLabelStyle,
   SankeyNodeAlignment,
 } from '@mermaid-js/core/config';
-import { checkColor, type SafeColor } from '@mermaid-js/core/svg';
+import { checkCssColor, type SafeColor } from '@mermaid-js/core/svg';
 import { SANKEY_COLOR_INVALID, SANKEY_CONFIG_INVALID } from './codes.ts';
 import { sankeyConfigDefaults } from './generated/config-defaults.ts';
 import type { LinkPaint } from './layout/types.ts';
@@ -67,13 +67,12 @@ const LABEL_STYLES = Object.keys({
 const MODES: ReadonlySet<string> = new Set(['gradient', 'source', 'target']);
 
 /**
- * `linkColor` as drawn: a mode is matched before the colour check (`checkColor('gradient')`
- * passes as a named colour); any other string is one colour for every link when it passes the
+ * `linkColor` as drawn: a mode, or else one colour for every link when it passes the colour
  * check. Undefined when it is neither.
  */
 function linkPaint(given: unknown): LinkPaint | undefined {
   if (typeof given !== 'string') return undefined;
-  return MODES.has(given) ? (given as LinkPaint) : checkColor(given);
+  return MODES.has(given) ? (given as LinkPaint) : checkCssColor(given);
 }
 
 type Reader = (value: unknown) => unknown;
@@ -125,7 +124,7 @@ function readNodeColors(
   if (given === undefined) return { colours, dropped };
   if (given === null || typeof given !== 'object' || Array.isArray(given)) return undefined;
   for (const [id, value] of Object.entries(given)) {
-    const colour = typeof value === 'string' ? checkColor(value) : undefined;
+    const colour = typeof value === 'string' ? checkCssColor(value) : undefined;
     if (colour) colours.set(id, colour);
     else dropped.push([`nodeColors.${id}`, shown(value)]);
   }

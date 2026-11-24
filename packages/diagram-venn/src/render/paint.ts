@@ -21,6 +21,7 @@
  */
 import {
   checkColor,
+  checkCssColor,
   checkStyle,
   type Attrs,
   type Paint,
@@ -116,10 +117,15 @@ export function vennPaints(ctx: VennRenderContext): VennPaints {
   // whose themes filled only the slots still unset. `Theme` resolves an author's value but does
   // not say whose a value is, so this reads the config the theme was built from.
   const authored = (ctx.config.themeVariables ?? {}) as Readonly<Record<string, unknown>>;
+  // A value the theme dropped or an empty one is not written.
+  const isAuthored = (name: string): boolean => {
+    const v = authored[name];
+    return typeof v === 'string' && checkCssColor(v) !== undefined;
+  };
   const palette = theme.palette('borderColorArray');
   const slotColour = (k: number): Colour | undefined => {
     const name = slotVar(k);
-    if (palette.length > 0 && !Object.hasOwn(authored, name)) {
+    if (palette.length > 0 && !isAuthored(name)) {
       const c = palette[k % palette.length]!;
       return { paint: c, rgba: parseColor(c) };
     }

@@ -138,7 +138,7 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
 
 /** How many variants differ, by reason. */
 const DIFFERING = {
-  unquoted: 316,
+  unquoted: 317,
   comment: 21,
   title: 19,
   hash: 19,

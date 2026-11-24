@@ -267,6 +267,36 @@ UpdateRelStyle(a, s, $lineColor="url(#x)")`;
     expect(byClass(svg, 'path', 'c4-rel')[0]!.stroke).toBe('var(--_c4r)');
   });
 
+  it('draws the default for a misspelt colour, with one C4_COLOR_INVALID naming each (D690)', async () => {
+    const src = `C4Context
+Person(a, "A")
+Boundary(b, "B", "system", $bgColor="lightgren", $borderColor="#12345") {
+System(s, "S")
+}
+Rel(a, s, "uses")
+UpdateElementStyle(a, $bgColor="redd", $fontColor="bluu", $borderColor="darkgrey")
+UpdateRelStyle(a, s, $textColor="redd", $lineColor="bluu")`;
+    const { svg, warnings } = await renderC4ForTest(src, {
+      config: { c4: { system_bg_color: 'greeen' } },
+    });
+    expect(svg).not.toMatch(/lightgren|#12345"|redd|bluu|greeen/);
+    expect(warnings.map((w) => w.code)).toEqual([C4_COLOR_INVALID]);
+    for (const where of [
+      '$bgColor of b "lightgren"',
+      '$borderColor of b "#12345"',
+      '$bgColor of a "redd"',
+      '$fontColor of a "bluu"',
+      '$textColor of a -> s "redd"',
+      '$lineColor of a -> s "bluu"',
+      'c4.system_bg_color "greeen"',
+    ])
+      expect(warnings[0]!.message).toContain(where);
+    const person = group(svg, 'data-id="a" data-ast');
+    expect(elements(person, 'rect')[0]).toMatchObject({ fill: '#08427B', stroke: 'darkgrey' });
+    expect(elements(group(svg, 'data-id="s" data-ast'), 'rect')[0]!.fill).toBe('#1168BD');
+    expect(byClass(svg, 'path', 'c4-rel')[0]!.stroke).toBe('var(--_c4r)');
+  });
+
   it('reads an empty UpdateElementStyle slot as not given: the default, with no warning (#774)', async () => {
     const { svg, warnings } = await renderC4ForTest(
       fixtureSource('nightly-check/styling/update-element-style-empty-slots')

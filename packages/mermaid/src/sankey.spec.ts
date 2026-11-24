@@ -185,8 +185,21 @@ describe('sankey diagrams through the public API (#503)', () => {
       'Not a colour, so the default is drawn instead: sankey.linkColor "url(#x)", sankey.nodeColors.Solar "javascript:alert(1)", sankey.nodeColors.Gas 5'
     );
     expect(bad.svg).toBe(plain.svg);
-    // `gradient` is a mode before it is a named colour.
+    // `gradient` is a mode, not a colour.
     expect((await m.render('s11', withInit({ linkColor: 'gradient' }))).warnings).toEqual([]);
+  });
+
+  it('drops a misspelt colour as one that fails the check (D690)', async () => {
+    const m = createMermaid();
+    const plain = await m.render('s11', TEXT);
+    const bad = await m.render(
+      's11',
+      withInit({ linkColor: 'sourse', nodeColors: { Solar: 'redd', Gas: '#12345' } })
+    );
+    expect(bad.warnings.map((w) => w.message)).toEqual([
+      'Not a colour, so the default is drawn instead: sankey.linkColor "sourse", sankey.nodeColors.Solar "redd", sankey.nodeColors.Gas "#12345"',
+    ]);
+    expect(bad.svg).toBe(plain.svg);
   });
 
   it('falls back to the default for an option it cannot use, one SANKEY_CONFIG_INVALID per key', async () => {

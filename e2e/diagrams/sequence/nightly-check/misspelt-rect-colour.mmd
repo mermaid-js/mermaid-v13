@@ -1,0 +1,13 @@
+---
+description: >-
+  D690: a misspelt rect colour (`redd`) is ignored with STYLE_VALUE_DROPPED and the block is
+  filled with rectBkgColor; the nested rect is spelt right
+---
+sequenceDiagram
+  A->>B: before
+  rect redd
+    B->>A: misspelt
+    rect lightgreen
+      A->>B: spelt right
+    end
+  end

@@ -73,8 +73,8 @@ beforeAll(async () => {
 
 describe('sankey render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, every linkColor mode and both label styles', () => {
-    // The 18 restored fixtures and the 9 baselines (#503).
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(27);
+    // The 18 restored fixtures and the 9 baselines (#503), and D690's.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(28);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(rejected.size).toBeLessThan(corpus.length / 2);
     expect(cases.length).toBeGreaterThan(80 * (THEMES.length + CONFIGS.length));
@@ -149,12 +149,15 @@ describe('sankey render properties over the parsed corpus', () => {
         c.id
       ).toEqual([]);
       expect(ids.includes('title#mermaid-0-title'), c.id).toBe(!!c.r.model.title?.trim());
-      // The one colour the configs plant that fails the colour check: one warning (#503).
-      const planted = (c.r.config.sankey?.nodeColors as Record<string, unknown> | undefined)?.b;
+      // A colour that fails the colour check, planted by the configs (#503) or misspelt by D690's
+      // fixture: one warning.
+      const { linkColor, nodeColors } = (c.r.config.sankey ?? {}) as Record<string, unknown>;
+      const given = [linkColor, ...Object.values((nodeColors ?? {}) as Record<string, unknown>)];
+      const refused = given.some((v) => v === 'url(x)' || v === 'sourse' || v === 'redd');
       expect(
         c.r.warnings.filter((w) => w.code.startsWith('SANKEY_')).map((w) => w.code),
         c.id
-      ).toEqual(planted === 'url(x)' ? ['SANKEY_COLOR_INVALID'] : []);
+      ).toEqual(refused ? ['SANKEY_COLOR_INVALID'] : []);
     }
   });
 

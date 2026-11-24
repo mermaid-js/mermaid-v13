@@ -31,10 +31,10 @@
   `labelStyle` and a value of the wrong type lay out with the default and warn
   `SANKEY_CONFIG_INVALID`, once per key (v12 passed them to d3 as they were: a negative
   `nodePadding` overlapped nodes, and a string one was concatenated with 15). A `linkColor` or
-  `nodeColors` value that fails the colour check is dropped, the default drawn (the gradient,
-  or the node's next Tableau10 colour), with one `SANKEY_COLOR_INVALID` warning per render
-  naming each. `useWidth` is ignored (v12's sankey never read it), and `look` as everywhere
-  (D153).
+  `nodeColors` value that fails the colour check, a misspelt colour included (D690), is dropped,
+  the default drawn (the gradient, or the node's next Tableau10 colour), with one
+  `SANKEY_COLOR_INVALID` warning per render naming each. `useWidth` is ignored (v12's
+  sankey never read it), and `look` as everywhere (D153).
 - **Text output** (`format: 'ascii'`) throws `UnsupportedFormatError` (D320), and sankey is not
   sketched under `look: handDrawn`, as v12 never sketched it (D301).
 - **Limits** (R-SEC-5): a diagram may have up to `limits.maxNodes` nodes (10,000) and

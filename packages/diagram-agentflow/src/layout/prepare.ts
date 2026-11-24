@@ -201,10 +201,7 @@ export function prepareAgentflow(
         inline,
         keepWords: units.id !== 'cell',
       }),
-    styleOf: styleCache(
-      new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
-      (w) => ctx.warn(w)
-    ),
+    styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), (w) => ctx.warn(w)),
   };
   const rootDir = layoutDir(model.direction) ?? 'TB';
   const { views, groups, nodes, flowDir } = nodeViews(model, rootDir, m);

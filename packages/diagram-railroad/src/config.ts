@@ -16,7 +16,7 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { checkColor, checkStyle, type SafeColor, type SafeValue } from '@mermaid-js/core/svg';
+import { checkCssColor, checkStyle, type SafeColor, type SafeValue } from '@mermaid-js/core/svg';
 import { configSectionOf } from '@mermaid-js/shared/parser/facet';
 import { railroadConfigDefaults } from './generated/config-defaults.ts';
 
@@ -177,7 +177,7 @@ export function railroadConfig(
   for (const key of Object.keys(RAILROAD_COLOUR_KEYS) as RailroadColourKey[]) {
     const value = given[key];
     if (value === undefined) continue;
-    const colour = typeof value === 'string' ? checkColor(value.trim()) : undefined;
+    const colour = typeof value === 'string' ? checkCssColor(value.trim()) : undefined;
     if (colour) colours[key] = colour;
     else dropped.push(`railroad.${key} ${shown(value)} (the theme's)`);
   }
