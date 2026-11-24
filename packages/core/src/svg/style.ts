@@ -4,6 +4,7 @@
  * else is dropped with a warning. Also the constructors for the branded colour, length and
  * theme-reference values.
  */
+import { parseColor } from '../theme/color.ts';
 import { RE_INVALID_XML, escAttr, num } from './escape.ts';
 import type {
   Attrs,
@@ -95,6 +96,36 @@ export function checkColor(value: string): SafeColor | undefined {
     } else if (c === ')' && --depth < 0) return undefined;
   }
   return depth === 0 ? (v as SafeColor) : undefined;
+}
+
+// cspell:disable -- CSS system colours
+/**
+ * The words besides the named colours and `transparent` that CSS reads as a colour, or as the
+ * paint of a shape (`none`), lower case: the CSS-wide keywords, `currentColor` and the system
+ * colours of CSS Color 4, deprecated ones included.
+ */
+const COLOR_KEYWORDS: ReadonlySet<string> = new Set(
+  (
+    'none currentcolor inherit initial unset revert revert-layer ' +
+    'accentcolor accentcolortext activetext buttonborder buttonface buttontext canvas canvastext ' +
+    'field fieldtext graytext highlight highlighttext linktext mark marktext selecteditem ' +
+    'selecteditemtext visitedtext activeborder activecaption appworkspace background ' +
+    'buttonhighlight buttonshadow captiontext inactiveborder inactivecaption ' +
+    'inactivecaptiontext infobackground infotext menu menutext scrollbar threeddarkshadow ' +
+    'threedface threedhighlight threedlightshadow threedshadow window windowframe windowtext'
+  ).split(' ')
+);
+// cspell:enable
+const RE_FUNC = /^[a-z-]+\s*\(.*\)$/i;
+
+/**
+ * A colour of a `style`, `classDef` or `linkStyle` declaration: what `checkColor` allows, less
+ * the words and hex digits CSS does not know. A browser ignores such a colour in CSS (v12), but
+ * an attribute that holds one replaces the theme's colour and draws black (#1195).
+ */
+function checkStyleColor(v: string, lower: string): SafeColor | undefined {
+  const known = COLOR_KEYWORDS.has(lower) || RE_FUNC.test(v) || parseColor(v) !== undefined;
+  return known ? checkColor(v) : undefined;
 }
 
 const RE_SHADOW_LENGTH = /^(-?)(\d{1,6}(?:\.\d{1,6})?|\.\d{1,6})(px|em|rem)?$/i;
@@ -267,7 +298,7 @@ const LINE_JOINS: ReadonlySet<string> = new Set(['miter', 'round', 'bevel']);
 /** Each kind's check: the value as it may be written, or undefined when it is not allowed. */
 const VALUE_CHECKS: Readonly<Record<Kind, ValueCheck>> = {
   blend: oneOf(BLEND_MODES),
-  color: checkColor,
+  color: checkStyleColor,
   length: checkLength,
   size: (v, lower) => (FONT_SIZES.has(lower) ? lower : checkLength(v)),
   spacing: (v, lower) => (lower === 'normal' ? lower : checkLength(v)),

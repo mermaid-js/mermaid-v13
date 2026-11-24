@@ -299,6 +299,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/nightly-check/icon/09-should-render-icons-from-fontawesome-library-on-theme-neutral.mmd": 0,
   "flowchart/nightly-check/icon/10-should-render-registered-icons-on-theme-neutral.mmd": 0,
   "flowchart/nightly-check/layered/subgraph-to-member-edge.mmd": 0,
+  "flowchart/nightly-check/misspelt-style-colour.mmd": 0,
   "flowchart/nightly-check/redux-color-subgraphs/01-should-render-subgraphs-subgraph-containers.mmd": 0,
   "flowchart/nightly-check/redux-color-subgraphs/02-should-render-nested-subgraph-containers.mmd": 0,
   "flowchart/nightly-check/redux-color-subgraphs/03-should-render-collapsed-subgraph-containers.mmd": 0,

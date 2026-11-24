@@ -266,6 +266,19 @@ describe('state render: palette slots (v12 stateDiagram-colorIndex)', () => {
     expect(slot(tree, 's:Third')).toBe('color-2');
   });
 
+  it('paints a composite whose style was dropped as a misspelt colour (#1195)', async () => {
+    const composites =
+      '  state First {\n    [*] --> A\n  }\n  state Second {\n    [*] --> B\n    --\n    [*] --> D\n  }';
+    for (const styling of [
+      '  classDef bad fill:redd\n  class Second bad',
+      '  style Second fill:redd',
+    ]) {
+      const { tree } = await renderForTest(`stateDiagram-v2\n${composites}\n${styling}`);
+      expect(slot(tree, 's:Second'), styling).toBe('color-1');
+      expect(slot(tree, 'r:Second#1'), styling).toBe('color-1');
+    }
+  });
+
   it('paints no slot in a theme without a palette, whatever its name', async () => {
     const plain = await renderForTest('stateDiagram-v2\n  state S {\n    [*] --> A\n  }', {
       config: { theme: 'redux' },
