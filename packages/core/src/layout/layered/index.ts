@@ -309,8 +309,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
 
   const sideways = (i: number): boolean => runsAcross(directionOf(cnodes, i) ?? rootDir);
   graph.nodes.forEach((n, i) => {
-    const across = sideways(i) ? n.height : n.width;
-    cnodes[i]!.span = n.span ?? Math.max(0, across - 2 * M.corner);
+    cnodes[i]!.span = n.span ?? Math.max(0, (sideways(i) ? n.height : n.width) - 2 * M.corner);
   });
 
   // A self-loop sits beside its node, across the flow; the box laid out grows to hold it.

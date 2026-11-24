@@ -259,7 +259,7 @@ function nodeViews(
     if (sg) measureNode(view, sg.title, sg.labelType === 'markdown', m);
     else if (v) {
       measureNode(view, v.text, v.labelType === 'markdown', m, v);
-      turnBar(view, nest.flowDir(view.id), m.cells);
+      turnBar(view, nest, m.cells);
     }
   }
   for (const view of groups) {
@@ -341,8 +341,9 @@ function measureNode(
 }
 
 /** A fork or join bar lies across the flow: 10 × 70 where it runs sideways (v12, D604). */
-function turnBar(view: NodeView, flow: Dir, cells: boolean): void {
-  if (view.shape === 'fork' && !cells && sideways(flow)) [view.w, view.h] = [view.h, view.w];
+function turnBar(view: NodeView, nest: Nesting, cells: boolean): void {
+  if (view.shape === 'fork' && !cells && sideways(nest.flowDir(view.id)))
+    [view.w, view.h] = [view.h, view.w];
 }
 
 /** One view per drawn edge; edges into a collapsed subgraph end at it, and a loop it hides goes. */
