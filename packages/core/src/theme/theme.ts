@@ -33,6 +33,8 @@ import type {
   StyleText,
   ThemeRef,
 } from '../svg/types.ts';
+import { dataKey } from '../config/data-key.ts';
+import { keptLeaf, kept, type KeptLevel } from './kept.ts';
 import { num } from '../svg/escape.ts';
 import {
   adjustChannels,
@@ -765,6 +767,8 @@ interface ThemeParts {
   rootTexts: RootTexts;
   /** Each padding variable read so far: a multiple of the diagram's padding, or px. */
   paddings: Map<string, { readonly scale: boolean; readonly n: number }>;
+  /** What checking the overrides warned of, replayed when the parts are kept. */
+  warnings: readonly ThemeWarning[];
 }
 
 /** `rootStyleText()` by the names used: one step per name, in the order they were first used. */
@@ -827,25 +831,34 @@ function flatten(
 // Without overrides a theme derives the same values on every render, so its resolvers (and
 // their memos) are kept, keyed by the spec, the `auto` dark spec, the diagram's table and the
 // registered fragment rules (D336). A render's own state is only `used`.
-type Cache = WeakMap<object, Cache | ThemeParts>;
-const PLAIN: Cache = new WeakMap();
+// With overrides the same holds for equal overrides: their parts are kept by their value
+// (`dataKey`), never by the object that holds them, and what checking them warned of is replayed
+// to each render's own `warn`. Overrides that are not plain data are not kept.
+const PARTS: KeptLevel<ThemeParts> = new WeakMap();
 const NONE = {};
 
 function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
+  const tv = flatten(options.themeVariables, options.diagram);
+  // `''` is no value's key. The table is part of the path, so the overrides as given will do.
+  const key = tv === undefined || !Object.keys(tv).length ? '' : dataKey(options.themeVariables);
+  if (key === undefined) return deriveParts(spec, options, tv);
+  const path = [spec, options.dark ?? NONE, options.diagram ?? NONE, options.rules ?? NONE];
+  const [parts, hit] = kept(keptLeaf(PARTS, path), key, () => deriveParts(spec, options, tv));
+  if (hit) for (const w of parts.warnings) options.warn?.(w);
+  return parts;
+}
+
+function deriveParts(
+  spec: ThemeSpec,
+  options: ThemeOptions,
+  tv: Readonly<Record<string, unknown>> | undefined
+): ThemeParts {
   const table = options.diagram;
-  const tv = flatten(options.themeVariables, table);
-  const plain = tv === undefined || Object.keys(tv).length === 0;
-  const keys: object[] = [spec, options.dark ?? NONE, table ?? NONE, options.rules ?? NONE];
-  let level: Cache = PLAIN;
-  if (plain) {
-    for (const k of keys.slice(0, -1)) {
-      let next = level.get(k) as Cache | undefined;
-      if (!next) level.set(k, (next = new WeakMap()));
-      level = next;
-    }
-    const hit = level.get(keys[3]!) as ThemeParts | undefined;
-    if (hit) return hit;
-  }
+  const warnings: ThemeWarning[] = [];
+  const warn = (w: ThemeWarning): void => {
+    warnings.push(w);
+    options.warn?.(w);
+  };
   const defs: Record<string, ThemeVarEntry> = { ...THEME_VARIABLE_TABLE };
   // A fragment's rule for a name the diagram's own table defines loses to the table (D337). A
   // table var that shadows a core name is ignored, so it takes no fragment rule away either.
@@ -857,7 +870,7 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
   }
   for (const [name, v] of Object.entries(table?.vars ?? {}))
     if (!own(THEME_VARIABLE_TABLE, name)) defs[name] = v;
-  const overrides = checkOverrides(tv, defs, options.warn);
+  const overrides = checkOverrides(tv, defs, warn);
   const tablePalettes = Object.keys(defs).filter((name) => defs[name]!.kind === 'palette');
   const authorDark = tv?.darkMode === true || tv?.darkMode === 'true';
   const darkMode = spec.dark || authorDark;
@@ -878,11 +891,7 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
   };
   const parts: ThemeParts = {
     darkMode,
-    main: resolver(
-      spec,
-      darkMode,
-      paletteSource(spec, tv, options.warn, authorDark, tablePalettes)
-    ),
+    main: resolver(spec, darkMode, paletteSource(spec, tv, warn, authorDark, tablePalettes)),
     // The dark spec's own palettes, so a series slot read follows it there (D332).
     night: options.dark
       ? resolver(
@@ -895,8 +904,8 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     byName: new Map(Object.entries(defs)),
     rootTexts: { next: new Map() },
     paddings: new Map(),
+    warnings,
   };
-  if (plain) level.set(keys[3]!, parts);
   return parts;
 }
 
