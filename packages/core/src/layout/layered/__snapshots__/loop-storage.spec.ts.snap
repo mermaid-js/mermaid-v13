@@ -1,0 +1,255 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`layered: self-loop bookkeeping, made at the first loop > LR > 0 loops on one node, unlabelled and labelled > labelled 1`] = `
+{
+  "edges": {
+    "ab": "88,34 138,34 |  | right/left",
+    "bc": "198,34 248,34 256,34 276,34 |  | right/left",
+  },
+  "size": [
+    362,
+    68,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > LR > 0 loops on one node, unlabelled and labelled > plain 1`] = `
+{
+  "edges": {
+    "ab": "88,34 138,34 |  | right/left",
+    "bc": "198,34 248,34 256,34 276,34 |  | right/left",
+  },
+  "size": [
+    362,
+    68,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > LR > 1 loops on one node, unlabelled and labelled > labelled 1`] = `
+{
+  "edges": {
+    "a0": "28,100 28,126 68,126 68,100 | label 48,142 | bottom/bottom",
+    "ab": "88,80 138,80 |  | right/left",
+    "bc": "198,80 248,80 256,80 276,80 |  | right/left",
+  },
+  "size": [
+    362,
+    160,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > LR > 1 loops on one node, unlabelled and labelled > plain 1`] = `
+{
+  "edges": {
+    "a0": "28,74 28,100 68,100 68,74 |  | bottom/bottom",
+    "ab": "88,54 138,54 |  | right/left",
+    "bc": "198,54 248,54 256,54 276,54 |  | right/left",
+  },
+  "size": [
+    362,
+    108,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > LR > 3 loops on one node, unlabelled and labelled > labelled 1`] = `
+{
+  "edges": {
+    "a0": "28,204 28,230 68,230 68,204 | label 48,246 | bottom/bottom",
+    "a1": "28,164 28,138 68,138 68,164 | label 48,124 | top/top",
+    "a2": "18,204 18,282 78,282 78,204 | label 48,300 | bottom/bottom",
+    "ab": "88,184 138,184 |  | right/left",
+    "bc": "198,184 248,184 256,184 276,184 |  | right/left",
+  },
+  "size": [
+    362,
+    368,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > LR > 3 loops on one node, unlabelled and labelled > plain 1`] = `
+{
+  "edges": {
+    "a0": "28,126 28,152 68,152 68,126 |  | bottom/bottom",
+    "a1": "28,86 28,60 68,60 68,86 |  | top/top",
+    "a2": "18,126 18,178 78,178 78,126 |  | bottom/bottom",
+    "ab": "88,106 138,106 |  | right/left",
+    "bc": "198,106 248,106 256,106 276,106 |  | right/left",
+  },
+  "size": [
+    362,
+    212,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > LR > a tight run after a loose one starts its own loop count (availableWidth) 1`] = `
+{
+  "edges": {
+    "a0": "28,204 28,230 68,230 68,204 | label 48,246 | bottom/bottom",
+    "a1": "28,164 28,138 68,138 68,164 | label 48,124 | top/top",
+    "a2": "18,204 18,282 78,282 78,204 | label 48,300 | bottom/bottom",
+    "ab": "88,184 125.5,184 |  | right/left",
+    "bc": "185.5,184 223,184 227.8,184 247.8,184 |  | right/left",
+  },
+  "size": [
+    330.6,
+    368,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > LR > loops on a group and on two nodes in one graph 1`] = `
+{
+  "edges": {
+    "G0": "274.5,138 274.5,164 327.5,164 327.5,138 | label 301,180 | bottom/bottom",
+    "G1": "274.5,86 274.5,60 327.5,60 327.5,86 |  | top/top",
+    "a0": "28,132 28,158 68,158 68,132 | label 48,174 | bottom/bottom",
+    "ab": "88,112 138,112 |  | right/left",
+    "b0": "153,127 153,153 183,153 183,127 | label 168,171 | bottom/bottom",
+    "bc": "198,112 248,112 256,112 276,112 |  | right/left",
+  },
+  "size": [
+    362,
+    224,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > TB > 0 loops on one node, unlabelled and labelled > labelled 1`] = `
+{
+  "edges": {
+    "ab": "51,48 51,98 |  | bottom/top",
+    "bc": "51,128 51,178 51,186 51,206 |  | bottom/top",
+  },
+  "size": [
+    102,
+    258,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > TB > 0 loops on one node, unlabelled and labelled > plain 1`] = `
+{
+  "edges": {
+    "ab": "51,48 51,98 |  | bottom/top",
+    "bc": "51,128 51,178 51,186 51,206 |  | bottom/top",
+  },
+  "size": [
+    102,
+    258,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > TB > 1 loops on one node, unlabelled and labelled > labelled 1`] = `
+{
+  "edges": {
+    "a0": "160,18 186,18 186,38 160,38 | label 212,28 | right/right",
+    "ab": "120,48 120,98 |  | bottom/top",
+    "bc": "120,128 120,178 120,186 120,206 |  | bottom/top",
+  },
+  "size": [
+    240,
+    258,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > TB > 1 loops on one node, unlabelled and labelled > plain 1`] = `
+{
+  "edges": {
+    "a0": "114,18 140,18 140,38 114,38 |  | right/right",
+    "ab": "74,48 74,98 |  | bottom/top",
+    "bc": "74,128 74,178 74,186 74,206 |  | bottom/top",
+  },
+  "size": [
+    148,
+    258,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > TB > 3 loops on one node, unlabelled and labelled > labelled 1`] = `
+{
+  "edges": {
+    "a0": "304,18 330,18 330,38 304,38 | label 356,28 | right/right",
+    "a1": "224,18 198,18 198,38 224,38 | label 177,28 | left/left",
+    "a2": "304,13 402,13 402,43 304,43 | label 433,28 | right/right",
+    "ab": "264,48 264,98 |  | bottom/top",
+    "bc": "264,128 264,178 264,186 264,206 |  | bottom/top",
+  },
+  "size": [
+    528,
+    258,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > TB > 3 loops on one node, unlabelled and labelled > plain 1`] = `
+{
+  "edges": {
+    "a0": "166,18 192,18 192,38 166,38 |  | right/right",
+    "a1": "86,18 60,18 60,38 86,38 |  | left/left",
+    "a2": "166,13 218,13 218,43 166,43 |  | right/right",
+    "ab": "126,48 126,98 |  | bottom/top",
+    "bc": "126,128 126,178 126,186 126,206 |  | bottom/top",
+  },
+  "size": [
+    252,
+    258,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > TB > a tight run after a loose one starts its own loop count (availableWidth) 1`] = `
+{
+  "edges": {
+    "a0": "304,18 330,18 330,38 304,38 | label 356,28 | right/right",
+    "a1": "224,18 198,18 198,38 224,38 | label 177,28 | left/left",
+    "a2": "304,13 402,13 402,43 304,43 | label 433,28 | right/right",
+    "ab": "264,48 264,98 |  | bottom/top",
+    "bc": "264,128 264,178 264,186 264,206 |  | bottom/top",
+  },
+  "size": [
+    528,
+    258,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > TB > loops on a group and on two nodes in one graph 1`] = `
+{
+  "edges": {
+    "G0": "192,196 218,196 218,232 192,232 | label 244,214 | right/right",
+    "G1": "106,196 80,196 80,232 106,232 |  | left/left",
+    "a0": "189,18 215,18 215,38 189,38 | label 241,28 | right/right",
+    "ab": "149,48 149,98 |  | bottom/top",
+    "b0": "179,105.5 205,105.5 205,120.5 179,120.5 | label 236,113 | right/right",
+    "bc": "149,128 149,178 149,186 149,206 |  | bottom/top",
+  },
+  "size": [
+    298,
+    258,
+  ],
+}
+`;
+
+exports[`layered: self-loop bookkeeping, made at the first loop > on the grid: several loops on a node and on a group take their own cells 1`] = `
+{
+  "edges": {
+    "G0": "20,20 22,20 22,22 20,22 |  | right/right",
+    "a0": "18,1 20,1 20,3 18,3 |  | right/right",
+    "a1": "18,5 20,5 20,7 18,7 | label 23,6 | right/right",
+    "a2": "18,9 20,9 20,11 18,11 |  | right/right",
+    "ab": "15,13 15,20 |  | bottom/top",
+  },
+  "size": [
+    31,
+    26,
+  ],
+}
+`;
