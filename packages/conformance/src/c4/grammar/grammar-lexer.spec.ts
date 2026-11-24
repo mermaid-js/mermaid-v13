@@ -72,8 +72,8 @@ describe('c4 grammar lexer', () => {
     expect(diffs.slice(0, 10)).toEqual([]);
     expect(against.jison).toBeGreaterThan(2000);
     expect(against).toEqual({
-      jison: 2367,
-      unquoted: 367,
+      jison: 2374,
+      unquoted: 368,
       comment: 43,
       title: 23,
       hash: 22,

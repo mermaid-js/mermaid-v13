@@ -259,6 +259,20 @@ describe('colours (spec #429 Renderer, D415)', () => {
     expect(circles.map((c) => c.path.fill)).toEqual(['var(--_vn1)', 'var(--_vn3)', 'var(--_vn1)']);
   });
 
+  it('keeps the palette colour of a slot whose author colour is dropped or empty', async () => {
+    const circles = async (themeVariables: Record<string, string>) => {
+      const { svg } = await renderVennForTest(
+        fixtureSource('pr-check/2-should-render-a-three-set-venn-diagram'),
+        { config: { theme: 'redux-color', themeVariables } }
+      );
+      const found = [...areas(svg).values()].filter((a) => hasClass(a.g, 'venn-circle'));
+      return found.map((c) => c.path.fill);
+    };
+    const plain = await circles({});
+    for (const venn1 of ['redd', 'url(x)', '']) expect(await circles({ venn1 })).toEqual(plain);
+    expect(await circles({ venn1: '#aa0000' })).toEqual(['var(--_vn1)', plain[1], plain[2]]);
+  });
+
   it('keeps an explicit style fill over the palette', async () => {
     const { svg } = await render('nightly-check/explicit-set-style-over-redux-palette');
     expect(areas(svg).get('A')!.path.fill).toBe('#00ff00');

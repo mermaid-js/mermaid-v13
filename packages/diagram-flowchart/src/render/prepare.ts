@@ -171,10 +171,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
         }
       ),
     curveOf: curveReporter((w) => ctx.warn(w)),
-    styleOf: styleCache(
-      new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
-      ctx.warn
-    ),
+    styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), ctx.warn),
   };
   const rootDir = dirOf(model.direction) ?? 'TB';
   const nest = nesting(model, rootDir);

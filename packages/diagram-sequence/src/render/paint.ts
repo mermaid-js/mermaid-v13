@@ -4,7 +4,7 @@
 // palette (`borderColorArray`, `bkgColorArray`), the participant corner (`actorRadius`) and the
 // shadow (`dropShadow`).
 import type { RenderContext } from '@mermaid-js/core';
-import { checkColor, checkStyle, type Attrs, type SafeValue } from '@mermaid-js/core/svg';
+import { checkCssColor, checkStyle, type Attrs, type SafeValue } from '@mermaid-js/core/svg';
 import { paletteSlots, type PaletteTint } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
@@ -123,7 +123,7 @@ export function paints(ctx: Pick<RenderContext, 'theme' | 'config'>, l: Sequence
         ? { stroke: theme.color('nodeBorder'), text: theme.color('textColor') }
         : undefined,
     // Looked up only when a `rect` takes it: one with no colour, or a refused one.
-    rect: l.rects.some((r) => r.color.trim() === '' || !checkColor(r.color))
+    rect: l.rects.some((r) => r.color.trim() === '' || !checkCssColor(r.color))
       ? theme.color('rectBkgColor')
       : undefined,
     title: l.title ? theme.color('textColor') : undefined,

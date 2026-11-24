@@ -12,6 +12,7 @@
  */
 import {
   checkColor,
+  checkCssColor,
   checkFilter,
   checkStyle,
   noteRootText,
@@ -214,7 +215,7 @@ function checkValue(kind: Exclude<ThemeVarKind, 'palette'>, raw: unknown): strin
   const v = raw.trim();
   switch (kind) {
     case 'color':
-      return checkColor(v);
+      return checkCssColor(v);
     case 'length':
       return RE_SIZE.test(v) ? v : undefined;
     case 'padding':
@@ -673,7 +674,7 @@ function numberedOverrides(
       raw === ''
     )
       continue;
-    const c = typeof raw === 'string' ? checkColor(raw) : undefined;
+    const c = typeof raw === 'string' ? checkCssColor(raw) : undefined;
     if (c === undefined) drop(key, raw);
     else out.push([key, c]);
   }
@@ -732,7 +733,7 @@ function paletteSource(
     const raw = own(vars, name) ? vars[name] : undefined;
     if (raw === undefined || raw === null) continue;
     const checked = paletteItems(raw)?.map((c) =>
-      typeof c === 'string' ? checkColor(c) : undefined
+      typeof c === 'string' ? checkCssColor(c) : undefined
     );
     if (!checked || checked.length > MAX_PALETTE || checked.includes(undefined)) {
       drop(name, raw);

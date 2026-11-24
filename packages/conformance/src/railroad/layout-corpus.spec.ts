@@ -58,7 +58,7 @@ describe('railroad layout invariants on parser-produced fixtures', () => {
         }
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.variant).length).toBe(48);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.variant).length).toBe(49);
     expect(rules).toBeGreaterThan(1_000);
     for (const kind of [
       'terminal',

@@ -21,7 +21,7 @@ section and task classes now sit on the group that holds the box and its label.
 | `sectionColours` reached the `tspan` fallback only (the default `fo` label ignored it) | Colours section and task names, by band, when set; otherwise names are `textColor` | D225 |
 | Title: an unclassed bold `<text>` at (`leftMargin`, 25) with `fill="<titleColor>"` (default empty: black on dark themes) and `font-family="<titleFontFamily>"` | `<text class="journey-title">` at the same place (a title of several lines ends on that baseline and grows upward), bold, `4ex` of the theme `fontSize` by default, in `titleColor` or else `textColor`; `titleFontFamily` inherits the Mermaid font when unset | D248, D615 |
 | Task text in `taskFontSize`/`taskFontFamily` (defaults 14 and Open Sans) via an inline `style` | Unset, both follow the theme font; when set, `font-family`/`font-size` are written on the `sections` and `tasks` groups | Fonts are uniform across diagrams (D132) |
-| A `journey.titleColor`, `actorColours` or `sectionColours` value that is not a colour went into the markup | Dropped with `STYLE_VALUE_DROPPED`; the default colour is used | Inert output (R-SEC-3) |
+| A `journey.titleColor`, `actorColours` or `sectionColours` value that is not a colour, a misspelt one included (`redd`, drawn in the inherited text colour), went into the markup | Dropped with `STYLE_VALUE_DROPPED`; the default colour is used: the title's and a section's `textColor`, an actor's built-in colour. The other entries of the list keep their places | Inert output (R-SEC-3), D690 |
 
 The `data-ast` ids come from the source (R-PARSE-8): `s:<name>` for a section line (a repeat
 of a name `s:<name>@2`, `@3`, …), `t:<n>` for the n-th task, counting from 1, and

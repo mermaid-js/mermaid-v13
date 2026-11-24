@@ -159,6 +159,11 @@ describe('typeset', () => {
     expect(() => typeset('\\color{url(#x)}{x}', { ex: EX })).toThrow(MathError);
   });
 
+  // A thrown colour would show the whole formula as TeX, so a word CSS does not know passes (D690).
+  it('keeps a formula whose colour is misspelt', () => {
+    expect(typeset('\\color{redd}{x}', { ex: EX }).width).toBeGreaterThan(0);
+  });
+
   it('still typesets after an error', () => {
     expect(() => typeset('\\frac{a}', { ex: EX })).toThrow(MathError);
     expect(typeset('x', { ex: EX }).width).toBeGreaterThan(0);

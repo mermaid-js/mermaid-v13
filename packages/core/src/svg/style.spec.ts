@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkColor,
+  checkCssColor,
   checkStyle,
   px,
   streamWriter,
@@ -107,6 +108,15 @@ describe('checkStyle', () => {
         v
       ).toEqual(['STYLE_VALUE_DROPPED', 'STYLE_VALUE_DROPPED', 'STYLE_VALUE_DROPPED']);
     }
+  });
+
+  it('is checkCssColor alone, too: trimmed, and a colour CSS knows or nothing (D690)', () => {
+    for (const v of ['redd', '#12345', 'red blue', 'calculated', '', 'url(#x)'])
+      expect(checkCssColor(v), v).toBeUndefined();
+    for (const v of ['red', 'RebeccaPurple', 'none', 'CanvasText', '#f9f8', 'oklch(70% 0.1 200)'])
+      expect(checkCssColor(` ${v} `), v).toBe(v);
+    // checkColor keeps its wider reading for values no author misspells (theme rules, math, icons).
+    expect(checkColor('redd')).toBe('redd');
   });
 
   it('keeps an earlier colour when a later one is misspelt, as CSS does', () => {

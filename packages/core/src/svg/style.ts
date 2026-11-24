@@ -77,7 +77,10 @@ const WEIGHTS: ReadonlySet<string> = new Set([
 ]);
 const DECORATIONS: ReadonlySet<string> = new Set(['none', 'underline', 'overline', 'line-through']);
 
-/** A colour from user styles or theme variables, or undefined when it is not allowed. */
+/**
+ * A colour that is safe to write, or undefined. It takes any word and does not know whether CSS
+ * has a colour of that name: a colour an author gives goes through `checkCssColor`.
+ */
 export function checkColor(value: string): SafeColor | undefined {
   const v = value.trim();
   if (v === '' || v.length > 200 || RE_UNSAFE_STYLE.test(v) || RE_INVALID_XML.test(v))
@@ -119,12 +122,15 @@ const COLOR_KEYWORDS: ReadonlySet<string> = new Set(
 const RE_FUNC = /^[a-z-]+\s*\(.*\)$/i;
 
 /**
- * A colour of a `style`, `classDef` or `linkStyle` declaration: what `checkColor` allows, less
- * the words and hex digits CSS does not know. A browser ignores such a colour in CSS (v12), but
- * an attribute that holds one replaces the theme's colour and draws black (#1195).
+ * A colour an author gives, in a style statement, the config or `themeVariables` (D690): what
+ * `checkColor` allows, less the words and hex digits CSS does not know. A browser ignores such a
+ * colour in CSS, but an attribute that holds one replaces the theme's colour and draws black
+ * (#1195).
  */
-function checkStyleColor(v: string, lower: string): SafeColor | undefined {
-  const known = COLOR_KEYWORDS.has(lower) || RE_FUNC.test(v) || parseColor(v) !== undefined;
+export function checkCssColor(value: string): SafeColor | undefined {
+  const v = value.trim();
+  const known =
+    COLOR_KEYWORDS.has(v.toLowerCase()) || RE_FUNC.test(v) || parseColor(v) !== undefined;
   return known ? checkColor(v) : undefined;
 }
 
@@ -298,7 +304,7 @@ const LINE_JOINS: ReadonlySet<string> = new Set(['miter', 'round', 'bevel']);
 /** Each kind's check: the value as it may be written, or undefined when it is not allowed. */
 const VALUE_CHECKS: Readonly<Record<Kind, ValueCheck>> = {
   blend: oneOf(BLEND_MODES),
-  color: checkStyleColor,
+  color: checkCssColor,
   length: checkLength,
   size: (v, lower) => (FONT_SIZES.has(lower) ? lower : checkLength(v)),
   spacing: (v, lower) => (lower === 'normal' ? lower : checkLength(v)),

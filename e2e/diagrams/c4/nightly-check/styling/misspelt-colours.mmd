@@ -1,0 +1,16 @@
+---
+config:
+  c4:
+    system_bg_color: 'greeen'
+description: >-
+  D690: misspelt colours in UpdateElementStyle, UpdateRelStyle, a boundary and the config are
+  ignored with C4_COLOR_INVALID and the defaults drawn; Customer's border is spelt right
+---
+C4Context
+Person(u, "Customer")
+Boundary(b, "Shop", "system", $bgColor="lightgren", $borderColor="#12345") {
+  System(s, "Web shop")
+}
+Rel(u, s, "Buys from")
+UpdateElementStyle(u, $bgColor="redd", $fontColor="bluu", $borderColor="orange")
+UpdateRelStyle(u, s, $textColor="redd", $lineColor="bluu")

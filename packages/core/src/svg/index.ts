@@ -61,6 +61,7 @@ export {
 } from './url.ts';
 export {
   checkColor,
+  checkCssColor,
   checkFilter,
   checkLength,
   checkStyle,
