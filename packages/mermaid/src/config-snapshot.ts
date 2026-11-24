@@ -332,11 +332,11 @@ export class SiteConfigs {
   }
 }
 
-/** A resolved diagram-text config and the warnings resolving it gave. */
-type TextConfig = [ResolvedConfig, readonly Warning[]];
-
-/** Resolved diagram-text configs, by site config, then by text config value. */
-export type TextConfigs = WeakMap<SiteConfig, Map<string, TextConfig>>;
+/**
+ * Resolved diagram-text configs, by site config, then by text config value: each with the
+ * warnings resolving it gave.
+ */
+export type TextConfigs = WeakMap<SiteConfig, Map<string, [ResolvedConfig, readonly Warning[]]>>;
 
 const TEXT_CONFIGS = 8;
 
@@ -357,7 +357,7 @@ export function textConfig(
   const key = front || directives[0] ? dataKey([front, directives]) : undefined;
   if (key === undefined) return resolveText(hit.site, front, directives, { warn });
   let byKey = texts.get(hit);
-  if (!byKey) texts.set(hit, (byKey = new Map<string, TextConfig>()));
+  if (!byKey) texts.set(hit, (byKey = new Map<string, [ResolvedConfig, readonly Warning[]]>()));
   let t = byKey.get(key);
   if (t) byKey.delete(key);
   else {
