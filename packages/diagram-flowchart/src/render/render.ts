@@ -88,10 +88,13 @@ type Warn = (warning: FlowWarning) => void;
 /** The layout's lane drawer: only on a render the `swimlane` layout laid out. */
 function lanesFor(
   { layoutPart }: FlowRenderContext,
-  ...args: [FlowModel, Prepared, LayoutModel, Warn?]
+  model: FlowModel,
+  flow: Prepared,
+  layout: LayoutModel,
+  warn?: Warn
 ): LaneDrawer | undefined {
   return typeof layoutPart === 'function'
-    ? (layoutPart as LaneDrawerFactory)(cls, ...args)
+    ? (layoutPart as LaneDrawerFactory)(cls, model, flow, layout, warn)
     : undefined;
 }
 
@@ -255,6 +258,9 @@ function inkOf({ ctx, inks }: Scene, fill: string): Ink {
   return ink;
 }
 
+/** The tooltips of a flowchart without any: never written to. */
+const NO_TIPS: ReadonlyMap<string, string> = new Map();
+
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
 export function renderFlowchart(
   model: FlowModel,
@@ -293,7 +299,7 @@ export function renderFlowchart(
   w.open('g', { class: 'edgeLabels' });
   if (scene.paint.edgeLabel) for (const e of flow.edges) drawEdgeLabel(scene, e);
   w.close();
-  const tips = new Map(model.tooltips);
+  const tips = model.tooltips.length > 0 ? new Map(model.tooltips) : NO_TIPS;
   w.open('g', { class: 'nodes', fill: scene.paint.node.text });
   for (const view of flow.nodes) drawNode(scene, view, tips.get(view.id));
   w.close();
