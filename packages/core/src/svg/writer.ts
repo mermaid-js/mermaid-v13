@@ -4,7 +4,7 @@
  * compact tree used when a `postRender` hook is registered.
  */
 import { BLANK_REL, GRADIENT_FIXED, PLAIN_ATTRS, TEXT_HOLDERS } from './allowlist.ts';
-import { checkName, checkTag, formatChecked } from './encode.ts';
+import { checkName, checkTag, formatChecked, recordOf } from './encode.ts';
 import { esc, escAttr, num } from './escape.ts';
 import { isBuilt, pathBuilder, transforms, translate, type PathBuilder } from './path.ts';
 import { checkColor, hash36, rootStyleAttr, styleScope } from './style.ts';
@@ -197,11 +197,15 @@ const withoutAst = (attrs: Attrs | undefined): Attrs | undefined =>
 const NO_ATTRS: Attrs = Object.freeze({});
 
 /**
- * The stream writer's `PLAIN_ATTRS`: the same names, each with its keywords (`k`) and its text up
- * to the value (`p`, ` name="`), so one lookup both passes the name and writes it. Made once at
- * load from `PLAIN_ATTRS`, so it holds exactly its names; private to this writer.
+ * The stream writer's `PLAIN_ATTRS`: the same names, each with its keywords as a list to scan
+ * (`k`, six at most) and its text up to the value (`p`, ` name="`), so one lookup both passes the
+ * name and writes it. Made once at load from `PLAIN_ATTRS`, so it holds exactly its names;
+ * private to this writer.
  */
-const PLAIN = new Map([...PLAIN_ATTRS].map(([n, k]) => [n, { k, p: ` ${n}="` }]));
+const PLAIN = new Map([...PLAIN_ATTRS].map(([n, k]) => [n, { k: [...k], p: ` ${n}="` }]));
+
+/** `TEXT_HOLDERS`, for a check with one property load. */
+const HOLDERS = recordOf(TEXT_HOLDERS);
 
 /** `outline` on either backing: the drawer's replacement, or the plain leaf. */
 function writeOutline(
@@ -450,13 +454,11 @@ function unescaped(
   name: string,
   raw: unknown,
   value: string,
-  keywords: ReadonlySet<string> | undefined
+  keywords: readonly string[] | undefined
 ): boolean {
-  return (
-    typeof raw !== 'string' ||
-    (!!keywords?.size && keywords.has(value)) ||
-    ((name === 'd' || name === 'transform') && isBuilt(value))
-  );
+  if (typeof raw !== 'string') return true;
+  if (keywords) for (const k of keywords) if (k === value) return true;
+  return (name === 'd' || name === 'transform') && isBuilt(value);
 }
 
 class Stream implements StreamSvgWriter {
@@ -555,7 +557,7 @@ class Stream implements StreamSvgWriter {
 
   text(content: string): void {
     const top = this.stack[this.stack.length - 1];
-    if (top === undefined || !TEXT_HOLDERS.has(top))
+    if (top === undefined || !HOLDERS[top])
       throw new TypeError(`<${top ?? 'document'}> cannot hold text`);
     const e = esc(content);
     if (e === '') return;
