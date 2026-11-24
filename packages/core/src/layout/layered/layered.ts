@@ -1368,108 +1368,137 @@ function alignLabels(
   opt: LayeredOptions,
   empty: Uint8Array | undefined
 ): void {
-  const sep = opt.edgeSep;
-  const {
-    n,
-    real,
-    maxRank,
-    KIND,
-    RANK,
-    W,
-    EF,
-    ET,
-    EFD,
-    ETD,
-    succStart,
-    succE,
-    predStart,
-    predE,
-    layerStart,
-    order,
-    pos,
-  } = g;
-  const placed = (v: number): boolean =>
-    KIND[v]! === Kind.Label ||
-    (KIND[v]! === Kind.Dummy && !(empty !== undefined && empty[RANK[v]!]! === 1));
-  // Where segment `e` ends on the way up (side 0) or down, and how many ends share that side of
-  // the node there: none for a point that is not on a node.
-  const end = (e: number, side: number): [number, number] => {
-    const u = side === 0 ? EF[e]! : ET[e]!;
-    const x = side === 0 ? xs[u]! + EFD[e]! : xs[u]! + ETD[e]!;
-    return [x, u < real && nodes[u]!.kind === Kind.Node ? free[1 - side]![u]! : 0];
-  };
-  // The room the neighbours in its rank leave a label or bend: a full gap from a node or between
-  // two labels, half of one between a label and a line that passes it.
-  const room = (v: number): [number, number] => {
-    const s = layerStart[RANK[v]!]!;
-    const i = s + pos[v]!;
-    const clear = (other: number): number =>
-      W[other]! / 2 + W[v]! / 2 + gapBetween(KIND[other]!, KIND[v]!, opt.nodeSep, sep);
-    return [
-      i > s ? xs[order[i - 1]!]! + clear(order[i - 1]!) : -Infinity,
-      i + 1 < layerStart[RANK[v]! + 1]! ? xs[order[i + 1]!]! - clear(order[i + 1]!) : Infinity,
-    ];
-  };
-  // The place between `lo` and `hi` that is in line with one of two ends, or else nearest the first choice.
-  const choose = (
-    x: number,
-    up: [number, number],
-    down: [number, number],
-    lo: number,
-    hi: number
-  ): number => {
-    const upFirst =
-      up[1] !== down[1] ? up[1] < down[1] : Math.abs(up[0] - x) <= Math.abs(down[0] - x);
-    const choices = upFirst ? [up[0], down[0]] : [down[0], up[0]];
-    return (
-      choices.find((choice) => choice >= lo && choice <= hi) ??
-      Math.max(lo, Math.min(hi, choices[0]!))
-    );
-  };
-  const done = u8(n);
-  const chain: number[] = [];
+  const { n, maxRank, layerStart, order } = g;
+  const a: Align = { g, nodes, xs, free, opt, empty, done: u8(n), chain: [] };
   for (let r = 1; r < maxRank; r++) {
     for (let i = layerStart[r]!; i < layerStart[r + 1]!; i++) {
-      if (!placed(order[i]!) || done[order[i]!]!) continue;
-      // The edge's labels and bends from its first node to its last, and the room they share.
-      let top = order[i]!;
-      while (isDummy(KIND[EF[predE[predStart[top]!]!]!]!)) top = EF[predE[predStart[top]!]!]!;
-      let bottom = top;
-      let lo = -Infinity;
-      let hi = Infinity;
-      chain.length = 0;
-      for (let d = top; isDummy(KIND[d]!); d = ET[succE[succStart[d]!]!]!) {
-        bottom = d;
-        if (!placed(d)) continue;
-        done[d] = 1;
-        chain.push(d);
-        const [least, most] = room(d);
-        if (least > lo) lo = least;
-        if (most < hi) hi = most;
-      }
-      if (lo <= hi) {
-        const x = choose(
-          xs[chain[0]!]!,
-          end(predE[predStart[top]!]!, 0),
-          end(succE[succStart[bottom]!]!, 1),
-          lo,
-          hi
-        );
-        for (const d of chain) xs[d] = x;
-        continue;
-      }
-      for (const d of chain) {
-        const [least, most] = room(d);
-        if (least > most) continue;
-        xs[d] = choose(
-          xs[d]!,
-          end(follow(g, empty, predE[predStart[d]!]!, 0), 0),
-          end(follow(g, empty, succE[succStart[d]!]!, 1), 1),
-          least,
-          most
-        );
-      }
+      if (!inPlace(a, order[i]!) || a.done[order[i]!]!) continue;
+      alignEdge(a, order[i]!);
     }
+  }
+}
+
+// What `alignLabels` works on: the labels and bends already lined up (`done`), and those of the
+// edge at hand (`chain`).
+interface Align {
+  g: Graph;
+  nodes: LNode[];
+  xs: Float64Array;
+  free: [Int32Array, Int32Array];
+  opt: LayeredOptions;
+  empty: Uint8Array | undefined;
+  done: Uint8Array;
+  chain: number[];
+}
+
+// Whether `v` is a label, or a bend in a rank that holds something besides bends.
+function inPlace({ g, empty }: Align, v: number): boolean {
+  const { KIND, RANK } = g;
+  return (
+    KIND[v]! === Kind.Label ||
+    (KIND[v]! === Kind.Dummy && !(empty !== undefined && empty[RANK[v]!]! === 1))
+  );
+}
+
+// Where segment `e` ends on the way up (side 0) or down, and how many ends share that side of
+// the node there: none for a point that is not on a node.
+function endOf({ g, nodes, xs, free }: Align, e: number, side: number): [number, number] {
+  const { real, EF, ET, EFD, ETD } = g;
+  const u = side === 0 ? EF[e]! : ET[e]!;
+  const x = side === 0 ? xs[u]! + EFD[e]! : xs[u]! + ETD[e]!;
+  return [x, u < real && nodes[u]!.kind === Kind.Node ? free[1 - side]![u]! : 0];
+}
+
+// The room the neighbours in its rank leave a label or bend: a full gap from a node or between
+// two labels, half of one between a label and a line that passes it.
+function roomOf({ g, xs, opt }: Align, v: number): [number, number] {
+  const { KIND, RANK, W, layerStart, order, pos } = g;
+  const s = layerStart[RANK[v]!]!;
+  const i = s + pos[v]!;
+  const clear = (other: number): number =>
+    W[other]! / 2 + W[v]! / 2 + gapBetween(KIND[other]!, KIND[v]!, opt.nodeSep, opt.edgeSep);
+  return [
+    i > s ? xs[order[i - 1]!]! + clear(order[i - 1]!) : -Infinity,
+    i + 1 < layerStart[RANK[v]! + 1]! ? xs[order[i + 1]!]! - clear(order[i + 1]!) : Infinity,
+  ];
+}
+
+// The place between `lo` and `hi` that is in line with one of two ends, or else nearest the first choice.
+function choose(
+  x: number,
+  up: [number, number],
+  down: [number, number],
+  lo: number,
+  hi: number
+): number {
+  const upFirst =
+    up[1] !== down[1] ? up[1] < down[1] : Math.abs(up[0] - x) <= Math.abs(down[0] - x);
+  const choices = upFirst ? [up[0], down[0]] : [down[0], up[0]];
+  return (
+    choices.find((choice) => choice >= lo && choice <= hi) ??
+    Math.max(lo, Math.min(hi, choices[0]!))
+  );
+}
+
+// Lines up the labels and bends of the edge through `v`: all on one line where they share room
+// for one, else each with the nearest point above or below that is held in place.
+function alignEdge(a: Align, v: number): void {
+  const { g, xs, chain } = a;
+  const { succE, succStart, predE, predStart } = g;
+  const top = topOf(g, v);
+  const { bottom, lo, hi } = chainFrom(a, top);
+  if (!(lo <= hi)) {
+    alignEach(a);
+    return;
+  }
+  const up = endOf(a, predE[predStart[top]!]!, 0);
+  const x = choose(xs[chain[0]!]!, up, endOf(a, succE[succStart[bottom]!]!, 1), lo, hi);
+  for (const d of chain) xs[d] = x;
+}
+
+// The first bend or label of the edge through `v`, going up.
+function topOf(g: Graph, v: number): number {
+  const { KIND, EF, predE, predStart } = g;
+  let top = v;
+  while (isDummy(KIND[EF[predE[predStart[top]!]!]!]!)) top = EF[predE[predStart[top]!]!]!;
+  return top;
+}
+
+// Gathers the edge's labels and bends from `top` down into `chain`, marks them done, and gives
+// the last bend and the room they share.
+function chainFrom(a: Align, top: number): { bottom: number; lo: number; hi: number } {
+  const { KIND, ET, succE, succStart } = a.g;
+  let bottom = top;
+  let lo = -Infinity;
+  let hi = Infinity;
+  a.chain.length = 0;
+  for (let d = top; isDummy(KIND[d]!); d = ET[succE[succStart[d]!]!]!) {
+    bottom = d;
+    if (!inPlace(a, d)) continue;
+    a.done[d] = 1;
+    a.chain.push(d);
+    const [least, most] = roomOf(a, d);
+    if (least > lo) lo = least;
+    if (most < hi) hi = most;
+  }
+  return { bottom, lo, hi };
+}
+
+// Brings each label and bend of the chain into line with the nearest point above or below that
+// is held in place, within its own room.
+function alignEach(a: Align): void {
+  const { g, xs, empty } = a;
+  const { succE, succStart, predE, predStart } = g;
+  for (const d of a.chain) {
+    const [least, most] = roomOf(a, d);
+    if (least > most) continue;
+    xs[d] = choose(
+      xs[d]!,
+      endOf(a, follow(g, empty, predE[predStart[d]!]!, 0), 0),
+      endOf(a, follow(g, empty, succE[succStart[d]!]!, 1), 1),
+      least,
+      most
+    );
   }
 }
 
