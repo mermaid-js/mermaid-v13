@@ -1597,91 +1597,139 @@ function snap(
   empty: Uint8Array | undefined,
   opt: LayeredOptions
 ): void {
-  const { n, KIND, RANK, EF, ET, EFD, ETD, layerStart, order, pos, M } = g;
+  const s: Snap = { g, xs, opt, ...snapEnds(g, empty), ...blocksOf(g.n) };
+  const near = nearEnds(s);
+  for (const k of near) snapOne(s, k);
+}
+
+// What `snap` works on: each edge from one point that is held in place to the next (`a` to `b`,
+// with the offsets of its ends), and the blocks of nodes that are in line and move as one.
+interface Snap {
+  g: Graph;
+  xs: Float64Array;
+  opt: LayeredOptions;
+  a: number[];
+  b: number[];
+  da: number[];
+  db: number[];
+  block: Int32Array;
+  members: number[][];
+}
+
+// Each edge from one point that is held in place to the next, past the bends in ranks that hold
+// nothing else.
+function snapEnds(g: Graph, empty: Uint8Array | undefined): Pick<Snap, 'a' | 'b' | 'da' | 'db'> {
+  const { KIND, RANK, EF, ET, EFD, ETD } = g;
   const passed = (u: number): boolean =>
     empty !== undefined && KIND[u]! === Kind.Dummy && empty[RANK[u]!]! === 1;
-  // Each edge from one point that is held in place to the next, past the bends in ranks that hold nothing else.
-  const a: number[] = [];
-  const b: number[] = [];
-  const da: number[] = [];
-  const db: number[] = [];
+  const ends: Pick<Snap, 'a' | 'b' | 'da' | 'db'> = { a: [], b: [], da: [], db: [] };
   for (let e = 0; e < EF.length; e++) {
     if (passed(EF[e]!)) continue;
     const f = follow(g, empty, e, 1);
-    a.push(EF[e]!);
-    b.push(ET[f]!);
-    da.push(EFD[e]!);
-    db.push(ETD[f]!);
+    ends.a.push(EF[e]!);
+    ends.b.push(ET[f]!);
+    ends.da.push(EFD[e]!);
+    ends.db.push(ETD[f]!);
   }
-  const off = (k: number): number => xs[b[k]!]! + db[k]! - xs[a[k]!]! - da[k]!;
-  // The nodes in line with each other move as one.
+  return ends;
+}
+
+// Every node a block of its own, to begin with.
+function blocksOf(n: number): Pick<Snap, 'block' | 'members'> {
   const block = i32(n);
   const members: number[][] = [];
   for (let i = 0; i < n; i++) {
     block[i] = i;
     members.push([i]);
   }
-  const join = (x: number, y: number): void => {
-    let keep = block[x]!;
-    let drop = block[y]!;
-    if (keep === drop) return;
-    if (members[keep]!.length < members[drop]!.length) [keep, drop] = [drop, keep];
-    for (const v of members[drop]!) {
-      block[v] = keep;
-      members[keep]!.push(v);
-    }
-    members[drop] = [];
-  };
+  return { block, members };
+}
+
+// How far edge `k` is from straight.
+function offAt(s: Snap, k: number): number {
+  return s.xs[s.b[k]!]! + s.db[k]! - s.xs[s.a[k]!]! - s.da[k]!;
+}
+
+// Puts the blocks of `x` and `y` together, the smaller into the larger.
+function join(s: Snap, x: number, y: number): void {
+  const { block, members } = s;
+  let keep = block[x]!;
+  let drop = block[y]!;
+  if (keep === drop) return;
+  if (members[keep]!.length < members[drop]!.length) [keep, drop] = [drop, keep];
+  for (const v of members[drop]!) {
+    block[v] = keep;
+    members[keep]!.push(v);
+  }
+  members[drop] = [];
+}
+
+// Joins the ends of each straight edge, and gives the edges near enough to straight to snap,
+// nearest first.
+function nearEnds(s: Snap): number[] {
+  const { M } = s.g;
   const near: number[] = [];
-  for (let k = 0; k < a.length; k++) {
-    const d = Math.abs(off(k));
-    if (d < 0.01) join(a[k]!, b[k]!);
+  for (let k = 0; k < s.a.length; k++) {
+    const d = Math.abs(offAt(s, k));
+    if (d < 0.01) join(s, s.a[k]!, s.b[k]!);
     else if (d <= M.bendSnap) near.push(k);
   }
-  if (near.length === 0) return;
-  near.sort((x, y) => Math.abs(off(x)) - Math.abs(off(y)) || x - y);
-  const gap = (v: number): number => halfRoom(g, opt, v);
-  // Whether every node of a block can move by `shift` and keep its room from those beside it.
-  const free = (id: number, shift: number): boolean => {
-    for (const v of members[id]!) {
-      const s = layerStart[RANK[v]!]!;
-      const end = layerStart[RANK[v]! + 1]!;
-      const i = s + pos[v]!;
-      if (
-        i > s &&
-        block[order[i - 1]!]! !== id &&
-        xs[v]! + shift - xs[order[i - 1]!]! < gap(v) + gap(order[i - 1]!) - 0.01
-      )
-        return false;
-      if (
-        i + 1 < end &&
-        block[order[i + 1]!]! !== id &&
-        xs[order[i + 1]!]! - xs[v]! - shift < gap(v) + gap(order[i + 1]!) - 0.01
-      )
-        return false;
-    }
-    return true;
-  };
-  for (const k of near) {
-    const d = off(k);
-    if (Math.abs(d) < 0.01) {
-      join(a[k]!, b[k]!);
-      continue;
-    }
-    if (Math.abs(d) > M.bendSnap || block[a[k]!]! === block[b[k]!]!) continue;
-    // The smaller of the two blocks moves, if it can; else the other.
-    const upper = block[a[k]!]!;
-    const lower = block[b[k]!]!;
-    const first = members[upper]!.length <= members[lower]!.length ? upper : lower;
-    for (const id of [first, first === upper ? lower : upper]) {
-      const shift = id === upper ? d : -d;
-      if (Math.abs(d) > M.snap && !members[id]!.every((v) => KIND[v]! === Kind.Dummy)) continue;
-      if (!free(id, shift)) continue;
-      for (const v of members[id]!) xs[v]! += shift;
-      join(a[k]!, b[k]!);
-      break;
+  return near.sort((x, y) => Math.abs(offAt(s, x)) - Math.abs(offAt(s, y)) || x - y);
+}
+
+// Snaps edge `k` straight if it is still near: the smaller of the two blocks moves, if it can;
+// else the other.
+function snapOne(s: Snap, k: number): void {
+  const { block, members } = s;
+  const d = offAt(s, k);
+  if (Math.abs(d) < 0.01) {
+    join(s, s.a[k]!, s.b[k]!);
+    return;
+  }
+  if (Math.abs(d) > s.g.M.bendSnap || block[s.a[k]!]! === block[s.b[k]!]!) return;
+  const upper = block[s.a[k]!]!;
+  for (const id of moveOrder(members, upper, block[s.b[k]!]!)) {
+    if (shiftBlock(s, id, id === upper ? d : -d, d)) {
+      join(s, s.a[k]!, s.b[k]!);
+      return;
     }
   }
+}
+
+// The two blocks an edge joins, the smaller first.
+function moveOrder(members: number[][], upper: number, lower: number): [number, number] {
+  return members[upper]!.length <= members[lower]!.length ? [upper, lower] : [lower, upper];
+}
+
+// Moves block `id` by `shift`, if it may: a block with a node in it only by `snap`'s small
+// distance, and only where those beside it keep their room. `d` is the edge's offset.
+function shiftBlock(s: Snap, id: number, shift: number, d: number): boolean {
+  const { KIND, M } = s.g;
+  const members = s.members[id]!;
+  if (Math.abs(d) > M.snap && !members.every((v) => KIND[v]! === Kind.Dummy)) return false;
+  if (!members.every((v) => roomBeside(s, id, v, shift))) return false;
+  for (const v of members) s.xs[v]! += shift;
+  return true;
+}
+
+// Whether node `v` of block `id` can move by `shift` and keep its room from those beside it.
+function roomBeside(s: Snap, id: number, v: number, shift: number): boolean {
+  const { RANK, layerStart, order, pos } = s.g;
+  const start = layerStart[RANK[v]!]!;
+  const end = layerStart[RANK[v]! + 1]!;
+  const i = start + pos[v]!;
+  return (
+    (i === start || roomTo(s, id, v, order[i - 1]!, -1, shift)) &&
+    (i + 1 === end || roomTo(s, id, v, order[i + 1]!, 1, shift))
+  );
+}
+
+// Whether node `v` keeps its room from its neighbour `w` on `side` (-1 left, 1 right) once it has
+// moved by `shift`; a neighbour in its own block moves with it.
+function roomTo(s: Snap, id: number, v: number, w: number, side: number, shift: number): boolean {
+  if (s.block[w]! === id) return true;
+  const gap = halfRoom(s.g, s.opt, v) + halfRoom(s.g, s.opt, w);
+  return !(side * (s.xs[w]! - s.xs[v]! - shift) < gap - 0.01);
 }
 
 // Marks the ranks that hold nothing but the bends of edges, if there are any.
