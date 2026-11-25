@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@changesets/get-github-info@0.7.0':
+    hash: 4c55aebe52509275f89192097f8ced745f9cb4b5de04a1195a04f5ad6ce4cba5
+    path: patches/@changesets__get-github-info@0.7.0.patch
+
 importers:
 
   .:
@@ -6089,7 +6094,7 @@ snapshots:
 
   '@changesets/changelog-github@0.5.2(encoding@0.1.13)':
     dependencies:
-      '@changesets/get-github-info': 0.7.0(encoding@0.1.13)
+      '@changesets/get-github-info': 0.7.0(patch_hash=4c55aebe52509275f89192097f8ced745f9cb4b5de04a1195a04f5ad6ce4cba5)(encoding@0.1.13)
       '@changesets/types': 6.1.0
       dotenv: 8.6.0
     transitivePeerDependencies:
@@ -6149,7 +6154,7 @@ snapshots:
       picocolors: 1.1.1
       semver: 7.8.5
 
-  '@changesets/get-github-info@0.7.0(encoding@0.1.13)':
+  '@changesets/get-github-info@0.7.0(patch_hash=4c55aebe52509275f89192097f8ced745f9cb4b5de04a1195a04f5ad6ce4cba5)(encoding@0.1.13)':
     dependencies:
       dataloader: 1.4.0
       node-fetch: 2.7.0(encoding@0.1.13)

@@ -1,0 +1,28 @@
+diff --git a/dist/changesets-get-github-info.cjs.js b/dist/changesets-get-github-info.cjs.js
+index 4187b5c54532a1c1c179b60cb314026f67e48323..d42303af753d29ca48083180da9fa26ae37c428a 100644
+--- a/dist/changesets-get-github-info.cjs.js
++++ b/dist/changesets-get-github-info.cjs.js
+@@ -205,6 +205,9 @@ const GHDataLoader = new DataLoader__default["default"](async requests => {
+       data = _objectWithoutProperties(_ref2, _excluded2);
+     return cleanedData[repo][data.kind][data.kind === "pull" ? data.pull : data.commit];
+   });
++}, {
++  // One query for hundreds of changesets comes back empty from GitHub; batch the lookups.
++  maxBatchSize: 40
+ });
+ async function getInfo(request) {
+   if (!request.commit) {
+diff --git a/dist/changesets-get-github-info.esm.js b/dist/changesets-get-github-info.esm.js
+index 071ec75bb2b5894f09c06d4ead395e56ddbfd1c8..c4b47d130314cf18b4c677fceb4db2895e1307b6 100644
+--- a/dist/changesets-get-github-info.esm.js
++++ b/dist/changesets-get-github-info.esm.js
+@@ -196,6 +196,9 @@ const GHDataLoader = new DataLoader(async requests => {
+       data = _objectWithoutProperties(_ref2, _excluded2);
+     return cleanedData[repo][data.kind][data.kind === "pull" ? data.pull : data.commit];
+   });
++}, {
++  // One query for hundreds of changesets comes back empty from GitHub; batch the lookups.
++  maxBatchSize: 40
+ });
+ async function getInfo(request) {
+   if (!request.commit) {
