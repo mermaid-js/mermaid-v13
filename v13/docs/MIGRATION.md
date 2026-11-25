@@ -818,7 +818,8 @@ npm install @mermaid-js/plugin-hand-drawn
   `classDef` and `linkStyle` colours, widths and dash patterns are kept. Under `neo` and
   `neo-dark` the gradient strokes the sketch and the `dropShadow` filter sits on the sketch's
   `<g>`; v12 never combined neo and hand-drawn. Fills are hachured as in v12; state composites
-  are solid.
+  are solid. One paint is the plugin's own: a mindmap node with a fill and no stroke gets v12's
+  `nodeBorder` sketch outline, except the plain node (D693, [Mindmap](#mindmap)).
 - **What is sketched (D301):** flowchart (node shapes, their inner lines, subgraphs, the
   collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
   (states, composites, notes, start and end, choice, fork and join, region dividers,
@@ -1608,11 +1609,14 @@ Legend entries carry `data-id="a:<name>"` only.
   over the top-level `layout`, with the same names and fallbacks.
 - **Hand-drawn colours in the classic themes.** v12 sketched mindmap's shaped nodes (all but the
   plain one, D308) in its generic sketch paints: a `mainBkg` hachure and a `nodeBorder` outline.
-  The section colour showed only because mindmap's `.section-<n> path` fill rule also filled the
-  outline path, so it appeared where the outline strays past the hachure. v13 sketches the node
-  it draws without the look (D307): the hachure is the section's `cScale` colour (the root's is
-  `git0`) and there is no outline; the plain node is sketched too, with its rule. Themes with
-  outlined mindmap nodes (the redux and neo families) keep their outline in the sketch (#1243).
+  The section colour reached the sketch only through mindmap's `.section-<n>` fill rule, which
+  also matched roughjs's paths, so how much of it showed depended on the shape: circles looked
+  solid in the section colour, cloud and bang nodes showed it around their edge, and square,
+  rounded and hexagon nodes did not show it at all. v13 hachures every shape in the section's
+  `cScale` colour (the root's is `git0`, D307) and keeps v12's `nodeBorder` outline, which the
+  hand-drawn plugin adds (D693); the plain node is sketched too, with its rule and no outline, as
+  v12 drew it. Themes with outlined mindmap nodes (the redux and neo families) keep their own
+  outline in the sketch (#1243, #1256).
 - **Labels** are SVG text, measured in the theme's font, instead of HTML in `<foreignObject>`
   ([Mindmap SVG structure](#mindmap-svg-structure)). As in v12, every label reads bold, italic
   and `<br>` line breaks without backticks, and a label that starts with `- `, `* ` or `+ ` is

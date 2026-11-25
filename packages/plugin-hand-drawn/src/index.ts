@@ -15,6 +15,7 @@
  * streaming writer stays in use.
  */
 import type { ExtensionPlugin } from '@mermaid-js/core';
+import { declareNodeBorder, withNodeBorder } from './border.ts';
 import { activate, draw } from './drawer.ts';
 import { configFragment } from './generated/config-fragment.ts';
 
@@ -25,15 +26,23 @@ export const handDrawn: ExtensionPlugin = {
   outline: {
     active: (ctx) => activate(ctx.config as Readonly<Record<string, unknown>>),
     draw: (role, tag, attrs, sink, ctx) =>
-      draw(role, tag, attrs, sink, ctx.config as Readonly<Record<string, unknown>>),
+      draw(
+        role,
+        tag,
+        withNodeBorder(role, attrs, ctx),
+        sink,
+        ctx.config as Readonly<Record<string, unknown>>
+      ),
   },
   postLayout(laidOut, ctx) {
-    if (laidOut.units === 'cell' && (ctx.config as { handDrawn?: unknown }).handDrawn === true)
+    if ((ctx.config as { handDrawn?: unknown }).handDrawn !== true) return laidOut;
+    if (laidOut.units === 'cell')
       ctx.warn({
         code: 'ASCII_DROPPED',
         feature: 'handDrawn',
         message: 'Text output is not hand-drawn; handDrawn is not used.',
       });
+    else declareNodeBorder(ctx);
     return laidOut;
   },
 };
