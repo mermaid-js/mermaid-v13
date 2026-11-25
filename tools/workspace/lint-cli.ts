@@ -25,12 +25,18 @@ try {
 const require = createRequire(import.meta.url);
 const eslint = join(dirname(require.resolve('eslint/package.json')), 'bin', 'eslint.js');
 const color = process.stdout.isTTY ? ['--color'] : [];
+// A shard linted without a cache (a pull request that changes the lockfile) peaks right at
+// Node's default heap of about 4 GB on the 4-vCPU CI runner, and dies there now and then.
+// A heap size set in NODE_OPTIONS (the pre-push hook sets one) wins over this default.
+const heap = /max[-_]old[-_]space[-_]size/.test(process.env.NODE_OPTIONS ?? '')
+  ? []
+  : ['--max-old-space-size=6144'];
 
 const tasks: Task[] = [
   ...lintShards(ROOT, shardCount(availableParallelism())).map((shard) => ({
     label: `eslint (${shard.name}: ${shard.paths.length} paths)`,
     command: process.execPath,
-    args: [eslint, ...color, ...shardArgs(shard, ESLINT_ARGS, CACHE_DIR)],
+    args: [...heap, eslint, ...color, ...shardArgs(shard, ESLINT_ARGS, CACHE_DIR)],
   })),
   {
     label: 'prettier --check',
