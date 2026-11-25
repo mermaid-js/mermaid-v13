@@ -108,6 +108,7 @@ function recording(calls: Call[]): ExtensionPlugin {
         };
         const done = outline!.draw(role, tag, attrs, spy, ctx);
         // The oracle sketches what the drawer sketches: the leaf, with D693's mindmap outline.
+        // This checks roughjs parity only; which nodes get that outline is pinned in mindmap.spec.ts.
         calls.push({
           role,
           tag,
