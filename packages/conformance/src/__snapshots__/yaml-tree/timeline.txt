@@ -11,7 +11,7 @@ e2e/diagrams/timeline/baseline/directions/td-redux-color.mmd 1 5d57b03f0c2e0087
 e2e/diagrams/timeline/baseline/directions/td-redux.mmd 1 ba7d306bcc0cd88f
 e2e/diagrams/timeline/baseline/sections/leading-periods.mmd 1 92d41351a1f7ccdb
 e2e/diagrams/timeline/baseline/sections/many-sections.mmd 1 03ed7f1af56e72a5
-e2e/diagrams/timeline/baseline/text/line-breaks.mmd 1 0a9bb626bb8990e8
+e2e/diagrams/timeline/baseline/text/line-breaks.mmd 1 077cdaf5d71f8d0a
 e2e/diagrams/timeline/baseline/text/tall-period.mmd 1 ada0207dc34a4e84
 e2e/diagrams/timeline/baseline/text/title-and-accessibility.mmd 1 43ba2b1a03893b29
 e2e/diagrams/timeline/baseline/themes/base.mmd 1 1a52c095c14da67c
