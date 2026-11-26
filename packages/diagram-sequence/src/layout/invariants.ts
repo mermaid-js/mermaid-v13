@@ -164,18 +164,41 @@ function rectCuts(r: Rect, cx: number, cy: number, radius: number): boolean {
   return Math.hypot(dx, dy) < radius - EPS;
 }
 
+/** A sequence number's circle: the message it numbers, and its centre. */
+interface Circle {
+  readonly ast: string;
+  readonly x: number;
+  readonly y: number;
+}
+
 /**
  * No message label runs into a sequence number's circle, its own or another message's
- * (#1337: a self message's label lowered onto its number).
+ * (#1337: a self message's label lowered onto its number). The circles are sorted by y, and
+ * each label is checked against those within a radius of its rows only.
  */
 function numbersClear(layout: SequenceLayout, out: string[]): void {
   const radius = metricsTable({ id: layout.units }).fixed.numberRadius;
   if (radius <= 0) return;
-  for (const n of layout.messages) {
-    if (!n.number) continue;
-    for (const msg of layout.messages)
-      if (msg.label && rectCuts(msg.label, n.number.x, n.y, radius))
-        out.push(`the label of message ${msg.ast} overlaps the number of ${n.ast}`);
+  const circles: Circle[] = layout.messages
+    .flatMap((n) => (n.number ? [{ ast: n.ast, x: n.number.x, y: n.y }] : []))
+    .sort((a, b) => a.y - b.y);
+  for (const msg of layout.messages) {
+    const label = msg.label;
+    if (!label) continue;
+    // The first circle whose centre is at most a radius above the label.
+    let lo = 0;
+    let hi = circles.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((circles[mid] as Circle).y < label.y - radius) lo = mid + 1;
+      else hi = mid;
+    }
+    for (let i = lo; i < circles.length; i++) {
+      const c = circles[i] as Circle;
+      if (c.y > label.y + label.height + radius) break;
+      if (rectCuts(label, c.x, c.y, radius))
+        out.push(`the label of message ${msg.ast} overlaps the number of ${c.ast}`);
+    }
   }
 }
 
