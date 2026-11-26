@@ -25,6 +25,7 @@ e2e/diagrams/pie/baseline/themes/redux-color.mmd 1 77cbb8e21bda6f84
 e2e/diagrams/pie/baseline/themes/redux-dark-color.mmd 1 f27147e1ea3451a6
 e2e/diagrams/pie/baseline/themes/redux-dark.mmd 1 d6ebca92f098371c
 e2e/diagrams/pie/baseline/themes/redux.mmd 1 9423d267d9b6b723
+e2e/diagrams/pie/nightly-check/cscale-override-redux-color.mmd 1 2ff439f81c4edee6
 e2e/diagrams/pie/nightly-check/dark-theme.mmd 1 7bdd9d68599d5583
 e2e/diagrams/pie/nightly-check/default-theme.mmd 1 f7ee6e01899a32cd
 e2e/diagrams/pie/nightly-check/forest-theme-base-colour-overrides.mmd 1 ba2be8aa27c5d9e4
@@ -32,6 +33,7 @@ e2e/diagrams/pie/nightly-check/forest-theme.mmd 1 c3bc11090a6a9d9e
 e2e/diagrams/pie/nightly-check/highlights-hovered-slice.mmd 1 e0d9c10dfe3d8322
 e2e/diagrams/pie/nightly-check/highlights-specific-slice.mmd 1 2ac089367081f1c8
 e2e/diagrams/pie/nightly-check/neutral-theme.mmd 1 939d12c2b3f921bb
+e2e/diagrams/pie/nightly-check/opacity-percent.mmd 1 5ea020bef8627c8b
 e2e/diagrams/pie/nightly-check/redux-color-theme.mmd 1 cb503f7b919e877f
 e2e/diagrams/pie/nightly-check/redux-dark-color-theme.mmd 1 1f7f9a9f43dd24bf
 e2e/diagrams/pie/nightly-check/redux-dark-theme.mmd 1 00c5d01cd43d0378

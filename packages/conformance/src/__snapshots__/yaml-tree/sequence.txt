@@ -38,6 +38,7 @@ e2e/diagrams/sequence/nightly-check/default-theme-base-colour-overrides.mmd 2 fd
 e2e/diagrams/sequence/nightly-check/default-theme.mmd 1 7025f117935ce9cb
 e2e/diagrams/sequence/nightly-check/forest-theme.mmd 1 ef97896f6a944414
 e2e/diagrams/sequence/nightly-check/front-matter-title.mmd 1 eb39adc4bc5ce601
+e2e/diagrams/sequence/nightly-check/misspelt-box-colour.mmd 1 f7bfca307ebf1508
 e2e/diagrams/sequence/nightly-check/neutral-theme.mmd 1 ad5a0314ca092953
 e2e/diagrams/sequence/nightly-check/redux-neo-all-participant-types-redux-color-theme.mmd 8 4d2849b463bf2d4c
 e2e/diagrams/sequence/nightly-check/redux-neo-all-participant-types-redux-dark-color-theme.mmd 8 d7ffb4bd4fecb5aa
