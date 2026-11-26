@@ -73,7 +73,7 @@ export const KEY_NOTES: Readonly<Record<string, KeyNote>> = {
     "status": "removed",
     "since": "13.0.0",
     "reason": "v12 never read it.",
-    "replacement": "`cScale<n>`, or `mainBkg` by theme"
+    "replacement": "`cScale<n>`, `mainBkg` or `borderColorArray` by theme"
   },
   "class.htmlLabels": {
     "status": "removed",
