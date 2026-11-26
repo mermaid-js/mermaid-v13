@@ -221,8 +221,21 @@ function flatLayout(c: Compound): void {
     }
   }
   for (let i = 0; i < n; i++) if (count[i]! > 0) key[i] = sum[i]! / count[i]!;
-  // Order outgoing ports at the group's last rank; break ties using the next rank.
-  c.farHint = (level: Level, port: PortEdge): number => {
+  // Made by a factory, not written inline: V8 allocates a function literal assigned straight to a
+  // property in old space, where it keeps this call's arrays alive through every scavenge until
+  // the next full GC. A local (`const f = …; c.farHint = f`) works too, but terser and oxc fold it back.
+  c.farHint = farHintOf(ledgeOf, ledges, key, edges, last);
+}
+
+// Order outgoing ports at the group's last rank; break ties using the next rank.
+function farHintOf(
+  ledgeOf: Int32Array,
+  ledges: LEdge[],
+  key: Float64Array,
+  edges: readonly CEdge[],
+  last: Int32Array
+): (level: Level, port: PortEdge) => number {
+  return (level: Level, port: PortEdge): number => {
     const le = ledgeOf[port.e]!;
     if (le < 0 || level.id < 0 || !port.out || port.side !== opposite(startSide(level.dir)))
       return NaN;
