@@ -243,6 +243,12 @@ describe('workflow branches (R-REL-1)', () => {
     expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_BUILD_NAME).toBe('nightly');
   });
 
+  it('keeps the nightly in Argos monitoring mode, so its differences wait for review (D703)', () => {
+    expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_MODE).toBe('monitoring');
+    // The PR and push builds stay in CI mode: the push build is the PRs' baseline.
+    expect(argosUpload('ci.yml')?.env?.ARGOS_MODE).toBeUndefined();
+  });
+
   it('photographs a PR by scope: a subset build for what changed, a skip for nothing (D632)', () => {
     const steps = wf('ci.yml').jobs.visual!.steps;
     const scope = steps.findIndex((s) => (s.run ?? '').includes('visual:scope'));
