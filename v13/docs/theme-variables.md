@@ -162,9 +162,9 @@ flags and opacities, which are read literally.
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `blockCompositeClusterPaint` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `false` | `false` |
 | `blockEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `blockEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
-| `blockCompositeClusterPaint` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `false` | `false` |
 
 ### c4
 
