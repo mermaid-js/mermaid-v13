@@ -273,14 +273,16 @@ describe('class render: review fixes', () => {
   it('draws class text in classText (v12), so a themeVariables override reaches it', async () => {
     const { tree } = await draw('classDiagram\nclass A\nA --> B : x', {
       theme: 'default',
-      themeVariables: { classText: '#ff0000' },
+      themeVariables: { classText: '#ff0000', textColor: '#0000aa' },
       output: { cssVariables: false },
     });
     const nodes = tree.find({ class: 'nodes' })[0]!;
     expect(attr(tree, nodes, 'fill')).toBe('#ff0000');
+    // The relation label sits on a tag and takes classEdgeLabelColor, textColor where it reads
+    // there (D713, #1327).
     const label = tree.find({ class: 'edgeLabel' })[0]!;
     expect(attr(tree, tree.children(label).find((n) => tree.tag(n) === 'text')!, 'fill')).toBe(
-      '#ff0000'
+      '#0000aa'
     );
   });
 

@@ -43,7 +43,17 @@ export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   // v12's classic theme files set `classText` to `primaryTextColor`, its redux ones (and neo)
   // to `textColor`.
-  rules: { light: { classText: 'primaryTextColor' } },
+  rules: {
+    light: {
+      classText: 'primaryTextColor',
+      // A relation label's tag: filled with the shared edgeLabelBackground (D628) unless class
+      // sets its own (D715), and inked with textColor where it reads there, else black or white,
+      // whichever reads better (D713, #1327, as `Theme.ink`). Multiplicities keep classText.
+      classEdgeLabelBackground: 'edgeLabelBackground',
+      classEdgeLabelColor:
+        'contrast(classEdgeLabelBackground, textColor, contrast(classEdgeLabelBackground, #000000, #ffffff))',
+    },
+  },
   families: {
     classic: { tokens: CLASSIC },
     redux: { rules: { classText: 'textColor' }, tokens: NEO },
