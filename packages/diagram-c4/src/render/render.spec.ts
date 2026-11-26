@@ -385,7 +385,7 @@ describe('relations (D455)', () => {
     expect(tag).toMatch(/>Uses<\/tspan><tspan [^>]*font-style="italic">\[HTTPS\]</);
   });
 
-  it('draws the label as the shared tag (D626–D629): the relation’s stroke, 1 px solid, radius 6, on the page’s background, the box the layout placed', async () => {
+  it('draws the label as the shared tag (D626–D629): the relation’s stroke, 1 px solid, radius 6, on c4EdgeLabelBackground, the box the layout placed', async () => {
     const src = `C4Context\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "Uses", "HTTPS")`;
     const { svg, layout } = await renderC4ForTest(src);
     const rel = group(svg, 'class="c4-relation"');
@@ -395,7 +395,7 @@ describe('relations (D455)', () => {
     const box = elements(tag, 'rect')[0]!;
     expect(box).toMatchObject({
       rx: '6',
-      fill: 'var(--_bg)',
+      fill: 'var(--_c4elb)',
       stroke: line.stroke,
       'stroke-width': '1',
     });
@@ -445,16 +445,16 @@ describe('the theme table (D456)', () => {
     return elements(svg, 'svg')[0]!.style!;
   };
 
-  it('draws v12’s #444444 relations and boundaries and the page’s textColor title in light themes', async () => {
+  it('draws textColor relations (D714), v12’s #444444 boundaries and the page’s textColor title in light themes', async () => {
     for (const theme of ['default', 'forest', 'neutral', 'base', 'redux', 'neo']) {
       const style = await roots({ theme });
-      expect(style, theme).toContain('--_c4r:var(--mermaid-c4RelationColor,#444444)');
+      expect(style, theme).toContain('--_c4r:var(--mermaid-c4RelationColor,var(--_tx))');
       expect(style, theme).toContain('--_c4b:var(--mermaid-c4BoundaryColor,#444444)');
       expect(style, theme).toContain('--_c4t:var(--mermaid-c4TitleColor,var(--_tx))');
     }
   });
 
-  it('draws lineColor relations and nodeBorder boundaries under the dark trait and darkMode', async () => {
+  it('draws textColor relations (D714) and nodeBorder boundaries under the dark trait and darkMode', async () => {
     for (const config of [
       { theme: 'dark' },
       { theme: 'neo-dark' },
@@ -463,7 +463,7 @@ describe('the theme table (D456)', () => {
     ]) {
       const style = await roots(config);
       expect(style, JSON.stringify(config)).toContain(
-        '--_c4r:var(--mermaid-c4RelationColor,var(--_l))'
+        '--_c4r:var(--mermaid-c4RelationColor,var(--_tx))'
       );
       expect(style, JSON.stringify(config)).toContain(
         '--_c4b:var(--mermaid-c4BoundaryColor,var(--_nb))'

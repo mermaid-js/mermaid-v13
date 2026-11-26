@@ -63,11 +63,14 @@ export const tagContrast = ({ fill, ink }: TagPaint): number =>
  * A type's tag variables (D715) through `render()`: `<prefix>EdgeLabelBackground` recolours
  * the tags of `fixtures` and nothing else, and a light background under the dark theme leaves
  * the ink readable on the tag (D713). Each fixture is a name in `<folder>/baseline/edge-labels`.
+ * `authored` are inks an author set on one edge in the first fixture: they win as written, with
+ * no contrast check (D713), so the readability check skips them.
  */
 export function describeTagVariables(
   prefix: string,
   folder: string,
-  fixtures: readonly string[]
+  fixtures: readonly string[],
+  authored: readonly string[] = []
 ): void {
   const own = `${prefix}EdgeLabelBackground`;
   it.each(fixtures)(`${own} recolours only the tags of %s`, async (name) => {
@@ -93,6 +96,7 @@ export function describeTagVariables(
       expect(found.length).toBeGreaterThan(0);
       for (const t of found) {
         expect(t.fill).toBe('#fafafa');
+        if (authored.includes(t.ink)) continue;
         expect(tagContrast(t), `${t.ink} on ${t.fill}`).toBeGreaterThanOrEqual(4.5);
       }
     }

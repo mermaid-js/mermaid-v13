@@ -9,9 +9,9 @@
  * - an element: fill and stroke `UpdateElementStyle`'s `$bgColor`/`$borderColor`, else the
  *   config's `<kind>_bg_color`/`_border_color`, else the section's generated default (the
  *   schema's); text `$fontColor`, else `#FFFFFF` (v12 `c4ShapeAdapter.ts`);
- * - a relation: line `$lineColor`, else `c4RelationColor`; text `$textColor`, else
- *   `c4RelationColor`, on a box of the page's `background`; arrowheads the page's `textColor`
- *   (v12's markers took the root's `fill`, whatever `$lineColor` said);
+ * - a relation: line `$lineColor`, else `c4RelationColor`; text `$textColor` as written, else
+ *   `c4EdgeLabelColor`, on a tag of `c4EdgeLabelBackground` (D713, D714, D715); arrowheads the
+ *   page's `textColor` (v12's markers took the root's `fill`, whatever `$lineColor` said);
  * - the title `c4TitleColor`.
  *
  * A value the check refuses is dropped and the default drawn, with one `C4_COLOR_INVALID` per
@@ -214,12 +214,12 @@ function relationPaints(
       colours.checked(lineColor, named('lineColor', owner), ast) ??
       colours.theme('c4RelationColor');
     const given = colours.checked(textColor, named('textColor', owner), ast);
-    const text = r.label || r.techn ? (given ?? colours.theme('c4RelationColor')) : undefined;
+    const text = r.label || r.techn ? (given ?? colours.theme('c4EdgeLabelColor')) : undefined;
     const head = colours.theme('textColor');
     out.set(r.index, {
       stroke,
       head,
-      ...(text ? { text, labelBkg: colours.theme('background') } : {}),
+      ...(text ? { text, labelBkg: colours.theme('c4EdgeLabelBackground') } : {}),
     });
   }
   return out;
