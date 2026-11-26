@@ -45,13 +45,17 @@ export const theme: DiagramThemeTable = {
     // misses AA on red. Text on the other bars stays `taskTextColor`, the theme's text.
     // The bars and the third band (`sectionBkgColor2`) read `mainBkg`, which `default`, `forest`,
     // `neutral` and `dark` pin to their primary colour, so an author's `primaryColor` leaves them
-    // alone there, as in v12; `base` derives `mainBkg` from it (D657). The first band reads
-    // `bandBkg` and the lines `guideLineColor`, the tertiary and line colours those four themes
-    // pin where v12 keeps its own under an override (D656); in `base` they are `tertiaryColor`
-    // and `lineColor`.
+    // alone there, as in v12; `base` derives `mainBkg` from it (D657). The lines read
+    // `guideLineColor`, the line colour those four themes pin where v12 keeps its own under an
+    // override (D656); in `base` it is `lineColor`. The first band is `mainBkg` moved away from
+    // the page and from the third band, darker in the light themes and lighter in `dark`, whose
+    // `background` is lighter than `mainBkg`: v12's `default` has a lavender band, its other
+    // themes pale ones the page barely tells apart (D726, amending D656's pin and D541's rows;
+    // #1249). Every classic theme reaches 1.2:1 against `background` and against the third band
+    // (`conformance/src/gantt/theme.spec.ts`). An author's `sectionBkgColor` still wins.
     classic: {
       rules: {
-        sectionBkgColor: 'darkenHsl(mainBkg, 10%)',
+        sectionBkgColor: 'darkenHsl(mainBkg, 16%)',
         sectionBkgColor2: 'mainBkg',
         taskBkgColor: 'mainBkg',
         activeTaskBkgColor: 'lightenHsl(mainBkg, 23%)',
@@ -64,7 +68,7 @@ export const theme: DiagramThemeTable = {
       // theme's misses AA on the grey active bar.
       dark: {
         rules: {
-          sectionBkgColor: 'lightenHsl(mainBkg, 30%)',
+          sectionBkgColor: 'lightenHsl(mainBkg, 18%)',
           critBkgColor: 'darkenHsl(red, 20%)',
           taskTextDarkColor: 'contrast(activeTaskBkgColor, textColor, white)',
         },
