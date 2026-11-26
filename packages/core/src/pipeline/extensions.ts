@@ -409,53 +409,56 @@ function guardedOutline(
   drawer: OutlineDrawer,
   ctx: HookContext
 ): ActiveOutline {
-  const active = { id: plugin.id, wrote: false } as {
-    -readonly [K in keyof ActiveOutline]: ActiveOutline[K];
-  };
-  active.draw = (role, tag, attrs, w) => {
-    let depth = 0;
-    let live = true;
-    const alive = (): void => {
-      if (!live) throw new TypeError('an outline sink was used after its draw() returned');
-      active.wrote = true;
-    };
-    const sink: OutlineSink = {
-      open(t, a) {
-        alive();
-        // Untyped callers can pass any tag.
-        if ((t as string) !== 'g')
-          throw new TypeError(`an outline sink opens <g> only, not <${String(t as unknown)}>`);
-        // Both backings reject a disallowed attribute name as they write it.
-        w.open(t, a);
-        depth++;
-      },
-      leaf(t, a) {
-        alive();
-        if ((t as string) !== 'path')
-          throw new TypeError(
-            `an outline sink writes <path> leaves only, not <${String(t as unknown)}>`
-          );
-        w.leaf(t, a);
-      },
-      close() {
-        alive();
-        if (depth === 0) throw new TypeError('an outline sink close() without its open()');
-        depth--;
-        w.close();
-      },
-      path: () => w.path(),
-    };
-    try {
-      const drawn: unknown = drawer.draw(role, tag, attrs, sink, ctx);
-      if (typeof drawn !== 'boolean')
-        throw new TypeError(`draw() must return a boolean, got ${typeof drawn}`);
-      if (depth !== 0) throw new TypeError(`draw() returned with ${depth} <g> still open`);
-      return drawn;
-    } catch (e) {
-      throw failed(plugin, 'outline', e);
-    } finally {
-      live = false;
-    }
+  const active: { -readonly [K in keyof ActiveOutline]: ActiveOutline[K] } = {
+    id: plugin.id,
+    wrote: false,
+    // In the literal, not assigned after: V8 allocates a function literal assigned straight to a
+    // property in old space, where it keeps this render alive until the next full GC.
+    draw: (role, tag, attrs, w) => {
+      let depth = 0;
+      let live = true;
+      const alive = (): void => {
+        if (!live) throw new TypeError('an outline sink was used after its draw() returned');
+        active.wrote = true;
+      };
+      const sink: OutlineSink = {
+        open(t, a) {
+          alive();
+          // Untyped callers can pass any tag.
+          if ((t as string) !== 'g')
+            throw new TypeError(`an outline sink opens <g> only, not <${String(t as unknown)}>`);
+          // Both backings reject a disallowed attribute name as they write it.
+          w.open(t, a);
+          depth++;
+        },
+        leaf(t, a) {
+          alive();
+          if ((t as string) !== 'path')
+            throw new TypeError(
+              `an outline sink writes <path> leaves only, not <${String(t as unknown)}>`
+            );
+          w.leaf(t, a);
+        },
+        close() {
+          alive();
+          if (depth === 0) throw new TypeError('an outline sink close() without its open()');
+          depth--;
+          w.close();
+        },
+        path: () => w.path(),
+      };
+      try {
+        const drawn: unknown = drawer.draw(role, tag, attrs, sink, ctx);
+        if (typeof drawn !== 'boolean')
+          throw new TypeError(`draw() must return a boolean, got ${typeof drawn}`);
+        if (depth !== 0) throw new TypeError(`draw() returned with ${depth} <g> still open`);
+        return drawn;
+      } catch (e) {
+        throw failed(plugin, 'outline', e);
+      } finally {
+        live = false;
+      }
+    },
   };
   return active;
 }
