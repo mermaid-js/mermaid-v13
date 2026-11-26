@@ -8,7 +8,8 @@ e2e/diagrams/architecture/baseline/themes/redux.mmd 1 02b93c4e64e65804
 e2e/diagrams/architecture/nightly-check/dark-theme-base-colour-overrides.mmd 1 f1ed8182ef7b6763
 e2e/diagrams/architecture/nightly-check/layout-bends-follow-written-sides.mmd 1 78e61f6ce9f02c6e
 e2e/diagrams/architecture/nightly-check/layout-dagre-ranks-services-and-attaches-lines-on-named-sides.mmd 1 b86f9aa443844eb9
-e2e/diagrams/architecture/nightly-check/layout-group-edge-detours-round-a-service.mmd 1 a08a9122ac5839b5
+e2e/diagrams/architecture/nightly-check/layout-detour-neighbour-blocked.mmd 1 32d64e37563c3e28
+e2e/diagrams/architecture/nightly-check/layout-group-edge-detours-round-a-service.mmd 1 2b9d92e9e140961a
 e2e/diagrams/architecture/nightly-check/layout-icon-size-and-padding.mmd 1 92f98433e46916b0
 e2e/diagrams/architecture/nightly-check/layout-layered-draws-a-junction-with-lines-on-named-sides.mmd 1 133aae9bbd2160d5
 e2e/diagrams/architecture/nightly-check/layout-level-edge-label-wraps-to-the-line.mmd 1 42ac8694fb6e78c6
