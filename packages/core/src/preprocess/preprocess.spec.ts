@@ -164,6 +164,101 @@ describe('preprocess: front matter', () => {
   });
 });
 
+describe('preprocess: front matter after leading `%%` lines (D704, D705)', () => {
+  const fmStart = (src: string) => src.indexOf('---');
+  const after = (src: string) => src.indexOf('pie');
+
+  it('reads the front matter after a `%%` comment line', () => {
+    const src = '%% a comment\n---\ntitle: T\nconfig:\n  theme: forest\n---\npie\n  "a" : 1\n';
+    const r = preprocess(src);
+    expect(meta(src)).toEqual({ title: 'T', config: { theme: 'forest' } });
+    expect(r.bodyStart).toBe(after(src));
+    expect(r.frontMatter?.range).toEqual({ start: fmStart(src), end: after(src) });
+    expect(r.directives).toEqual([]);
+    expect(r.diagnostics).toEqual([]);
+  });
+
+  it('reads a directive above the fence, at its offset in the source (#1204)', () => {
+    const src = '%%{init: {"theme": "forest"}}%%\n---\ntitle: Commented\n---\npie\n  "A" : 40\n';
+    const r = preprocess(src);
+    expect(r.frontMatter?.title).toBe('Commented');
+    expect(r.frontMatter?.range).toEqual({ start: fmStart(src), end: after(src) });
+    expect(r.bodyStart).toBe(after(src));
+    expect(r.directives.map((d) => [d.kind, d.range, d.args])).toEqual([
+      ['init', { start: 0, end: 31 }, { theme: 'forest' }],
+    ]);
+    expect(r.diagnostics).toEqual([]);
+  });
+
+  it.each([
+    ['several comment lines', '%% one\n  %% two\n%%\n---\ntitle: T\n---\npie\n'],
+    ['blank lines between', '\n%% one\n\n  \n%%{wrap}%%\n\n---\ntitle: T\n---\npie\n'],
+    ['CRLF', '%% one\r\n%%{wrap}%%\r\n---\r\ntitle: T\r\n---\r\npie\r\n'],
+    ['a BOM then a comment', '﻿%% one\n---\ntitle: T\n---\npie\n'],
+    ['an indented fence', '%% one\n  ---\n  title: T\n  ---\npie\n'],
+  ])('reads the front matter after %s', (_name, src) => {
+    const r = preprocess(src);
+    expect(r.frontMatter?.title).toBe('T');
+    expect(r.frontMatter?.range.start).toBe(src.lastIndexOf('\n', fmStart(src)) + 1);
+    expect(r.bodyStart).toBe(after(src));
+    expect(r.diagnostics).toEqual([]);
+  });
+
+  it('keeps directives above and below the front matter in source order', () => {
+    const src = '%% c\n%%{init: {"a": 1}}%%\n---\ntitle: T\n---\n%%{wrap}%%\npie\n';
+    const r = preprocess(src);
+    expect(r.directives.map((d) => [d.name, src.slice(d.range.start, d.range.end)])).toEqual([
+      ['init', '%%{init: {"a": 1}}%%'],
+      ['wrap', '%%{wrap}%%'],
+    ]);
+  });
+
+  it('does not read a `%%{` inside a comment line above the fence as a directive', () => {
+    const src =
+      '%% use %%{init: {"theme":"dark"} to theme\n%% or %%{wrap}%% here\n---\ntitle: T\n---\n%%{wrap}%%\npie\n';
+    const r = preprocess(src);
+    expect(r.frontMatter?.title).toBe('T');
+    expect(r.diagnostics).toEqual([]);
+    expect(r.directives.map((d) => d.range.start)).toEqual([src.lastIndexOf('%%{wrap}%%')]);
+  });
+
+  it('reads indented whole directive lines above the fence, between comment lines', () => {
+    const src = '%% c %%{\n  %%{init: {"a": 1}}%%\n%% }%%\n---\ntitle: T\n---\npie\n';
+    const r = preprocess(src);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.directives.map((d) => [d.name, src.slice(d.range.start, d.range.end)])).toEqual([
+      ['init', '%%{init: {"a": 1}}%%'],
+    ]);
+  });
+
+  it('does not read a `%%{` inside the YAML as a directive', () => {
+    const src = '%% c\n---\ntitle: "%%{init: {}}%%"\n---\npie\n';
+    const r = preprocess(src);
+    expect(r.frontMatter?.title).toBe('%%{init: {}}%%');
+    expect(r.directives).toEqual([]);
+  });
+
+  it.each([
+    ['text before the fence', 'pie\n---\ntitle: T\n---\n'],
+    ['a directive line with text after it', '%%{wrap}%% pie\n---\ntitle: T\n---\n'],
+    ['a directive that is not closed on its line', '%%{init: {\n}}%%\n---\ntitle: T\n---\npie\n'],
+    ['only a comment', '%% c\n'],
+  ])('finds no front matter after %s, as before', (_name, src) => {
+    const r = preprocess(src);
+    expect(r.frontMatter).toBeUndefined();
+    expect(r.bodyStart).toBe(0);
+  });
+
+  it('reports an unclosed fence after a comment line', () => {
+    const src = '%% c\n---\ntitle: x\npie\n';
+    const r = preprocess(src);
+    expect(r.bodyStart).toBe(src.length);
+    expect(r.diagnostics.map((d) => [d.code, d.related?.[0]?.range])).toEqual([
+      ['UNCLOSED_FRONT_MATTER', { start: 5, end: 8 }],
+    ]);
+  });
+});
+
 describe('preprocess: front matter diagnostics are at original positions', () => {
   it('reports an unclosed fence at the end, with the opener as related', () => {
     const src = '---\ntitle: foo\ngraph TD\n  A-->B\n';
@@ -199,8 +294,10 @@ describe('preprocess: front matter diagnostics are at original positions', () =>
 
   it('reports a YAML error at its own line and column', () => {
     const src = '%% leading line\n\n---\ntitle: ok\nconfig:\n  theme: [dark\n---\nflowchart TD\n';
-    // The first line is not blank, so this is not front matter at all.
-    expect(preprocess(src).frontMatter).toBeUndefined();
+    // A `%%` line before the fence is skipped, so this is front matter (D704).
+    expect(preprocess(src).diagnostics.map((d) => [d.code, at(src, d.range.start)])).toEqual([
+      ['YAML_SYNTAX', { line: 5, column: 9 }],
+    ]);
 
     const fm =
       '\r\n  ---\r\n  title: ok\r\n  config:\r\n    theme: [dark\r\n  ---\r\nflowchart TD\r\n';

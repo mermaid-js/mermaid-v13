@@ -401,8 +401,68 @@ describe('warnings and errors (D274, D276)', () => {
         .click('a', 'w')
     );
     expect(warnings.map((w) => w.code)).toEqual(['GANTT_UNKNOWN_TASK', 'GANTT_BAD_DURATION']);
-    expect(warnings[0]!.message).toContain('"x", "y", "z", "w"');
+    expect(warnings[0]!.message).toBe(
+      'No task has the id "x", "y" (named by "after"): the task starts at midnight today. ' +
+        'No task has the id "z" (named by "until"): the task ends at midnight today. ' +
+        'No task written before the click has the id "w": the click does nothing.'
+    );
     expect(warnings[1]!.message).toContain('"soon", "later"');
+  });
+
+  describe('GANTT_UNKNOWN_TASK names only what applies (D727)', () => {
+    const messageOf = (f: LayoutFixture | GanttModel): string => {
+      const { warnings } = lay(f);
+      expect(warnings.map((w) => w.code)).toEqual(['GANTT_UNKNOWN_TASK']);
+      return warnings[0]!.message;
+    };
+
+    it('says only what an unknown after does', () => {
+      expect(
+        messageOf(fixture().addTask('a', 'a,2014-01-01,1d').addTask('b', 'b,after zz,2d'))
+      ).toBe('No task has the id "zz" (named by "after"): the task starts at midnight today.');
+    });
+
+    it('says only what an unknown until does', () => {
+      expect(messageOf(fixture().addTask('a', 'a,2014-01-01,until zz'))).toBe(
+        'No task has the id "zz" (named by "until"): the task ends at midnight today.'
+      );
+    });
+
+    it('says only what an unknown click does', () => {
+      expect(messageOf(fixture().addTask('a', 'a,2014-01-01,1d').click('a', 'w'))).toBe(
+        'No task written before the click has the id "w": the click does nothing.'
+      );
+    });
+
+    it('gives the milestone hint only when a milestone named the id', () => {
+      const plain = messageOf(fixture().addTask('a', 'a,after zz,1d'));
+      const milestone = messageOf(fixture().addTask('m', 'milestone, m1, after zz, 0d'));
+      expect(plain).not.toContain('ilestone');
+      expect(milestone).toContain('"zz" (named by "after")');
+      expect(milestone).toContain('A milestone needs an id and a duration');
+    });
+
+    it('calls __proto__ reserved for after, until and click', () => {
+      const text = messageOf(
+        fixture()
+          .addTask('a', 'a,after __proto__,1d')
+          .addTask('b', 'b,2014-01-01,until __proto__')
+          .click('__proto__')
+      );
+      expect(text).toBe(
+        'The id "__proto__" is reserved and cannot be referenced: ' +
+          'an "after" naming it starts at midnight today, an "until" naming it ends at midnight today, ' +
+          'and a click naming it does nothing.'
+      );
+    });
+
+    it('keeps a reserved id out of the unknown-id clauses', () => {
+      const text = messageOf(fixture().addTask('a', 'a,after __proto__ x,1d'));
+      expect(text).toBe(
+        'No task has the id "x" (named by "after"): the task starts at midnight today. ' +
+          'The id "__proto__" is reserved and cannot be referenced: an "after" naming it starts at midnight today.'
+      );
+    });
   });
 
   it('rejects a schedule error as SEMANTIC at the task data', () => {

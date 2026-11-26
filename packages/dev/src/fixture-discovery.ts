@@ -70,6 +70,9 @@ export const FIXTURE_FOLDER_TYPES: Readonly<Record<string, readonly string[]>> =
  */
 export const FIXTURE_TYPE_EXCEPTIONS: Readonly<Record<string, string>> = {
   'state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd': 'info',
+  // #1216 and #1204's sources, kept as filed (D704).
+  'conf-and-directives/pr-check/comment-before-frontmatter.mmd': 'architecture',
+  'conf-and-directives/pr-check/directive-before-frontmatter.mmd': 'pie',
 };
 
 export interface DiscoveryOptions {

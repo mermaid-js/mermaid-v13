@@ -5,7 +5,7 @@
  */
 import { MermaidError } from '@mermaid-js/core';
 import { formatDiagnostic, type Diagnostic } from '@mermaid-js/core/parser-kit';
-import { clickTargets } from '../ids.ts';
+import { clickTargets, NEVER_STORED } from '../ids.ts';
 import { Steps } from '../steps.ts';
 import {
   schedule,
@@ -96,21 +96,79 @@ function scheduled(model: GanttModel, now: number, steps: Steps): Schedule {
 
 const quoted = (list: Iterable<string>): string => [...list].map((s) => `"${s}"`).join(', ');
 
-/** D276: one warning each for unknown ids (`after`, `until`, `click`) and bad durations. */
-function warnings(model: GanttModel, plan: Schedule, ctx: GanttLayoutContext): void {
-  const unknown = new Set(plan.unknownIds);
+type Reference = 'after' | 'until' | 'click';
+
+/** What an unknown reference does, per statement (v12 fell back to midnight today). */
+const CONSEQUENCE: Readonly<Record<Reference, { task: string; reserved: string }>> = {
+  after: {
+    task: 'the task starts at midnight today',
+    reserved: 'an "after" naming it starts at midnight today',
+  },
+  until: {
+    task: 'the task ends at midnight today',
+    reserved: 'an "until" naming it ends at midnight today',
+  },
+  click: { task: 'the click does nothing', reserved: 'a click naming it does nothing' },
+};
+
+const HINT_MILESTONE =
+  'A milestone needs an id and a duration, e.g. "Milestone :milestone, m1, 2023-01-01, 0d".';
+
+/** The unknown ids by statement, in first-seen order, with the ones a milestone named. */
+function unknownByKind(
+  model: GanttModel,
+  plan: Schedule
+): { ids: Map<Reference, Set<string>>; milestone: boolean } {
+  const ids = new Map<Reference, Set<string>>();
+  const add = (kind: Reference, id: string): void => {
+    const set = ids.get(kind) ?? new Set<string>();
+    ids.set(kind, set.add(id));
+  };
+  plan.unknownRefs.forEach((r) => add(r.kind, r.id));
   // A click names the latest task with the id written before it, or nothing (`ids.ts`).
   clickTargets(model.tasks, model.clicks).forEach((targets, i) =>
     targets.forEach((at, k) => {
-      if (at === undefined) unknown.add(model.clicks[i]!.ids[k]!);
+      if (at === undefined) add('click', model.clicks[i]!.ids[k]!);
     })
   );
-  if (unknown.size > 0) {
-    ctx.warn({
-      code: GANTT_UNKNOWN_TASK,
-      message: `No task has the id ${quoted(unknown)} (for a click: none written before it): "after" then starts and "until" ends at midnight today, and a click does nothing. Milestones need an id and a duration, e.g. "Milestone :milestone, m1, 2023-01-01, 0d".`,
-    });
+  return { ids, milestone: plan.unknownRefs.some((r) => r.milestone) };
+}
+
+/** D727: the text of the one `GANTT_UNKNOWN_TASK` warning: a clause per statement involved. */
+function unknownTaskMessage(model: GanttModel, plan: Schedule): string | undefined {
+  const { ids, milestone } = unknownByKind(model, plan);
+  const clauses: string[] = [];
+  const reserved: Reference[] = [];
+  for (const kind of ['after', 'until', 'click'] as const) {
+    const named = ids.get(kind);
+    if (named === undefined) continue;
+    const plain = [...named].filter((id) => id !== NEVER_STORED);
+    if (named.has(NEVER_STORED)) reserved.push(kind);
+    if (plain.length === 0) continue;
+    const who =
+      kind === 'click'
+        ? `No task written before the click has the id ${quoted(plain)}`
+        : `No task has the id ${quoted(plain)} (named by "${kind}")`;
+    clauses.push(`${who}: ${CONSEQUENCE[kind].task}.`);
   }
+  if (reserved.length > 0) {
+    const effects = reserved.map((kind) => CONSEQUENCE[kind].reserved);
+    const last = effects.pop()!;
+    const list =
+      effects.length === 0
+        ? last
+        : `${effects.join(', ')}${effects.length > 1 ? ',' : ''} and ${last}`;
+    clauses.push(`The id "${NEVER_STORED}" is reserved and cannot be referenced: ${list}.`);
+  }
+  if (clauses.length === 0) return undefined;
+  if (milestone) clauses.push(HINT_MILESTONE);
+  return clauses.join(' ');
+}
+
+/** D276, D727: one warning for unknown ids (`after`, `until`, `click`), one for bad durations. */
+function warnings(model: GanttModel, plan: Schedule, ctx: GanttLayoutContext): void {
+  const message = unknownTaskMessage(model, plan);
+  if (message !== undefined) ctx.warn({ code: GANTT_UNKNOWN_TASK, message });
   if (plan.badDurations.length > 0) {
     ctx.warn({
       code: GANTT_BAD_DURATION,
