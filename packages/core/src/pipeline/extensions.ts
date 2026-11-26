@@ -39,7 +39,6 @@ import type {
   InlineProvider,
   InlineRequest,
   InlineSpans,
-  LabelBoxer,
   LabelRequest,
 } from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
@@ -489,15 +488,18 @@ function checkProvider(
 }
 
 /**
- * One render's whole-label providers as one function (D695), for label layout to ask through the
- * render's spans: the first box, checked, with a failure reported as its extension's. `context`
- * gives an extension's hook context.
+ * Gives the render's `spans` the whole-label providers of `list` as one function (D695), for
+ * label layout to ask: the first box, checked, with a failure reported as its extension's.
+ * `context` gives an extension's hook context. Without a provider, `spans` is left as it is.
  */
-function labelBoxer<P extends { id: string; label?: LabelProvider }>(
-  labellers: readonly P[],
+function setLabelBoxer<P extends { id: string; label?: LabelProvider }>(
+  list: readonly P[],
+  spans: InlineSpans | undefined,
   context: (plugin: P) => HookContext
-): LabelBoxer {
-  return (raw, request) => {
+): void {
+  const labellers = list.filter((p) => p.label);
+  if (!labellers[0] || !spans) return;
+  spans.boxer = (raw, request) => {
     for (const p of labellers) {
       try {
         const box = p.label!.box(raw, request, context(p));
@@ -619,8 +621,7 @@ export class HookRunner<El = unknown, R = unknown> {
       const { pending: asked, ...rest } = options ?? {};
       const request: GlyphRequest = { ...rest, size, warn, iconPacks, scratch };
       let unresolved = false;
-      // A placeholder counts only for a caller that asks.
-      let pending: true | undefined;
+      let pending: true | undefined; // set only for a caller that asks
       for (const p of list) {
         try {
           const glyph = p.glyphs!.glyph(name, request);
@@ -680,8 +681,7 @@ export class HookRunner<El = unknown, R = unknown> {
       }
       return value;
     };
-    const labellers = list.filter((p) => p.label);
-    if (labellers[0] && ctx.inline) ctx.inline.boxer = labelBoxer(labellers, context);
+    setLabelBoxer(list, ctx.inline, context);
     const owner = list.find((p) => this.drawers.has(p));
     let outline: ActiveOutline | undefined | null = owner === undefined ? undefined : null;
     const activeOutline = (): ActiveOutline | undefined => {
