@@ -109,9 +109,9 @@ export function paints(model: UsecaseModel, p: UsecasePrepared, ctx: UsecaseRend
     }),
     ...(labelled && {
       edgeLabel: {
-        fill: c('edgeLabelBackground'),
+        fill: c('usecaseEdgeLabelBackground'),
         stroke: 'none',
-        text: c('primaryTextColor'),
+        text: c('usecaseEdgeLabelColor'),
       },
     }),
     ...(p.title && { title: c('textColor') }),

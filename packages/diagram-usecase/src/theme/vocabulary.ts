@@ -18,6 +18,8 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   usecaseBoundaryBorder: { alias: 'ubr', kind: 'color', usedBy: USECASE },
   usecaseIncludeLine: { alias: 'uil', kind: 'color', usedBy: USECASE },
   usecaseExtendLine: { alias: 'uel', kind: 'color', usedBy: USECASE },
+  usecaseEdgeLabelBackground: { alias: 'ueb', kind: 'color', usedBy: USECASE },
+  usecaseEdgeLabelColor: { alias: 'uec', kind: 'color', usedBy: USECASE },
 };
 
 /**
