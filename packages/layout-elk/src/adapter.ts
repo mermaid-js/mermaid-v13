@@ -78,7 +78,7 @@ import { offHead } from './heads.ts';
 import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
 import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
 import { crowdedEnds, LAST_LEG, type Pinned } from './spread.ts';
-import { straightenRoutes } from './straighten.ts';
+import { movable, straightenRoutes } from './straighten.ts';
 import { slideOffTitles, type SlideEdge, type SlideNode } from './titles.ts';
 import { layoutSync } from './sync.ts';
 import { ROOT, findCommonAncestor, orderNestedEdgeEnds, type Tree } from './tree.ts';
@@ -742,8 +742,7 @@ function straighten(
     const fixed = !placedByElk || e.source === e.target;
     return { ...e, fixed, points, ...(c && e.label ? { ...c, label: true, ...e.label } : {}) };
   });
-  const free = (id: string) =>
-    built.nodes.get(id)!.layoutOptions?.['elk.portConstraints'] !== 'FIXED_POS';
+  const free = (id: string) => movable(built.nodes.get(id)!);
   const o = { jogs, labelGap: graph.spacing.edge, boxes: rects, free, corner: CORNER };
   const labelMoved = straightenRoutes(items, o);
   for (const edge of items) routes.get(edge.id)!.points = edge.points;

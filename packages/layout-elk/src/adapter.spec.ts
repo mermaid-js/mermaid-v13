@@ -566,4 +566,55 @@ describe('a box too small for the corner margins sits centred on its lone ends (
       expect(Math.abs(p.x - b.x)).toBeLessThan(0.5);
     }
   });
+
+  // A 14 px start box above a wider one, as in the fixtures above.
+  const small = (extra: Partial<LayoutGraph> = {}, label = false): LayoutGraph => ({
+    direction: 'TB',
+    spacing,
+    nodes: [
+      { id: 'A', width: 14, height: 14 },
+      { id: 'B', width: 80, height: 40 },
+    ],
+    edges: [
+      {
+        id: 'e',
+        source: 'A',
+        target: 'B',
+        minLen: 1,
+        ...(label ? { startLabel: { width: 8, height: 10 } } : {}),
+      },
+    ],
+    groups: [],
+    ...extra,
+  });
+
+  it('moves the box when nothing beside it goes with it', () => {
+    const model = elkEngine('layered')(small());
+    expect(model.edges.get('e')!.points[0]!.x).toBeCloseTo(model.nodes.get('A')!.x, 1);
+  });
+
+  it('keeps a box with an end label ELK placed beside it where ELK put both', () => {
+    // The label is placed off the box's side as ELK had it; moving the box alone would part them.
+    const plain = elkEngine('layered')(small());
+    const labelled = elkEngine('layered')(small({}, true));
+    const a = labelled.nodes.get('A')!;
+    expect(a.x).not.toBeCloseTo(plain.nodes.get('A')!.x, 1);
+    expect(labelled.edges.get('e')!.points[0]!.x).not.toBeCloseTo(a.x, 1);
+  });
+
+  it('keeps a small group where ELK put it, around its children and title', () => {
+    // A 14 px group around a 10 px node: moving the frame alone would leave the node half out.
+    const g = small({
+      nodes: [
+        { id: 'C', width: 10, height: 10, parent: 'A' },
+        { id: 'B', width: 80, height: 40 },
+      ],
+      groups: [{ id: 'A', padding: { top: 2, right: 2, bottom: 2, left: 2 } }],
+    });
+    const model = elkEngine('layered')(g);
+    expect(validateLayout(g, model)).toEqual([]);
+    const frame = model.groups.get('A')!;
+    const c = model.nodes.get('C')!;
+    expect(Math.abs(c.x - frame.x)).toBeLessThan(0.5);
+  });
 });

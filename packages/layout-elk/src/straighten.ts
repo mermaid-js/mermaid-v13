@@ -4,6 +4,7 @@
  * `projectLabelOntoStraightenedRun`). Pure point maths over the routes ELK gave back.
  */
 import type { Point as P } from '@mermaid-js/core/layout';
+import type { ElkNode } from 'elkjs/lib/elk-api.js';
 import { sideOf, type Rect } from './geometry.ts';
 
 /**
@@ -264,6 +265,9 @@ export interface RouteEdge extends StraightenEdge {
   target: string;
   /** The boxes at its ends stay where they are: a self-loop (D719), or a route ELK did not place. */
   fixed: boolean;
+  /** An end label, which ELK placed beside that end's box: the box stays where it is. */
+  startLabel?: object;
+  endLabel?: object;
 }
 
 /** What `straightenRoutes` reads besides the edges. */
@@ -274,10 +278,18 @@ export interface RouteOptions {
   labelGap: number;
   /** Every box an edge ends on, by id; a box that moves onto its ends is replaced here. */
   boxes: Map<string, Rect>;
-  /** Whether ELK placed the ends on box `id` itself: no port of it is pinned. */
+  /** Whether box `id` may move: a node (not a group) none of whose ports is pinned. */
   free: (id: string) => boolean;
   /** The length ELK keeps free at each end of a side (`PORTS_SURROUNDING`). */
   corner: number;
+}
+
+/**
+ * Whether ELK node `n` may move onto its ends: a node, not a group (whose children and title
+ * would stay behind), none of whose ports is pinned (`FIXED_POS`, placed by the adapter).
+ */
+export function movable(n: ElkNode): boolean {
+  return !n.children && n.layoutOptions?.['elk.portConstraints'] !== 'FIXED_POS';
 }
 
 /**
@@ -303,18 +315,20 @@ function onto(r: Rect, at: P[], corner: number): P | null {
  * port alignment, then lines that end up with the far one: a 14 px start state sat 4 px beside
  * its edge. Moving the box, not the edge, keeps the edge on the far box's centre too. Two or
  * more ends on a side ELK spreads about the centre, and pinned ports are where the adapter put
- * them, so those boxes stay, as do those with a self-loop or an end ELK did not route.
+ * them, so those boxes stay, as do those with a self-loop or an end ELK did not route. A group
+ * stays (its children and title would not move with it), and so does a box with an end label,
+ * which ELK placed beside it.
  */
 function centreOnLoneEnds(edges: RouteEdge[], o: RouteOptions): void {
   const ends = new Map<string, P[]>();
   const stays = new Set<string>();
   for (const e of edges) {
-    for (const [id, p] of [
-      [e.source, e.points[0]!],
-      [e.target, e.points.at(-1)!],
+    for (const [id, p, label] of [
+      [e.source, e.points[0]!, e.startLabel],
+      [e.target, e.points.at(-1)!, e.endLabel],
     ] as const) {
       ends.set(id, [...(ends.get(id) ?? []), p]);
-      if (e.fixed) stays.add(id);
+      if (e.fixed || label) stays.add(id);
     }
   }
   for (const [id, at] of ends) {
