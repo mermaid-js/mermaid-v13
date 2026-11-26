@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeEntities } from './index.ts';
+import { decodeEntities, entityAt } from './index.ts';
 
 describe('decodeEntities', () => {
   it('decodes the ASCII punctuation names authors use to escape syntax (#396)', () => {
@@ -46,5 +46,15 @@ describe('decodeEntities', () => {
 
   it('decodes a name written with its semicolon before trying a legacy prefix', () => {
     expect(decodeEntities('&times; &timesx &ltx;')).toBe('× ×x <x;');
+  });
+});
+
+describe('entityAt with xml', () => {
+  it('needs the ";" and reads a name whole, as XML does', () => {
+    expect(entityAt('&lt;', 0, true)).toEqual(['<', 4]);
+    expect(entityAt('&#169;', 0, true)).toEqual(['©', 6]);
+    for (const ref of ['&lt', '&ltx;', '&copyx;', '&#169', '&#x3c']) {
+      expect(entityAt(ref, 0, true)).toBeUndefined();
+    }
   });
 });

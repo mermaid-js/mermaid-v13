@@ -57,12 +57,15 @@ interface Frame {
   readonly children: (SvgFragment | string)[];
 }
 
-/** Character references decoded as in label text (core's `entityAt`); unknown ones stay. */
+/**
+ * Character references decoded as XML decodes them (core's `entityAt` with `xml`): each needs
+ * its `;`, and a name is read whole. Unknown ones stay.
+ */
 function decode(text: string): string {
   let out = '';
   let from = 0;
   for (let at = text.indexOf('&'); at !== -1; at = text.indexOf('&', at + 1)) {
-    const ref = entityAt(text, at);
+    const ref = entityAt(text, at, true);
     if (ref === undefined) continue;
     out += text.slice(from, at) + ref[0];
     from = at + ref[1];

@@ -150,4 +150,10 @@ describe('convertBody: review fixes', () => {
       '<text>a b © &amp;unknown; ©</text>'
     );
   });
+
+  it('decodes a reference only with its ";", as XML does: no legacy name, no prefix', () => {
+    expect(out('<text>&lt &ltx; &copyx; &#169 &lt;</text>')).toBe(
+      '<text>&amp;lt &amp;ltx; &amp;copyx; &amp;#169 &lt;</text>'
+    );
+  });
 });

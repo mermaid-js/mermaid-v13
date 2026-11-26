@@ -84,17 +84,17 @@ const RE_ENTITY = /&(?:#(\d+)|#[xX]([\da-fA-F]+)|([A-Za-z][A-Za-z\d]*))(;?)/y;
 
 /**
  * Decodes the character reference starting at `at`, if there is one, as HTML does in text
- * (D709): a numeric reference or a legacy name needs no `;`. Returns the text and the length it
- * replaces.
+ * (D709): a numeric reference or a legacy name needs no `;`. With `xml`, as XML does: every
+ * reference needs its `;` and a name is read whole. Returns the text and the length it replaces.
  */
-export function entityAt(source: string, at: number): [string, number] | undefined {
+export function entityAt(source: string, at: number, xml?: boolean): [string, number] | undefined {
   RE_ENTITY.lastIndex = at;
   const m = RE_ENTITY.exec(source);
-  if (!m) return undefined;
+  if (!m || (xml && !m[4])) return undefined;
   const [all, dec, hex, name, semi] = m;
   if (name !== undefined) {
     if (semi && Object.hasOwn(NAMED, name)) return [NAMED[name] as string, all.length];
-    for (let n = name.length; n > 1; n--) {
+    for (let n = xml ? 0 : name.length; n > 1; n--) {
       const legacy = name.slice(0, n);
       if (LEGACY.has(legacy)) return [NAMED[legacy] as string, n + 1];
     }
