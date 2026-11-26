@@ -9,6 +9,7 @@ import {
   BASE_PLOT,
   INVERTED_SCALE,
   LABEL_SCALE,
+  paletteSlots,
   TAILWIND_300,
   TAILWIND_400,
   TAILWIND_50,
@@ -25,9 +26,10 @@ const theme: ThemeSpec = {
     cScale: TAILWIND_300,
     cScaleInv: INVERTED_SCALE,
     cScaleLabel: LABEL_SCALE,
-    // v12 `pie<i+1> ||= cScale<i>` and `fillType<i> || bkgColorArray[i]`: the Tailwind-300 set,
-    // then the Tailwind-50 tints.
-    seriesColorArray: [...TAILWIND_300, ...TAILWIND_50.slice(0, 8)],
+    // v12 `pie<i+1> ||= cScale<i>` and `fillType<i> || bkgColorArray[i]`: reads of the
+    // Tailwind-300 `cScale`, so they follow an author's `cScale` override (D334), then the
+    // Tailwind-50 tints.
+    seriesColorArray: [...paletteSlots((i) => `cScale${i}`), ...TAILWIND_50.slice(0, 8)],
     ...NEO_GIT,
   },
   // v12 theme-redux-color.js does not darken its fixed cScale under darkMode.

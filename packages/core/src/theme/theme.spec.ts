@@ -525,3 +525,30 @@ describe('createTheme: extra rules (config fragments, D153)', () => {
     expect(set.value('fixtureInk')).toBe('#ff0000');
   });
 });
+
+describe('createTheme: series colours follow cScale overrides (#1202, D334)', () => {
+  // v12: redux-color and redux-dark-color `pie<i+1> ||= cScale<i>`; dark and neutral
+  // `pie<i> = cScale<i>`, the twelfth `cScale0` (D228).
+  const OFFSETS: readonly [ThemeName, number][] = [
+    ['redux-color', 0],
+    ['redux-dark-color', 0],
+    ['dark', 1],
+    ['neutral', 1],
+  ];
+  const series = (t: ReturnType<typeof createTheme>) => t.palette('seriesColorArray').slice(0, 12);
+  const scale = (t: ReturnType<typeof createTheme>, offset: number) =>
+    Array.from({ length: 12 }, (_, i) => t.palette('cScale')[(i + offset) % 12]);
+
+  it.each(OFFSETS)('%s: series slots 0-11 are cScale shifted by %i', async (name, offset) => {
+    const t = createTheme(await loadTheme(name), { cssVariables: false });
+    expect(series(t)).toEqual(scale(t, offset));
+  });
+
+  it.each(OFFSETS)('%s: a cScale1 override moves its series slot', async (name, offset) => {
+    const spec = await loadTheme(name);
+    const plain = series(createTheme(spec, { cssVariables: false }));
+    const t = createTheme(spec, { cssVariables: false, themeVariables: { cScale1: '#ff0000' } });
+    const slot = (1 - offset + 12) % 12;
+    expect(series(t)).toEqual(plain.map((c, i) => (i === slot ? '#ff0000' : c)));
+  });
+});

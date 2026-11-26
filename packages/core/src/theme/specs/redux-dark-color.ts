@@ -43,9 +43,10 @@ const theme: ThemeSpec = {
     cScaleInv: INVERTED_SCALE,
     // v12 theme-redux-dark-color.js: each label is its slot darkened by 75.
     cScaleLabel: paletteSlots((i) => `darkenHsl(cScale${i}, 75%)`),
-    // The Tailwind-300 set, then v12's fixed 900 shades as tints.
+    // v12 `pie<i+1> ||= cScale<i>`: reads of the Tailwind-300 `cScale`, so they follow an
+    // author's `cScale` override (D334), then v12's fixed 900 shades as tints.
     seriesColorArray: [
-      ...TAILWIND_300,
+      ...paletteSlots((i) => `cScale${i}`),
       ...series('#701a75 #134e4a #7c2d12 #581c87 #14532d #4c1d95 #7f1d1d #713f12'),
     ],
     ...REDUX_DARK_GIT,
