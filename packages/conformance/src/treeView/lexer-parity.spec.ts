@@ -42,8 +42,8 @@ import { TREEVIEW_E2E_AT_LEAST, treeViewE2eIds, treeViewGateCorpus } from './cor
  *     written, with a blank line before its `---`. Core reads front matter on the first
  *     non-blank line (asserted); v12's `getDiagramFromText` reads it only at offset 0 and lexed
  *     the `---` lines as names (and rejected the source, as it did the copy without the blank
- *     line, for its trailing blank line). Its commented copy matches: the comment lines go
- *     first.
+ *     line, for its trailing blank line). Its commented copy puts the comment lines first, and
+ *     core reads front matter after them too (D704), so it is excluded as well.
  * - {@link NOT_REACHED}: the sources v12 never lexed as treeView: the ones v12's box pass
  *   rejected (their messages are gated by the box gate), the ones another type took or none did
  *   (`treeview-beta`, an upper-case header), and the `commented()` copies of short sources,
@@ -52,12 +52,14 @@ import { TREEVIEW_E2E_AT_LEAST, treeViewE2eIds, treeViewGateCorpus } from './cor
 const UNCLOSED = 'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)';
 const variants = (id: string) => [id, `${id} (CRLF)`, `${id} (commented)`];
 const LEADING_FRONT_MATTER = 'core reads front matter after leading blank lines';
+const BEFORE_FENCE = 'core reads front matter after leading `%%` lines (D704)';
 const EXCLUDED: ReadonlyMap<string, string> = new Map([
   ...variants('treeView-cases/unclosed-directive').map((id) => [id, UNCLOSED] as const),
   ...[
     'treeView-cases/cypress-custom-config-raw',
     'treeView-cases/cypress-custom-config-raw (CRLF)',
   ].map((id) => [id, LEADING_FRONT_MATTER] as const),
+  ['treeView-cases/cypress-custom-config-raw (commented)', BEFORE_FENCE],
 ]);
 const BOX_ERROR = 'v12 box pass threw';
 const NOT_TREEVIEW = 'not detected as treeView';

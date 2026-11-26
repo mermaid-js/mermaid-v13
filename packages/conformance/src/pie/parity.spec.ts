@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { beforeFenceResults, BEFORE_FENCE_COMMENTED } from '../before-fence.ts';
 import { runParity } from '../runner.ts';
 import { loadDivergences } from '../divergences.ts';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +19,9 @@ import { pieAdapter } from './v13.ts';
  * Core's preprocess ends an unclosed `%%{` at its line end and reports `UNCLOSED_DIRECTIVE`, so
  * v13 rejects what v12 accepted with the rest of the line (or the text) removed. That is core's
  * directive reading, shared by every type; the test below checks it still holds.
+ *
+ * Also excluded: {@link BEFORE_FENCE_COMMENTED}, the commented copy of the fixture with a `%%`
+ * line above its front matter (D704; the reason is in `before-fence.ts`).
  */
 const EXCLUDED = 'pie-cases/unclosed directive ';
 
@@ -27,7 +31,9 @@ async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
 
 describe('pie oracle parity with mermaid@12', () => {
   it('matches accept/reject and the model over the gate corpus', async () => {
-    const items = (await pieGateCorpus()).filter((i) => !i.id.startsWith(EXCLUDED));
+    const items = (await pieGateCorpus()).filter(
+      (i) => !i.id.startsWith(EXCLUDED) && i.id !== BEFORE_FENCE_COMMENTED
+    );
     const report = await runParity({
       adapters: [pieAdapter],
       corpus: each(items),
@@ -58,5 +64,13 @@ describe('pie oracle parity with mermaid@12', () => {
       expect(r.divergence?.kind, r.id).toBe('reject');
       expect(r.divergence?.detail, r.id).toMatch(/^UNCLOSED_DIRECTIVE/);
     }
+  }, 60_000);
+
+  it('still rejects the YAML of the commented copy below a `%%` line (D704)', async () => {
+    const { items, results } = await beforeFenceResults(pieAdapter, await pieGateCorpus());
+    expect(items.length).toBe(1);
+    expect(results.map((r) => [r.divergence?.kind, r.divergence?.detail])).toEqual([
+      ['reject', expect.stringMatching(/^YAML_SYNTAX/)],
+    ]);
   }, 60_000);
 });
