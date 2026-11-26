@@ -1,0 +1,12 @@
+---
+description: >-
+  Markdown strings (D710): a set, a union and a text node wholly in
+  backticks draw as markdown without their backticks; the plain labels
+  beside them keep markdown syntax literal and draw tags and line breaks.
+---
+venn-beta
+  set A["`**bold** set`"]
+    text "`*italic* node`"
+    text "**literal**"
+  set B["Plain <b>tag</b><br>two lines"]
+  union A, B["`**both**`"]

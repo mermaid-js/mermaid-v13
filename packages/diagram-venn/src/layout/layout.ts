@@ -16,7 +16,12 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { formatList } from '@mermaid-js/core/parser-kit';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import { VENN_ZERO_SET } from '../codes.ts';
 import { vennLayoutConfig } from '../config.ts';
 import { idsKey, pairwiseRule, setIdOf, type VennModel, type VennSubset } from '../model.ts';
@@ -93,8 +98,15 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
     title: font(m.titleFontSize),
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure = (text: string, labelFont: FontKey, maxWidth: number): MeasuredLabel =>
-    layoutLabel(text, labelFont, maxWidth, ctx.measurer, { ...inline, keepWords: true });
+  // A markdown string is laid out as markdown without its wrapper, any other text plain (D710).
+  const measure = (text: string, labelFont: FontKey, maxWidth: number): MeasuredLabel => {
+    const { text: source, markup } = markdownString(text);
+    return layoutLabel(source, labelFont, maxWidth, ctx.measurer, {
+      ...inline,
+      markup,
+      keepWords: true,
+    });
+  };
 
   // Measure first: the title.
   const titleText =
