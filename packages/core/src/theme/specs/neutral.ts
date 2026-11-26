@@ -38,8 +38,7 @@ const theme: ThemeSpec = {
     // colour moves them (#773, #798): the node fill, the borders, the inverted text inks, and
     // the error colours, which darkMode leaves alone.
     mainBkg: '#eeeeee',
-    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
-    bandBkg: '#eeeeee',
+    // v12's constructor line colour (`guideLineColor` in vocabulary.ts).
     guideLineColor: '#666666',
     border1: '#999999',
     primaryBorderColor: '#d4d4d4',

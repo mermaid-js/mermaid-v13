@@ -87,14 +87,23 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   `textColor`). Set the variables in `themeVariables` for v12's look.
 - **Under a `themeVariables` override (D656, D657):** in the classic family the task bars,
   the active bar and the third section band (`taskBkgColor`, `activeTaskBkgColor`,
-  `sectionBkgColor2`) read `mainBkg`, the first section band (`sectionBkgColor`) reads
-  `bandBkg`, and the active bar's outline and the `vert` marker read `guideLineColor`.
-  `default`, `dark`, `forest` and `neutral` pin all three to their own primary, tertiary and
-  line colours, so an author's `primaryColor`, `tertiaryColor` or `lineColor` leaves the bars,
-  the band and the outline alone there, as in v12. In `base` they derive from `primaryColor`,
-  `tertiaryColor` and `lineColor`, so they follow them, as in v12, except that the active
-  outline and the `vert` marker follow `lineColor` where v12's followed `primaryColor` and
-  stayed navy (D574). Set `bandBkg` or `guideLineColor` in `themeVariables` to move them.
+  `sectionBkgColor2`) read `mainBkg`, and the active bar's outline and the `vert` marker read
+  `guideLineColor`. `default`, `dark`, `forest` and `neutral` pin both to their own primary and
+  line colours, so an author's `primaryColor` or `lineColor` leaves the bars and the outline
+  alone there, as in v12. In `base` they derive from `primaryColor` and `lineColor`, so they
+  follow them, as in v12, except that the active outline and the `vert` marker follow
+  `lineColor` where v12's followed `primaryColor` and stayed navy (D574). Set
+  `guideLineColor` in `themeVariables` to move the outline and the marker.
+- **The first section band is visible in every classic theme (D726, #1249):** `sectionBkgColor`
+  is the theme's `mainBkg` darkened (lightened under `dark`), so the band reads against the page
+  and against the third band by at least 1.2:1. v12's `default` drew a lavender
+  `rgba(102, 102, 255, 0.49)`; v13's is `#9a9aff` (v13 used the near-white `#f9ffec` before).
+  `neutral` is `#c5c5c5` (v12 `#bdbdbd`), `forest` `#aed357` (v12 `#6eaa49`), `base` `#ffda8b`
+  (v12 `#f6f9ff`) and `dark` `#4c4f4f` (v12 `#b4ac76`). An author's `sectionBkgColor` wins in
+  every theme; an author's `mainBkg` also moves the band, and `base`'s band no longer follows
+  `tertiaryColor`. The v13-only `bandBkg` variable is removed (it never existed in v12): a
+  `themeVariables.bandBkg` is ignored without a warning, like any unknown name; set
+  `sectionBkgColor`.
 - **A `mainBkg` override moves the bars (D657):** an author's `mainBkg` recolours the task
   bars, the active bar and the third band in every classic theme, where v12's `default`,
   `forest` and `neutral` kept their own; under `dark` the text on the active bar follows that
