@@ -364,7 +364,7 @@ describe('glyphs (D292, D293)', () => {
     );
     // Each glyph's own failure is named after the label icon's, in the order drawn.
     expect(message(r, 'ICON_NOT_RENDERED')).toBe(
-      'Icons not rendered: fa:fa-nope (pack "fa" has no icon "nope"), fa:nada (pack "fa" has no icon "nada"), user (not a pack:name icon name). Labels show them as written; icons outside labels get no glyph.'
+      `Icons not rendered: fa:fa-nope (pack "fa" has no icon "nope"), fa:nada (pack "fa" has no icon "nada"), user (not a pack:name icon name). Labels show them as written; icons outside labels get the diagram's fallback.`
     );
     // Flowchart's deprecated alias, a fixed message (D299).
     expect(message(r, 'ICON_UNAVAILABLE')).toBe(
@@ -377,7 +377,7 @@ describe('glyphs (D292, D293)', () => {
     const m = await api({ name: 'fa', icons: staticBellIconPack });
     const r = await m.render('i', 'flowchart LR\n  A["fa:fa-bell"] --> B@{ icon: "fa:nada" }');
     expect(message(r, 'ICON_NOT_RENDERED')).toBe(
-      'Icons not rendered: fa:nada (pack "fa" has no icon "nada"). Icons outside labels get no glyph.'
+      `Icons not rendered: fa:nada (pack "fa" has no icon "nada"). Icons outside labels get the diagram's fallback.`
     );
   });
 
@@ -425,7 +425,7 @@ describe('glyphs (D292, D293)', () => {
     expect(r.svg).toContain('<g transform="scale(1)"><path fill="currentColor" d="M0 0H1V24z"/>');
     const unknown = await m.render('i', 'glyphs nope');
     expect(message(unknown, 'ICON_NOT_RENDERED')).toBe(
-      'Icons not rendered: nope (pack "arch" has no icon "nope"). Icons outside labels get no glyph.'
+      `Icons not rendered: nope (pack "arch" has no icon "nope"). Icons outside labels get the diagram's fallback.`
     );
   });
 });

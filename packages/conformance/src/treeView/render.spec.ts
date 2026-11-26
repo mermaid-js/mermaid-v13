@@ -87,6 +87,9 @@ const TOL = 0.01;
  * stroke, a line's ends with half its width across it, a text's point, an icon path's points
  * inside its group's `translate()`.
  */
+/** All the text inside `node`, its descendants' included. */
+const textIn = (node: SvgElement): string => node.children.map((c) => c.text ?? textIn(c)).join('');
+
 function extents(tree: SvgView): { x: number; y: number; tag: string }[] {
   const out: { x: number; y: number; tag: string }[] = [];
   // A point (x, y) inside `node` is drawn at (dx + k·x, dy + k·y), its transforms applied.
@@ -202,9 +205,12 @@ describe('treeView render properties over the corpus', () => {
         resolveIcon(n, options as TreeViewIconOptions)
       );
       const withIcon = names.filter((n) => n !== undefined);
-      const icons = (c.result.svg.match(/class="treeView-node-icon"/g) ?? []).length;
-      expect(icons, c.id).toBe(withIcon.length);
-      const unknown = (c.result.svg.match(/>\?<\/text>/g) ?? []).length;
+      const icons = c.tree
+        .find({ tag: 'g' })
+        .filter((g) => c.tree.getAttr(g, 'class') === 'treeView-node-icon');
+      expect(icons.length, c.id).toBe(withIcon.length);
+      // Only the icons' own text: a row named `?` is a label, not the square.
+      const unknown = icons.filter((g) => textIn(g) === '?').length;
       expect(unknown, c.id).toBe(withIcon.filter((n) => !BUILTIN.has(n)).length);
       expect(withIcon.filter((n) => BUILTIN.has(n)).length, c.id).toBeGreaterThan(0);
     }

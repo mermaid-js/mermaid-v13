@@ -197,7 +197,9 @@ function warnFor({ warn, scratch }: InlineSpans): void {
   if (notes.unresolved.size > 0) {
     const where = [
       notes.labels ? 'labels show them as written' : '',
-      notes.glyphs ? 'icons outside labels get no glyph' : '',
+      // Each diagram draws its own fallback: architecture and treeView v12's `?` square (D505,
+      // D702), mindmap the name as written (D286).
+      notes.glyphs ? "icons outside labels get the diagram's fallback" : '',
     ].filter(Boolean);
     const said = where.join('; ');
     warn({
