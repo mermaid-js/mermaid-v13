@@ -26,10 +26,12 @@ export function preprocess(src: string): PreprocessResult {
   const diagnostics = new Diagnostics();
   const { bodyStart, fenceStart, frontMatter } = scanFrontMatter(src, diagnostics);
   // Directives above the fence still apply (D705); the YAML between the fences is never read
-  // for them. The head is cut off at the fence, so its ranges are offsets into `src` as well.
-  const head = fenceStart > 0 ? scanDirectives(src.slice(0, fenceStart), 0, diagnostics) : [];
-  const body = scanDirectives(src, bodyStart, diagnostics);
-  const directives = head.length > 0 ? [...head, ...body] : body;
+  // for them. Only whole directive lines are: a `%%{` in a `%%` comment line is comment text
+  // (D704). Each line is cut off at its end, so its ranges are offsets into `src` as well.
+  const directives: Directive[] = [];
+  for (const m of src.slice(0, fenceStart).matchAll(/^\s*%%\{.*/gm))
+    directives.push(...scanDirectives(src.slice(0, m.index + m[0].length), m.index, diagnostics));
+  directives.push(...scanDirectives(src, bodyStart, diagnostics));
   const result: PreprocessResult = { bodyStart, directives, diagnostics: diagnostics.list };
   if (frontMatter) result.frontMatter = frontMatter;
   return result;

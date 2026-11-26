@@ -213,6 +213,24 @@ describe('preprocess: front matter after leading `%%` lines (D704, D705)', () =>
     ]);
   });
 
+  it('does not read a `%%{` inside a comment line above the fence as a directive', () => {
+    const src =
+      '%% use %%{init: {"theme":"dark"} to theme\n%% or %%{wrap}%% here\n---\ntitle: T\n---\n%%{wrap}%%\npie\n';
+    const r = preprocess(src);
+    expect(r.frontMatter?.title).toBe('T');
+    expect(r.diagnostics).toEqual([]);
+    expect(r.directives.map((d) => d.range.start)).toEqual([src.lastIndexOf('%%{wrap}%%')]);
+  });
+
+  it('reads indented whole directive lines above the fence, between comment lines', () => {
+    const src = '%% c %%{\n  %%{init: {"a": 1}}%%\n%% }%%\n---\ntitle: T\n---\npie\n';
+    const r = preprocess(src);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.directives.map((d) => [d.name, src.slice(d.range.start, d.range.end)])).toEqual([
+      ['init', '%%{init: {"a": 1}}%%'],
+    ]);
+  });
+
   it('does not read a `%%{` inside the YAML as a directive', () => {
     const src = '%% c\n---\ntitle: "%%{init: {}}%%"\n---\npie\n';
     const r = preprocess(src);

@@ -114,9 +114,17 @@ function triviaTokens(ctx: DocumentContext, from: number, to: number): SemanticT
   return out.sort((a, b) => a.range.start - b.range.start);
 }
 
+/**
+ * Where the front matter's opening fence is, or 0. A fence that is not closed yet (the author is
+ * typing it) has no front matter; its `UNCLOSED_FRONT_MATTER` error points at the fence.
+ */
+function fenceStart({ pre }: DocumentContext): number {
+  const unclosed = pre.diagnostics.find((d) => d.code === 'UNCLOSED_FRONT_MATTER');
+  return pre.frontMatter?.range.start ?? unclosed?.related?.[0]?.range.start ?? 0;
+}
+
 /** The `%%` lines above the front matter (D704), which no lexer reads. */
-const headTokens = (ctx: DocumentContext): SemanticToken[] =>
-  triviaTokens(ctx, 0, ctx.pre.frontMatter?.range.start ?? 0);
+const headTokens = (ctx: DocumentContext): SemanticToken[] => triviaTokens(ctx, 0, fenceStart(ctx));
 
 /** Comments and directives of a document with no facet. */
 function genericTokens(ctx: DocumentContext): SemanticToken[] {

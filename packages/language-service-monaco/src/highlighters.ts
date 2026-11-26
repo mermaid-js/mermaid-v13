@@ -125,7 +125,7 @@ export function combineMonarch(
   // As core's scanner (D704): `%%` comment lines and whole directive lines may come before the
   // opening `---`; they keep the front matter's start.
   tokenizer.frontMatterStart?.unshift(
-    ['^[^\\S\\n]*%%\\{.*?\\}%%[^\\S\\n]*(?:\\n|$)', { token: `annotation${SHARED}` }],
+    ['^[^\\S\\n]*%%\\{(?:(?!\\}%%).)*\\}%%[^\\S\\n]*(?:\\n|$)', { token: `annotation${SHARED}` }],
     ['^[^\\S\\n]*%%(?!\\{)[^\\n]*(?:\\n|$)', { token: `comment${SHARED}` }]
   );
   // The first facet whose detector matches picks the type, as in the service; one with no

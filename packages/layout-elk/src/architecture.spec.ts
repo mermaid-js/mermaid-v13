@@ -10,6 +10,7 @@ import {
   type Point,
   type Side,
 } from '@mermaid-js/core/layout';
+import { preprocess } from '@mermaid-js/core/preprocess';
 import { createMermaid } from 'mermaid';
 import elkLayouts from './index.ts';
 
@@ -129,10 +130,9 @@ const FIXTURES = walk(join(REPO, 'e2e/diagrams/architecture'))
 
 /** `text` with `layout: elk` in its front matter's config, in place of any `layout` it sets. */
 function withElk(source: string): string {
-  // `%%` lines may come before the front matter (D704); they stay first.
-  let at = 0;
-  while (source.startsWith('%%', at) && source.includes('\n', at))
-    at = source.indexOf('\n', at) + 1;
+  // Blank, `%%` comment and whole directive lines may come before the front matter (D704): the
+  // lines core skips stay first. With no front matter, a new one goes at the very start.
+  const at = preprocess(source).frontMatter?.range.start ?? 0;
   return source.slice(0, at) + withElkConfig(source.slice(at));
 }
 

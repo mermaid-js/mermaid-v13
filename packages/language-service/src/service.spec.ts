@@ -64,6 +64,17 @@ describe('snapshots', () => {
     expect(head(await open(text, 'file:///head.mmd'))).toEqual(want);
   });
 
+  it('colours the lines above a front matter that is not closed yet (D704)', () => {
+    const text = '%% note\n  %%{init: {}}%%\n---\ntitle: x\n%% in the yaml\n';
+    const doc = createLanguageService().update('file:///head-open.mmd', text);
+    expect(
+      doc.semanticTokens().map((t) => [t.type, text.slice(t.range.start, t.range.end)])
+    ).toEqual([
+      ['comment', '%% note'],
+      ['macro', '%%{init: {}}%%'],
+    ]);
+  });
+
   it('is immutable: a later update does not change an earlier snapshot', async () => {
     const a = await open('flowchart TD\n  A --> B\n', 'file:///imm.mmd');
     const b = await open('flowchart TD\n  A --> C\n', 'file:///imm.mmd');
