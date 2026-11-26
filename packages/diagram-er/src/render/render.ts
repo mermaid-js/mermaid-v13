@@ -131,7 +131,7 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
         }
       : undefined;
   const labelPaint = er.edges.some((e) => e.label.width > 0)
-    ? { fill: theme.color('erEdgeLabelBackground'), text: theme.color('textColor') }
+    ? { fill: theme.color('erEdgeLabelBackground'), text: theme.color('erEdgeLabelColor') }
     : undefined;
   return {
     font: theme.font(),

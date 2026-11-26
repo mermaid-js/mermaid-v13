@@ -95,6 +95,7 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   flowchartEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
   stateEdgeLabelBackground: 'D715: v12 has no variable; the tag fill, D628',
   stateEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
+  erEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',

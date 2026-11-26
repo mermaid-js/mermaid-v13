@@ -17,4 +17,4 @@ function table(text: string): Record<string, DiagramThemeVar> {
 
 /** The diagram's theme variables, for `DiagramThemeTable.vars`: `THEME_VARIABLES` without `usedBy`. */
 export const THEME_VARIABLE_TABLE: Readonly<Record<string, DiagramThemeVar>> =
-  /* @__PURE__ */ table('usecaseActorBkg uab color - usecaseActorBorder uar color - usecaseBkg ucb color - usecaseBorder ucr color - usecaseBoundaryBkg ubb color - usecaseBoundaryBorder ubr color - usecaseIncludeLine uil color - usecaseExtendLine uel color -');
+  /* @__PURE__ */ table('usecaseActorBkg uab color - usecaseActorBorder uar color - usecaseBkg ucb color - usecaseBorder ucr color - usecaseBoundaryBkg ubb color - usecaseBoundaryBorder ubr color - usecaseIncludeLine uil color - usecaseExtendLine uel color - usecaseEdgeLabelBackground ueb color - usecaseEdgeLabelColor uec color -');
