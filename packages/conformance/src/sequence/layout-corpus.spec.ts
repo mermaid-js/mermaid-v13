@@ -67,7 +67,7 @@ describe('sequence layout invariants on parsed models', () => {
             warn: () => {},
           });
           laid++;
-          const found = sequenceLayoutViolations(result.model, layout, sequence).filter(
+          const found = sequenceLayoutViolations(result.model, layout, { sequence }).filter(
             (v) => !(late && /^message \S+ at y \S+ is outside /.test(v))
           );
           if (found.length > 0)
@@ -91,7 +91,7 @@ describe('sequence layout invariants on parsed models', () => {
       theme: createTheme(spec, { diagram: DIAGRAM_TABLES.sequence }),
       warn: () => {},
     });
-    const found = sequenceLayoutViolations(result.model, layout);
+    const found = sequenceLayoutViolations(result.model, layout, { sequence: {} });
     expect(found).toHaveLength(1);
     expect(found[0]).toMatch(/^message m:A>B#3 at y \S+ is outside B$/);
   });
@@ -107,7 +107,7 @@ describe('sequence layout invariants on parsed models', () => {
       theme: createTheme(spec, { diagram: DIAGRAM_TABLES.sequence }),
       warn: () => {},
     });
-    expect(sequenceLayoutViolations(result.model, layout)).toEqual([]);
+    expect(sequenceLayoutViolations(result.model, layout, { sequence: {} })).toEqual([]);
     // The message the check is about: wrapped to more than one line.
     const ast = result.model.statements.find((s) => s.kind === 'message' && s.wrap === true)!.ast;
     const wrapped = layout.messages.find((m) => m.ast === ast)!;

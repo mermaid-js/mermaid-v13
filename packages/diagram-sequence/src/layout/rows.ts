@@ -239,7 +239,9 @@ export class Rows {
    * padding below `starty + messageLead`, over a line placed from rows it measured in Arial: its
    * last baseline sits 1 em of the message font plus `lineGap`, less the lead and half the wrap
    * padding, above the line (11 px at the defaults; v12 10.81 in Chromium), whatever the font and
-   * the number of lines. In cells the label keeps the rows right above its line.
+   * the number of lines. The label never reaches below its line, which would strike it through:
+   * a large `wrapPadding`, a small message font or a square self message lift it until its box
+   * ends on the line (#1337 review). In cells the label keeps the rows right above its line.
    */
   private messageLabelY(
     label: MeasuredLabel,
@@ -252,7 +254,7 @@ export class Rows {
     const n = label.lines.length;
     const last = label.baselines?.[n - 1] ?? (n - 1) * label.lineHeight + label.baseline;
     const rise = fonts.message.size + this.lineGap(self) - m.messageLead - m.half(m.wrapPadding);
-    return lineY - rise - last;
+    return Math.min(lineY - rise - last, lineY - label.height);
   }
 
   /** A message's label, placed across its span and above its line. */
@@ -263,7 +265,7 @@ export class Rows {
     lineY: number,
     numberX: number | undefined
   ): PlacedLabel {
-    const { m, seq } = this.env;
+    const { m } = this.env;
     const { label } = g;
     const self = s.from === s.to;
     const span = [Math.min(g.startx, g.stopx), Math.max(g.startx, g.stopx)] as const;
@@ -271,19 +273,27 @@ export class Rows {
     const x =
       self && m.cells
         ? g.startx + m.lifelineHalf
-        : clearOf(
-            this.borders,
-            alignX(this.env, seq.messageAlign, span, label.width, m.wrapPadding),
-            label.width,
-            span,
-            this.lifelinesOf(s)
-          );
+        : clearOf(this.borders, this.labelX(g, span), label.width, span, this.lifelinesOf(s));
     const y = this.messageLabelY(label, self, starty, lineY);
     return placed(
       label,
       x,
       numberX === undefined ? y : this.clearOfNumber(label, x, y, numberX, lineY)
     );
+  }
+
+  /**
+   * A message label's x at `messageAlign`. A label wrapped inside its span (D724) that a whole
+   * word makes wider than the room inside the padding keeps on its line where the line holds it,
+   * and is centred on the line where it does not.
+   */
+  private labelX(g: MessageX, span: readonly [number, number]): number {
+    const { m, seq } = this.env;
+    const w = g.label.width;
+    const x = alignX(this.env, seq.messageAlign, span, w, m.wrapPadding);
+    if (!g.inside) return x;
+    const [lo, hi] = span;
+    return w > hi - lo ? lo + m.half(hi - lo - w) : Math.min(Math.max(x, lo), hi - w);
   }
 
   /**

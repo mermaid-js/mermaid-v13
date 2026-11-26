@@ -8,9 +8,9 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
 import type { UnitProfile } from '@mermaid-js/core/layout';
 import { streamWriter } from '@mermaid-js/core/svg';
-import { tableMeasurer } from '@mermaid-js/core/text';
+import { layoutLabel, tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
-import { layoutSequence } from '../layout/index.ts';
+import { layoutSequence, type SequenceLayout } from '../layout/index.ts';
 import { parseSequence } from '../parser/index.ts';
 import { renderSequence } from './render.ts';
 import { sequence as diagramPlugin } from '../plugin.ts';
@@ -43,13 +43,16 @@ const ALIGN_SOURCE = `sequenceDiagram
   Note over A,B: a note line one that is long<br>short
   A->>B: one line`;
 
-async function alignedSvg(align?: 'left' | 'center' | 'right') {
+async function alignedSvg(
+  align?: 'left' | 'center' | 'right',
+  edit: (l: SequenceLayout) => SequenceLayout = (l) => l
+) {
   const theme = createTheme(await loadTheme('default'), { diagram: diagramTheme });
   const sequence = align === undefined ? {} : { messageAlign: align, noteAlign: align };
   const config = { sequence } as unknown as ResolvedConfig;
   const { model } = parseSequence(ALIGN_SOURCE);
   const ctx = { config, theme, units: pxProfile, warn: () => {}, idPrefix: 's', version: '13' };
-  const layout = layoutSequence(model, { ...ctx, measurer: tableMeasurer });
+  const layout = edit(layoutSequence(model, { ...ctx, measurer: tableMeasurer }));
   const w = streamWriter();
   renderSequence(model, layout, ctx, w);
   return { svg: w.finish(), layout };
@@ -89,6 +92,38 @@ describe('messageAlign and noteAlign (#1241)', () => {
       for (const [j, x] of d.xs.entries())
         expect(x + box.text.widths[j]!).toBeCloseTo(box.x + box.width, 2);
     });
+  });
+
+  it('keeps the line indents of a label (bullets) when it aligns the lines', async () => {
+    // Sequence measures its labels as plain text today, so no indents reach the renderer; a
+    // bullet item that wraps has a hanging indent on its second line (#1337 review).
+    const font = { family: 'Arial', size: 16, weight: 400 };
+    const bullets = layoutLabel('- one two three four', font, 60, tableMeasurer, {
+      markup: 'markdown',
+    });
+    expect(bullets.indents[1]).toBeGreaterThan(0);
+    const withBullets = (l: SequenceLayout): SequenceLayout => {
+      const [first, ...rest] = l.messages;
+      return {
+        ...l,
+        messages: [
+          { ...first!, label: { ...first!.label!, text: bullets, width: bullets.width } },
+          ...rest,
+        ],
+      };
+    };
+    const right = await alignedSvg('right', withBullets);
+    const box = right.layout.messages[0]!.label!;
+    const xs = texts(right.svg, 'messageText')[0]!.xs;
+    // Each line, indent and all, ends at the right edge of the box.
+    for (const [j, x] of xs.entries())
+      expect(x + bullets.widths[j]! - bullets.indents[j]!).toBeCloseTo(box.x + box.width, 2);
+    const left = await alignedSvg('left', withBullets);
+    const at = left.layout.messages[0]!.label!.x;
+    // The writer rounds each x to 0.01.
+    const starts = texts(left.svg, 'messageText')[0]!.xs;
+    expect(starts).toHaveLength(bullets.indents.length);
+    for (const [j, x] of starts.entries()) expect(x).toBeCloseTo(at + bullets.indents[j]!, 2);
   });
 
   it('center is the default and draws each line centred', async () => {

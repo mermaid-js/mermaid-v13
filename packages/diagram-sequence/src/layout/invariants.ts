@@ -24,6 +24,8 @@ import {
   rectsOverlap as overlaps,
   within,
 } from '@mermaid-js/shared/testing/layout-invariants';
+import type { MeasuredLabel } from '@mermaid-js/core/text';
+import { autoWrapOf } from './env.ts';
 import { metricsTable } from './metrics.ts';
 
 type Participants = ReadonlyMap<string, ParticipantLayout>;
@@ -161,19 +163,54 @@ function rectCuts(r: Rect, cx: number, cy: number, radius: number): boolean {
   return Math.hypot(dx, dy) < radius - EPS;
 }
 
+/** A sequence number's circle: the message it numbers, and its centre. */
+interface Circle {
+  readonly ast: string;
+  readonly x: number;
+  readonly y: number;
+}
+
 /**
  * No message label runs into a sequence number's circle, its own or another message's
- * (#1337: a self message's label lowered onto its number).
+ * (#1337: a self message's label lowered onto its number). The circles are sorted by y, and
+ * each label is checked against those within a radius of its rows only.
  */
 function numbersClear(layout: SequenceLayout, out: string[]): void {
   const radius = metricsTable({ id: layout.units }).fixed.numberRadius;
   if (radius <= 0) return;
-  for (const n of layout.messages) {
-    if (!n.number) continue;
-    for (const msg of layout.messages)
-      if (msg.label && rectCuts(msg.label, n.number.x, n.y, radius))
-        out.push(`the label of message ${msg.ast} overlaps the number of ${n.ast}`);
+  const circles: Circle[] = layout.messages
+    .flatMap((n) => (n.number ? [{ ast: n.ast, x: n.number.x, y: n.y }] : []))
+    .sort((a, b) => a.y - b.y);
+  for (const msg of layout.messages) {
+    const label = msg.label;
+    if (!label) continue;
+    // The first circle whose centre is at most a radius above the label.
+    let lo = 0;
+    let hi = circles.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((circles[mid] as Circle).y < label.y - radius) lo = mid + 1;
+      else hi = mid;
+    }
+    for (let i = lo; i < circles.length; i++) {
+      const c = circles[i] as Circle;
+      if (c.y > label.y + label.height + radius) break;
+      if (rectCuts(label, c.x, c.y, radius))
+        out.push(`the label of message ${msg.ast} overlaps the number of ${c.ast}`);
+    }
   }
+}
+
+/**
+ * A message label ends at or above its line, so the line never strikes through it (#1337
+ * review: a large `wrapPadding`, a small message font or a square self message put the last
+ * baseline at or below the line). For a self message the line is the loop's start, where the
+ * label sits.
+ */
+function labelsAboveLines(layout: SequenceLayout, out: string[]): void {
+  for (const msg of layout.messages)
+    if (msg.label && msg.label.y + msg.label.height > msg.y + EPS)
+      out.push(`the label of message ${msg.ast} reaches below its line`);
 }
 
 /** The messages of `list`, at any depth. */
@@ -186,11 +223,23 @@ function messagesOf(list: readonly SequenceStatement[], out: SequenceMessage[] =
   return out;
 }
 
+/** Whether a line of `text` is one word, which wrapping keeps whole, wider than `room`. */
+function wordWider(text: MeasuredLabel, room: number): boolean {
+  return text.lines.some((line, i) => {
+    const words = line
+      .map((r) => r.text)
+      .join('')
+      .trim();
+    return !/\s/.test(words) && (text.widths[i] ?? 0) > room + EPS;
+  });
+}
+
 /**
  * The label of a wrapped message between neighbouring participants stays between their
  * lifelines, in every `messageAlign` (#1239, D724). A self message and a message across several
  * columns are not checked: their labels may reach past a lifeline, as in v12. Nor is a message
- * whose line leaves the lifelines, when activation bars wider than the gap cover the other one.
+ * whose line leaves the lifelines, when activation bars wider than the gap cover the other one,
+ * or whose label holds a word wider than its line, which stays whole (D724).
  * Cells have their own rule: a label keeps off the lifeline columns and off box borders, and may
  * move past a lifeline to do so (the conformance spec `layout-corpus.spec.ts` checks it).
  */
@@ -212,6 +261,7 @@ function wrappedInside(
     const right = layout.participants[Math.max(a, b)] as ParticipantLayout;
     const ends = [msg.startX, msg.stopX];
     if (!ends.every((e) => within(e, left.lifeline.x, right.lifeline.x))) continue;
+    if (wordWider(msg.label.text, Math.abs(msg.startX - msg.stopX))) continue;
     const { x, width } = msg.label;
     if (x < left.lifeline.x - EPS || x + width > right.lifeline.x + EPS)
       out.push(`the wrapped label of message ${msg.ast} crosses a lifeline`);
@@ -275,13 +325,13 @@ function rowsHold(layout: SequenceLayout, out: string[]): void {
 }
 
 /**
- * Every invariant `layout` breaks; empty when it holds them all. `sequence` is the `sequence`
- * config the layout was made with: its `wrap` says which messages wrap.
+ * Every invariant `layout` breaks; empty when it holds them all. `config` is the config the
+ * layout was made with: its `wrap` and `sequence.wrap` say which messages wrap, as in the layout.
  */
 export function sequenceLayoutViolations(
   model: SequenceModel,
   layout: SequenceLayout,
-  sequence: { readonly wrap?: unknown } = {}
+  config: { readonly wrap?: unknown; readonly sequence?: Readonly<Record<string, unknown>> }
 ): string[] {
   const out: string[] = [];
   numbers(layout, 'layout', out);
@@ -295,7 +345,8 @@ export function sequenceLayoutViolations(
   framesHold(model, layout, rectsOf, out);
   notesClear(layout, out);
   numbersClear(layout, out);
-  wrappedInside(model, layout, sequence.wrap === true, out);
+  labelsAboveLines(layout, out);
+  wrappedInside(model, layout, autoWrapOf(config), out);
   activationsOnLifeline(layout, parts, out);
   rowsHold(layout, out);
   return out;

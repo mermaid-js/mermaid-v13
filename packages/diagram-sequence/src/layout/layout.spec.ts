@@ -72,7 +72,7 @@ describe('sequence layout invariants', () => {
         for (const [name, model] of Object.entries(FIXTURES)) {
           it(`${name}, ${theme}, ${unit}, ${config}`, () => {
             const layout = lay(model, units, measurer, sequence, theme);
-            expect(sequenceLayoutViolations(model, layout, sequence)).toEqual([]);
+            expect(sequenceLayoutViolations(model, layout, { sequence })).toEqual([]);
             expect(layout.units).toBe(unit);
           });
         }
@@ -116,7 +116,7 @@ describe('sequence layout invariants', () => {
       messages: [{ ...first!, y: NaN }, ...good.messages.slice(1)],
       notes: good.notes.map((n) => ({ ...n, y: 0 })),
     };
-    const found = sequenceLayoutViolations(model, broken);
+    const found = sequenceLayoutViolations(model, broken, {});
     expect(found).toContain('layout.messages[0].y is NaN');
     expect(found.some((v) => v.startsWith(`frame ${frame!.ast} does not contain`))).toBe(true);
     expect(found.some((v) => v.includes(' overlaps the box of '))).toBe(true);
@@ -235,12 +235,19 @@ describe('message label height above its line (#1237, D723)', () => {
           expect(Math.abs(gap - V12_GAP[theme])).toBeLessThanOrEqual(1);
         });
 
-  it('a self message with rightAngles keeps v12 text over its higher line', () => {
-    const l = lay(modelOf([part('A')], [msg('A', 'A', 'self')]), pxProfile, tableMeasurer, {
-      rightAngles: true,
-    });
-    const [placed] = l.messages;
-    expect(Math.abs(placed!.y - lastBaseline(placed!) - 0.81)).toBeLessThanOrEqual(1);
+  it('a self message with rightAngles ends its label on the line, not through it', () => {
+    // v12's last baseline sat 0.81 px above the square loop's top, which struck the descenders
+    // through. v13 lifts the label until its box ends on the line (#1337 review): the last
+    // baseline then sits the font's descent above it.
+    const descent: Readonly<Record<ThemeName, number>> = { default: 3.552, redux: 3.92 };
+    for (const theme of THEMES) {
+      const model = modelOf([part('A')], [msg('A', 'A', 'self')]);
+      const l = lay(model, pxProfile, tableMeasurer, { rightAngles: true }, theme, AT_16);
+      const [placed] = l.messages;
+      const label = placed!.label!;
+      expect(label.y + label.height, theme).toBeCloseTo(placed!.y, 6);
+      expect(placed!.y - lastBaseline(placed!), theme).toBeCloseTo(descent[theme], 3);
+    }
   });
 
   it('leaves cells as they were: the label on the row above its line', () => {
@@ -531,7 +538,7 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
       for (const sequence of [{}, VARIANT])
         for (const [name, m] of Object.entries(models)) {
           const l = lay(m, pxProfile, tableMeasurer, sequence, 'redux', { actorGlyphBand: band });
-          expect(sequenceLayoutViolations(m, l), `${name}, band ${band}`).toEqual([]);
+          expect(sequenceLayoutViolations(m, l, { sequence }), `${name}, band ${band}`).toEqual([]);
         }
   });
 
@@ -543,13 +550,13 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
 
   it('catches a symbol or label off its band and a lifeline inside its row', () => {
     const good = neo(SYMBOLS);
-    expect(sequenceLayoutViolations(SYMBOLS, good)).toEqual([]);
+    expect(sequenceLayoutViolations(SYMBOLS, good, {})).toEqual([]);
     const u = good.participants.findIndex((p) => p.id === 'U');
     const p = good.participants[u]!;
     const broken = (q: Partial<typeof p>): string[] => {
       const participants = [...good.participants];
       participants[u] = { ...p, ...q };
-      return sequenceLayoutViolations(SYMBOLS, { ...good, participants });
+      return sequenceLayoutViolations(SYMBOLS, { ...good, participants }, {});
     };
     expect(broken({ band: { ...p.band!, top: p.height + 1 } })).toContain(
       'the top glyph band of U leaves its row'

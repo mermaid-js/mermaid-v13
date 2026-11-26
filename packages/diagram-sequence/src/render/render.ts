@@ -318,13 +318,19 @@ function drawFragment(scene: Scene, f: FragmentLayout): void {
 /**
  * A multi-line label's lines at the edge `messageAlign` or `noteAlign` names, as v12 anchors
  * each line (`text-anchor` start or end, #1241): `left` starts every line at the box's left edge,
- * `right` ends every line at its right edge. `center`, and a one-line label, draw as measured.
+ * `right` ends every line at its right edge. Each line keeps its own indent (a bullet's hang).
+ * `center`, and a one-line label, draw as measured.
  */
 function aligned(text: MeasuredLabel, align: unknown): LabelBox {
   if (text.lines.length < 2) return text;
   if (align === 'left') return { ...text, left: true };
   if (align === 'right')
-    return { ...text, left: true, indents: text.widths.map((w) => text.width - w) };
+    return {
+      ...text,
+      left: true,
+      // `widths` include each line's own indent (a bullet's hang): the text after it ends flush.
+      indents: text.widths.map((w, i) => text.width - w + (text.indents[i] ?? 0)),
+    };
   return text;
 }
 
