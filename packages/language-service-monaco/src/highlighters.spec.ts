@@ -115,6 +115,16 @@ describe('the per-type Monarch highlighters (D134)', () => {
     expect(spans(text)[0]).toBe('---:annotation.mermaid');
   });
 
+  it('ends a directive line before the fence at its first `}%%`, as core does (D704)', async () => {
+    const def = combineMonarch(new Map([['sequence', await MONARCH_HIGHLIGHTERS.sequence.load()]]));
+    const fm = '---\ntitle: T\n---\nsequenceDiagram\n';
+    expect(monarchSpans(def, `%%{init: {}}%%\n${fm}`)).toContain('---:annotation.mermaid');
+    // Text after the directive's close: core finds no front matter, so neither does Monarch.
+    expect(monarchSpans(def, `%%{init: {}}%% x }%%\n${fm}`)).not.toContain(
+      '---:annotation.mermaid'
+    );
+  });
+
   it('reads the ER grammar case-insensitively, as its own definition says', async () => {
     await setUp();
     const text = 'erDiagram\n  A |O--O{ B : has\n';
