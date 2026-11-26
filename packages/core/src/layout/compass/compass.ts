@@ -493,8 +493,8 @@ class Pixels {
   }
 
   /**
-   * Edge `k`'s route from `s` to `e`, simplified, with each run between two bends that would
-   * cross a node other than the edge's ends moved off it (#767).
+   * Edge `k`'s route from `s` to `e`, simplified, with each run of a route with two or more
+   * bends that would cross a node other than the edge's ends moved off it (#767, D720).
    */
   routePoints(k: number, s: Port, e: Port): number[] {
     const a = this.endA[k]!;

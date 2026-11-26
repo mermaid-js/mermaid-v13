@@ -301,6 +301,107 @@ describe('compass: review fixes', () => {
   });
 });
 
+/** Each run of `id`'s route that crosses a node other than its ends, as `run k x node`. */
+function runsOnNodes(g: LayoutGraph, m: ReturnType<typeof compass>, id: string): string[] {
+  const e = g.edges.find((x) => x.id === id)!;
+  const pts = m.edges.get(id)!.points;
+  const out: string[] = [];
+  for (let k = 1; k < pts.length; k++) {
+    for (const [n, box] of m.nodes) {
+      if (n === e.source || n === e.target) continue;
+      if (crosses(pts[k - 1]!, pts[k]!, around(box, box.width, box.height)))
+        out.push(`run ${k - 1} x ${n}`);
+    }
+  }
+  return out;
+}
+
+describe('compass: second sides and detours (#1218, D720)', () => {
+  it('honours two links into a rigid group when both sides can hold', () => {
+    // The nested Azure fixture in small: `p` and `q` share a group, `a` reaches `p` from its
+    // right and `q` from its bottom, and `v`, in a group of its own, reaches `q` from the left.
+    const g = graph({
+      nodes: [
+        node('v', { parent: 'gv' }),
+        node('n', { parent: 'ga' }),
+        node('a', { parent: 'ga' }),
+        node('p', { parent: 'gp' }),
+        node('q', { parent: 'gp' }),
+      ],
+      groups: [
+        { id: 'gv', padding: pad },
+        { id: 'ga', parent: 'gb', padding: pad },
+        { id: 'gp', parent: 'gb', padding: pad },
+        { id: 'gb', padding: pad },
+      ],
+      edges: [
+        edge('n', 'a', 'right', 'left'),
+        edge('a', 'p', 'right', 'left'),
+        edge('a', 'q', 'bottom', 'top'),
+        edge('v', 'q', 'right', 'left'),
+      ],
+    });
+    const m = compass(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    const at = (id: string) => m.nodes.get(id)!;
+    expect(at('p').x).toBeGreaterThan(at('a').x);
+    expect(at('q').y).toBeGreaterThan(at('a').y);
+    expect(at('q').x).toBeGreaterThan(at('v').x);
+    expect(runsOnNodes(g, m, 'v-q')).toEqual([]);
+    expect(runsOnNodes(g, m, 'a-q')).toEqual([]);
+  });
+
+  it('moves a node the way a second, already placed link asks', () => {
+    // `b` takes the cell right of `a`, so `c` moves off it; `c:B -- T:b` says above, not below.
+    const g = graph({
+      nodes: [node('a'), node('b'), node('c')],
+      edges: [
+        edge('a', 'b', 'right', 'left'),
+        edge('a', 'c', 'right', 'left'),
+        edge('c', 'b', 'bottom', 'top'),
+      ],
+    });
+    const m = compass(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    const at = (id: string) => m.nodes.get(id)!;
+    expect(at('c').x).toBeGreaterThan(at('a').x);
+    expect(at('b').y).toBeGreaterThan(at('c').y);
+  });
+
+  it('keeps the first link’s place when two links cannot both hold', () => {
+    // `p` is right of `y` by one link and left of `x`, which is left of `y`, by the other.
+    const g = graph({
+      nodes: [node('x'), node('y'), node('p')],
+      edges: [
+        edge('x', 'y', 'right', 'left'),
+        edge('x', 'p', 'left', 'right'),
+        edge('y', 'p', 'right', 'left'),
+      ],
+    });
+    const m = compass(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    const at = (id: string) => m.nodes.get(id)!;
+    expect(at('p').x).toBeLessThan(at('x').x);
+    expect(at('p').y).toBe(at('x').y);
+  });
+
+  it('keeps every run of a detoured route off the nodes it does not end on', () => {
+    // `n3` and `n2` stack left of `n1`, so the like-side edge to `n3` came back across `n2`.
+    const g = graph({
+      nodes: [node('n0'), node('n1'), node('n2'), node('n3')],
+      edges: [
+        edge('n3', 'n1', 'top', 'right'),
+        edge('n1', 'n0', 'top', 'bottom'),
+        edge('n1', 'n3', 'left', 'left'),
+        edge('n1', 'n2', 'left', 'left'),
+      ],
+    });
+    const m = compass(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    for (const e of g.edges) expect(runsOnNodes(g, m, e.id), e.id).toEqual([]);
+  });
+});
+
 function overlapsRect(a: Rect, b: Rect): boolean {
   return a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 }
