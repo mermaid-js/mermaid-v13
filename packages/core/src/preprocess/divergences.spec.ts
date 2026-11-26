@@ -87,6 +87,9 @@ const FENCE_CORPUS: string[] = [
   '--- \ntitle: a\n--- x\n---\ngraph TD\n',
   '---\ntitle: a\n---graph TD\n',
   '\uFEFF---\ntitle: after a byte order mark\n---\ngraph TD\n',
+  '%% a comment\n---\ntitle: after a comment line\n---\ngraph TD\n',
+  '%%{init: {"theme": "forest"}}%%\n---\ntitle: after a directive line\n---\ngraph TD\n',
+  'graph TD\n%% a comment\n---\ntitle: not at the start\n---\n',
 ];
 
 interface Divergence {
@@ -118,6 +121,16 @@ const FENCE_DIVERGENCES: Divergence[] = [
     input: '\uFEFF---\ntitle: after a byte order mark\n---\ngraph TD\n',
     decision:
       "v12's `\\s` reads a leading BOM as the opener's indent, so no closing `---` matches; v12 later trims the BOM away and draws the diagram without its front matter (#766). v13 skips one BOM at offset 0 and reads the front matter, so `title` and `config` apply (D642).",
+  },
+  {
+    input: '%% a comment\n---\ntitle: after a comment line\n---\ngraph TD\n',
+    decision:
+      "v12's regex is anchored at the start, so a `%%` line above the fence hides the front matter; v12 then removes comments and Langium types draw without it (#1216). v13 skips blank, `%%` comment and whole directive lines before the fence and reads it, so `title` and `config` apply (D704).",
+  },
+  {
+    input: '%%{init: {"theme": "forest"}}%%\n---\ntitle: after a directive line\n---\ngraph TD\n',
+    decision:
+      'As above, with a directive line above the fence (#1204). The directive still applies, and wins over the front matter for a key set in both, as in v12 (D704, D705).',
   },
 ];
 
