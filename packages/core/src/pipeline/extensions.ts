@@ -39,6 +39,7 @@ import type {
   InlineProvider,
   InlineRequest,
   InlineSpans,
+  LabelBoxer,
   LabelRequest,
 } from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
@@ -468,6 +469,39 @@ function checkResources(plugin: { id: string }, r: unknown): ExtensionResources 
   return res as ExtensionResources;
 }
 
+/** `plugin[hook]`, when the extension has one, needs a `method()` function. */
+function checkProvider(
+  plugin: { id: string; glyphs?: unknown; label?: unknown },
+  hook: 'glyphs' | 'label',
+  method: string
+): void {
+  const provider = plugin[hook] as Record<string, unknown> | undefined;
+  if (provider && typeof provider[method] !== 'function')
+    throw new TypeError(`Extension "${plugin.id}": ${hook} needs a ${method}() function`);
+}
+
+/**
+ * One render's whole-label providers as one function (D695), for label layout to ask through the
+ * render's spans: the first box, checked, with a failure reported as its extension's. `context`
+ * gives an extension's hook context.
+ */
+function labelBoxer<P extends { id: string; label?: LabelProvider }>(
+  labellers: readonly P[],
+  context: (plugin: P) => HookContext
+): LabelBoxer {
+  return (raw, request) => {
+    for (const p of labellers) {
+      try {
+        const box = p.label!.box(raw, request, context(p));
+        if (box) return checkBox(box);
+      } catch (e) {
+        throw failed(p, 'label', e);
+      }
+    }
+    return undefined;
+  };
+}
+
 /** `resource` and its loader, with a failed load reported as `plugin`'s. */
 function need(
   plugin: { id: string },
@@ -506,10 +540,8 @@ export class HookRunner<El = unknown, R = unknown> {
       throw new TypeError(`Extension "${plugin.id}": inline must be an array of providers`);
     const providers = (inline as readonly InlineProvider[]).map((p) => guarded(plugin, p));
     const resources = checkResources(plugin, plugin.resources);
-    if (plugin.glyphs && typeof plugin.glyphs.glyph !== 'function')
-      throw new TypeError(`Extension "${plugin.id}": glyphs needs a glyph() function`);
-    if (plugin.label && typeof plugin.label.box !== 'function')
-      throw new TypeError(`Extension "${plugin.id}": label needs a box() function`);
+    checkProvider(plugin, 'glyphs', 'glyph');
+    checkProvider(plugin, 'label', 'box');
     const drawer = checkOutline(plugin, plugin.outline);
     const at = this.list.findIndex((p) => p.id === plugin.id);
     if (at >= 0) {
@@ -639,20 +671,8 @@ export class HookRunner<El = unknown, R = unknown> {
       }
       return value;
     };
-    // D695: the whole-label providers, for label layout to ask through the render's spans.
     const labellers = list.filter((p) => p.label);
-    if (labellers[0] && ctx.inline)
-      ctx.inline.boxer = (raw, request) => {
-        for (const p of labellers) {
-          try {
-            const box = p.label!.box(raw, request, context(p));
-            if (box) return checkBox(box);
-          } catch (e) {
-            throw failed(p, 'label', e);
-          }
-        }
-        return undefined;
-      };
+    if (labellers[0] && ctx.inline) ctx.inline.boxer = labelBoxer(labellers, context);
     const owner = list.find((p) => this.drawers.has(p));
     let outline: ActiveOutline | undefined | null = owner === undefined ? undefined : null;
     const activeOutline = (): ActiveOutline | undefined => {
