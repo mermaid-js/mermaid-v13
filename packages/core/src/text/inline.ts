@@ -207,6 +207,9 @@ const RE_PLACEHOLDER = new RegExp(
   `[\\u${hex(PLACEHOLDER)}-\\u${hex(PLACEHOLDER + MAX_BOXES - 1)}]`
 );
 
+/** How many of `raw`'s spans may be boxed: none in a label that holds a placeholder character. */
+const roomIn = (raw: string): number => (RE_PLACEHOLDER.test(raw) ? 0 : MAX_BOXES);
+
 /** A span found from `at`: its owner (`by`), where it starts and ends (`next`), and its `source`. */
 interface Found<P> {
   readonly by: P;
@@ -244,6 +247,32 @@ function finder<P extends Spans>(by: P): Finder<P> {
 const escape = (text: string): string => text.replace(/[^\w\s]/g, '\\$&');
 
 const FINDERS = FEATURES.map(finder);
+
+/** The span that starts first from `at`; on a tie, the first finder's. */
+function earliest<P>(finders: readonly Finder<P>[], raw: string, at: number): Found<P> | undefined {
+  let found: Found<P> | undefined;
+  for (const find of finders) {
+    const f = find(raw, at);
+    if (f && (!found || f.start < found.start)) found = f;
+  }
+  return found;
+}
+
+/**
+ * Gives `spans` the warning of each feature's span in `raw` that none of `covered` covers: it is
+ * not drawn (D291). A feature that has warned in this render is not looked for again.
+ */
+function warnUncovered(
+  raw: string,
+  covered: readonly Found<unknown>[],
+  spans: InlineSpans,
+  ascii: boolean
+): void {
+  for (const find of FINDERS)
+    for (let s = find(raw, 0); s && !spans.notRendered(s.by.ascii.feature); s = find(raw, s.next))
+      if (!covered.some((c) => c.start <= s.start && s.next <= c.next))
+        spans.warn(ascii ? s.by.ascii : s.by.warning);
+}
 
 /**
  * The inline spans of one render: `providers` in registration order (the span that starts first
@@ -302,24 +331,17 @@ export function inlineSpans(
     extract(raw, font, measurer) {
       // Without a provider, only a feature's span can be found, and each holds `$$` or `:fa-`.
       if (finders.length === 0 && !raw.includes('$$') && !raw.includes(':fa-')) return undefined;
-      // The spans that may be boxed: a label holding a placeholder character boxes none.
-      const blocked = RE_PLACEHOLDER.test(raw);
+      const room = roomIn(raw);
       const spans: Found<InlineProvider>[] = [];
       const boxes: LabelBoxSpan[] = [];
       let request: InlineRequest | undefined;
       let source = '';
       let at = 0;
-      for (;;) {
-        let found: Found<InlineProvider> | undefined;
-        for (const find of finders) {
-          const f = find(raw, at);
-          if (f && (!found || f.start < found.start)) found = f;
-        }
-        if (!found) break;
+      for (let found = earliest(finders, raw, at); found; found = earliest(finders, raw, at)) {
         const { by, start, next } = found;
         spans.push(found);
         let box: InlineBox | undefined;
-        if (blocked || boxes.length === MAX_BOXES) once(LIMIT);
+        if (boxes.length === room) once(LIMIT);
         else box = by.box(found.source, (request ??= requestFor(font, measurer)));
         if (box) {
           source += raw.slice(at, start) + String.fromCharCode(PLACEHOLDER + boxes.length);
@@ -328,11 +350,7 @@ export function inlineSpans(
         } else source += raw.slice(at, next);
         at = next;
       }
-      // A feature's span that no provider's span covers is not drawn (D291).
-      for (const find of FINDERS)
-        for (let s = find(raw, 0); s && !notDrawn.has(s.by.ascii.feature); s = find(raw, s.next))
-          if (!spans.some((c) => c.start <= s.start && s.next <= c.next))
-            once(ascii ? s.by.ascii : s.by.warning);
+      warnUncovered(raw, spans, self, ascii);
       return boxes.length > 0 ? { source: source + raw.slice(at), boxes } : undefined;
     },
   };
