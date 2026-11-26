@@ -271,7 +271,7 @@ function nodeViews(
   const lanes = typeof m.ctx.layoutPart === 'function';
   for (const view of groups) {
     const [f, bits] = textStyle(view.style, m.font);
-    const [title, md] = groupTitle(subgraphs.get(view.id)!, lanes && view.parent === undefined);
+    const [title, md] = groupTitle(subgraphs.get(view.id)!, lanes, view.parent);
     view.label = m.label(title, md, f, Infinity, bits);
   }
   groups.sort((g, h) => g.depth - h.depth);
@@ -283,8 +283,13 @@ function nodeViews(
  * without quotes (D710); the parser strips only the quoted form's wrapper, so the bare form is
  * read here. A subgraph title keeps flowchart's reading.
  */
-function groupTitle(sg: FlowModelSubgraph, lane: boolean): [string, boolean] {
-  if (sg.labelType === 'markdown' || !lane) return [sg.title, sg.labelType === 'markdown'];
+function groupTitle(
+  sg: FlowModelSubgraph,
+  lanes: boolean,
+  parent: string | undefined
+): [string, boolean] {
+  if (sg.labelType === 'markdown' || !lanes || parent !== undefined)
+    return [sg.title, sg.labelType === 'markdown'];
   const { text, markup } = markdownString(sg.title);
   return [text, markup === 'markdown'];
 }
