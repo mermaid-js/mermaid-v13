@@ -7,7 +7,7 @@
 // Changed from Pele: `route` split into one function per case, with the same cases in the same
 // order; route points with an axis; `clearSpot`, which moves an edge label off any node; and
 // `detour`, which slides a run of a route with two or more bends off a node it would cross (#767,
-// D507). Pele's router sees only the two end boxes.
+// D507, D720), end runs included. Pele's router sees only the two end boxes.
 import type { Point, RoutePoint } from '../types.ts';
 import type { Rect } from '../layered/end-markers.ts';
 import { METRICS } from './metrics.ts';
@@ -273,48 +273,96 @@ function runBox(p: readonly number[], k: number): Rect {
 const runWay = (p: readonly number[], k: number): number =>
   Math.sign(p[2 * k + 2]! - p[2 * k]! + p[2 * k + 3]! - p[2 * k + 1]!);
 
+/** Whether run `j` of `q` still goes the way it went in `p`; a run of no length may go any way. */
+const kept = (p: readonly number[], q: readonly number[], j: number): boolean =>
+  runWay(p, j) === 0 || runWay(q, j) === runWay(p, j);
+
 /**
- * `p` (simplified route points) with each inner run that `blocked` says crosses a node slid
- * across its direction until it is clear: half a cell gap past the node, or a stub past it, on
- * the nearer side first. The runs on either side stretch with it; a slide is kept only when they
- * stay clear and keep their direction. A route with fewer than two bends is returned as it is
- * (D507 keeps v12's look for those), and so is a run no slide clears.
+ * `p` with an elbow a stub out of each port whose run is longer than that: the point twice, so the
+ * rest of an end run can slide like an inner run while the stub stays on the port.
+ */
+function elbows(p: readonly number[]): number[] {
+  const { stub } = METRICS;
+  const q = [...p];
+  for (const [i, j] of [
+    [q.length - 2, q.length - 4],
+    [0, 2],
+  ] as const) {
+    const ux = Math.sign(q[j]! - q[i]!);
+    const uy = Math.sign(q[j + 1]! - q[i + 1]!);
+    if (Math.abs(q[j]! - q[i]!) + Math.abs(q[j + 1]! - q[i + 1]!) <= stub) continue;
+    const x = q[i]! + ux * stub;
+    const y = q[i + 1]! + uy * stub;
+    q.splice(Math.max(i, j), 0, x, y, x, y);
+  }
+  return q;
+}
+
+/**
+ * `p` (simplified route points) with each run that `blocked` says crosses a node slid across its
+ * direction until it is clear: half a cell gap past the node, or a stub past it, on the nearer
+ * side first. An end run slides from a stub out of its port, where the route gains an elbow. The
+ * runs on either side stretch with it and keep their direction; one that the slide puts on a
+ * node slides too (D720), and the slide is kept only when all three are clear. A route with fewer
+ * than two bends is returned as it is (D507 keeps v12's look for those), and so is a route no
+ * slide clears.
  */
 export function detour(p: number[], blocked: (r: Rect) => Rect | undefined): number[] {
   const n = p.length / 2;
   if (n < 4) return p;
-  let out = p;
-  for (let k = 1; k <= n - 3; k++) {
+  let k = 0;
+  while (k < n - 1 && !blocked(runBox(p, k))) k++;
+  if (k === n - 1) return p;
+  let out = elbows(p);
+  let moved = false;
+  for (k = 1; k <= out.length / 2 - 3; k++) {
     const b = blocked(runBox(out, k));
-    if (b) out = slid(out, k, b, blocked) ?? out;
+    const q = b && slid(out, k, b, blocked, true);
+    if (q) [out, moved] = [q, true];
   }
-  return out;
+  return moved ? out : p;
 }
 
-/** `p` with run `k` slid off the node box `b`, or undefined when no slide keeps it clear. */
+/**
+ * `p` with run `k` slid off the node box `b`, or undefined when no slide keeps it clear. When
+ * `deep`, a neighbouring inner run that the slide puts on a node is slid off it in turn.
+ */
 function slid(
   p: readonly number[],
   k: number,
   b: Rect,
-  blocked: (r: Rect) => Rect | undefined
+  blocked: (r: Rect) => Rect | undefined,
+  deep: boolean
 ): number[] | undefined {
   const flat = Math.abs(p[2 * k + 1]! - p[2 * k + 3]!) < 0.01;
   // The coordinate that slides: y for a flat run, x for an upright one.
   const c = flat ? 1 : 0;
   const at = p[2 * k + c]!;
-  const lo = flat ? b.y0 : b.x0;
-  const hi = flat ? b.y1 : b.x1;
+  const [lo, hi] = flat ? (['y0', 'y1'] as const) : (['x0', 'x1'] as const);
+  const past = (r: Rect, dir: number, room: number): number =>
+    dir > 0 ? r[hi] + room : r[lo] - room;
   const { gap, stub } = METRICS;
-  const tries = [hi + gap / 2, lo - gap / 2, hi + stub, lo - stub].sort(
-    (u, v) => Math.abs(u - at) - Math.abs(v - at)
-  );
-  for (const v of tries) {
-    const q = [...p];
-    q[2 * k + c] = v;
-    q[2 * k + 2 + c] = v;
-    const clear = [k - 1, k, k + 1].every((j) => !blocked(runBox(q, j)));
-    const kept = [k - 1, k + 1].every((j) => runWay(q, j) === runWay(p, j));
-    if (clear && kept) return q;
+  // Past the node's far or near side, by half a gap or by a stub: the nearest first.
+  const tries: [number, number][] = [
+    [1, gap / 2],
+    [-1, gap / 2],
+    [1, stub],
+    [-1, stub],
+  ];
+  tries.sort((u, v) => Math.abs(past(b, ...u) - at) - Math.abs(past(b, ...v) - at));
+  const last = p.length / 2 - 2;
+  for (const [dir, room] of tries) {
+    let q = [...p];
+    // On past each node the run lands on, the same way, until it lands on none.
+    for (let hit: Rect | undefined = b; hit; hit = blocked(runBox(q, k))) {
+      q[2 * k + c] = q[2 * k + 2 + c] = past(hit, dir, room);
+    }
+    if (!kept(p, q, k - 1) || !kept(p, q, k + 1)) continue;
+    for (const j of [k - 1, k + 1]) {
+      const on = deep && j > 0 && j < last ? blocked(runBox(q, j)) : undefined;
+      if (on) q = slid(q, j, on, blocked, false) ?? q;
+    }
+    if ([k - 1, k, k + 1].every((j) => !blocked(runBox(q, j)))) return q;
   }
   return undefined;
 }

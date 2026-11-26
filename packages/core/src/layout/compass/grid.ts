@@ -9,7 +9,9 @@
 // Changed from Pele: plain index input (the caller orders groups parents first and resolves
 // `in`), sides as indexes, edge ends that are groups (a flowchart edge to a subgraph: the link
 // places the group's block), and Pele's closures split into methods of one class. The steps and
-// their order are Pele's.
+// their order are Pele's, with two additions (D720): a node a later placed link wants on another
+// side moves there when every link into it still holds, and two members of a group that one
+// outside node reaches through two sides are linked to each other the way those sides ask.
 
 export interface GridInput {
   /** Number of nodes. */
@@ -94,6 +96,8 @@ class Placer {
   // direction it slides (packed as `slideKey`).
   readonly reach = new Map<number, Map<number, number>>();
   first = 0;
+  // Links below this index are `align` hints, which are kept as written.
+  hints = 0;
   ax = 0;
   ay = 0;
 
@@ -128,8 +132,8 @@ class Placer {
     for (let g = 0; g < G; g++) this.kids[this.parent[N + g]!]!.push(N + g);
   }
 
-  addLink(a: number, b: number, sa: number, sb: number, lists: Lists): void {
-    if (a === b) return;
+  /** The innermost container holding `a` and `b`, and the two of its children they are in. */
+  meet(a: number, b: number): [number, number, number] {
     const { N, parent, depth } = this;
     let ia = a;
     let ib = b;
@@ -144,6 +148,19 @@ class Placer {
         cb = parent[ib]!;
       }
     }
+    return [ia, ib, ca];
+  }
+
+  /** Whether item `i` is inside container `c`. */
+  inside(i: number, c: number): boolean {
+    let p = this.parent[i]!;
+    while (p !== c && p !== this.root) p = this.parent[this.N + p]!;
+    return p === c;
+  }
+
+  addLink(a: number, b: number, sa: number, sb: number, lists: Lists): void {
+    if (a === b) return;
+    const [ia, ib] = this.meet(a, b);
     const k = this.linkA.length;
     this.linkA.push(a);
     this.linkB.push(b);
@@ -269,7 +286,65 @@ class Placer {
       bx += dx * far;
       by += dy * far;
     }
-    this.put(to, bx, by);
+    const [px, py] = k < this.hints ? [bx, by] : this.settle(to, from, k, bx, by);
+    this.put(to, px, py);
+  }
+
+  /**
+   * Where `to` goes when link `k` puts it at (`bx`, `by`) and other placed links into it ask for
+   * another side of their far end (D720): moved by what they ask, then on that way to free cells.
+   * It stays at (`bx`, `by`) when they already hold, or when no such place keeps every link. A
+   * second link from `from` itself is drawn as a route of its own and does not move it.
+   */
+  settle(to: number, from: number, k: number, bx: number, by: number): [number, number] {
+    let nx = 0;
+    let ny = 0;
+    for (const j of this.edgeLinks[to] ?? []) {
+      const need = j === k ? undefined : this.need(j, to, bx, by, from);
+      if (!need) continue;
+      if (need[0] * nx < 0 || need[1] * ny < 0) return [bx, by];
+      if (Math.abs(need[0]) > Math.abs(nx)) nx = need[0];
+      if (Math.abs(need[1]) > Math.abs(ny)) ny = need[1];
+    }
+    if (nx === 0 && ny === 0) return [bx, by];
+    const sx = ny === 0 ? Math.sign(nx) : 0;
+    const sy = Math.sign(ny);
+    const far = this.slide(bx + nx, by + ny, this.w[to]!, this.h[to]!, sx, sy);
+    const cx = bx + nx + sx * far;
+    const cy = by + ny + sy * far;
+    for (const j of this.edgeLinks[to] ?? [])
+      if (this.need(j, to, cx, cy, j === k ? -1 : from)) return [bx, by];
+    return [cx, cy];
+  }
+
+  /**
+   * How far `to`, put at (`px`, `py`), must move for link `j` to hold: its end beyond the side the
+   * far end names, and the far end beyond its own side. Undefined when it holds, when the far end
+   * is not placed yet or is `skip`, and for like sides, which never hold.
+   */
+  need(j: number, to: number, px: number, py: number, skip: number): [number, number] | undefined {
+    const toIsB = this.itemB[j] === to;
+    const other = toIsB ? this.itemA[j]! : this.itemB[j]!;
+    const so = toIsB ? this.sideA[j]! : this.sideB[j]!;
+    const st = toIsB ? this.sideB[j]! : this.sideA[j]!;
+    if (other === to || other === skip || !this.placed[other] || so === st) return undefined;
+    this.anchor(toIsB ? this.linkA[j]! : this.linkB[j]!, other);
+    const ox = this.x[other]! + this.ax;
+    const oy = this.y[other]! + this.ay;
+    this.anchor(toIsB ? this.linkB[j]! : this.linkA[j]!, to);
+    const tx = px + this.ax;
+    const ty = py + this.ay;
+    let mx = 0;
+    let my = 0;
+    // Out of `so` from the far end, and back out of `st` from this one, by at least one cell.
+    for (const [ux, uy] of [
+      [DX[so]!, DY[so]!],
+      [-DX[st]!, -DY[st]!],
+    ] as const) {
+      if (ux !== 0 && (tx - ox) * ux < 1) mx = ox + ux - tx;
+      if (uy !== 0 && (ty - oy) * uy < 1) my = oy + uy - ty;
+    }
+    return mx === 0 && my === 0 ? undefined : [mx, my];
   }
 
   /**
@@ -449,6 +524,48 @@ class Placer {
   }
 }
 
+/**
+ * The cell offset `follow` gives the end with side `sq` from the end with side `sp`: a step out of
+ * `sp`, and for a bend a step back from `sq`. None for like sides, which loop.
+ */
+function offset(sp: number, sq: number): [number, number] | undefined {
+  if (sp === sq) return undefined;
+  if (DX[sp]! + DX[sq]! === 0 && DY[sp]! + DY[sq]! === 0) return [DX[sp]!, DY[sp]!];
+  return [DX[sp]! - DX[sq]!, DY[sp]! - DY[sq]!];
+}
+
+/**
+ * A group is placed whole, so of several links from one item outside it to items inside it, only
+ * the first one followed used to decide where its members sit (D326's known gap). Two ends that
+ * one outside item reaches through two sides are now linked to each other, in the places those
+ * sides ask for, after every edge, so the block is built the way both sides can hold (D720).
+ */
+function addTwins(placer: Placer, edges: readonly GridEdge[]): void {
+  // By outside item: the last end reached from it, and that end's offset from it.
+  const last = new Map<number, [number, number, number]>();
+  for (const e of edges) {
+    const ends: [number, number, number, number][] = [
+      [e.a, e.sa, e.b, e.sb],
+      [e.b, e.sb, e.a, e.sa],
+    ];
+    for (const [o, so, end, se] of ends) {
+      const off = offset(so, se);
+      if (!off) continue;
+      const prev = last.get(o);
+      last.set(o, [end, off[0], off[1]]);
+      if (!prev || prev[0] === end || placer.inside(o, placer.meet(prev[0], end)[2])) continue;
+      const dx = Math.sign(off[0] - prev[1]);
+      const dy = Math.sign(off[1] - prev[2]);
+      if (dx === 0 && dy === 0) continue;
+      // Out across when it moves across, else up or down; in from above or below when it moves
+      // up or down, else across. A diagonal is a bend, as `follow` reads one.
+      const sa = dx !== 0 ? [LEFT, RIGHT][(dx + 1) >> 1]! : [TOP, BOTTOM][(dy + 1) >> 1]!;
+      const sb = dy !== 0 ? [BOTTOM, TOP][(dy + 1) >> 1]! : [RIGHT, LEFT][(dx + 1) >> 1]!;
+      placer.addLink(prev[0], end, sa, sb, placer.edgeLinks);
+    }
+  }
+}
+
 export function placeOnGrid(input: GridInput): Grid {
   const placer = new Placer(input);
   for (const hint of input.hints) {
@@ -460,6 +577,7 @@ export function placeOnGrid(input: GridInput): Grid {
       placer.hintLinks
     );
   }
+  placer.hints = placer.linkA.length;
   // An edge between two like sides says least about where its ends go, so those come last.
   for (const likeSides of [false, true]) {
     for (const edge of input.edges) {
@@ -467,6 +585,7 @@ export function placeOnGrid(input: GridInput): Grid {
       placer.addLink(edge.a, edge.b, edge.sa, edge.sb, placer.edgeLinks);
     }
   }
+  addTwins(placer, input.edges);
   for (let c = placer.G - 1; c >= 0; c--) placer.layout(c);
   placer.layout(placer.root);
   return placer.result();

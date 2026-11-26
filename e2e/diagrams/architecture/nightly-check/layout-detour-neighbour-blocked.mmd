@@ -1,0 +1,14 @@
+---
+description: >-
+  #1218, D720: C and D stack left of B, so the like-side line from B to D used to come back
+  into D across C. The run beside C moves off it, from an elbow a stub out of D's side.
+---
+architecture-beta
+  service a(server)[A]
+  service b(server)[B]
+  service c(server)[C]
+  service d(server)[D]
+  d:T -- R:b
+  b:T -- B:a
+  b:L -- L:d
+  b:L -- L:c

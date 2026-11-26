@@ -104,4 +104,32 @@ describe('compass over the architecture corpus (D326)', () => {
     expect({ pairs, pairsGood }).toEqual({ pairs: 11, pairsGood: 11 });
     expect(missed).toMatchSnapshot();
   });
+
+  it('honours both sides into PE Bus in the nested fixture, and its lines cross no service (#1218, D720)', () => {
+    const f = fixtures.find((x) =>
+      x.id.endsWith('a-deterministic-layout-for-a-complex-deeply-nested-diagram.mmd')
+    )!;
+    const at = (id: string) => f.model.nodes.get(id)!;
+    // `web:B --> T:pe2` and `vm1:R --> L:pe2`: below Web App, right of VM.
+    expect(at('pe2').y).toBeGreaterThan(at('web').y);
+    expect(at('pe2').x).toBeGreaterThan(at('vm1').x);
+    const crossed: string[] = [];
+    for (const e of f.graph.edges) {
+      const p = f.model.edges.get(e.id)!.points;
+      for (let k = 1; k < p.length; k++) {
+        const [u, v] = [p[k - 1]!, p[k]!];
+        for (const [id, n] of f.model.nodes) {
+          if (id === e.source || id === e.target) continue;
+          if (
+            Math.min(u.x, v.x) < n.x + n.width / 2 &&
+            n.x - n.width / 2 < Math.max(u.x, v.x) &&
+            Math.min(u.y, v.y) < n.y + n.height / 2 &&
+            n.y - n.height / 2 < Math.max(u.y, v.y)
+          )
+            crossed.push(`${e.source}->${e.target} x ${id}`);
+        }
+      }
+    }
+    expect(crossed).toEqual([]);
+  });
 });
