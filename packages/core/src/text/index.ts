@@ -19,9 +19,7 @@ export type {
   SourceLine,
 } from './label.ts';
 export { decodeEntities, entityAt } from './entities.ts';
-// `PLACEHOLDER`: the character that stands for box `i` in what `LabelRequest.inline` returns
-// (D698), for a whole-label provider that places those boxes itself.
-export { inlineSpans, PLACEHOLDER } from './inline.ts';
+export { inlineSpans } from './inline.ts';
 export type {
   InlinePairProvider,
   InlinePatternProvider,

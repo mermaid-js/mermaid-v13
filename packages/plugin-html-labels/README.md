@@ -51,13 +51,10 @@ Every label goes through [DOMPurify](https://github.com/cure53/DOMPurify) before
 
 Mermaid draws no style sheet. A label takes the font and text colour of the diagram. Its wrapper has the class `html-label` if your page wants to style it, and in a flowchart also v12's class: `nodeLabel` for a node's label or a subgraph's, `edgeLabel` for an edge's. Other diagram types do not say which label is which yet, so their labels have only `html-label`.
 
-## Math and icons
-
-A label with math (`$$…$$`) or an icon (`fa:fa-car`) is an HTML label too. `@mermaid-js/plugin-math` and `@mermaid-js/plugin-icons` draw the math and the icon as SVG, as they do without this plugin, and the HTML leaves room for each where it was written (an empty `span.html-label-box` of that size). Register those plugins as usual; without them the span is shown as written and Mermaid warns `MATH_NOT_RENDERED` or `ICON_NOT_RENDERED`.
-
 ## Where labels stay SVG
 
 - Outside a browser (Node, a worker), in a deterministic render (`deterministic: true`) and in text output. The output is then the same as without the plugin.
+- A label with math (`$$…$$`) or an icon (`fa:…`), so `@mermaid-js/plugin-math` and `@mermaid-js/plugin-icons` still draw it.
 - Text a diagram draws without Mermaid's label layout: all of it in gitgraph, info, railroad, sankey, treemap, treeView and wardley diagrams, and much of it in cynefin, gantt, packet and xychart.
 
 > [!WARNING]

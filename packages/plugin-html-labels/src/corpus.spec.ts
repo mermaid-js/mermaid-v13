@@ -31,10 +31,7 @@ beforeAll(async () => {
     extensionWith({
       document: () => ({}) as Document,
       sanitizer: () => (() => undefined) as never,
-      measure: (_document, _sanitize, { html, boxes }) => (
-        boxed++,
-        { width: 120, height: 42, html, at: boxes.map(() => ({ x: 0, y: 0 })) }
-      ),
+      measure: (_document, _sanitize, { html }) => (boxed++, { width: 120, height: 42, html }),
       mount: () => 0,
     }),
   ]);

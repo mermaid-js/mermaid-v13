@@ -65,7 +65,7 @@ export interface InlinePatternProvider {
 
 /**
  * What a whole-label provider gets with each label (D695): the inline request, how the label
- * wraps, what it names (D699) and the boxes of its inline spans (D698).
+ * wraps and what it names (D699).
  */
 export interface LabelRequest extends InlineRequest {
   /** The width the label wraps at, in px; `Infinity` for a label that wraps only where it says. */
@@ -77,16 +77,6 @@ export interface LabelRequest extends InlineRequest {
    * `undefined` says nothing about the label.
    */
   readonly role?: LabelRole;
-  /**
-   * The inline spans of `text` (the label, or a part of it), boxed by the render's inline
-   * providers as label layout boxes them (D698): `source` is `text` with each boxed span replaced
-   * by a placeholder character ({@link PLACEHOLDER} + its index in `boxes`), and `boxes` holds
-   * each box with its span as written. `undefined` when no span is boxed. It warns as label
-   * layout does for a span that is not drawn (`MATH_NOT_RENDERED`, `ICON_NOT_RENDERED`,
-   * `INLINE_LIMIT`), so a provider that takes a label calls it and places the boxes it gets; one
-   * that does not answers for the label's math and icons itself.
-   */
-  inline(text: string): LabelBoxes | undefined;
 }
 
 /** One render's whole-label providers as one function: the first box, or `undefined`. */
@@ -213,10 +203,7 @@ const FEATURES: readonly Feature[] = [
   },
 ];
 
-/**
- * The first placeholder's code point. Placeholders are Unicode non-characters, which never occur
- * in interchange text; box `i` of a label is `PLACEHOLDER + i`.
- */
+/** Placeholders are Unicode non-characters, which never occur in interchange text. */
 export const PLACEHOLDER = 0xfdd0;
 const MAX_BOXES = 32;
 /** Given once per render when a label's spans are shown as written because of the limits above. */
@@ -347,7 +334,6 @@ export function inlineSpans(
         maxWidth,
         markup,
         role,
-        inline: (text) => self.extract(text, font, measurer),
       });
       if (!box) return undefined;
       const { width, height, baseline, node } = box;

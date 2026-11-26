@@ -14,8 +14,7 @@ interface Calls {
 
 /**
  * An environment without a DOM: a "document" that is only passed along, a measure that gives
- * every label 200 × 60 px, wraps its HTML as the real one does and puts box `i` at
- * (10 + 30 i, 5), and a mount that counts.
+ * every label 200 × 60 px and wraps its HTML as the real one does, and a mount that counts.
  */
 function standIn(hasDocument = true): { env: Env; calls: Calls } {
   const document = hasDocument ? {} : undefined;
@@ -28,43 +27,18 @@ function standIn(hasDocument = true): { env: Env; calls: Calls } {
     },
     measure(_document, _sanitize, label): Measured {
       calls.measured.push(label);
-      return {
-        width: 200,
-        height: 60,
-        html: `<div class="${label.className}">${label.html}</div>`,
-        at: label.boxes.map((_box, i) => ({ x: 10 + 30 * i, y: 5 })),
-      };
+      const html = `<div class="${label.className}">${label.html}</div>`;
+      return { width: 200, height: 60, html };
     },
     mount: () => ++calls.mounted,
   };
   return { env, calls };
 }
 
-/** A stand-in math extension: every `$$…$$` span is a 20 × 12 px box holding a classed path. */
-const math: ExtensionPlugin = {
-  id: 'fixture-math',
-  inline: [
-    {
-      open: '$$',
-      close: '$$',
-      box: () => ({
-        width: 20,
-        height: 12,
-        baseline: 9,
-        node: { tag: 'path', attrs: { class: 'fixture-math' } },
-      }),
-    },
-  ],
-};
-
-async function api(
-  extension: ExtensionPlugin,
-  config: Record<string, unknown> = {},
-  ...others: ExtensionPlugin[]
-) {
+async function api(extension: ExtensionPlugin, config: Record<string, unknown> = {}) {
   const m = createMermaid();
   m.initialize(config);
-  await m.registerExternalDiagrams([...others, extension]);
+  await m.registerExternalDiagrams([extension]);
   return m;
 }
 
@@ -133,68 +107,6 @@ describe('the HTML labels extension', () => {
   });
 });
 
-describe('math and icons in an HTML label (D698)', () => {
-  const TEXT = 'flowchart LR\n  A["Energy $$E=mc^2$$ and $$x$$"] --> B["Plain"]';
-
-  it("leaves room for each inline box and draws the box's SVG there", async () => {
-    const { env, calls } = standIn();
-    const r = await (await api(extensionWith(env), {}, math)).render('x', TEXT);
-    // Every label is HTML: the one with math too.
-    expect(count(r.svg, PLACEHOLDER)).toBe(2);
-    const energy = calls.measured.find((m) => m.html.startsWith('Energy'))!;
-    // A placeholder character stands where each box goes; the TeX is not in the HTML.
-    expect(energy.html).toBe('Energy \ufdd0 and \ufdd1');
-    expect(energy.boxes.map((b) => [b.width, b.height, b.baseline])).toEqual([
-      [20, 12, 9],
-      [20, 12, 9],
-    ]);
-    // The boxes follow the placeholder's rect and desc, at the places the measure gave them.
-    expect(r.svg).toContain(
-      '</desc><g transform="translate(10,5)"><path class="fixture-math"/></g>' +
-        '<g transform="translate(40,5)"><path class="fixture-math"/></g></g>'
-    );
-    expect(r.warnings).toEqual([]);
-    assertInert(r.svg);
-  });
-
-  it('skips a box whose room the measure did not find', async () => {
-    const { env } = standIn();
-    const lost: Env = {
-      ...env,
-      measure: (document, sanitize, label) => ({
-        ...env.measure(document, sanitize, label),
-        at: label.boxes.map(() => undefined),
-      }),
-    };
-    const r = await (await api(extensionWith(lost), {}, math)).render('x', TEXT);
-    expect(count(r.svg, PLACEHOLDER)).toBe(2);
-    expect(r.svg).not.toContain('fixture-math');
-  });
-
-  it("shows a span as written, with core's warning, when no extension draws it", async () => {
-    const { env, calls } = standIn();
-    const text = 'flowchart LR\n  A["Energy $$E=mc^2$$"] --> B["fa:fa-car Car"]';
-    const r = await (await api(extensionWith(env))).render('x', text);
-    expect(calls.measured.map((m) => m.html)).toEqual(['Energy $$E=mc^2$$', 'fa:fa-car Car']);
-    expect(calls.measured.every((m) => m.boxes.length === 0)).toBe(true);
-    expect(r.warnings.map((w) => w.code).sort()).toEqual([
-      'ICON_NOT_RENDERED',
-      'MATH_NOT_RENDERED',
-    ]);
-  });
-
-  it('boxes the spans once for a label it is asked for twice', async () => {
-    const { env } = standIn();
-    let boxed = 0;
-    const counting: ExtensionPlugin = {
-      id: 'counting-math',
-      inline: [{ open: '$$', close: '$$', box: (s, q) => (boxed++, math.inline![0]!.box(s, q)) }],
-    };
-    await (await api(extensionWith(env), {}, counting)).render('x', TEXT);
-    expect(boxed).toBe(2);
-  });
-});
-
 describe('the HTML labels extension declines (D697)', () => {
   /** The svg with the extension over `env` and `config`, and the svg without any extension. */
   async function both(env: Env, config: Record<string, unknown>, text = FLOW) {
@@ -259,6 +171,14 @@ describe('the HTML labels extension declines (D697)', () => {
     const config = { htmlLabels: true, flowchart: { htmlLabels: false } };
     const r = await (await api(extensionWith(env), config)).render('x', FLOW);
     expect(r.svg).toContain('mermaid-html-label');
+  });
+
+  it('for a label with math or an icon, which stays SVG', async () => {
+    const { env, calls } = standIn();
+    const text = 'flowchart LR\n  A["Energy $$E=mc^2$$"] --> B["fa:fa-car Car"] --> C["Plain"]';
+    const r = await (await api(extensionWith(env))).render('x', text);
+    expect(calls.measured.map((m) => m.html)).toEqual(['Plain']);
+    expect(count(r.svg, 'mermaid-html-label')).toBe(1);
   });
 
   it('for text output', async () => {

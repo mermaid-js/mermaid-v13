@@ -15,19 +15,18 @@
  *
  * Its config fragment owns `html.labels` (on by default) and aliases v12's `htmlLabels` keys
  * (D696). The provider declines, and core draws the SVG label, when the key is false, there is
- * no DOM, or the render is deterministic (D697). Text output never asks it.
+ * no DOM, the render is deterministic, or the label holds math or an icon (D697). Text output
+ * never asks it.
  *
- * A label's math and icons are boxed by the math and icons extensions (`LabelRequest.inline`,
- * D698): the HTML leaves room for each box, and the box's SVG is drawn there. The label's
- * wrapper carries v12's `nodeLabel` or `edgeLabel` class where the diagram says what the label
- * names (D699).
+ * The label's wrapper carries v12's `nodeLabel` or `edgeLabel` class where the diagram says what
+ * the label names (D699).
  */
 import type { ExtensionPlugin } from '@mermaid-js/core';
 import { measure, mountLabels } from './dom.ts';
 import { extensionWith } from './extension.ts';
 import { createSanitizer, type LinkRules } from './sanitize.ts';
 
-export { BOX_CLASS, LABEL_CLASS, PLACEHOLDER_CLASS } from './dom.ts';
+export { LABEL_CLASS, PLACEHOLDER_CLASS } from './dom.ts';
 export { ALLOWED_TAGS, labelHtml } from './html.ts';
 export type { LinkRules } from './sanitize.ts';
 

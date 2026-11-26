@@ -3,8 +3,7 @@
  * mounts. `index.ts` gives it the browser's; the specs give it stand-ins, since Node has no DOM.
  */
 import type { ExtensionPlugin, HookContext } from '@mermaid-js/core';
-import { translate } from '@mermaid-js/core/svg';
-import type { InlineBox, LabelRequest, SvgFragment } from '@mermaid-js/core/text';
+import type { InlineBox, LabelRequest } from '@mermaid-js/core/text';
 import {
   LABEL_CLASS,
   PLACEHOLDER_CLASS,
@@ -26,15 +25,15 @@ export interface Env {
   mount: typeof mountLabels;
 }
 
-/** A label as measured, with the inline boxes it left room for (D698). */
-interface Laid extends Measured {
-  readonly boxes: readonly InlineBox[];
-}
+// A math span or an icon, as core finds them (`core/src/text/inline.ts`, D296): such a label
+// stays SVG, so the math and icons extensions still draw it.
+// cspell:disable-next-line
+const RE_INLINE = /\$\$[^]*?\$\$|fa[bdklrs]?:fa-[\w-]+/;
 
 /** What one render keeps between its labels, and for `afterMount`. */
 interface State {
   sanitize?: Sanitize;
-  measured?: Map<string, Laid>;
+  measured?: Map<string, Measured>;
 }
 
 /** Whether this render draws HTML labels at all (D696, D697). */
@@ -47,44 +46,26 @@ function enabled(ctx: HookContext): boolean {
 const classOf = (role: LabelRequest['role']): string =>
   role ? `${LABEL_CLASS} ${role === 'edge' ? 'edgeLabel' : 'nodeLabel'}` : LABEL_CLASS;
 
-/**
- * The label `raw` measured in `document`, once per render for each font, wrap width and role.
- * Its math and icons are boxed by the render's inline providers first (D698): the HTML is made
- * from what is left, with a placeholder character where each box goes.
- */
+/** The label `raw` measured in `document`, once per render for each font, wrap width and role. */
 function measured(
   env: Env,
   document: Document,
   raw: string,
-  request: LabelRequest,
+  { font, maxWidth, markup, role }: LabelRequest,
   ctx: HookContext
-): Laid {
-  const { font, maxWidth, markup, role } = request;
+): Measured {
   const state = ctx.state as State;
   // Layout and drawing may both ask for a label.
   const key = [markup, maxWidth, role, font.family, font.size, font.weight, raw].join('\n');
-  const known = (state.measured ??= new Map<string, Laid>());
+  const known = (state.measured ??= new Map<string, Measured>());
   let label = known.get(key);
   if (!label) {
     state.sanitize ??= env.sanitizer(document, ctx);
-    const spans = request.inline(raw);
-    const boxes = spans?.boxes ?? [];
-    const html = labelHtml(spans?.source ?? raw, markup);
-    const source = { html, font, maxWidth, className: classOf(role), boxes };
-    label = { ...env.measure(document, state.sanitize, source), boxes };
+    const source = { html: labelHtml(raw, markup), font, maxWidth, className: classOf(role) };
+    label = env.measure(document, state.sanitize, source);
     known.set(key, label);
   }
   return label;
-}
-
-/** Each inline box of `label` at the place its room has in the HTML. */
-function placed({ boxes, at }: Laid): SvgFragment[] {
-  return boxes.flatMap((box, i) => {
-    const where = at[i];
-    return where
-      ? [{ tag: 'g', attrs: { transform: translate(where.x, where.y) }, children: [box.node] }]
-      : [];
-  });
 }
 
 /** The extension that measures, sanitizes and mounts through `env`. */
@@ -94,11 +75,10 @@ export function extensionWith(env: Env): ExtensionPlugin<Element, unknown> {
     config: configFragment,
     label: {
       box(raw, request, ctx): InlineBox | undefined {
-        if (!enabled(ctx) || raw.trim() === '') return undefined;
+        if (!enabled(ctx) || raw.trim() === '' || RE_INLINE.test(raw)) return undefined;
         const document = env.document();
         if (!document) return undefined;
-        const label = measured(env, document, raw, request, ctx);
-        const { width, height, html } = label;
+        const { width, height, html } = measured(env, document, raw, request, ctx);
         const { ascent, lineHeight } = request.metrics;
         return {
           width,
@@ -111,7 +91,6 @@ export function extensionWith(env: Env): ExtensionPlugin<Element, unknown> {
             children: [
               { tag: 'rect', attrs: { width, height, fill: 'none' } },
               { tag: 'desc', children: [html] },
-              ...placed(label),
             ],
           },
         };
