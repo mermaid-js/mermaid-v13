@@ -253,19 +253,45 @@ describe('slots and classes', () => {
   });
 });
 
-describe('labels are plain text (v12 .text(), D225 line breaks only)', () => {
-  it('shows markup literally in sections, periods, events and the title; <br> still breaks', async () => {
+describe('label markup (D710, D711)', () => {
+  const textOf = (svg: string, ast: string) =>
+    new RegExp(`<text data-id="${ast}"[^>]*>(.*?)</text>`).exec(svg)![1]!;
+  // A label's runs without the line positions.
+  const runs = (svg: string, ast: string) => textOf(svg, ast).replace(/ x="[^"]*" y="[^"]*"/g, '');
+
+  it('draws <b>, <i> and <u> in sections, periods, events and the title; <br> breaks', async () => {
     const m = fx.timeline(['a <b>bold</b> c', ['a <i>it</i> c<br>next', 'a <u>u</u> &amp; c']], {
       title: 'T <b>x</b>',
     });
     const d = await draw(m, { theme: 'default' });
-    const text = (ast: string) =>
-      new RegExp(`<text data-id="${ast}"[^>]*>(.*?)</text>`).exec(d.r.svg)![1]!;
-    expect(text('sec:1')).toBe('a &lt;b&gt;bold&lt;/b&gt; c');
-    expect(text('per:1')).toMatch(/>a &lt;i&gt;it&lt;\/i&gt; c<\/tspan><tspan[^>]*>next<\/tspan>$/);
-    expect(text('ev:1.1')).toBe('a &lt;u&gt;u&lt;/u&gt; &amp; c');
-    expect(d.r.svg).toMatch(/class="timeline-title"[^>]*>T &lt;b&gt;x&lt;\/b&gt;<\/text>/);
-    expect(d.r.svg).not.toMatch(/font-weight="bold"|font-style|text-decoration/);
+    expect(runs(d.r.svg, 'sec:1')).toBe(
+      '<tspan>a </tspan><tspan font-weight="bold">bold</tspan><tspan> c</tspan>'
+    );
+    expect(runs(d.r.svg, 'per:1')).toBe(
+      '<tspan>a </tspan><tspan font-style="italic">it</tspan><tspan> c</tspan><tspan>next</tspan>'
+    );
+    expect(runs(d.r.svg, 'ev:1.1')).toBe(
+      '<tspan>a </tspan><tspan text-decoration="underline">u</tspan><tspan> &amp; c</tspan>'
+    );
+    expect(d.r.svg).toMatch(/class="timeline-title"[^>]*>.*<tspan font-weight="bold">x<\/tspan>/);
+    expect(d.r.svg).not.toContain('&lt;b&gt;');
+  });
+
+  it('drops other tags, keeps their text, and keeps List<T> and escaped tags as text', async () => {
+    const d = await draw(fx.timeline(['s', ['a <span>in</span> c', 'List<T> and &lt;b&gt;']]), {
+      theme: 'default',
+    });
+    expect(textOf(d.r.svg, 'per:1')).toBe('a in c');
+    expect(textOf(d.r.svg, 'ev:1.1')).toBe('List&lt;T&gt; and &lt;b&gt;');
+  });
+
+  it('lays out markdown strings as markdown; markdown elsewhere stays as written', async () => {
+    const d = await draw(fx.timeline(['"`**md** sec`"', ['`*em*`', '**not** md']]), {
+      theme: 'default',
+    });
+    expect(runs(d.r.svg, 'sec:1')).toBe('<tspan font-weight="bold">md</tspan><tspan> sec</tspan>');
+    expect(runs(d.r.svg, 'per:1')).toBe('<tspan font-style="italic">em</tspan>');
+    expect(textOf(d.r.svg, 'ev:1.1')).toBe('**not** md');
   });
 });
 
