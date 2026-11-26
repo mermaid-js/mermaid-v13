@@ -23,6 +23,7 @@ import {
   rectsOverlap as overlaps,
   within,
 } from '@mermaid-js/shared/testing/layout-invariants';
+import { metricsTable } from './metrics.ts';
 
 type Participants = ReadonlyMap<string, ParticipantLayout>;
 
@@ -152,6 +153,28 @@ function notesClear(layout: SequenceLayout, out: string[]): void {
         if (overlaps(n, r)) out.push(`note ${n.ast} overlaps the box of ${p.id}`);
 }
 
+/** Whether a rectangle and a circle share more than `EPS` of area along any line. */
+function rectCuts(r: Rect, cx: number, cy: number, radius: number): boolean {
+  const dx = cx - Math.max(r.x, Math.min(cx, r.x + r.width));
+  const dy = cy - Math.max(r.y, Math.min(cy, r.y + r.height));
+  return Math.hypot(dx, dy) < radius - EPS;
+}
+
+/**
+ * No message label runs into a sequence number's circle, its own or another message's
+ * (#1337: a self message's label lowered onto its number).
+ */
+function numbersClear(layout: SequenceLayout, out: string[]): void {
+  const radius = metricsTable({ id: layout.units }).fixed.numberRadius;
+  if (radius <= 0) return;
+  for (const n of layout.messages) {
+    if (!n.number) continue;
+    for (const msg of layout.messages)
+      if (msg.label && rectCuts(msg.label, n.number.x, n.y, radius))
+        out.push(`the label of message ${msg.ast} overlaps the number of ${n.ast}`);
+  }
+}
+
 /**
  * A first bar covers its lifeline; a stacked bar starts inside the bar below it (depth one
  * less, open at the time) and right of its left edge. All stay within the participant's span.
@@ -221,6 +244,7 @@ export function sequenceLayoutViolations(model: SequenceModel, layout: SequenceL
   messagesInSpan(layout, parts, out);
   framesHold(model, layout, rectsOf, out);
   notesClear(layout, out);
+  numbersClear(layout, out);
   activationsOnLifeline(layout, parts, out);
   rowsHold(layout, out);
   return out;
