@@ -33,12 +33,18 @@ import { pieGateCorpus } from './corpus.ts';
  *   reports `UNCLOSED_DIRECTIVE`, so v13 rejects the source; v12's directive regex also removed
  *   the line break after it (or, with a `{` argument, the rest of the text). The difference is
  *   in core's directive reading, shared by every type, not in a pie lexer rule.
+ * - `e2e/nightly-check/comment-before-frontmatter.mmd`, a `%%` line above the front matter:
+ *   core reads that front matter (D704) and the pie lexer starts after it; v12 did not find it,
+ *   so its lexer saw the block as hidden `YAML`. The difference is in core's front-matter
+ *   scanner, shared by every type.
  */
+const BEFORE_FENCE = 'core reads front matter after a leading `%%` line (D704)';
 const EXCLUDED: ReadonlyMap<string, string> = new Map([
   [
     'pie-cases/unclosed directive ',
     'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)',
   ],
+  ['e2e/nightly-check/comment-before-frontmatter.mmd', BEFORE_FENCE],
 ]);
 const ERROR = 'LEXICAL_ERROR';
 const HIDDEN = new Set(['YAML', 'DIRECTIVE', 'SINGLE_LINE_COMMENT']);
@@ -125,7 +131,7 @@ describe('pie lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () => {
       `pie lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     // Every e2e fixture reaches the pie lexer.
-    expect(e2e).toBe(52);
+    expect(e2e).toBe(53);
     expect(compared).toBeGreaterThan(450);
     expect(diffs).toEqual([]);
   }, 120_000);

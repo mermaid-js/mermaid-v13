@@ -36,7 +36,11 @@ import { architectureGateCorpus, E2E_FIXTURES } from './corpus.ts';
  *   regex also removed the line break after it (or, with a `{` argument, the rest of the text).
  *   The difference is in core's directive reading, shared by every type (pie's, radar's and
  *   wardley's gates list it too), not in an architecture lexer rule. An unclosed `%%{` after a
- *   statement (`architecture-cases/directive-unclosed-in-line`) is gated.
+ *   statement (`architecture-cases/directive-unclosed-in-line`) is gated. Also
+ *   `e2e/nightly-check/comment-before-frontmatter.mmd` in every variant, a `%%` line above the
+ *   front matter: core reads that front matter (D704) and the lexer starts after it; v12 did not
+ *   find it, so its lexer saw the block as hidden `YAML`. That difference is in core's
+ *   front-matter scanner, shared by every type.
  * - {@link NOT_REACHED}: the sources v12 never lexed as architecture: the cases written so
  *   (`header-upper`, `header-mixed-case`: v12's detector is `/^\s*architecture/`, case
  *   sensitive) and `header-cut-short-by-directive` (no `architecture` once the directive is cut)
@@ -44,14 +48,18 @@ import { architectureGateCorpus, E2E_FIXTURES } from './corpus.ts';
  *   inside the header. `architecture` alone is detected and lexed (as an ID), so it is gated.
  */
 const UNCLOSED = 'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)';
+const BEFORE_FENCE = 'core reads front matter after a leading `%%` line (D704)';
 const variants = (id: string) => [id, `${id} (CRLF)`, `${id} (commented)`];
-const EXCLUDED: ReadonlyMap<string, string> = new Map(
-  [
+const EXCLUDED: ReadonlyMap<string, string> = new Map([
+  ...[
     'architecture-cases/unclosed-directive',
     'architecture-cases/unclosed-directive (CRLF)',
     ...variants('architecture-cases/unclosed-directive-init'),
-  ].map((id) => [id, UNCLOSED])
-);
+  ].map((id) => [id, UNCLOSED] as const),
+  ...variants('e2e/nightly-check/comment-before-frontmatter.mmd').map(
+    (id) => [id, BEFORE_FENCE] as const
+  ),
+]);
 const CUT_HEADER = 'the commented() cut falls inside the header';
 const NOT_REACHED: ReadonlyMap<string, string> = new Map([
   ...[
@@ -155,10 +163,15 @@ describe('architecture lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)',
       if (EXCLUDED.has(item.id)) {
         // Still different, and for the reason given: v13 rejects the source in preprocess.
         if (tokens ?? hidden) excluded.push(item.id);
-        const unclosed = preprocess(item.source).diagnostics.some(
-          (d) => d.code === 'UNCLOSED_DIRECTIVE' && d.severity === 'error'
-        );
-        if (!unclosed) accepted.push(item.id);
+        const pre = preprocess(item.source);
+        // D704: the front matter below the `%%` line is read.
+        const forReason =
+          EXCLUDED.get(item.id) === BEFORE_FENCE
+            ? pre.frontMatter !== undefined
+            : pre.diagnostics.some(
+                (d) => d.code === 'UNCLOSED_DIRECTIVE' && d.severity === 'error'
+              );
+        if (!forReason) accepted.push(item.id);
         continue;
       }
       if (tokens) diffs.push(`${item.id} tokens ${tokens}`);

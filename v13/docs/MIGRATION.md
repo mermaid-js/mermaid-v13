@@ -1325,6 +1325,9 @@ differences, all checked against v12 over the e2e corpus:
   trimmed them).
 - A byte order mark (U+FEFF) before the opening `---` is skipped, so the front matter's `title`
   and `config` apply. v12 drew the diagram but ignored the front matter (D642).
+- `%%` comment lines and whole `%%{…}%%` directive lines before the opening `---` are skipped,
+  so the front matter's `title` and `config` apply. v12 drew the diagram but ignored the front
+  matter. A directive there still applies and wins over the front matter, as in v12 (D704, D705).
 - YAML anchors are rejected, and `__proto__`/`constructor`/`prototype` keys are dropped with a
   warning. The error says that tags, anchors and aliases are not supported, also for an anchor
   on a key that holds a nested mapping (`base: &b` over indented keys).
