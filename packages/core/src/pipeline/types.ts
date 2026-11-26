@@ -70,6 +70,11 @@ export interface RenderContext {
   readonly version: string;
   /** Integrator link schemes for URLs (default http, https, mailto). */
   readonly linkSchemes?: readonly string[];
+  /**
+   * True when the integrator asked for a deterministic render (R-TEXT-4): an extension that
+   * measures with the DOM then leaves the label to core (D695).
+   */
+  readonly deterministic?: boolean;
   /** The layout engine named by `layout` config. */
   layout(graph: LayoutGraph): LayoutModel;
   /**

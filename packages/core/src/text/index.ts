@@ -16,5 +16,7 @@ export type {
   InlineProvider,
   InlineRequest,
   InlineSpans,
+  LabelBoxer,
+  LabelRequest,
 } from './inline.ts';
 export type { InlineBox, LabelBox, LabelBoxSpan, LabelSpan, SvgFragment } from '../svg/writer.ts';

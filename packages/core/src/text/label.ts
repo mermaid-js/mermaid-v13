@@ -116,7 +116,11 @@ export function layoutLabel(
 ): MeasuredLabel {
   const base = options.style ?? 0;
   const { ascent, lineHeight } = measurer.metrics(font);
-  const spans = options.inline?.extract(raw, font, measurer);
+  const markup = options.markdown ? 'markdown' : (options.markup ?? 'plain');
+  // A whole-label provider (D695) is asked first: its box is then the label's only span.
+  const spans =
+    options.inline?.label(raw, font, measurer, maxWidth, markup) ??
+    options.inline?.extract(raw, font, measurer);
   const src = spans?.source ?? raw;
   let left = false;
   const box = (lines: Run[][], indents: number[], widths: number[]): MeasuredLabel => {
@@ -141,7 +145,6 @@ export function layoutLabel(
   const plain = spans ? undefined : plainLabel(src, text, font, maxWidth, measurer, options);
   if (plain) return box(...plain);
 
-  const markup = options.markdown ? 'markdown' : options.markup;
   const markdown = markup === 'markdown';
   const lines: Run[][] = [];
   const indents: number[] = [];

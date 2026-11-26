@@ -364,6 +364,7 @@ export function contextFor(
     idPrefix: id as string,
     version: VERSION,
     linkSchemes: s.options.linkSchemes,
+    deterministic: s.options.deterministic,
     limits: s.limits,
     dataAst: analysis.dataAst,
     now,

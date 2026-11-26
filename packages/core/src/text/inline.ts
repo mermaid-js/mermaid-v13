@@ -4,6 +4,7 @@
 import type { Resource } from '../pipeline/errors.ts';
 import type { IconPacks } from '../pipeline/icon-packs.ts';
 import type { InlineBox, LabelBoxSpan } from '../svg/writer.ts';
+import type { LabelMarkup } from './label.ts';
 import type { FontKey, Measurer, VerticalMetrics } from './measurer.ts';
 
 /** What a provider gets with each span: the label's font and how to size against it. */
@@ -62,6 +63,23 @@ export interface InlinePatternProvider {
   box(source: string, request: InlineRequest): InlineBox | undefined;
 }
 
+/** What a whole-label provider gets with each label (D695): the inline request and how it wraps. */
+export interface LabelRequest extends InlineRequest {
+  /** The width the label wraps at, in px; `Infinity` for a label that wraps only where it says. */
+  readonly maxWidth: number;
+  /** The label's mode (D562). */
+  readonly markup: LabelMarkup;
+}
+
+/** One render's whole-label providers as one function: the first box, or `undefined`. */
+export type LabelBoxer = (raw: string, request: LabelRequest) => InlineBox | undefined;
+
+/** What {@link InlineSpans.extract} and {@link InlineSpans.label} give label layout. */
+interface Boxed {
+  readonly source: string;
+  readonly boxes: readonly LabelBoxSpan[];
+}
+
 /** A warning sink, as `RenderContext.warn`. */
 type Warn = (warning: {
   readonly code: string;
@@ -75,11 +93,21 @@ export interface InlineSpans {
    * Replaces each span a provider boxes with a placeholder character (U+FDD0 + its index) and
    * returns the boxes, or `undefined` when the label has none.
    */
-  extract(
+  extract(raw: string, font: FontKey, measurer: Measurer): Boxed | undefined;
+  /**
+   * The whole label as one box (D695), when {@link InlineSpans.boxer} is set and boxes it: the
+   * source is then one placeholder character. Label layout asks this before `extract`. Text
+   * output and a label that holds a placeholder character get `undefined`.
+   */
+  label(
     raw: string,
     font: FontKey,
-    measurer: Measurer
-  ): { readonly source: string; readonly boxes: readonly LabelBoxSpan[] } | undefined;
+    measurer: Measurer,
+    maxWidth: number,
+    markup: LabelMarkup
+  ): Boxed | undefined;
+  /** The render's whole-label providers (D695). The hook run sets it when an extension has one. */
+  boxer?: LabelBoxer;
   /**
    * Whether this render has warned that `feature`'s spans (`'math'`, `'icon'`) are not drawn: its
    * not-rendered warning (`MATH_NOT_RENDERED`, `ICON_NOT_RENDERED`, from core or a provider) or
@@ -245,11 +273,31 @@ export function inlineSpans(
     given.add(key);
     warn(w);
   };
-  return {
+  const requestFor = (font: FontKey, measurer: Measurer): InlineRequest => ({
+    font,
+    measurer,
+    metrics: measurer.metrics(font),
+    ex: font.size / 2,
+    warn: once,
+    iconPacks,
+    scratch,
+    standIns,
+  });
+  const self: InlineSpans = {
     warn: once,
     scratch,
     dropped: new Set(),
     notRendered: (feature) => notDrawn.has(feature),
+    label(raw, font, measurer, maxWidth, markup) {
+      if (ascii || !self.boxer || RE_PLACEHOLDER.test(raw)) return undefined;
+      const box = self.boxer(raw, { ...requestFor(font, measurer), maxWidth, markup });
+      if (!box) return undefined;
+      const { width, height, baseline, node } = box;
+      return {
+        source: String.fromCharCode(PLACEHOLDER),
+        boxes: [{ kind: 'box', text: raw, width, height, baseline, node }],
+      };
+    },
     extract(raw, font, measurer) {
       // Without a provider, only a feature's span can be found, and each holds `$$` or `:fa-`.
       if (finders.length === 0 && !raw.includes('$$') && !raw.includes(':fa-')) return undefined;
@@ -271,20 +319,7 @@ export function inlineSpans(
         spans.push(found);
         let box: InlineBox | undefined;
         if (blocked || boxes.length === MAX_BOXES) once(LIMIT);
-        else
-          box = by.box(
-            found.source,
-            (request ??= {
-              font,
-              measurer,
-              metrics: measurer.metrics(font),
-              ex: font.size / 2,
-              warn: once,
-              iconPacks,
-              scratch,
-              standIns,
-            })
-          );
+        else box = by.box(found.source, (request ??= requestFor(font, measurer)));
         if (box) {
           source += raw.slice(at, start) + String.fromCharCode(PLACEHOLDER + boxes.length);
           const { width, height, baseline, node } = box;
@@ -300,4 +335,5 @@ export function inlineSpans(
       return boxes.length > 0 ? { source: source + raw.slice(at), boxes } : undefined;
     },
   };
+  return self;
 }

@@ -39,6 +39,7 @@ import type {
   InlineProvider,
   InlineRequest,
   InlineSpans,
+  LabelRequest,
 } from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
 import { MermaidError, type Resource } from './errors.ts';
@@ -101,6 +102,12 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
    * tie, the first registered provider.
    */
   readonly inline?: readonly InlineProvider[];
+  /**
+   * A whole-label provider (D695): label layout asks it for each label before it looks for inline
+   * spans, and draws the box it returns instead of the text. In registration order; the first
+   * box wins. Text output never asks.
+   */
+  readonly label?: LabelProvider;
   /** Glyphs for icons drawn outside labels (D293), which core exposes as `RenderContext.icon`. */
   readonly glyphs?: GlyphProvider;
   /** What it loads lazily, and when a diagram needs it (R-API-2, D178). */
@@ -115,6 +122,17 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
    * variables, known to the validator while the extension is registered.
    */
   readonly config?: ConfigFragment;
+}
+
+/**
+ * An extension's whole-label provider (D695). `box` runs during layout, so it is synchronous. It
+ * lays out `raw`, the label's source as written, and returns its box, whose `node` is drawn with
+ * its top-left corner at the origin and is held to the allow-list as an inline box's is; or it
+ * declines with `undefined`, and core lays the label out. `ctx` is the render's hook context, as
+ * an outline drawer gets it (D655): its config, and the `state` the extension's `afterMount` gets.
+ */
+export interface LabelProvider {
+  box(raw: string, request: LabelRequest, ctx: HookContext): InlineBox | undefined;
 }
 
 /**
@@ -260,6 +278,7 @@ type Hook =
   | 'postRender'
   | 'afterMount'
   | 'inline'
+  | 'label'
   | 'glyphs'
   | 'resources'
   | 'outline';
@@ -489,6 +508,8 @@ export class HookRunner<El = unknown, R = unknown> {
     const resources = checkResources(plugin, plugin.resources);
     if (plugin.glyphs && typeof plugin.glyphs.glyph !== 'function')
       throw new TypeError(`Extension "${plugin.id}": glyphs needs a glyph() function`);
+    if (plugin.label && typeof plugin.label.box !== 'function')
+      throw new TypeError(`Extension "${plugin.id}": label needs a box() function`);
     const drawer = checkOutline(plugin, plugin.outline);
     const at = this.list.findIndex((p) => p.id === plugin.id);
     if (at >= 0) {
@@ -618,6 +639,20 @@ export class HookRunner<El = unknown, R = unknown> {
       }
       return value;
     };
+    // D695: the whole-label providers, for label layout to ask through the render's spans.
+    const labellers = list.filter((p) => p.label);
+    if (labellers[0] && ctx.inline)
+      ctx.inline.boxer = (raw, request) => {
+        for (const p of labellers) {
+          try {
+            const box = p.label!.box(raw, request, context(p));
+            if (box) return checkBox(box);
+          } catch (e) {
+            throw failed(p, 'label', e);
+          }
+        }
+        return undefined;
+      };
     const owner = list.find((p) => this.drawers.has(p));
     let outline: ActiveOutline | undefined | null = owner === undefined ? undefined : null;
     const activeOutline = (): ActiveOutline | undefined => {
