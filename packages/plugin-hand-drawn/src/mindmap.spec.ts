@@ -75,3 +75,75 @@ describe('mindmap hand-drawn (H4, D307, D308(c), D309)', () => {
     expect(/viewBox="[^"]*"/.exec(r.svg)![0]).toBe(/viewBox="[^"]*"/.exec(plain.svg)![0]);
   });
 });
+
+/**
+ * Each sketched node: its shape and the stroke of its outline path (roughjs's `path` set, the
+ * last in its group after the hachure), or undefined when the group is the hachure alone.
+ */
+const sketchOutlines = (svg: string) =>
+  [...svg.matchAll(/<g class="node-bkg node-(\w+)"[^>]*>(.*?)<\/g>/g)].map(([, shape, body]) => {
+    const paths = [...body!.matchAll(/<path [^>]*?\/>/g)].map(([p]) => p);
+    return [shape, paths.length > 1 ? paths.at(-1)! : undefined] as const;
+  });
+const attr = (el: string | undefined, name: string) =>
+  el && new RegExp(` ${name}="([^"]*)"`).exec(el)?.[1];
+const sketchStrokes = (svg: string) =>
+  sketchOutlines(svg).map(([shape, outline]) => [shape, attr(outline, 'stroke')] as const);
+
+/** The root `style`'s declaration of `alias`, or undefined. */
+const declared = (svg: string, alias: string) =>
+  new RegExp(`${alias}:([^;"]*)`).exec(/<svg [^>]*style="([^"]*)"/.exec(svg)![1]!)?.[1];
+
+describe("mindmap hand-drawn node outline (D693, #1256: v12's nodeBorder sketch outline)", () => {
+  it('outlines every shaped node in nodeBorder in a classic theme, not the plain node', async () => {
+    const r = await render('default', 'handDrawn');
+    const strokes = sketchStrokes(r.svg);
+    expect(strokes.filter(([shape]) => shape !== 'default')).toEqual(
+      ['circle', 'rect', 'rect', 'rounded', 'bang', 'cloud', 'hexagon'].map((s) => [
+        s,
+        'var(--_nb)',
+      ])
+    );
+    // At v12's width: the node has none of its own, and roughjs's 1.3 is only its geometry's.
+    const shaped = sketchOutlines(r.svg).filter(([shape]) => shape !== 'default');
+    expect(shaped.map(([, outline]) => attr(outline, 'stroke-width'))).toEqual(
+      shaped.map(() => '1.3')
+    );
+    // v12 did not sketch the plain node and drew it with no outline (D308): its hachure only.
+    expect(strokes.filter(([shape]) => shape === 'default')).toEqual([
+      ['default', undefined],
+      ['default', undefined],
+    ]);
+    // Read before the root is written, so the alias the outlines use is declared.
+    expect(declared(r.svg, '--_nb')).toBe('var(--mermaid-nodeBorder,#9370db)');
+  });
+
+  it("takes the author's nodeBorder", async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    await m.registerExternalDiagrams([handDrawn]);
+    // A classic theme: the default, redux-color, outlines its nodes and never reaches D693.
+    const r = await m.render(
+      'm',
+      `---\nconfig:\n  theme: default\n  look: handDrawn\n  themeVariables:\n    nodeBorder: '#ff0000'\n---\n${SHAPES}`
+    );
+    const shaped = sketchStrokes(r.svg).filter(([shape]) => shape !== 'default');
+    expect(shaped.map(([, stroke]) => stroke)).toEqual(shaped.map(() => 'var(--_nb)'));
+    expect(declared(r.svg, '--_nb')).toBe('var(--mermaid-nodeBorder,#ff0000)');
+  });
+
+  it.each(['redux', 'neo', 'neo-dark'])(
+    'keeps the outline %s draws, and adds no declaration',
+    async (theme) => {
+      const plain = await render(theme);
+      const r = await render(theme, 'handDrawn');
+      const leafStrokes = [
+        ...plain.svg.matchAll(
+          /<(?:path|rect|circle|polygon) [^>]*class="node-bkg node-(\w+)"[^>]*>/g
+        ),
+      ].map(([leaf, shape]) => [shape, /stroke="([^"]*)"/.exec(leaf)?.[1]] as const);
+      expect(sketchStrokes(r.svg)).toEqual(leafStrokes);
+      expect(declared(r.svg, '--_nb')).toBe(declared(plain.svg, '--_nb'));
+    }
+  );
+});

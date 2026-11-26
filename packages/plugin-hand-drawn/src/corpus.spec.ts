@@ -18,6 +18,7 @@ import { assertInert } from '@mermaid-js/core/svg';
 import { PAYLOADS, V12_XSS_CASES } from '@mermaid-js/core/svg/testing';
 import { createMermaid, MermaidError, type ExtensionPlugin } from 'mermaid';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { withNodeBorder } from './border.ts';
 import { handDrawn } from './index.ts';
 import { sketch, type SketchOptions } from './sketch.ts';
 
@@ -106,7 +107,15 @@ function recording(calls: Call[]): ExtensionPlugin {
           },
         };
         const done = outline!.draw(role, tag, attrs, spy, ctx);
-        calls.push({ role, tag, attrs, drawn: done ? drawn : [], seed });
+        // The oracle sketches what the drawer sketches: the leaf, with D693's mindmap outline.
+        // This checks roughjs parity only; which nodes get that outline is pinned in mindmap.spec.ts.
+        calls.push({
+          role,
+          tag,
+          attrs: withNodeBorder(role, attrs, ctx),
+          drawn: done ? drawn : [],
+          seed,
+        });
         return done;
       },
     },
