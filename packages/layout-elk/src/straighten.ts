@@ -4,6 +4,7 @@
  * `projectLabelOntoStraightenedRun`). Pure point maths over the routes ELK gave back.
  */
 import type { Point as P } from '@mermaid-js/core/layout';
+import { sideOf, type Rect } from './geometry.ts';
 
 /**
  * Largest port-to-channel step worth collapsing. ELK layered spreads ports evenly along a side,
@@ -254,4 +255,88 @@ export function straightenEdgeTerminals<E extends StraightenEdge>(
     changed.push({ edge, runs });
   }
   return changed;
+}
+
+/** An edge for `straightenRoutes`: its route and label, and its ends. */
+export interface RouteEdge extends StraightenEdge {
+  id: string;
+  source: string;
+  target: string;
+  /** The boxes at its ends stay where they are: a self-loop (D719), or a route ELK did not place. */
+  fixed: boolean;
+}
+
+/** What `straightenRoutes` reads besides the edges. */
+export interface RouteOptions {
+  /** Whether the step at an edge's ends goes (`straightenEdges`). */
+  jogs: boolean;
+  /** The gap two labels keep (`straightenEdgeTerminals`). */
+  labelGap: number;
+  /** Every box an edge ends on, by id; a box that moves onto its ends is replaced here. */
+  boxes: Map<string, Rect>;
+  /** Whether ELK placed the ends on box `id` itself: no port of it is pinned. */
+  free: (id: string) => boolean;
+  /** The length ELK keeps free at each end of a side (`PORTS_SURROUNDING`). */
+  corner: number;
+}
+
+/**
+ * How far `r` moves to sit centred on its ends `at`, or null when it stays: each end alone on
+ * its side, every side shorter than the two corner margins and parallel, all ends the same way
+ * off centre.
+ */
+function onto(r: Rect, at: P[], corner: number): P | null {
+  const sides = at.map((p) => sideOf(r, p));
+  const across = sides.every((s) => s === 'top' || s === 'bottom');
+  if (new Set(sides).size < sides.length) return null;
+  if (!across && !sides.every((s) => s === 'left' || s === 'right')) return null;
+  if ((across ? r.width : r.height) >= 2 * corner) return null;
+  const off = at.map((p) => (across ? p.x - r.x - r.width / 2 : p.y - r.y - r.height / 2));
+  const d = off[0]!;
+  if (Math.abs(d) < JOG_EPS || off.some((o) => Math.abs(o - d) > JOG_EPS)) return null;
+  return across ? { x: d, y: 0 } : { x: 0, y: d };
+}
+
+/**
+ * A small box moves onto its ends (#1303, D722). On a side shorter than its two corner margins
+ * ELK cannot keep both, and puts a lone end `corner - 1` from the side's start whatever the
+ * port alignment, then lines that end up with the far one: a 14 px start state sat 4 px beside
+ * its edge. Moving the box, not the edge, keeps the edge on the far box's centre too. Two or
+ * more ends on a side ELK spreads about the centre, and pinned ports are where the adapter put
+ * them, so those boxes stay, as do those with a self-loop or an end ELK did not route.
+ */
+function centreOnLoneEnds(edges: RouteEdge[], o: RouteOptions): void {
+  const ends = new Map<string, P[]>();
+  const stays = new Set<string>();
+  for (const e of edges) {
+    for (const [id, p] of [
+      [e.source, e.points[0]!],
+      [e.target, e.points.at(-1)!],
+    ] as const) {
+      ends.set(id, [...(ends.get(id) ?? []), p]);
+      if (e.fixed) stays.add(id);
+    }
+  }
+  for (const [id, at] of ends) {
+    const r = o.boxes.get(id)!;
+    const d = !stays.has(id) && o.free(id) ? onto(r, at, o.corner) : null;
+    if (d) o.boxes.set(id, { ...r, x: r.x + d.x, y: r.y + d.y });
+  }
+}
+
+/**
+ * ELK's routes made good: the step at each end goes (`jogs`, `straightenEdgeTerminals`), and a
+ * small box moves onto its ends (`centreOnLoneEnds`). Rewrites each edge's `points` and
+ * `boxes`; returns where each main label on a run that moved went with it.
+ */
+export function straightenRoutes(edges: RouteEdge[], o: RouteOptions): Map<string, P> {
+  const labelMoved = new Map<string, P>();
+  if (o.jogs)
+    for (const { edge, runs } of straightenEdgeTerminals(edges, o.labelGap)) {
+      if (edge.x === undefined || edge.y === undefined) continue;
+      const at = projectLabelOntoStraightenedRun({ x: edge.x, y: edge.y }, runs);
+      if (at) labelMoved.set(edge.id, at);
+    }
+  centreOnLoneEnds(edges, o);
+  return labelMoved;
 }
