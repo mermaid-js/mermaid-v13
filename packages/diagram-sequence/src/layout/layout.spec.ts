@@ -6,7 +6,7 @@ import { cellProfile, pxProfile, type UnitProfile } from '@mermaid-js/core/layou
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { SequenceModel } from '../model.ts';
-import { FIXTURES, hello, model as modelOf, msg, note, p as part } from './fixtures.ts';
+import { FIXTURES, frag, hello, model as modelOf, msg, note, p as part } from './fixtures.ts';
 import { fontsOf } from './env.ts';
 import { layoutSequence, type SequenceLayout } from './index.ts';
 import { sequenceLayoutViolations } from './invariants.ts';
@@ -247,6 +247,127 @@ describe('message label height above its line (#1237, D723)', () => {
     const l = lay(hello, cellProfile(), cellMeasurer);
     const [m] = l.messages;
     expect([m!.label!.y, m!.y]).toEqual([4, 5]);
+  });
+});
+
+describe('frame title and section label height (#1238, D723)', () => {
+  // mermaid 12.2.0 (the conformance oracle's dist) in Chromium at 16 px: the first line's glyph
+  // box is centred 12.5 px below the frame's top line (or the section's dashed line) in
+  // `default` and 12.59 px in `redux`, for every fragment kind, nested or not. v13's `redux`
+  // draws messages at 14 px, so it is measured here at v12's 16.
+  const V12_CENTRE: Readonly<Record<ThemeName, number>> = { default: 12.5, redux: 12.59 };
+  const AT_16 = { fontSize: '16px' };
+  const two = [msg('A', 'B', 'one')];
+  const KINDS = [
+    ['loop', frag('loop', ['Every minute', two])],
+    ['alt/else', frag('alt', ['is sick', two], ['is well', two], ['other', two])],
+    ['opt', frag('opt', ['Extra response', two])],
+    ['par/and', frag('par', ['Alice to Bob', two], ['Alice to John', two])],
+    ['critical/option', frag('critical', ['Connect', two], ['Timeout', two], ['Rejected', two])],
+    ['break', frag('break', ['when the booking fails', two])],
+    [
+      'nested',
+      frag(
+        'par',
+        ['Alice to Bob', two],
+        ['Alice to John', [frag('par', ['John to Charlie', two], ['John to Diana', two])]]
+      ),
+    ],
+  ] as const;
+  /** Each title's and section label's first-line centre, below the line it hangs from. */
+  const centres = (l: SequenceLayout): number[] =>
+    l.fragments.flatMap((f) => [
+      ...(f.title ? [f.title.y + f.title.text.lineHeight / 2 - f.y] : []),
+      ...f.sections.flatMap((s) =>
+        s.label ? [s.label.y + s.label.text.lineHeight / 2 - s.y] : []
+      ),
+    ]);
+
+  for (const theme of THEMES)
+    for (const [kind, statement] of KINDS)
+      it(`${kind}, ${theme}: v12's centre, within 1 px`, () => {
+        const model = modelOf([part('A'), part('B')], [statement]);
+        const l = lay(model, pxProfile, tableMeasurer, {}, theme, AT_16);
+        const found = centres(l);
+        expect(found.length).toBeGreaterThan(0);
+        for (const c of found) expect(Math.abs(c - V12_CENTRE[theme])).toBeLessThanOrEqual(1);
+      });
+
+  it('never lifts a title above its frame or a section label above its line', () => {
+    const model = modelOf([part('A'), part('B')], [KINDS[1][1]]);
+    const l = lay(model, pxProfile, tableMeasurer, {}, 'default', { fontSize: '40px' });
+    for (const f of l.fragments) {
+      expect(f.title!.y).toBeGreaterThanOrEqual(f.y);
+      for (const s of f.sections) expect(s.label!.y).toBeGreaterThanOrEqual(s.y);
+    }
+  });
+
+  it('keeps every frame, tab, section line and the diagram height where they were', () => {
+    // Pinned before #1238 moved the text: `y+height tab [section lines]` per frame.
+    const r = (v: number): string => v.toFixed(2);
+    const pins = THEMES.map((theme) => {
+      const l = lay(FIXTURES.fragments!, pxProfile, tableMeasurer, {}, theme);
+      const frames = l.fragments.map(
+        (f) =>
+          `${r(f.y)}+${r(f.height)} ${f.tab.height} [${f.sections.map((s) => r(s.y)).join(',')}]`
+      );
+      return `${theme} ${r(l.bounds.height)}: ${frames.join(', ')}`;
+    });
+    expect(pins).toMatchInlineSnapshot(`
+      [
+        "redux 1480.50: 82.10+388.80 35 [], 169.30+291.60 35 [261.50,429.80], 343.70+71.10 35 [], 480.90+276.60 35 [573.10,732.50], 767.50+234.40 35 [859.70], 1011.90+87.20 35 [], 1109.10+35.00 35 [], 1220.20+87.20 35 []",
+        "default 1478.25: 75.00+408.61 20 [], 167.15+306.46 20 [264.30,440.03], 351.46+73.58 20 [], 493.61+291.46 20 [590.76,760.06], 795.06+244.30 20 [892.22], 1049.37+92.15 20 [], 1151.52+20.00 20 [], 1250.10+92.15 20 []",
+      ]
+    `);
+  });
+
+  it('leaves cells as they were', () => {
+    const l = lay(FIXTURES.fragments!, cellProfile(), cellMeasurer);
+    const labels = l.fragments.map((f) => [f.title?.y, f.sections.map((s) => s.label?.y)]);
+    expect(labels).toMatchInlineSnapshot(`
+      [
+        [
+          5,
+          [],
+        ],
+        [
+          10,
+          [
+            15,
+            27,
+          ],
+        ],
+        [
+          undefined,
+          [],
+        ],
+        [
+          31,
+          [
+            36,
+            undefined,
+          ],
+        ],
+        [
+          47,
+          [
+            52,
+          ],
+        ],
+        [
+          60,
+          [],
+        ],
+        [
+          undefined,
+          [],
+        ],
+        [
+          74,
+          [],
+        ],
+      ]
+    `);
   });
 });
 
