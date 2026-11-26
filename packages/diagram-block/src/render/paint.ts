@@ -43,7 +43,7 @@ export interface EdgePaint {
   /** `arrowheadColor`, as flowchart v13 (v12 block's markers took `lineColor`). */
   readonly arrow: Paint;
   readonly heads: Arrowheads;
-  /** `edgeLabelBackground`. */
+  /** `blockEdgeLabelBackground`. */
   readonly labelFill: Paint;
   /** `nodeTextColor`: v12's `.label` and `span` rules reached edge labels too. */
   readonly labelText: Paint;
@@ -127,8 +127,8 @@ export function paints(theme: Theme, model: BlockModel, warn: (w: Warning) => vo
     thickWidth: BLOCK_RENDER.thickEdge,
     arrow: theme.color('arrowheadColor'),
     heads: arrowheads(theme),
-    labelFill: theme.color('edgeLabelBackground'),
-    labelText: node.text,
+    labelFill: theme.color('blockEdgeLabelBackground'),
+    labelText: theme.color('blockEdgeLabelColor'),
   };
   // v12 `genColor`: the fill is the slot's, not the order's, when the arrays differ.
   const slot = paletteSlots(theme, 'slot');
