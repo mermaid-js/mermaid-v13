@@ -520,14 +520,15 @@ class Pixels {
     if (isClear(kept, either)) return kept;
     const apart = cleared(kept, either, false);
     if (apart === kept) return kept;
-    const out = this.folded(apart, [s, e], either);
+    const out = this.folded(k, apart, [s, e], either);
     return routed.length > 4 || out.length === 4 ? out : kept;
   }
 
   /**
    * What blocks a run of edge `k` from `s` to `e`: a node other than its ends; and that, or a run
    * of an edge routed before it that runs along it, unless that edge shares exactly one end with
-   * this one (a bundle from that port).
+   * this one (a bundle from that port). Ends as drawn: a route folded off a port (D721) no longer
+   * leaves it, so a later edge from that port that ran along it would merge into it unseen.
    */
   blockers(k: number, s: Port, e: Port): [Blocked, Blocked] {
     const a = this.endA[k]!;
@@ -544,17 +545,33 @@ class Pixels {
   }
 
   /**
-   * `p` with each end moved along its side to take the detour's first jog where the jog lands on
-   * that side (D721), so the route leaves the side straight from there: an offset rather than a
-   * detour. `p` when that is not clear, and for ends on like sides, which a fold could join.
+   * `p` with each end of edge `k` moved along its side to take the detour's first jog where the
+   * jog lands on that side (D721), so the route leaves the side straight from there: an offset
+   * rather than a detour. `p` when that is not clear, and for ends on like sides, which a fold
+   * could join.
    */
-  folded(p: number[], [s, e]: [Port, Port], blocked: Blocked): number[] {
+  folded(k: number, p: number[], [s, e]: [Port, Port], blocked: Blocked): number[] {
     if (s.dx === e.dx && s.dy === e.dy) return p;
     const q = [...p];
-    foldJog(q, s, false);
-    foldJog(q, e, true);
+    const border = this.graph.edges[k]!.border;
+    foldJog(q, this.face(this.endA[k]!, s, border?.source), false);
+    foldJog(q, this.face(this.endB[k]!, e, border?.target), true);
     const out = simplify(q);
     return isClear(out, blocked) ? out : p;
+  }
+
+  /**
+   * Port `p` of `end`, bounded to where an end may fold along it: a group's whole border, but on
+   * a node only the square about where its ends meet (`anchorY` above and below the anchor line,
+   * as wide, D501). A service's box holds its label below the icon, and an end on the label or
+   * in the air beside the icon would meet nothing.
+   */
+  face(end: number, p: Port, border: boolean | undefined): Port {
+    if (end >= this.N || border) return p;
+    const a = this.anchor[end]!;
+    const mid = (p.x0 + p.x1) / 2;
+    const [x0, x1] = [Math.max(p.x0, mid - a), Math.min(p.x1, mid + a)];
+    return { ...p, x0, x1, y1: Math.min(p.y1, p.y0 + 2 * a) };
   }
 
   routeEdge(k: number): LayoutModelEdge {

@@ -441,6 +441,66 @@ describe('compass: overlapping routes are drawn apart (#1176, D721)', () => {
     expect(ge[0]!.y).not.toBe(m.edges.get('j1-s1')!.points[0]!.y);
   });
 
+  it('never moves a node end off its icon onto the label below it', () => {
+    // Service-like nodes: an 80 px icon on top (anchorY 40), a 20 px label under it. Offsetting
+    // `a:R -- L:b` below the 60 px junction between them would put its ends at y 82, on the
+    // labels. A node's side ends stay where the node meets them.
+    const g = graph({
+      nodes: [
+        node('a'),
+        node('j', { width: 60, height: 60, anchorY: 30, shape: 'junction' }),
+        node('b'),
+      ],
+      edges: [
+        edge('a', 'j', 'right', 'left'),
+        edge('j', 'b', 'right', 'left'),
+        edge('a', 'b', 'right', 'left'),
+      ],
+      align: [{ axis: 'row', members: ['a', 'j', 'b'] }],
+    });
+    const m = compass(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    const pts = m.edges.get('a-b')!.points;
+    for (const [id, p] of [
+      ['a', pts[0]!],
+      ['b', pts.at(-1)!],
+    ] as const) {
+      const n = m.nodes.get(id)!;
+      const top = n.y - n.height / 2;
+      expect(p.y, id).toBeGreaterThanOrEqual(top);
+      expect(p.y, id).toBeLessThanOrEqual(top + 80);
+    }
+  });
+
+  it('keeps a later edge from a port apart from a route that was folded off that port', () => {
+    // `s1-s4` is folded below `j1` along the two group borders, so it no longer leaves the port
+    // on `a`'s border that `s1-s5` leaves. The two share no drawn end, so they are no bundle:
+    // `s1-s5` is drawn beside `s1-s4`, not along it.
+    const g = graph({
+      nodes: [
+        node('s1', { parent: 'a' }),
+        node('s4', { parent: 'b' }),
+        node('s5', { parent: 'b' }),
+        node('j1', { width: 80, height: 80, shape: 'junction' }),
+      ],
+      groups: [
+        { id: 'a', padding: pad },
+        { id: 'b', padding: pad },
+      ],
+      edges: [
+        edge('j1', 's1', 'left', 'right'),
+        edge('j1', 's4', 'right', 'left'),
+        edge('s4', 's5', 'bottom', 'top'),
+        { ...edge('s1', 's4', 'right', 'left'), border: { source: true, target: true } },
+        { ...edge('s1', 's5', 'right', 'left'), border: { source: true, target: true } },
+      ],
+    });
+    const m = compass(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    expect(sharedRuns(g, m)).toEqual([]);
+    for (const e of g.edges) expect(runsOnNodes(g, m, e.id), e.id).toEqual([]);
+  });
+
   it('takes a one-bend route that would cross a node around it', () => {
     // `b` sits right of `a` and above `d`, so `a:R -- T:d` ran through `b` and along `b`'s edges.
     const g = graph({
