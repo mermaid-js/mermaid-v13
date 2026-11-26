@@ -23,10 +23,12 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   2,000 tasks of `9000y` with any `excludes` fit in the source limit. The largest corpus chart
   walks 689 days. Raise it with `initialize({ limits: { maxLayoutWork } })` or a per-call
   `config.limits`.
-- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click names
-  only a task written before it, as v12 bound it while reading the line) and data that
+- **Warnings (D276, D727):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click
+  names only a task written before it, as v12 bound it while reading the line) and data that
   is neither a date nor a duration (`GANTT_BAD_DURATION`), one each per render, where v12 only
-  logged. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
+  logged. The unknown-id text has one clause for each statement involved and says only what
+  that statement did (`after` starts and `until` ends at midnight today, a click does nothing);
+  `__proto__` is reported as a reserved id; the milestone hint appears only for a milestone. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
   10,000 ticks: automatic ticks instead), `GANTT_EXCLUDES_NOT_DRAWN` (a chart over five years
   draws no excluded days, as v12) and `GANTT_CONFIG_IGNORED`.
 - **Nothing at NaN (D277, R-LAYOUT-3):** a chart with nothing to schedule draws its title and
