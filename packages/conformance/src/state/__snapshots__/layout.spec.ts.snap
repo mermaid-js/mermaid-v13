@@ -83,6 +83,7 @@ exports[`layered over parser-produced state graphs > lays out every corpus graph
   "e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-between-nested-composites-written-in-the-inner.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-from-a-child-to-its-own-composite.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-from-a-composite-to-its-own-child.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/nightly-check/entity-without-semicolon.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/forest-theme.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/monospace-font-family-issue-759.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/nested-composite-containers-handdrawn-look-redux-color-theme.mmd": 0,

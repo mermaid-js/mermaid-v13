@@ -25,12 +25,11 @@ async function draw(
 describe('HTML_DROPPED (R-TEXT-3, D566)', () => {
   it('names the tags of #691 once, in SVG and in text output', async () => {
     const out = await draw('flowchart/nightly-check/html-dropped-img.mmd');
-    expect(out.labels).toContain('Logo 2');
+    // `<sub>` is drawn since D710: its own run, plain text in text output, and not named.
+    expect(out.labels).toContain('Logo  2');
     expect(out.text).toContain('Logo 2');
     for (const messages of out.dropped) {
-      expect(messages).toHaveLength(1);
-      expect(messages[0]).toContain('<img>, <sub>');
-      expect(messages[0]).not.toContain('click');
+      expect(messages).toEqual(['Labels do not draw <img>.']);
     }
   });
 
@@ -65,7 +64,7 @@ describe('HTML_DROPPED (R-TEXT-3, D566)', () => {
   it('names the tags the text of a mindmap ::icon() loses', async () => {
     const { svg, warnings } = await svgOf('mindmap/nightly-check/html-dropped-icon-text.mmd');
     expect(drawn(svg)).toContain('fa fa-book');
-    expect(dropped(warnings)).toEqual(['Labels do not draw <u>.']);
+    expect(dropped(warnings)).toEqual(['Labels do not draw <span>.']);
   });
 
   it('keeps what follows a <script> or <style> with no end tag, and drops the tag', async () => {

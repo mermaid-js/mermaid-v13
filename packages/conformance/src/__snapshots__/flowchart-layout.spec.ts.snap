@@ -284,6 +284,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/nightly-check/handdrawn/should-style-nodes-via-a-class.mmd": 0,
   "flowchart/nightly-check/handdrawn/testing-the-label-width-in-percy.mmd": 0,
   "flowchart/nightly-check/handdrawn/text-color-from-classes.mmd": 0,
+  "flowchart/nightly-check/html-drawn-tags.mmd": 0,
   "flowchart/nightly-check/html-dropped-img.mmd": 0,
   "flowchart/nightly-check/html-dropped-links.mmd": 0,
   "flowchart/nightly-check/html-dropped-script.mmd": 0,

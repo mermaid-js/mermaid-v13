@@ -1,7 +1,7 @@
 /**
- * A character reference without its `;` (#1313, D709), through `createMermaid().render()`: in a
- * state note the `;` ends the statement, so `raw &lt; x` leaves `raw &lt`, which v12's browser
- * decoded as HTML text does. The source is the fixture.
+ * A character reference without its `;` (#1313, D709), through `createMermaid().render()`: a state
+ * note's `raw &lt x`, which v12's browser decoded as HTML text does. In #1313 a `;` ended the note
+ * right after `&lt`, which leaves the same text. The source is the fixture.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -15,10 +15,10 @@ const FIXTURE = join(
 );
 
 describe('a legacy entity name without a semicolon (#1313)', () => {
-  it('draws the state note "raw &lt" as "raw <"', async () => {
+  it('draws the state note "raw &lt x" as "raw < x"', async () => {
     const { svg } = await createMermaid().render('e', readFileSync(FIXTURE, 'utf8'));
     // The SVG escapes the decoded `<` once; the reference as written would be `&amp;lt`.
-    expect(svg).toMatch(/>raw &lt;</);
+    expect(svg).toMatch(/>raw &lt; x</);
     expect(svg).not.toContain('&amp;lt');
   });
 });

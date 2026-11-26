@@ -1,9 +1,9 @@
 ---
 description: >-
-  Regression fixture for issue #1313: the `;` ends the note, so its text is
-  `raw &lt` with no semicolon. As in HTML text (D709) the legacy name decodes
-  and the note reads "raw <".
+  Regression fixture for issue #1313: a note holds `&lt` with no semicolon (in
+  the issue a `;` ended the note right after it). As in HTML text (D709) the
+  legacy name decodes and the note reads "raw < x".
 ---
 stateDiagram-v2
   A --> B
-  note right of A : raw &lt; x
+  note right of A : raw &lt x
