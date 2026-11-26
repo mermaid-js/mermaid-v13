@@ -4,11 +4,11 @@
 // Fast path, CJK pieces and soft-hyphen fitting are based on Pele's text/label.ts
 // (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
 import type { LabelBox, LabelBoxSpan, LabelSpan } from '../svg/writer.ts';
-import type { SafeValue } from '../svg/types.ts';
+import type { Attrs, SafeValue } from '../svg/types.ts';
 import { entityAt } from './entities.ts';
 import { PLACEHOLDER, type InlineSpans, type LabelBoxes } from './inline.ts';
 import { SPACE } from '../parser-kit/char-codes.ts';
-import { Style, type FontKey, type Measurer, type StyleBits } from './measurer.ts';
+import { SMALLER, Style, type FontKey, type Measurer, type StyleBits } from './measurer.ts';
 import { SLICE, UNITS, unitsWidth, type SliceMeasurer, type Units } from './table.ts';
 
 /**
@@ -42,10 +42,22 @@ export interface MeasuredLabel extends LabelBox {
 
 /**
  * What a label's source may hold besides text (D562). `plain`: character references, `<br>` and
- * the `<b>`/`<i>` HTML subset. `emphasis`: plain, plus `**`, `*`, `__` and `_`. `markdown`:
- * emphasis, plus inline code, bullet items and backslash escapes.
+ * the drawn HTML tags (`<b>`, `<i>`, `<u>`, `<s>`, `<sub>`, `<sup>` and their aliases, D710).
+ * `emphasis`: plain, plus `**`, `*`, `__` and `_`. `markdown`: emphasis, plus inline code, bullet
+ * items and backslash escapes.
  */
 export type LabelMarkup = 'plain' | 'emphasis' | 'markdown';
+
+/**
+ * A label as written, read by the rule every diagram type shares (D710): a whole label in
+ * backticks, with or without double quotes around them, is a markdown string, returned without
+ * its wrapper in the `markdown` mode. Any other label is returned as written, `plain`.
+ */
+export function markdownString(label: string): { text: string; markup: LabelMarkup } {
+  const md = RE_MARKDOWN_STRING.exec(label.trim())?.[2];
+  return md === undefined ? { text: label, markup: 'plain' } : { text: md, markup: 'markdown' };
+}
+const RE_MARKDOWN_STRING = /^("?)`([^]*)`\1$/;
 
 export interface LabelOptions {
   /** The label's mode. Default `plain`. A markdown string (`"`…`"`) is `markdown`. */
@@ -164,7 +176,7 @@ export function layoutLabel(
   const lines: Run[][] = [];
   const indents: number[] = [];
   const widths: number[] = [];
-  const tags: Tags = { bold: 0, italic: 0, dropped: options.inline?.dropped };
+  const tags: Tags = { open: {}, dropped: options.inline?.dropped };
   // `<script>` and `<style>` lose what they hold, as in v12 (D566); `inline` drops the tags.
   const shown = (markdown ? src : text).replace(RE_SCRIPT, '$1$2').replace(RE_STYLE, '$1$2');
   for (const { source, bullet } of markdown
@@ -232,13 +244,15 @@ function plainLabel(
     }
     if (line === '') push([], 0);
     else if (!slow && (width = measurer.width(line, font, base)) <= maxWidth) {
-      push([run(line, base, width)], width);
+      push([run(line, base, width, font.size)], width);
     } else if (
       // A markdown label's lines come from the untrimmed source; keep that to the general path.
       (markup === 'markdown' && src !== text) ||
       // A line between breaks has none, as tested above.
       (!slow && RE_OTHER_SPACE.test(line)) ||
-      !wrapPlain(line, font, maxWidth, measurer, options, (t, w) => push([run(t, base, w)], w))
+      !wrapPlain(line, font, maxWidth, measurer, options, (t, w) =>
+        push([run(t, base, w, font.size)], w)
+      )
     ) {
       return undefined;
     }
@@ -350,10 +364,25 @@ const HTML_TAGS = new Set(
   ).split(' ')
 );
 
-/** Open `<b>`/`<strong>` and `<i>`/`<em>` tags. HTML tags stay open across line breaks. */
+// The tags that are drawn (D566, D710), with the `Style` bit each sets: Bold 1, Italic 2,
+// Sub 8, Sup 16, Underline 32, Strike 64 (as numbers, which keeps core small).
+const TAG_STYLE: Readonly<Record<string, StyleBits>> = {
+  b: 1,
+  strong: 1,
+  i: 2,
+  em: 2,
+  sub: 8,
+  sup: 16,
+  u: 32,
+  ins: 32,
+  s: 64,
+  strike: 64,
+  del: 64,
+};
+
+/** How many of the drawn tags are open, per style bit. HTML tags stay open across line breaks. */
 interface Tags {
-  bold: number;
-  italic: number;
+  open: Record<StyleBits, number>;
   /** Where the names of the other tags go: the render's `InlineSpans.dropped`. */
   dropped: Set<string> | undefined;
 }
@@ -422,8 +451,8 @@ function inline(
   let style = base;
   let marked = 0;
   const restyle = (): void => {
-    const next =
-      base | marked | (tags.bold > 0 ? Style.Bold : 0) | (tags.italic > 0 ? Style.Italic : 0);
+    let next = base | marked;
+    for (const bit in tags.open) if ((tags.open[bit] as number) > 0) next |= +bit;
     if (next === style) return;
     if (text !== '') out.push({ text, style });
     text = '';
@@ -432,9 +461,9 @@ function inline(
   restyle();
   // Counts one HTML tag: `step` is 1 for a start tag and -1 for an end tag.
   const count = (tag: string, step: number): void => {
-    if (tag === 'b' || tag === 'strong') tags.bold = Math.max(0, tags.bold + step);
-    else if (tag === 'i' || tag === 'em') tags.italic = Math.max(0, tags.italic + step);
-    else tags.dropped?.add(tag);
+    const bit = TAG_STYLE[tag];
+    if (bit === undefined) tags.dropped?.add(tag);
+    else tags.open[bit] = Math.max(0, (tags.open[bit] ?? 0) + step);
     restyle();
   };
   let i = 0;
@@ -841,14 +870,18 @@ function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measure
   const merged = mergePieces(line);
   trimEnds(merged, broken);
   const runs: Run[] = [];
+  // The shift of the run before; the writer places the text after a box afresh.
+  let shift = 0;
   for (const piece of merged) {
     if (piece.box) {
       runs.push({ ...piece.box, style: piece.style } satisfies BoxRun);
+      shift = 0;
       continue;
     }
     const text = piece.text.replace(RE_SHY, '');
     if (text === '') continue;
-    runs.push(run(text, piece.style, measurer.width(text, font, piece.style)));
+    runs.push(run(text, piece.style, measurer.width(text, font, piece.style), font.size, shift));
+    shift = shiftOf(piece.style);
   }
   return runs;
 }
@@ -856,15 +889,30 @@ function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measure
 // Inline code is drawn in the generic monospace family, which the table measures at 0.6 em.
 const MONO = 'monospace' as SafeValue;
 
-function run(text: string, style: StyleBits, width: number): Run {
-  if (style === 0) return { text, style, width };
-  return {
-    text,
-    style,
-    width,
-    ...(style & Style.Bold ? { bold: true } : {}),
-    ...(style & Style.Italic ? { italic: true } : {}),
-    ...(style & Style.Underline ? { underline: true } : {}),
-    ...(style & Style.Mono ? { attrs: { 'font-family': MONO } } : {}),
-  };
+/** How far a run in `style` is shifted down from the baseline, in em (D710). */
+function shiftOf(style: StyleBits): number {
+  if (style & Style.Sup) return -0.4;
+  return style & Style.Sub ? 0.3 : 0;
 }
+
+/**
+ * A run for the writer. Sub- and superscript runs are drawn at the size they are measured at and
+ * shifted with `dy`; `from` is the shift of the run before in the line (in em, at font `size`), which
+ * the run undoes. The line's height does not change.
+ */
+function run(text: string, style: StyleBits, width: number, size: number, from = 0): Run {
+  const r: Writable<Run> = { text, style, width };
+  const attrs: Writable<Attrs> = {};
+  const shift = shiftOf(style);
+  if (style & Style.Bold) r.bold = true;
+  if (style & Style.Italic) r.italic = true;
+  if (style & Style.Underline) r.underline = true;
+  if (style & Style.Strike) r.strike = true;
+  if (style & Style.Mono) attrs['font-family'] = MONO;
+  if (style & (Style.Sub | Style.Sup)) attrs['font-size'] = size / SMALLER;
+  if (shift !== from) attrs.dy = (shift - from) * size;
+  if (style & (Style.Mono | Style.Sub | Style.Sup) || shift !== from) r.attrs = attrs;
+  return r;
+}
+
+type Writable<T> = { -readonly [K in keyof T]: T[K] };

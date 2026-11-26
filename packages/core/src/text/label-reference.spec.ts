@@ -596,12 +596,14 @@ function plainLabel(
     }
     if (line === '') push([], 0);
     else if (!slow && (width = measurer.width(line, font, base)) <= maxWidth) {
-      push([run(line, base, width)], width);
+      push([run(line, base, width, font.size)], width);
     } else if (
       // A markdown label's lines come from the untrimmed source; keep that to the general path.
       (markup === 'markdown' && src !== text) ||
       RE_OTHER_SPACE.test(line) ||
-      !wrapPlain(line, font, maxWidth, measurer, options, (t, w) => push([run(t, base, w)], w))
+      !wrapPlain(line, font, maxWidth, measurer, options, (t, w) =>
+        push([run(t, base, w, font.size)], w)
+      )
     ) {
       return undefined;
     }
@@ -1163,14 +1165,17 @@ function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measure
     if (broken && last.text.endsWith(SHY)) last.text = last.text.slice(0, -1) + '-';
   }
   const runs: Run[] = [];
+  let shift = 0;
   for (const piece of merged) {
     if (piece.box) {
       runs.push({ ...piece.box, style: piece.style } satisfies BoxRun);
+      shift = 0;
       continue;
     }
     const text = piece.text.replace(RE_SHY, '');
     if (text === '') continue;
-    runs.push(run(text, piece.style, measurer.width(text, font, piece.style)));
+    runs.push(run(text, piece.style, measurer.width(text, font, piece.style), font.size, shift));
+    shift = shiftOf(piece.style);
   }
   return runs;
 }
@@ -1178,8 +1183,18 @@ function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measure
 // Inline code is drawn in the generic monospace family, which the table measures at 0.6 em.
 const MONO = 'monospace' as SafeValue;
 
-function run(text: string, style: StyleBits, width: number): Run {
-  if (style === 0) return { text, style, width };
+// Sub- and superscript runs are drawn smaller and shifted since D710, which changes no layout.
+const shiftOf = (style: StyleBits): number =>
+  style & Style.Sup ? -0.4 : style & Style.Sub ? 0.3 : 0;
+
+function run(text: string, style: StyleBits, width: number, size: number, from = 0): Run {
+  const shift = shiftOf(style);
+  if (style === 0 && from === 0) return { text, style, width };
+  const attrs = {
+    ...(style & Style.Mono ? { 'font-family': MONO } : {}),
+    ...(style & (Style.Sub | Style.Sup) ? { 'font-size': size / SMALLER } : {}),
+    ...(shift !== from ? { dy: (shift - from) * size } : {}),
+  };
   return {
     text,
     style,
@@ -1187,7 +1202,8 @@ function run(text: string, style: StyleBits, width: number): Run {
     ...(style & Style.Bold ? { bold: true } : {}),
     ...(style & Style.Italic ? { italic: true } : {}),
     ...(style & Style.Underline ? { underline: true } : {}),
-    ...(style & Style.Mono ? { attrs: { 'font-family': MONO } } : {}),
+    ...(style & Style.Strike ? { strike: true } : {}),
+    ...(Object.keys(attrs).length > 0 ? { attrs } : {}),
   };
 }
 

@@ -4,6 +4,7 @@ import {
   Style,
   inlineSpans,
   layoutLabel,
+  markdownString,
   tableMeasurer,
   type FontKey,
   type LabelMarkup,
@@ -279,9 +280,67 @@ describe('HTML subset (R-TEXT-3)', () => {
   });
 
   it('drops other known tags and keeps their text', () => {
-    expect(runs(layout('<span class="x">a</span> <u>b</u> <a href="x">c</a>'))).toEqual([
+    expect(runs(layout('<span class="x">a</span> <big>b</big> <a href="x">c</a>'))).toEqual([
       [['a b c', 0]],
     ]);
+  });
+
+  // D710: the drawn tags besides bold and italic, the same in every mode.
+  const U = Style.Underline;
+  const S = Style.Strike;
+  it.each<LabelMarkup>(['plain', 'emphasis', 'markdown'])(
+    'underlines <u> and <ins>, strikes <s>, <strike> and <del> (%s)',
+    (markup) => {
+      const box = layoutLabel(
+        '<u>a</u><ins>b</ins> <s>c</s><strike>d</strike><DEL>e</DEL>',
+        arial,
+        Infinity,
+        tableMeasurer,
+        { markup }
+      );
+      expect(box.lines).toEqual([
+        [
+          { text: 'ab', style: U, underline: true, width: 11.12 },
+          { text: ' ', style: 0, width: 2.78 },
+          { text: 'cde', style: S, strike: true, width: 16.12 },
+        ],
+      ]);
+    }
+  );
+
+  it('draws underline and strike-through together', () => {
+    const w = streamWriter();
+    w.label(layout('<u><s>x</s></u>'), 0, 0);
+    expect(w.finish()).toBe(
+      '<text text-anchor="middle" xml:space="preserve"><tspan x="0" y="3.3" text-decoration="underline line-through">x</tspan></text>'
+    );
+  });
+
+  it.each<LabelMarkup>(['plain', 'emphasis', 'markdown'])(
+    'draws <sub> and <sup> smaller and shifted, then shifts back (%s)',
+    (markup) => {
+      const box = layoutLabel('H<sub>2</sub>O x<sup>2</sup>', arial, Infinity, tableMeasurer, {
+        markup,
+      });
+      // Measured at 10 / 1.2 px; moved 0.3 em down and 0.4 em up; the line keeps its height.
+      expect(texts(box)).toEqual(['H2O x2']);
+      expect(box.lines[0]?.map((r) => [r.text, r.style, r.attrs])).toEqual([
+        ['H', 0, undefined],
+        ['2', Style.Sub, { 'font-size': 10 / 1.2, dy: 3 }],
+        ['O x', 0, { dy: -3 }],
+        ['2', Style.Sup, { 'font-size': 10 / 1.2, dy: -4 }],
+      ]);
+      expect(box.lines[0]?.[1]?.width).toBeCloseTo(5.56 / 1.2, 9);
+      expect(box.height).toBe(box.lineHeight);
+    }
+  );
+
+  it('draws sub- and superscript runs through the writer', () => {
+    const w = streamWriter();
+    w.label(layout('x<sup>2</sup>'), 0, 0);
+    expect(w.finish()).toBe(
+      '<text text-anchor="middle" xml:space="preserve"><tspan x="0" y="3.3">x</tspan><tspan font-size="8.33" dy="-4">2</tspan></text>'
+    );
   });
 
   // D566: the render's `InlineSpans.dropped` gets the names; the API warns `HTML_DROPPED`.
@@ -293,12 +352,17 @@ describe('HTML subset (R-TEXT-3)', () => {
 
   it('names the tags it drops, lower case and once each, but not the formatting subset', () => {
     expect(
-      droppedBy('<IMG src="a.png"/> Logo <sub>2</sub> <a href=x>l</a><br><b>b</b><em>e</em>')
+      droppedBy('<IMG src="a.png"/> Logo <big>2</big> <a href=x>l</a><br><b>b</b><em>e</em>')
     ).toEqual([
       ['Logo 2 l', 'be'],
-      ['img', 'sub', 'a'],
+      ['img', 'big', 'a'],
     ]);
     expect(droppedBy('<b>a</b><br/><i>b</i> List<T> <foo> a < b')[1]).toEqual([]);
+    expect(
+      droppedBy(
+        '<u>u</u><ins>i</ins><s>s</s><strike>t</strike><del>d</del><sub>b</sub><sup>p</sup>'
+      )[1]
+    ).toEqual([]);
     expect(droppedBy('plain')[1]).toEqual([]);
   });
 
@@ -427,6 +491,20 @@ describe('markdown strings (R-TEXT-2)', () => {
         [' aaa', 0],
       ],
     ]);
+  });
+});
+
+describe('markdownString (D710)', () => {
+  it('reads a whole label in backticks, with or without quotes, as a markdown string', () => {
+    expect(markdownString('"`**a** b`"')).toEqual({ text: '**a** b', markup: 'markdown' });
+    expect(markdownString('`*a*`')).toEqual({ text: '*a*', markup: 'markdown' });
+    expect(markdownString('  "`a\nb`" ')).toEqual({ text: 'a\nb', markup: 'markdown' });
+  });
+
+  it('returns any other label as written, in the plain mode', () => {
+    for (const label of ['**a**', ' "a" ', '"`a`', '`a`"', 'a `b` c', '']) {
+      expect(markdownString(label)).toEqual({ text: label, markup: 'plain' });
+    }
   });
 });
 

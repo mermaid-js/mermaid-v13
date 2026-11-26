@@ -132,7 +132,7 @@ export interface AttrTypes {
     | 'hanging'
     | 'alphabetic'
     | 'text-before-edge';
-  'text-decoration': SafeValue | 'underline' | 'line-through' | 'none';
+  'text-decoration': SafeValue | 'underline' | 'line-through' | 'underline line-through' | 'none';
   'letter-spacing': Length;
   'xml:space': 'preserve';
   // links and images

@@ -26,7 +26,8 @@ export const v12TokenText = decodePlaceholders;
 
 /**
  * Whether `source` holds a `#name;` whose name core cannot decode, which v13 keeps as written and
- * v12 made `&name;` (D561). The fuzz specs leave such an input out, since a generated input is no
+ * v12 made `&name;` (D561). A name that starts with a legacy name, such as `ltx`, decodes in both,
+ * as HTML text does (`&ltx;` is `<x;`, D709), so it is no difference. The fuzz specs leave such an input out, since a generated input is no
  * corpus item that `divergences/` could list; `fuzz/decided.ts` holds the decision's example.
  * Directives are taken out first, as both versions do: one may sit inside the code.
  */

@@ -298,7 +298,7 @@ export interface TreeSvgWriter extends SvgWriter {
 }
 
 function textDecoration(span: LabelSpan): Attrs['text-decoration'] {
-  if (span.underline) return 'underline';
+  if (span.underline) return span.strike ? 'underline line-through' : 'underline';
   return span.strike ? 'line-through' : span.attrs?.['text-decoration'];
 }
 

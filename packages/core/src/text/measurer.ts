@@ -13,7 +13,7 @@ export interface FontKey {
 /** Bit set of `Style` flags. */
 export type StyleBits = number;
 
-/** Style flags for a text run. Italic and Underline do not change table widths. */
+/** Style flags for a text run. Italic, Underline and Strike do not change table widths. */
 export const Style = {
   Bold: 1,
   Italic: 2,
@@ -21,6 +21,7 @@ export const Style = {
   Sub: 8,
   Sup: 16,
   Underline: 32,
+  Strike: 64,
 } as const;
 
 /** Vertical font metrics in px at the font size. */
