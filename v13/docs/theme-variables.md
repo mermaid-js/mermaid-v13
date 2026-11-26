@@ -495,6 +495,8 @@ flags and opacities, which are read literally.
 | `altBackground` | | color | `#f9f9fb` | `#f9f9fb` | `#16141f` | `#16141f` | `#f0f0f0` | `#555555` | `#f0f0f0` | `#f4f4f4` | `#f6f9ff` | `#f0f0f0` | `#404040` |
 | `stateLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
 | `compositeTitleColor` | | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#000000` | `#dfe0e0` |
+| `stateEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `stateEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### timeline
 

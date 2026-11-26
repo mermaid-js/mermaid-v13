@@ -84,6 +84,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   classEdgeLabelColor: 'D713: v13 ink for the class tag; textColor here, where it reads',
   flowchartEdgeLabelBackground: 'D715: v12 has no variable; the tag fill, D628',
   flowchartEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
+  stateEdgeLabelBackground: 'D715: v12 has no variable; the tag fill, D628',
+  stateEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
   requirementEdgeLabelBackground: 'D715: v12 has no variable; the tag fill, D628',
   requirementEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
