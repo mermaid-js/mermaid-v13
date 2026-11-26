@@ -10,9 +10,12 @@
  * laid out: the graph is laid out without their labels, and when one did not run straight it
  * gets its label back and the graph is laid out again, for the engine to make room for it. The
  * flow engines never draw a level edge straight (they put `b` under `a` for `a:R -- L:b`), so
- * they get every label and lay the graph out once.
+ * they get every label and lay the graph out once. `layered` (and `dagre`) reads no side, so its
+ * model goes through core's `honourSides` (`@mermaid-js/core/layout/sides`, D718), which draws
+ * each line again out of the sides it names; flowchart, which names none, does not load it.
  */
 import type { LayoutEdge, LayoutGraph, LayoutModel } from '@mermaid-js/core/layout';
+import { honourSides } from '@mermaid-js/core/layout/sides';
 import type { ArchitectureModel } from '../model.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
 import { flowEngine, warnPlacementIgnored } from './engine.ts';
@@ -40,7 +43,9 @@ function laidOut(
   graph: LayoutGraph,
   ctx: ArchitectureLayoutContext
 ): { graph: LayoutGraph; layout: LayoutModel } {
-  if (flowEngine(ctx) || !graph.edges.some(level)) return { graph, layout: ctx.layout(graph) };
+  // `layered` reads no side: the lines are drawn again from theirs on its model (D503, D718).
+  if (flowEngine(ctx)) return { graph, layout: honourSides(graph, ctx.layout(graph)) };
+  if (!graph.edges.some(level)) return { graph, layout: ctx.layout(graph) };
   const bare: LayoutGraph = {
     ...graph,
     edges: graph.edges.map((e) => (level(e) ? withoutLabel(e) : e)),

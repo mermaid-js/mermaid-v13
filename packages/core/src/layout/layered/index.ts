@@ -417,8 +417,9 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     groups,
     direction: rootDir,
   };
-  // Sides are hints (D503), honoured by the hook a graph that names them brings (D718).
-  return hooks || !graph.honourSides ? laid : graph.honourSides(graph, laid, M, margin);
+  // Named sides are not read here: `honourSides` (`@mermaid-js/core/layout/sides`) draws them
+  // on the model, called by the diagram that names them, and places the end labels again (D718).
+  return laid;
 }
 
 // Edge-end labels (D102), placed once the routes are final: each sits beside the segment that
@@ -430,7 +431,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
 // node or a group's title. On the grid all of it is whole cells: the label starts in the row or
 // column `along` cells past the end cell, `across` blank cells off the line, and it also moves
 // past every route's end cell and every group border row (column) it would cover.
-function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
+export function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
   if (!graph.edges.some((e) => e.startLabel ?? e.endLabel)) return model;
   const M = graph.metrics ?? pxProfile.engine;
   const walls: Rect[] = [...model.nodes.values()].map((b) => rectOf(b, b));

@@ -3,24 +3,25 @@
 // `anchorY` down a `left`/`right` side (architecture's icon line); an end with no side named stays
 // where layered put it. The named ends on one side of a node are spread along it. A stub runs
 // straight out, then right angles from stub to stub, round the nodes and off the runs of the
-// routes drawn before it; the label moves onto the route, nearest where layered put it. Ranks,
+// routes drawn before it; the label moves beside the route, nearest where layered put it. Ranks,
 // order and boxes stay; the drawing grows where a stub reaches past it. An edge between a node and
 // its own group, and a self-loop on the sides layered's loop took, keep layered's route. Limits:
 // #525 GAPS (T0b): from stub to stub a route has two corners, so it cannot always go round.
-// `@mermaid-js/core/layout/sides`, a subpath core's index does not re-export (D557, D718): only a
-// diagram whose edges name sides loads it, and hands `honourSides` to layered on its graph
-// (`LayoutGraph.honourSides`), so flowchart's closure (R-PERF-1) does not carry it.
+// `@mermaid-js/core/layout/sides`, a subpath core's index does not re-export (D557, D718): layered
+// reads no side; a diagram whose edges name sides passes layered's model through `honourSides`,
+// so flowchart's closure (R-PERF-1) does not carry it, and the graph stays plain data (§6.1).
 import type {
-  HonourSides,
   LayoutEdge,
+  LayoutGraph,
   LayoutModel,
   LayoutModelEdge,
   Point,
   RoutePoint,
   Side,
 } from '../types.ts';
-import type { LayoutMetrics } from '../units.ts';
+import { pxProfile, type LayoutMetrics } from '../units.ts';
 import { hits, OUTWARD, rectOf, type Rect } from './end-markers.ts';
+import { endLabels } from './index.ts';
 
 interface Size {
   width: number;
@@ -84,7 +85,20 @@ function link(
   let best: Point[] = [];
   let low = Infinity;
   let lanes = boxes;
+  const ends = [...seq.slice(-2), to, ...after];
   for (let pass = 0; pass < 2 && low >= 9; pass++) {
+    // Every path tried lies within `gap` of the box round the ends and lanes, so only the walls
+    // that reach near that box can cost it anything: the rest are not looked at again.
+    const fence = grown(
+      [...ends.map((p) => segment(p, p)), ...lanes].reduce((u, r) => ({
+        x0: Math.min(u.x0, r.x0),
+        y0: Math.min(u.y0, r.y0),
+        x1: Math.max(u.x1, r.x1),
+        y1: Math.max(u.y1, r.y1),
+      })),
+      2 * gap
+    );
+    const near = walls.filter((w) => hits(fence, w));
     for (const k of ['x', 'y'] as const) {
       const lines = [to[k], a[k], (a[k] + to[k]) / 2];
       for (const b of lanes) lines.push(b[`${k}0`] - gap, b[`${k}1`] + gap);
@@ -93,12 +107,12 @@ function link(
           { ...a, [k]: v },
           { ...to, [k]: v },
         ];
-        const n = cost([...seq.slice(-2), ...c, to, ...after], walls, gap / 2);
+        const n = cost([...seq.slice(-2), ...c, to, ...after], near, gap / 2);
         if (n < low) [low, best] = [n, c];
       }
     }
     const path = [a, ...best, to];
-    lanes = walls.filter((w) => path.some((q, i) => i > 0 && hits(segment(path[i - 1]!, q), w)));
+    lanes = near.filter((w) => path.some((q, i) => i > 0 && hits(segment(path[i - 1]!, q), w)));
   }
   // A corner on `to` itself would hide the way the route reaches it from the next link.
   return best.filter((c) => c.x !== to.x || c.y !== to.y);
@@ -125,7 +139,8 @@ function place(e: LayoutEdge, which: 'source' | 'target', model: LayoutModel, an
 // Where the label of size `size`, which layered put at `w`, goes beside the route `seq` (D718):
 // the route no longer runs through `w`, which turned it back on itself. Against a leg between the
 // stubs, `gap` off either side of it, at the leg's point nearest `w` or its middle: the place
-// nearest `w` where the label covers no node and no route drawn before; else `w`.
+// nearest `w` where the label covers the fewest walls (nodes, groups' titles, routes and labels
+// placed before), so where none is clear it still sits by its route.
 function labelOn(
   seq: readonly Point[],
   w: Point,
@@ -146,8 +161,10 @@ function labelOn(
     ])
       for (const s of [-0.5, 0.5]) {
         const at = { ...c, [k]: c[k] + s * ((k === 'x' ? size.width : size.height) + 2 * gap) };
-        const d = Math.hypot(at.x - w.x, at.y - w.y);
-        if (d < near && !walls.some((n) => hits(rectOf(at, size), n))) [near, label] = [d, at];
+        const d =
+          Math.hypot(at.x - w.x, at.y - w.y) +
+          1e6 * walls.filter((n) => hits(rectOf(at, size), n)).length;
+        if (d < near) [near, label] = [d, at];
       }
   }
   return label;
@@ -189,23 +206,33 @@ function route(
 // `portPitch` apart, less on a short side, `corner` clear of each end of it, round where one
 // alone would go, ordered by the way each edge's far end lies so that they do not cross. Of two
 // that turn the same way, the one further from where they turn gets the longer stub, so that
-// their runs out are a pitch apart.
+// their runs out are a pitch apart. The ways are read before any side is spread, so that the
+// order of the sides does not matter.
 function spread(sides: Map<string, [End, End][]>, M: LayoutMetrics): void {
+  const way = new Map<[End, End], number>();
+  for (const list of sides.values())
+    for (const u of list) {
+      const [[, side, b], [o]] = u;
+      const { axis, sign } = OUTWARD[side];
+      const k = axis === 'x' ? 'y' : 'x';
+      way.set(u, Math.atan2(o[k] - b[k], sign * (o[axis] - b[axis])));
+    }
   for (const list of sides.values()) {
     const [[[p, side, b]]] = list as [[End, End]];
-    const { axis, sign } = OUTWARD[side];
-    const k = axis === 'x' ? 'y' : 'x';
+    const k = OUTWARD[side].axis === 'x' ? 'y' : 'x';
     const n = list.length - 1;
     if (!n) continue;
-    const room = Math.max(0, (k === 'x' ? b.width : b.height) - 2 * M.corner);
+    // On a side too short for its corners, the ends move into their room, evenly spaced along
+    // it: as far from each other as from either end of the side.
+    const len = k === 'x' ? b.width : b.height;
+    const room = Math.max(len - 2 * M.corner, (len * n) / (n + 2));
     const pitch = Math.min(M.portPitch, room / n);
     const lo = b[k] - room / 2 + (n * pitch) / 2;
     const mid = Math.min(Math.max(p[k], lo), lo + room - n * pitch);
-    const way = ([, [o]]: [End, End]) => Math.atan2(o[k] - b[k], sign * (o[axis] - b[axis]));
-    list.sort((u, v) => way(u) - way(v));
+    list.sort((u, v) => way.get(u)! - way.get(v)!);
     list.forEach((u, i) => {
       u[0][0][k] = mid + (i - n / 2) * pitch;
-      u[0][3] = pitch * (way(u) > 0 ? n - i : i);
+      u[0][3] = pitch * (way.get(u)! > 0 ? n - i : i);
     });
   }
 }
@@ -227,14 +254,11 @@ function grow(model: LayoutModel, drawn: readonly Point[], margin: number): Layo
   for (const p of model.edges.values()) [...p.points, ...(p.label ? [p.label] : [])].forEach(mv);
   return model;
 }
-
-/**
- * Draws the edges of `model` that name a side (D503, D718) again, in place: a stub out of each
- * side (`corner`, plus the start marker at the source and the arrowhead's room and end marker at
- * the target), then right angles from stub to stub, each route a wall to the ones after it. Grows
- * the drawing where they reach into its margin. `layered` calls it as `LayoutGraph.honourSides`.
- */
-export const honourSides: HonourSides = (graph, model, M, margin) => {
+// The edges of `graph` to draw again, with their ends, and the named ends on each side of a node.
+function toDraw(
+  graph: LayoutGraph,
+  model: LayoutModel
+): [[LayoutEdge, End, End][], Map<string, [End, End][]>] {
   // Ids to node indices, then group indices after them, as layered numbers them.
   const index = new Map([...graph.nodes, ...graph.groups].map((n, i) => [n.id, i]));
   const at = (id: string) => index.get(id)!;
@@ -266,30 +290,74 @@ export const honourSides: HonourSides = (graph, model, M, margin) => {
     if (named.source) add(e.source, s, t);
     if (named.target) add(e.target, t, s);
   }
-  if (!todo.length) return model;
+  return [todo, sides];
+}
+
+// Whether the route `pts` runs through the box `n`.
+const through = (pts: readonly Point[], n: Rect): boolean =>
+  pts.some((q, i) => i && hits(segment(pts[i - 1]!, q), n));
+
+// The groups' titles and borders, as walls to the labels: one may cover neither.
+function groupWalls(graph: LayoutGraph, model: LayoutModel): Wall[] {
+  return graph.groups.flatMap((g) => {
+    const b = model.groups.get(g.id)!;
+    const { x0, y0, x1, y1 } = rectOf(b, b);
+    const sides = [
+      { x0, y0, x1, y1: y0 },
+      { x0, y0: y1, x1, y1 },
+      { x0, y0, x1: x0, y1 },
+      { x0: x1, y0, x1, y1 },
+    ];
+    return g.title ? [rectOf(b.title, g.title), ...sides] : sides;
+  });
+}
+
+/**
+ * Draws the edges of `model`, `layered`'s layout of `graph`, that name a side (D503, D718) again,
+ * in place, and returns it: a stub out of each side (`corner`, plus the start marker at the source
+ * and the arrowhead's room and end marker at the target), then right angles from stub to stub,
+ * each route a wall to the ones after it. Grows the drawing where they reach into its margin
+ * (`diagramPadding`). On the grid (D140) it changes nothing.
+ */
+export function honourSides(graph: LayoutGraph, model: LayoutModel): LayoutModel {
+  const M = graph.metrics ?? pxProfile.engine;
+  const [todo, sides] = toDraw(graph, model);
+  if (graph.grid || !todo.length) return model;
   spread(sides, M);
   // Every node is a wall to a route, and so is every route drawn before it (D718).
-  const walls: Wall[] = Array.from(model.nodes.values(), (b) => rectOf(b, b));
+  const nodes = Array.from(model.nodes.values(), (b) => rectOf(b, b));
+  const walls: Wall[] = [...nodes];
   const drawn: Point[] = [];
-  const labels: [Size, LayoutModelEdge, Point[]][] = [];
+  const labels: [Size, LayoutModelEdge, Point[]?][] = [];
   for (const [e, s, t] of todo) {
-    const [redrawn, seq] = route(e, [s, t], model, walls, M, graph.headRoom ?? 0);
-    model.edges.set(e.id, redrawn);
-    const pts = redrawn.points;
+    const was = model.edges.get(e.id)!;
+    const redrawn = route(e, [s, t], model, walls, M, graph.headRoom ?? 0);
+    // Where the sides are the ones layered took, and its route went round a node that this one,
+    // with two corners at most (#525 GAPS), would run through, layered's route stays, label and all.
+    const kept =
+      s[1] === was.ports.source &&
+      t[1] === was.ports.target &&
+      nodes.some((n) => through(redrawn[0].points, n) && !through(was.points, n));
+    const [placed, seq] = kept ? [was] : redrawn;
+    model.edges.set(e.id, placed);
+    const pts = placed.points;
     drawn.push(...pts);
-    if (e.label) labels.push([e.label, redrawn, seq]);
+    if (e.label) labels.push([e.label, placed, seq]);
     // Each run, half a pitch wider all round, is a wall to the runs alongside it.
     for (let i = 1; i < pts.length; i++) {
       walls.push({ ...grown(segment(pts[i - 1]!, pts[i]!), M.portPitch / 2), a: pts[i]!.axis });
     }
   }
-  // Then the labels, half a pitch off their routes, clear of every route and label before them;
-  // the drawing grows to hold them too.
+  // Then the labels, half a pitch off their routes, clear of every route and label before them,
+  // of the groups' titles and across none of their borders; the drawing grows to hold them too.
+  walls.push(...groupWalls(graph, model));
   for (const [size, r, seq] of labels) {
     if (!r.label) continue;
-    const b = rectOf((r.label = labelOn(seq, r.label, size, walls, M.portPitch / 2)), size);
+    if (seq) r.label = labelOn(seq, r.label, size, walls, M.portPitch / 2);
+    const b = rectOf(r.label, size);
     walls.push(b);
     drawn.push({ x: b.x0, y: b.y0 }, { x: b.x1, y: b.y1 });
   }
-  return grow(model, drawn, margin);
-};
+  // The end labels go again beside the routes as drawn (D102).
+  return endLabels(graph, grow(model, drawn, graph.diagramPadding ?? 0), 0);
+}

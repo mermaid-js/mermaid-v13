@@ -8,6 +8,9 @@ import { validateLayout } from '../validate.ts';
 import { layered } from './index.ts';
 import { honourSides } from './sides.ts';
 
+// `layered`, then the named sides drawn on its model, as architecture does (D718).
+const laid = (g: LayoutGraph): LayoutModel => honourSides(g, layered(g));
+
 const r = (x: number): number => Math.round(x * 100) / 100;
 
 function routes(m: LayoutModel): unknown {
@@ -35,7 +38,6 @@ function graph(edges: LayoutEdge[]): LayoutGraph {
     groups: [],
     spacing: { node: 50, rank: 50, edge: 20 },
     diagramPadding: 8,
-    honourSides,
   };
 }
 
@@ -57,7 +59,7 @@ describe('layered: side hints routed again round the nodes', () => {
         sides: { source: 'right', target: 'right' },
       },
     ]);
-    const m = layered(g);
+    const m = laid(g);
     expect(validateLayout(g, m)).toEqual([]);
     expect(m.edges.get('ac')!.ports).toEqual({ source: 'right', target: 'right' });
     expect(routes(m)).toMatchSnapshot();
@@ -76,7 +78,7 @@ describe('layered: side hints routed again round the nodes', () => {
         sides: { source: 'right', target: 'bottom' },
       },
     ]);
-    const m = layered(g);
+    const m = laid(g);
     expect(validateLayout(g, m)).toEqual([]);
     expect(m.edges.get('ac')!.ports).toEqual({ source: 'left', target: 'left' });
     expect(m.edges.get('db')!.ports).toEqual({ source: 'top', target: 'right' });
@@ -86,7 +88,7 @@ describe('layered: side hints routed again round the nodes', () => {
 
   it('draws again, square, the edges whose hints name the sides layered took (D718)', () => {
     const g = graph(CHAIN.map((e) => ({ ...e, sides: { source: 'bottom', target: 'top' } })));
-    const m = layered(g);
+    const m = laid(g);
     expect(validateLayout(g, m)).toEqual([]);
     for (const e of m.edges.values()) {
       expect(e.ports).toEqual({ source: 'bottom', target: 'top' });
@@ -100,7 +102,7 @@ describe('layered: side hints routed again round the nodes', () => {
   });
 
   it("leaves layered's model as it is with no hints", () => {
-    expect(routes(layered(graph(CHAIN)))).toMatchSnapshot();
+    expect(routes(laid(graph(CHAIN)))).toMatchSnapshot();
   });
 });
 
@@ -195,7 +197,6 @@ describe('layered: lanes for routes drawn again (D718)', () => {
     groups: [],
     spacing: { node: 50, rank: 50, edge: 20 },
     diagramPadding: 40,
-    honourSides,
   });
   // #1212's repro: a junction with a line on each side, the one below to a second junction.
   const junctionCross = (label = false): LayoutGraph =>
@@ -220,7 +221,7 @@ describe('layered: lanes for routes drawn again (D718)', () => {
     ]);
   // The edges drawn again: those whose route is not the one layered gives with no sides.
   const redrawn = (g: LayoutGraph, m: LayoutModel): LayoutEdge[] => {
-    const free = layered({ ...g, edges: g.edges.map(({ sides: _, ...e }) => e) });
+    const free = laid({ ...g, edges: g.edges.map(({ sides: _, ...e }) => e) });
     const key = (x: LayoutModel, id: string) => JSON.stringify(x.edges.get(id)!.points);
     return g.edges.filter((e) => key(m, e.id) !== key(free, e.id));
   };
@@ -232,7 +233,7 @@ describe('layered: lanes for routes drawn again (D718)', () => {
     ['the junction cross, labelled', junctionCross(true), true],
     ['a fan out of both sides of a hub', fan(), false],
   ])('keeps the routes drawn again apart: %s', (_, g, clear) => {
-    const m = layered(g);
+    const m = laid(g);
     expect(validateLayout(g, m)).toEqual([]);
     const again = redrawn(g, m);
     expect(again.length).toBeGreaterThan(1);
@@ -250,12 +251,12 @@ describe('layered: lanes for routes drawn again (D718)', () => {
     ['labelled', true],
   ])('never doubles back in the junction cross (#1212, %s)', (_, label) => {
     const g = junctionCross(label);
-    const m = layered(g);
+    const m = laid(g);
     for (const e of g.edges) expect(doublesBack(m.edges.get(e.id)!.points), e.id).toBe(false);
   });
 
   it('spreads the ends on one side of a node along it, round the anchor line', () => {
-    const m = layered(fan());
+    const m = laid(fan());
     const hub = m.nodes.get('hub')!;
     for (const [side, ids] of [
       ['left', ['ha', 'hb']],
@@ -273,7 +274,7 @@ describe('layered: lanes for routes drawn again (D718)', () => {
 
   it('puts the label of a route drawn again beside it, clear of every line and node', () => {
     const g = junctionCross(true);
-    const m = layered(g);
+    const m = laid(g);
     // How far a leg stays from a label's box: negative where it runs through it.
     const gap = (l: Leg, at: Point): number => {
       const [along, across] = l.h ? [at.x, at.y] : [at.y, at.x];

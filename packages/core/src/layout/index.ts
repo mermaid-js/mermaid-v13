@@ -6,7 +6,6 @@ export type {
   Dir,
   EdgeRouting,
   EndMarker,
-  HonourSides,
   LayoutContext,
   LayoutEdge,
   LayoutEngine,
