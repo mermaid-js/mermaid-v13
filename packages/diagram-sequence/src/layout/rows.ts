@@ -201,8 +201,7 @@ export class Rows {
     const { m } = this.env;
     const textH = g.label.height;
     const first = g.label.lines.length > 0 ? g.label.lineHeight : 0;
-    const gap = !self || !this.env.rightAngles ? m.boxMargin.y : 0;
-    const above = m.messageLeadLines * first + textH + gap;
+    const above = m.messageLeadLines * first + textH + this.lineGap(self);
     if (above < reserve) b.bump(reserve - above);
     const starty = b.y;
     b.bump(m.messageLead);
@@ -226,6 +225,32 @@ export class Rows {
     b.bump(total);
     b.insert(g.fromBounds, starty, g.toBounds, b.y);
     return [starty, lineY];
+  }
+
+  /** v12's room between a message's text rows and its line: none for a square self message. */
+  private lineGap(self: boolean): number {
+    return !self || !this.env.rightAngles ? this.env.m.boxMargin.y : 0;
+  }
+
+  /**
+   * The top of a message label (#1237, D723). v12 drew the text's middle 1 em plus half the wrap
+   * padding below `starty + messageLead`, over a line placed from rows it measured in Arial: its
+   * last baseline sits 1 em of the message font plus `lineGap`, less the lead and half the wrap
+   * padding, above the line (11 px at the defaults; v12 10.81 in Chromium), whatever the font and
+   * the number of lines. In cells the label keeps the rows right above its line.
+   */
+  private messageLabelY(
+    label: MeasuredLabel,
+    self: boolean,
+    starty: number,
+    lineY: number
+  ): number {
+    const { m, fonts } = this.env;
+    if (m.cells) return starty + m.messageLead;
+    const n = label.lines.length;
+    const last = label.baselines?.[n - 1] ?? (n - 1) * label.lineHeight + label.baseline;
+    const rise = fonts.message.size + this.lineGap(self) - m.messageLead - m.half(m.wrapPadding);
+    return lineY - rise - last;
   }
 
   /** The lifeline columns of a message's two ends, which its label keeps off (cells only). */
@@ -320,7 +345,7 @@ export class Rows {
                     span,
                     this.lifelinesOf(s)
                   ),
-              starty + m.messageLead
+              this.messageLabelY(label, self, starty, lineY)
             ),
           }
         : {}),
