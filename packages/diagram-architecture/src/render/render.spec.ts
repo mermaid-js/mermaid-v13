@@ -378,6 +378,45 @@ describe('edges (D507)', () => {
   });
 });
 
+describe('label markup (D710, spec #1333 T4)', () => {
+  /** The `<text>` element whose text holds `word`. */
+  const textWith = (svg: string, word: string): string =>
+    [...svg.matchAll(/<text[^>]*>[^]*?<\/text>/g)].map((m) => m[0]).find((t) => t.includes(word)) ??
+    '';
+  const SOURCE = `architecture-beta
+  group g(cloud)["\`**Cloud** *group*\`"]
+  service a(server)["\`**bold** *italic*\`"] in g
+  service b(server)[Line one<br>Line two] in g
+  service c(database)[<b>Bold</b> <i>it</i>]
+  service d(disk)[**literal** *stars*]
+  service t "\`**T**\`"[Text icon]
+  a:R -["\`**edge** label\`"]- L:b
+  b:B -[x<br>y]- T:c
+`;
+
+  it('lays a markdown string out as markdown, without its wrapper, in every kind of label', async () => {
+    const { svg } = await render(SOURCE, grid);
+    // A group title, a service label, an edge label and a text icon.
+    for (const word of ['Cloud', 'bold', 'edge', 'node-icon-text']) {
+      const text = textWith(svg, word);
+      expect(text, word).toMatch(/font-weight="bold">(Cloud|bold|edge|T)</);
+      expect(text, word).not.toMatch(/`|\*\*|monospace/);
+    }
+    expect(textWith(svg, 'italic')).toMatch(/font-style="italic">italic</);
+  });
+
+  it('draws <br> and the tags in a plain label, and keeps markdown syntax literal', async () => {
+    const { svg, warnings } = await render(SOURCE, grid);
+    expect(textWith(svg, 'Line one')).toMatch(/>Line one<\/tspan><tspan[^>]*>Line two</);
+    expect(textWith(svg, '>x<')).toMatch(/>x<\/tspan><tspan[^>]*>y</);
+    expect(textWith(svg, 'Bold')).toMatch(/font-weight="bold">Bold</);
+    expect(textWith(svg, 'Bold')).toMatch(/font-style="italic">it</);
+    expect(textWith(svg, 'literal')).toMatch(/>\*\*literal\*\*<\/tspan><tspan[^>]*>\*stars\*</);
+    expect(textWith(svg, 'literal')).not.toContain('font-weight');
+    expect(codes({ warnings })).toEqual([]);
+  });
+});
+
 describe('theme table (D331, D541)', () => {
   it('colours edges, heads and borders from the five arch* variables', async () => {
     const r = await render(

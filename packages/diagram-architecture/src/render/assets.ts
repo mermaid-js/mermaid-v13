@@ -15,6 +15,7 @@ import type { Point } from '@mermaid-js/core/layout';
 import { scale, transforms, translate, writeFragment, type SvgWriter } from '@mermaid-js/core/svg';
 import {
   layoutLabel,
+  markdownString,
   type BoxRun,
   type FontKey,
   type MeasuredLabel,
@@ -149,7 +150,9 @@ export function fitTextIcon(
 ): MeasuredLabel | undefined {
   const room = sizes.iconSize - 2 * sizes.iconTextMargin;
   if (!(room > 0)) return undefined;
-  const label = layoutLabel(text, font, room, ctx.measurer, { inline: ctx.inline });
+  // A markdown string is laid out as markdown without its wrapper, any other text plain (D710).
+  const { text: source, markup } = markdownString(text);
+  const label = layoutLabel(source, font, room, ctx.measurer, { markup, inline: ctx.inline });
   const bottoms = lineBottoms(label);
   let most = 0;
   while (most < bottoms.length && bottoms[most]! <= room) most++;
