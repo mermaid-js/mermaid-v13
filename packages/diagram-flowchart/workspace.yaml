@@ -33,6 +33,7 @@ languageBundle:
   renderer:
     - render/
     - ascii
+    - theme/
     - plugin.ts
 
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).

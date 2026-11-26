@@ -145,6 +145,8 @@ flags and opacities, which are read literally.
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `flowContainerStroke` | | color | `#adadad` | `#adadad` | `#2f2f2f` | `#2f2f2f` | `#eeeebc` | `#2f2f2f` | `#b4e599` | `#e3e3e3` | `#cfbcd9` | `#b3b3b3` | `#6c6d6d` |
+| `agentflowEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `agentflowEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### architecture
 
@@ -248,6 +250,13 @@ flags and opacities, which are read literally.
 | `emRelationStroke` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `emArrowhead` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `emTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+
+### flowchart
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `flowchartEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `flowchartEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### gantt
 
@@ -488,6 +497,8 @@ flags and opacities, which are read literally.
 | `altBackground` | | color | `#f9f9fb` | `#f9f9fb` | `#16141f` | `#16141f` | `#f0f0f0` | `#555555` | `#f0f0f0` | `#f4f4f4` | `#f6f9ff` | `#f0f0f0` | `#404040` |
 | `stateLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
 | `compositeTitleColor` | | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#000000` | `#dfe0e0` |
+| `stateEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `stateEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### timeline
 

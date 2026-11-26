@@ -7,6 +7,7 @@ import type { FlowModel, FlowParseResult } from './parser/index.ts';
 import type { FlowRenderContext } from './render/context.ts';
 import { layoutFlowchart, renderFlowchart, type FlowLayout } from './render/render.ts';
 import { flowchartIcons, flowchartLabels } from './labels.ts';
+import { theme } from './theme/table.ts';
 
 /** The pipeline's limits, or the ones the integrator config implies (`maxEdges`). */
 const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
@@ -40,6 +41,7 @@ export const flowchart = {
   },
   labels: flowchartLabels,
   icons: flowchartIcons,
+  theme,
   layout: (model: FlowModel, ctx: FlowRenderContext): FlowLayout => layoutFlowchart(model, ctx),
   render: (model: FlowModel, layout: FlowLayout, ctx: FlowRenderContext, w: SvgWriter): void =>
     renderFlowchart(model, layout, ctx, w),

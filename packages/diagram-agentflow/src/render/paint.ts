@@ -61,7 +61,10 @@ export function paints(theme: ThemeOf, prepared: AgentflowPrepared, titled: bool
   const palette =
     border.length > 0 ? { size: border.length, slotOf: paletteSlots(theme) } : undefined;
   const edgeLabel = prepared.edges.some((e) => e.label.width > 0)
-    ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
+    ? {
+        fill: theme.color('agentflowEdgeLabelBackground'),
+        text: theme.color('agentflowEdgeLabelColor'),
+      }
     : undefined;
   const title = titled ? theme.color('textColor') : undefined;
   return { heads, node, frame, card, palette, edgeLabel, title };

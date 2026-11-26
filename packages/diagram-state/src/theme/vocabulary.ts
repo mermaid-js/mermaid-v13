@@ -14,4 +14,8 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   // State text and composite titles (D638, #827): v12's `stateLabelColor` drew both.
   stateLabelColor: { alias: 'stx', kind: 'color', usedBy: ['state'] },
   compositeTitleColor: { alias: 'ctc', kind: 'color', usedBy: ['state'] },
+  // A transition label's tag (#1346): its fill (edgeLabelBackground unless set, D715) and its
+  // ink (textColor where it reads on the fill, D713).
+  stateEdgeLabelBackground: { alias: 'seb', kind: 'color', usedBy: ['state'] },
+  stateEdgeLabelColor: { alias: 'sel', kind: 'color', usedBy: ['state'] },
 };
