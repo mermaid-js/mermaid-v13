@@ -5103,9 +5103,10 @@ export const configSchema: ConfigSchema = {
             "#00008B"
           ],
           "x-mermaid": {
-            "status": "ignored",
+            "status": "removed",
             "since": "13.0.0",
-            "reason": "Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme."
+            "reason": "v12's `fillType<n>` style rules hid it in every theme (D241, D708).",
+            "replacement": "the `fillType<n>` theme variables, n from 0 to 7"
           }
         },
         "sectionColours": {
@@ -5408,9 +5409,10 @@ export const configSchema: ConfigSchema = {
             "#00008B"
           ],
           "x-mermaid": {
-            "status": "ignored",
+            "status": "removed",
             "since": "13.0.0",
-            "reason": "v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`."
+            "reason": "v12's timeline never read it (D708).",
+            "replacement": "the `cScale<n>` theme variables in the classic themes, else `mainBkg` or `borderColorArray` (D227, D257)"
           }
         },
         "sectionColours": {

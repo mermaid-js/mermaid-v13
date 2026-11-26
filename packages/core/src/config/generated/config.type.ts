@@ -912,7 +912,6 @@ activationWidth?: number
  */
 textPlacement?: string
 actorColours?: string[]
-sectionFills?: string[]
 sectionColours?: string[]
 /**
  * Color of the title text in Journey Diagrams
@@ -1023,7 +1022,6 @@ activationWidth?: number
  */
 textPlacement?: string
 actorColours?: string[]
-sectionFills?: string[]
 sectionColours?: string[]
 /**
  * Draws a timeline without sections in one colour slot instead of one slot per period.

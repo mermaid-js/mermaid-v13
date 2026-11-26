@@ -113,6 +113,21 @@ describe('user journeys through the public API (#327)', () => {
     ]);
   });
 
+  it('warns that sectionFills was removed, names fillType0 to fillType7 and draws as without it (#1293, D708)', async () => {
+    const source = 'journey\n  section S\n    Task: 3: Me\n';
+    const m = createMermaid();
+    const plain = await m.render('j', source);
+    const set = await m.render(
+      'j',
+      "---\nconfig:\n  journey:\n    sectionFills: ['#ff0000', '#00ff00']\n---\n" + source
+    );
+    expect(set.svg).toBe(plain.svg);
+    expect(set.warnings.map((w) => [w.code, w.path])).toEqual([
+      ['CONFIG_REMOVED_KEY', 'journey.sectionFills'],
+    ]);
+    expect(set.warnings[0]?.message).toMatch(/fillType<n>.*0 to 7/);
+  });
+
   it("maps each task dot to its actor mention; '' draws none and legend rows carry data-id only", async () => {
     const { svg } = await createMermaid().render('j', 'journey\n  A: 5: Me, , You\n  B: 3: Me,\n');
     const dots = [
