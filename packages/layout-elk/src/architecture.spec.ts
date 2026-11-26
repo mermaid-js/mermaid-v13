@@ -128,7 +128,15 @@ const FIXTURES = walk(join(REPO, 'e2e/diagrams/architecture'))
   .sort();
 
 /** `text` with `layout: elk` in its front matter's config, in place of any `layout` it sets. */
-function withElk(text: string): string {
+function withElk(source: string): string {
+  // `%%` lines may come before the front matter (D704); they stay first.
+  let at = 0;
+  while (source.startsWith('%%', at) && source.includes('\n', at))
+    at = source.indexOf('\n', at) + 1;
+  return source.slice(0, at) + withElkConfig(source.slice(at));
+}
+
+function withElkConfig(text: string): string {
   if (!text.startsWith('---\n')) return `---\nconfig:\n  layout: elk\n---\n${text}`;
   const end = text.indexOf('\n---', 3);
   const own = /^ {2}layout:.*$/m.exec(text.slice(0, end));
