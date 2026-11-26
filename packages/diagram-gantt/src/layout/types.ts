@@ -21,9 +21,10 @@ export interface PlacedText {
 
 export interface GanttTaskLabel extends PlacedText {
   /**
-   * v12's class rule (`taskText`, `taskTextOutsideRight|Left`), which reads `endTime` where
-   * `x` reads `renderEndTime`, so with excludes the two can disagree (v12, kept). The anchor
-   * follows the side; a `vert` label is centred whatever its side (`.vertText`).
+   * v12's class rule (`taskText`, `taskTextOutsideRight|Left`), here read from the drawn width
+   * (`renderEndTime`) as `x` is: v12 read `endTime`, so with excludes a label wider than the
+   * shortened bar sat across its end (D729). The anchor follows the side; a `vert` label is
+   * centred whatever its side (`.vertText`).
    */
   readonly side: LabelSide;
 }

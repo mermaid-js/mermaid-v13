@@ -2053,6 +2053,11 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   shown as written, as v12 drew them with `.text()`. A reference typed with `&` (`&amp;`) is
   decoded too; v12 showed it as written. A `#name;` Mermaid does not know stays as written
   (D561).
+- **A label wider than its bar goes outside it (D729, provisional):** with `excludes`, a task's
+  bar is drawn shorter than its span. v12 chose the label's side from the whole span and placed
+  it from the drawn bar, so a label wider than the drawn bar but not than the span was centred on
+  the bar's end, across the bar. v13 chooses the side from the drawn bar: such a label goes right
+  of the bar, or left near the chart's edge. Labels that fit are unchanged.
 
 ### Config
 

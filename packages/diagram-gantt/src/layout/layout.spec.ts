@@ -6,7 +6,7 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { GanttModel } from '../model.ts';
 import { parseGantt } from '../parser/index.ts';
 import { fixture, type LayoutFixture } from './fixtures.ts';
-import { layoutGantt, type GanttLayout } from './index.ts';
+import { layoutGantt, type GanttBar, type GanttLayout } from './index.ts';
 import { ganttLayoutViolations } from './invariants.ts';
 
 // Spec #293 T3: the layout seam, on hand-built models. Expected numbers are v12's formulas
@@ -628,5 +628,60 @@ describe('final review fixes', () => {
       ['B', 's:B'],
       ['A', 's:A@2'],
     ]);
+  });
+});
+
+type RawGlob = (
+  pattern: string,
+  options: { query: '?raw'; import: 'default'; eager: true }
+) => Readonly<Record<string, string>>;
+const FIXTURES = (import.meta as ImportMeta & { glob: RawGlob }).glob(
+  '../../../../e2e/diagrams/gantt/**/*.mmd',
+  { query: '?raw', import: 'default', eager: true }
+);
+
+/** The model of the fixture at `path` under `e2e/diagrams/gantt/`, front matter dropped. */
+function fixtureModel(path: string): GanttModel {
+  const source = FIXTURES[`../../../../e2e/diagrams/gantt/${path}.mmd`];
+  if (source === undefined) throw new Error(`no fixture e2e/diagrams/gantt/${path}.mmd`);
+  return parseGantt(source.replace(/^---\n[\s\S]*?\n---\n/, '')).model;
+}
+
+describe('a label wider than its drawn bar (#1249, D729)', () => {
+  const path = 'nightly-check/handle-multiline-section-titles-with-different-line-breaks';
+
+  it('goes right of a bar that excludes shortened, though its unshortened span would hold it', () => {
+    // "Implement parser and jison": the label is 132.66 wide, the span 185 (`end`), the drawn
+    // bar 123 (`renderEnd`): v12 chose `inside` from the span and placed it from the bar.
+    const { layout } = lay(fixtureModel(path));
+    const bar = layout.bars.find((b) => b.id === 'task2')!;
+    expect(bar.width).toBeCloseTo(123, 0);
+    expect(bar.label.text.width).toBeGreaterThan(bar.width);
+    expect(bar.label.text.width).toBeLessThan(185);
+    expect([bar.label.side, bar.label.anchor]).toEqual(['right', 'start']);
+    expect(bar.label.x).toBeCloseTo(bar.x + bar.width + 5, 5);
+  });
+
+  it('leaves the labels that fit their bar centred inside it', () => {
+    const { layout } = lay(fixtureModel(path));
+    const inside = layout.bars.filter((b) => b.label.side === 'inside');
+    expect(inside.length).toBeGreaterThan(5);
+    for (const b of inside) {
+      expect(b.label.anchor).toBe('middle');
+      expect(b.label.x).toBeCloseTo(b.x + b.width / 2, 5);
+    }
+  });
+
+  it('is reported by the invariants when an inside label is wider than its bar', () => {
+    const { layout } = lay(two());
+    const [a, b] = layout.bars;
+    const wide: GanttBar = {
+      ...a!,
+      width: a!.label.text.width - 1,
+      label: { ...a!.label, side: 'inside' },
+    };
+    expect(ganttLayoutViolations({ ...layout, bars: [wide, b!] })).toContain(
+      'bar "a" has an inside label wider than its bar'
+    );
   });
 });
