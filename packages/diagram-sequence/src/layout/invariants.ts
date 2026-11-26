@@ -178,6 +178,18 @@ function numbersClear(layout: SequenceLayout, out: string[]): void {
   }
 }
 
+/**
+ * A message label ends at or above its line, so the line never strikes through it (#1337
+ * review: a large `wrapPadding`, a small message font or a square self message put the last
+ * baseline at or below the line). For a self message the line is the loop's start, where the
+ * label sits.
+ */
+function labelsAboveLines(layout: SequenceLayout, out: string[]): void {
+  for (const msg of layout.messages)
+    if (msg.label && msg.label.y + msg.label.height > msg.y + EPS)
+      out.push(`the label of message ${msg.ast} reaches below its line`);
+}
+
 /** The messages of `list`, at any depth. */
 function messagesOf(list: readonly SequenceStatement[], out: SequenceMessage[] = []) {
   for (const s of list) {
@@ -312,6 +324,7 @@ export function sequenceLayoutViolations(
   framesHold(model, layout, rectsOf, out);
   notesClear(layout, out);
   numbersClear(layout, out);
+  labelsAboveLines(layout, out);
   const { wrapPadding } = sequenceMetrics(pxProfile, sequence);
   wrappedInside(model, layout, sequence.wrap === true, wrapPadding, out);
   activationsOnLifeline(layout, parts, out);

@@ -230,6 +230,34 @@ describe('sequence layout, review regressions', () => {
     }
   });
 
+  it('keeps every message label above its line (#1337 review)', () => {
+    // A large wrapPadding, a small message font and a square self message each put the last
+    // baseline at or below the line, so the arrow struck through the text.
+    const m = model(
+      [p('A'), p('B')],
+      [
+        { kind: 'autonumber', ast: 'st:n', visible: false },
+        msg('A', 'B', 'to B'),
+        msg('B', 'A', 'two<br>lines', 'dotted'),
+        msg('A', 'A', 'self'),
+        msg('B', 'B', 'self<br>twice', 'solid_open'),
+      ]
+    );
+    const configs = [
+      { wrapPadding: 40 },
+      { messageFontSize: 6 },
+      { rightAngles: true },
+      { rightAngles: true, messageFontSize: 8, wrapPadding: 30 },
+      { wrap: true, wrapPadding: 60 },
+    ];
+    const problems: string[] = [];
+    for (const classic of [false, true])
+      for (const sequence of configs)
+        for (const v of violations(m, false, sequence, { classic }))
+          problems.push(`${classic ? 'default' : 'redux'} ${JSON.stringify(sequence)}: ${v}`);
+    expect(problems).toEqual([]);
+  });
+
   it('message ends stay on their columns when bars or wrapped boxes are wide', () => {
     expect(violations(FIXTURES.activations!, false, { activationWidth: 119, width: 40 })).toEqual(
       []

@@ -239,7 +239,9 @@ export class Rows {
    * padding below `starty + messageLead`, over a line placed from rows it measured in Arial: its
    * last baseline sits 1 em of the message font plus `lineGap`, less the lead and half the wrap
    * padding, above the line (11 px at the defaults; v12 10.81 in Chromium), whatever the font and
-   * the number of lines. In cells the label keeps the rows right above its line.
+   * the number of lines. The label never reaches below its line, which would strike it through:
+   * a large `wrapPadding`, a small message font or a square self message lift it until its box
+   * ends on the line (#1337 review). In cells the label keeps the rows right above its line.
    */
   private messageLabelY(
     label: MeasuredLabel,
@@ -252,7 +254,7 @@ export class Rows {
     const n = label.lines.length;
     const last = label.baselines?.[n - 1] ?? (n - 1) * label.lineHeight + label.baseline;
     const rise = fonts.message.size + this.lineGap(self) - m.messageLead - m.half(m.wrapPadding);
-    return lineY - rise - last;
+    return Math.min(lineY - rise - last, lineY - label.height);
   }
 
   /** A message's label, placed across its span and above its line. */

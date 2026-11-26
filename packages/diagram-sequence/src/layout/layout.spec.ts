@@ -235,12 +235,19 @@ describe('message label height above its line (#1237, D723)', () => {
           expect(Math.abs(gap - V12_GAP[theme])).toBeLessThanOrEqual(1);
         });
 
-  it('a self message with rightAngles keeps v12 text over its higher line', () => {
-    const l = lay(modelOf([part('A')], [msg('A', 'A', 'self')]), pxProfile, tableMeasurer, {
-      rightAngles: true,
-    });
-    const [placed] = l.messages;
-    expect(Math.abs(placed!.y - lastBaseline(placed!) - 0.81)).toBeLessThanOrEqual(1);
+  it('a self message with rightAngles ends its label on the line, not through it', () => {
+    // v12's last baseline sat 0.81 px above the square loop's top, which struck the descenders
+    // through. v13 lifts the label until its box ends on the line (#1337 review): the last
+    // baseline then sits the font's descent above it.
+    const descent: Readonly<Record<ThemeName, number>> = { default: 3.552, redux: 3.92 };
+    for (const theme of THEMES) {
+      const model = modelOf([part('A')], [msg('A', 'A', 'self')]);
+      const l = lay(model, pxProfile, tableMeasurer, { rightAngles: true }, theme, AT_16);
+      const [placed] = l.messages;
+      const label = placed!.label!;
+      expect(label.y + label.height, theme).toBeCloseTo(placed!.y, 6);
+      expect(placed!.y - lastBaseline(placed!), theme).toBeCloseTo(descent[theme], 3);
+    }
   });
 
   it('leaves cells as they were: the label on the row above its line', () => {
