@@ -4,7 +4,14 @@
 // their lifelines, activations, fragment frames, notes and messages. Every element drawn from
 // an AST node carries `data-id` and `data-ast` (R-PARSE-8); labels carry `data-id` only.
 import type { RenderContext } from '@mermaid-js/core';
-import { checkCssColor, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import {
+  checkCssColor,
+  type LabelBox,
+  type Paint,
+  type SafeValue,
+  type SvgWriter,
+} from '@mermaid-js/core/svg';
+import type { MeasuredLabel } from '@mermaid-js/core/text';
 import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { SequenceModel } from '../model.ts';
 import { sequenceMetrics, type SequenceMetrics } from '../layout/index.ts';
@@ -308,9 +315,23 @@ function drawFragment(scene: Scene, f: FragmentLayout): void {
   w.close();
 }
 
+/**
+ * A multi-line label's lines at the edge `messageAlign` or `noteAlign` names, as v12 anchors
+ * each line (`text-anchor` start or end, #1241): `left` starts every line at the box's left edge,
+ * `right` ends every line at its right edge. `center`, and a one-line label, draw as measured.
+ */
+function aligned(text: MeasuredLabel, align: unknown): LabelBox {
+  if (text.lines.length < 2) return text;
+  if (align === 'left') return { ...text, left: true };
+  if (align === 'right')
+    return { ...text, left: true, indents: text.widths.map((w) => text.width - w) };
+  return text;
+}
+
 /** Notes (v12 `drawNote`). */
 function drawNotes(scene: Scene): void {
-  const { w, layout, paint } = scene;
+  const { w, layout, paint, ctx } = scene;
+  const align = ctx.config.sequence?.noteAlign;
   const note = paint.note!;
   w.open('g', { class: 'notes', ...paint.fonts.note });
   for (const n of layout.notes) {
@@ -325,7 +346,7 @@ function drawNotes(scene: Scene): void {
       stroke: note.stroke,
       filter: paint.shadow,
     });
-    w.label(n.label.text, centreX(n.label), centreY(n.label), {
+    w.label(aligned(n.label.text, align), centreX(n.label), centreY(n.label), {
       class: 'noteText',
       'data-id': n.ast,
       fill: note.text,
@@ -339,6 +360,7 @@ function drawNotes(scene: Scene): void {
 function drawMessages(scene: Scene): void {
   const { w, layout, paint, ctx } = scene;
   const rightAngles = ctx.config.sequence?.rightAngles === true;
+  const align = ctx.config.sequence?.messageAlign;
   const mp: MessagePaint = {
     line: paint.signal.line,
     text: paint.signal.text,
@@ -348,7 +370,7 @@ function drawMessages(scene: Scene): void {
   for (const m of layout.messages) {
     w.open('g', { class: 'message', 'data-id': m.ast, 'data-ast': m.ast });
     if (m.label)
-      w.label(m.label.text, centreX(m.label), centreY(m.label), {
+      w.label(aligned(m.label.text, align), centreX(m.label), centreY(m.label), {
         class: 'messageText',
         'data-id': m.ast,
         fill: mp.text,
