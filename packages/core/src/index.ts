@@ -34,6 +34,7 @@ export {
   type GlyphRequest,
   type HookContext,
   type HookRun,
+  type LabelProvider,
   type LaidOut,
   type OutlineDrawer,
   type ResourceRequest,

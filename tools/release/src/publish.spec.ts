@@ -43,6 +43,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/language-service-monaco',
       '@mermaid-chart/layout-elk',
       '@mermaid-chart/plugin-hand-drawn',
+      '@mermaid-chart/plugin-html-labels',
       '@mermaid-chart/plugin-icons',
       '@mermaid-chart/plugin-interactions',
       '@mermaid-chart/plugin-math',

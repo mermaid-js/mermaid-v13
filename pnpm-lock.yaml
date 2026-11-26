@@ -1315,6 +1315,19 @@ importers:
         specifier: workspace:*
         version: link:../mermaid
 
+  packages/plugin-html-labels:
+    dependencies:
+      dompurify:
+        specifier: 3.4.17
+        version: 3.4.17
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
+
   packages/plugin-icons:
     devDependencies:
       '@iconify-json/fa6-solid':

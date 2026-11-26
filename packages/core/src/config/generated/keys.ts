@@ -54,20 +54,20 @@ export const KEY_NOTES: Readonly<Record<string, KeyNote>> = {
   "htmlLabels": {
     "status": "removed",
     "since": "13.0.0",
-    "reason": "Labels are SVG text only; there is no HTML label mode (D5).",
-    "replacement": "none; labels support a markdown subset rendered as SVG text"
+    "reason": "Core draws labels as SVG text only (D5).",
+    "replacement": "the HTML labels plugin, which reads the key as `html.labels` (D694, D696)"
   },
   "flowchart.htmlLabels": {
     "status": "removed",
     "since": "13.0.0",
-    "reason": "Labels are SVG text only; there is no HTML label mode (D5).",
-    "replacement": "none; labels support a markdown subset rendered as SVG text"
+    "reason": "Core draws labels as SVG text only (D5).",
+    "replacement": "the HTML labels plugin, which reads the key as `html.labels` (D694, D696)"
   },
   "class.htmlLabels": {
     "status": "removed",
     "since": "13.0.0",
-    "reason": "Labels are SVG text only; there is no HTML label mode (D5).",
-    "replacement": "none; labels support a markdown subset rendered as SVG text"
+    "reason": "Core draws labels as SVG text only (D5).",
+    "replacement": "the HTML labels plugin, which reads the key as `html.labels` (D694, D696)"
   },
   "dompurifyConfig": {
     "status": "removed",

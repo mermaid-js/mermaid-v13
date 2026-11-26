@@ -1,0 +1,47 @@
+{
+  "name": "@mermaid-js/plugin-html-labels",
+  "version": "13.0.0-alpha.0",
+  "description": "HTML labels in Mermaid v13: labels drawn as sanitized HTML in the mounted diagram, as v12's htmlLabels did (D694).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/plugin-html-labels"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "THIRD_PARTY_NOTICES"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "dependencies": {
+    "dompurify": "3.4.17"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^",
+    "mermaid": "workspace:*"
+  },
+  "mermaid": {
+    "plugin": "extension",
+    "id": "html-labels",
+    "entry": "./dist/index.js",
+    "export": "htmlLabels"
+  }
+}

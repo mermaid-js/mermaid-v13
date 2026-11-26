@@ -22,7 +22,8 @@ What most integrators have to change:
 
 1. Replace `mermaidAPI.*` calls with the top-level functions ([Public API](#public-api)).
 2. Stop relying on `htmlLabels`, `<foreignObject>` labels and `dompurifyConfig`: labels are SVG
-   text ([Labels](#labels-and-text)).
+   text ([Labels](#labels-and-text)). If your diagrams need HTML in labels, register the optional
+   HTML labels plugin ([HTML labels](#html-labels)).
 3. Click callbacks (`click A callback`, `call fn()`) and `bindFunctions` need
    `@mermaid-js/plugin-interactions`, and callbacks still need `securityLevel: 'loose'`
    ([Click callbacks](#click-callbacks-and-bindfunctions)).
@@ -56,6 +57,7 @@ What most integrators have to change:
 | No language-service or editor packages | Editor support is published as packages: `@mermaid-js/language-service` (editor-agnostic), `@mermaid-js/language-server` (LSP over stdio), and the adapters `@mermaid-js/language-service-codemirror` (CodeMirror 6) and `@mermaid-js/language-service-monaco` (Monaco). The adapters ship the generated first-paint grammars, one lazily loaded file per diagram type; the diagram packages ship none | R-LANG-2, D135, D158 |
 | `@mermaid-js/layout-elk` | Same name, a 13.x line. Register it as in v12 (`mermaid.registerLayoutLoaders(elkLayouts)`); without it `layout: elk` draws with the built-in engine and warns `ELK_NOT_INSTALLED` ([ELK](#elk)) | R-PLUG-8, D171 |
 | `look: handDrawn`, drawn by roughjs inside `mermaid` | `@mermaid-js/plugin-hand-drawn`, an optional extension with roughjs 4.6.6 as its one dependency. Installed is enabled; without it `look: handDrawn` draws the plain diagram and warns `LOOK_REMOVED` ([Hand-drawn look](#hand-drawn-look)) | R-PLUG-8, D300 |
+| HTML labels (`htmlLabels: true`, the flowchart default), drawn by `mermaid` and sanitised by DOMPurify | `@mermaid-js/plugin-html-labels`, an optional extension with DOMPurify as its one dependency. Without it labels are SVG text ([HTML labels](#html-labels)) | D694 |
 | ZenUML, tidy-tree and the example diagram package | Not ported in M1 | |
 
 ## Loading and plugins
@@ -168,8 +170,8 @@ leave it unset) to keep them. `antiscript` and `sandbox` act as `default` with a
 `SECURITY_LEVEL` warning; there is no sandbox iframe mode and no HTML in labels. `loose` acts
 as `default` for link URLs too, with no warning, because it still turns callbacks on (D634).
 
-In v12, `loose` was also what allowed click callbacks and HTML labels. In v13 HTML labels are
-gone. Callbacks need the interactions plugin and, as in v12, `securityLevel: 'loose'` (D554):
+In v12, `loose` was also what allowed click callbacks and HTML labels. In v13 HTML labels need
+the optional HTML labels plugin, whatever the level ([HTML labels](#html-labels)). Callbacks need the interactions plugin and, as in v12, `securityLevel: 'loose'` (D554):
 that is the one thing `loose` still turns on, and for link URLs it acts as `default`. Only
 `initialize()` can set `securityLevel`; front matter and directives cannot (as in v12, where it
 was in `secure`). `initialize({ linkSchemes: [...] })` replaces the scheme list of `default`.
@@ -277,7 +279,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `themeVariables.THEME_COLOR_LIMIT` | ignored | The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267). v12 built that many `cScale` slots and style rules, and its timeline also took the section colour modulo the limit, so `THEME_COLOR_LIMIT: 3` gave the fourth section the first one's colour. v13's timeline cycles every twelve sections whatever the value. |  |
 | `themeCSS` | removed | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
 | `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
-| `htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
+| `htmlLabels` | removed | Core draws labels as SVG text only (D5). | the HTML labels plugin, which reads the key as `html.labels` (D694, D696) |
 | `altFontFamily` | ignored | Unused by every renderer, also in v12. |  |
 | `logLevel` | ignored | v13 does not log; problems are returned in `RenderResult.warnings`. |  |
 | `arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
@@ -285,7 +287,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `forceLegacyMathML` | ignored | v13 never emits MathML or KaTeX HTML (D175): a math extension typesets `$$…$$` TeX into SVG paths. |  |
 | `flowchart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render. The redux themes carry v12's `look: neo` geometry (D152). | `theme`, or the geometry and `dropShadow` theme variables |
 | `flowchart.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
-| `flowchart.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
+| `flowchart.htmlLabels` | removed | Core draws labels as SVG text only (D5). | the HTML labels plugin, which reads the key as `html.labels` (D694, D696) |
 | `swimlane.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `agentflow.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the agentflow renderer never did. |  |
 | `agentflow.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -333,7 +335,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `class.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `class.dividerMargin` | ignored | Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it. |  |
 | `class.textHeight` | ignored | Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it. |  |
-| `class.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
+| `class.htmlLabels` | removed | Core draws labels as SVG text only (D5). | the HTML labels plugin, which reads the key as `html.labels` (D694, D696) |
 | `state.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the state renderers never did. |  |
 | `state.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `state.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
@@ -544,8 +546,10 @@ ported (status `pending`, R-CONF-5).
 
 Removed and ignored keys, with what to use instead:
 
-- `htmlLabels`, `flowchart.htmlLabels`, `class.htmlLabels`: removed. Labels are always SVG text
-  (D5); markdown strings cover bold, italic, code and lists ([Labels](#labels-and-text)).
+- `htmlLabels`, `flowchart.htmlLabels`, `class.htmlLabels`: removed from core, which always draws
+  labels as SVG text (D5); markdown strings cover bold, italic, code and lists
+  ([Labels](#labels-and-text)). With `@mermaid-js/plugin-html-labels` registered they set its
+  `html.labels` key instead ([HTML labels](#html-labels)).
 - `dompurifyConfig`: removed. There is no HTML sanitizer to configure; the SVG writer only
   emits allow-listed elements and attributes, and `assertInert` checks the output (R-SEC-1).
 - `themeCSS`: removed, with a `CONFIG_REMOVED_KEY` warning. The output carries no author stylesheet (R-SEC-2). Use `themeVariables`,
@@ -962,7 +966,7 @@ variables instead.
 
 | v12 | v13 | Why |
 | --- | --- | --- |
-| HTML labels in `<foreignObject>` (`htmlLabels: true`) or SVG text | SVG `<text>`/`<tspan>` only | D5 |
+| HTML labels in `<foreignObject>` (`htmlLabels: true`) or SVG text | SVG `<text>`/`<tspan>` only. HTML labels come back with the optional `@mermaid-js/plugin-html-labels` ([HTML labels](#html-labels)) | D5, D694 |
 | Any HTML in labels, sanitised by DOMPurify | `<b>`/`<strong>` and `<i>`/`<em>` are drawn bold and italic, `<br>` breaks the line. Other HTML element tags are dropped and their text kept (`<img>` draws nothing, `<a>` is not a link, `<sub>`/`<sup>`/`<u>` draw plain text), with one `HTML_DROPPED` warning per render that names the tags. For a link, use `click id "url"`; the warning says so when `<a>` is among them. A `<script>` or `<style>` element is dropped with its content, up to its end tag; with no end tag only the tag is dropped and the text after it stays, where v12 lost the rest of the label. Text that only looks like a tag, such as `List<T>` or `<style.css>`, is shown as written | R-TEXT-3, D566 |
 | Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
 | Mindmap, state, requirement and class labels were read as Markdown without backticks: `**bold**` and `_italic_` were formatted, and a label starting with `- `, `* ` or `+ ` or holding backticks was shown as written | The same: bold and italic are read, list markers and code spans are drawn as written. In a label that holds a code span, bold and italic outside the span are read. Only a mindmap markdown string (`` "`…`" ``) has bullets and inline code. Not Markdown: the title and rows of a state with several description lines, class multiplicities, namespace titles and lollipop interface names | D564, D610, #763, #836 |
@@ -1065,6 +1069,30 @@ mermaid.registerIconPacks([
   (`feature: 'icon'`); an icon shape is a box with its label (`feature: 'image'`) (D299).
 - **Size.** Core does not change with the plugin installed (R-PLUG-8); the plugin is about
   5.5 KB gz, plus the packs your diagrams load.
+
+### HTML labels
+
+v12 drew flowchart labels as HTML in a `<foreignObject>` unless `htmlLabels` was false. v13's core draws every label as SVG text (D5). The optional `@mermaid-js/plugin-html-labels` brings HTML labels back (D694):
+
+```js
+import mermaid from 'mermaid';
+import { htmlLabels } from '@mermaid-js/plugin-html-labels';
+
+await mermaid.registerExternalDiagrams([htmlLabels]);
+```
+
+| v12 | v13 with the plugin | Why |
+| --- | --- | --- |
+| `htmlLabels` true by default in flowcharts, false in class diagrams | On for every type once the plugin is registered. `htmlLabels: false` turns it off, as do `flowchart.htmlLabels` and `class.htmlLabels`, whatever type is drawn; the plugin's own key is `html.labels` | D696 |
+| The svg string held the `<foreignObject>` labels | The svg string holds a placeholder for each label and no HTML, so it is still safe to insert with no sanitizer. `run()` and `mount()` swap the labels in. A page that inserts the string itself calls `result.bindFunctions(el)`, as v12 pages did for click callbacks, or `mountHtmlLabels(el)` for a stored string | D694, D697 |
+| Any HTML that DOMPurify's defaults let through, with `dompurifyConfig` to change them | A fixed list of text, list, table, link and image elements, sanitised by DOMPurify, which cannot be turned off or configured. Links and image sources pass `linkSchemes`. A `style` attribute loses declarations that position the element or load something (`url(…)`). Other HTML tags, and text shaped like one (`List<T>`), are shown as written; `<script>` and `<style>` are dropped with what they hold | D694 |
+| `securityLevel` decided what HTML a label kept | The plugin's list decides it, at every level. `strict` still limits links and image sources to relative ones, as it does for core's links | D694 |
+| v12 always ran with a DOM | Browser only. Without a DOM, in a deterministic render and in text output the labels are SVG text, as without the plugin | D697 |
+| Math and `fa:` icons inside HTML labels | A label with `$$…$$` or `fa:…` stays an SVG label, drawn by the math and icons plugins; its other HTML is dropped with `HTML_DROPPED` | D697 |
+| Every label of the unified renderer | Every label core lays out. Text a diagram draws itself (info, railroad, sankey, treeView, wardley, and secondary text in gantt, kanban, class, packet, quadrant, sequence, treemap and xychart) stays SVG | D697 |
+| Labels styled by the diagram's style sheet (`.nodeLabel`, `.edgeLabel`) | No style sheet. A label takes the font and text colour core resolved; its wrapper has the class `html-label` for the page's own CSS | D697 |
+
+A page that exports the svg string, or shows it through `<img>`, sets `htmlLabels: false`: the placeholders hold no visible text, and most rasterizers do not draw `<foreignObject>`.
 
 ## Flowchart syntax
 

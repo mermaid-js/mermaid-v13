@@ -39,6 +39,7 @@ import type {
   InlineProvider,
   InlineRequest,
   InlineSpans,
+  LabelRequest,
 } from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
 import { MermaidError, type Resource } from './errors.ts';
@@ -101,6 +102,12 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
    * tie, the first registered provider.
    */
   readonly inline?: readonly InlineProvider[];
+  /**
+   * A whole-label provider (D695): label layout asks it for each label before it looks for inline
+   * spans, and draws the box it returns instead of the text. In registration order; the first
+   * box wins. Text output never asks.
+   */
+  readonly label?: LabelProvider;
   /** Glyphs for icons drawn outside labels (D293), which core exposes as `RenderContext.icon`. */
   readonly glyphs?: GlyphProvider;
   /** What it loads lazily, and when a diagram needs it (R-API-2, D178). */
@@ -115,6 +122,17 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
    * variables, known to the validator while the extension is registered.
    */
   readonly config?: ConfigFragment;
+}
+
+/**
+ * An extension's whole-label provider (D695). `box` runs during layout, so it is synchronous. It
+ * lays out `raw`, the label's source as written, and returns its box, whose `node` is drawn with
+ * its top-left corner at the origin and is held to the allow-list as an inline box's is; or it
+ * declines with `undefined`, and core lays the label out. `ctx` is the render's hook context, as
+ * an outline drawer gets it (D655): its config, and the `state` the extension's `afterMount` gets.
+ */
+export interface LabelProvider {
+  box(raw: string, request: LabelRequest, ctx: HookContext): InlineBox | undefined;
 }
 
 /**
@@ -260,6 +278,7 @@ type Hook =
   | 'postRender'
   | 'afterMount'
   | 'inline'
+  | 'label'
   | 'glyphs'
   | 'resources'
   | 'outline';
@@ -312,17 +331,25 @@ function checkFragment(node: unknown, depth = 0): void {
   const f = node as { tag?: unknown; attrs?: unknown; children?: unknown } | null;
   if (typeof f !== 'object' || f === null || typeof f.tag !== 'string' || !isAllowedTag(f.tag))
     throw new TypeError(`a node holds ${describe(f)}, not an allowed SVG element`);
-  if (f.attrs !== undefined) {
-    if (typeof f.attrs !== 'object' || f.attrs === null)
-      throw new TypeError(`<${f.tag}> has attrs that are not an object`);
-    for (const name of Object.keys(f.attrs))
-      if (!isAllowedAttr(name))
-        throw new TypeError(`${name} on <${f.tag}> is not an allowed attribute`);
-  }
-  if (f.children === undefined) return;
-  if (!Array.isArray(f.children))
-    throw new TypeError(`<${f.tag}> has children that are not an array`);
-  for (const child of f.children as unknown[])
+  checkAttrs(f.tag, f.attrs);
+  checkChildren(f.tag, f.children, depth);
+}
+
+/** The attributes of a `<tag>` fragment: none, or an object of allowed names. */
+function checkAttrs(tag: string, attrs: unknown): void {
+  if (attrs === undefined) return;
+  if (typeof attrs !== 'object' || attrs === null)
+    throw new TypeError(`<${tag}> has attrs that are not an object`);
+  for (const name of Object.keys(attrs))
+    if (!isAllowedAttr(name))
+      throw new TypeError(`${name} on <${tag}> is not an allowed attribute`);
+}
+
+/** The children of a `<tag>` fragment at `depth`: none, or an array of strings and fragments. */
+function checkChildren(tag: string, children: unknown, depth: number): void {
+  if (children === undefined) return;
+  if (!Array.isArray(children)) throw new TypeError(`<${tag}> has children that are not an array`);
+  for (const child of children as unknown[])
     if (typeof child !== 'string') checkFragment(child, depth + 1);
 }
 
@@ -449,6 +476,42 @@ function checkResources(plugin: { id: string }, r: unknown): ExtensionResources 
   return res as ExtensionResources;
 }
 
+/** `plugin[hook]`, when the extension has one, needs a `method()` function. */
+function checkProvider(
+  plugin: { id: string; glyphs?: unknown; label?: unknown },
+  hook: 'glyphs' | 'label',
+  method: string
+): void {
+  const provider = plugin[hook] as Record<string, unknown> | undefined;
+  if (provider && typeof provider[method] !== 'function')
+    throw new TypeError(`Extension "${plugin.id}": ${hook} needs a ${method}() function`);
+}
+
+/**
+ * Gives the render's `spans` the whole-label providers of `list` as one function (D695), for
+ * label layout to ask: the first box, checked, with a failure reported as its extension's.
+ * `context` gives an extension's hook context. Without a provider, `spans` is left as it is.
+ */
+function setLabelBoxer<P extends { id: string; label?: LabelProvider }>(
+  list: readonly P[],
+  spans: InlineSpans | undefined,
+  context: (plugin: P) => HookContext
+): void {
+  const labellers = list.filter((p) => p.label);
+  if (!labellers[0] || !spans) return;
+  spans.boxer = (raw, request) => {
+    for (const p of labellers) {
+      try {
+        const box = p.label!.box(raw, request, context(p));
+        if (box) return checkBox(box);
+      } catch (e) {
+        throw failed(p, 'label', e);
+      }
+    }
+    return undefined;
+  };
+}
+
 /** `resource` and its loader, with a failed load reported as `plugin`'s. */
 function need(
   plugin: { id: string },
@@ -487,8 +550,8 @@ export class HookRunner<El = unknown, R = unknown> {
       throw new TypeError(`Extension "${plugin.id}": inline must be an array of providers`);
     const providers = (inline as readonly InlineProvider[]).map((p) => guarded(plugin, p));
     const resources = checkResources(plugin, plugin.resources);
-    if (plugin.glyphs && typeof plugin.glyphs.glyph !== 'function')
-      throw new TypeError(`Extension "${plugin.id}": glyphs needs a glyph() function`);
+    checkProvider(plugin, 'glyphs', 'glyph');
+    checkProvider(plugin, 'label', 'box');
     const drawer = checkOutline(plugin, plugin.outline);
     const at = this.list.findIndex((p) => p.id === plugin.id);
     if (at >= 0) {
@@ -558,11 +621,11 @@ export class HookRunner<El = unknown, R = unknown> {
       const { pending: asked, ...rest } = options ?? {};
       const request: GlyphRequest = { ...rest, size, warn, iconPacks, scratch };
       let unresolved = false;
-      let pending = false;
+      let pending: true | undefined; // set only for a caller that asks
       for (const p of list) {
         try {
           const glyph = p.glyphs!.glyph(name, request);
-          if (glyph === 'pending') pending = true;
+          if (glyph === 'pending') pending = asked;
           else if (glyph) return (checkFragment(glyph), glyph);
           else if (glyph === null) unresolved = true;
         } catch (e) {
@@ -570,7 +633,7 @@ export class HookRunner<El = unknown, R = unknown> {
         }
       }
       if (unresolved) return null;
-      return asked && pending ? 'pending' : undefined;
+      return pending ? 'pending' : undefined;
     };
     return lookup as IconLookup;
   }
@@ -618,6 +681,7 @@ export class HookRunner<El = unknown, R = unknown> {
       }
       return value;
     };
+    setLabelBoxer(list, ctx.inline, context);
     const owner = list.find((p) => this.drawers.has(p));
     let outline: ActiveOutline | undefined | null = owner === undefined ? undefined : null;
     const activeOutline = (): ActiveOutline | undefined => {
