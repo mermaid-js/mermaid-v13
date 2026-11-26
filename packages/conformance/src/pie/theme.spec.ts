@@ -149,6 +149,24 @@ describe('pie theme variables against v12 12.2.0 (#325, D221, D228)', () => {
     }
   );
 
+  // D707: v12 writes `pieOpacity` into CSS as given, where `50%` means 0.5 (#1203).
+  it.each(THEME_NAMES.map((n) => [n]))(
+    '%s: pieOpacity "50%" is 0.5, as in v12’s CSS',
+    async (name) => {
+      const themeVariables = { pieOpacity: '50%' };
+      expect(v12Vars(name, themeVariables).pieOpacity).toBe('50%');
+      const warnings: string[] = [];
+      const theme = createTheme(await loadTheme(name), {
+        diagram: DIAGRAM_TABLES.pie,
+        themeVariables,
+        cssVariables: false,
+        warn: (w) => warnings.push(w.code),
+      });
+      expect(theme.number('pieOpacity')).toBe(0.5);
+      expect(warnings).toEqual([]);
+    }
+  );
+
   // D334: the slots v12 reads from `cScale` follow an author's `cScale` override (#1202).
   it.each(THEME_NAMES.map((n) => [n]))(
     '%s: the slices follow a cScale1 override as in v12',

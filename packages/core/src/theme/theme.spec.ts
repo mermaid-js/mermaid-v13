@@ -372,7 +372,7 @@ describe('createTheme: shape tokens (R-THEME-11)', () => {
   });
 });
 
-describe('createTheme: opacity (D221)', () => {
+describe('createTheme: opacity (D221, D707)', () => {
   // A diagram's opacity variable, 0.7 in the classic family (as pie's slices, #325).
   const OPACITY: DiagramThemeTable = {
     vars: { sliceOpacity: { alias: 'so', kind: 'opacity' } },
@@ -396,6 +396,12 @@ describe('createTheme: opacity (D221)', () => {
       [1, 1],
       [' 0.5 ', 0.5],
       ['1.0', 1],
+      // D707: a percentage from 0% to 100%, as CSS takes it, read as N/100.
+      ['50%', 0.5],
+      ['0%', 0],
+      ['100%', 1],
+      [' 33.5% ', 0.335],
+      ['7%', 0.07],
     ] as const) {
       const t = createTheme(base, { diagram: OPACITY, themeVariables: { sliceOpacity: given } });
       expect(t.number('sliceOpacity'), String(given)).toBe(read);
@@ -403,7 +409,24 @@ describe('createTheme: opacity (D221)', () => {
   });
 
   it('drops anything else with a warning and keeps the theme value', () => {
-    for (const given of [1.5, -0.1, '70%', '1.01', '0.5px', '.5', 'abc', 'var(--x)', NaN, true]) {
+    for (const given of [
+      1.5,
+      -0.1,
+      '1.01',
+      '0.5px',
+      '.5',
+      'abc',
+      'var(--x)',
+      NaN,
+      true,
+      '150%',
+      '100.5%',
+      '-1%',
+      '50 %',
+      '%',
+      '.5%',
+      '50%%',
+    ]) {
       const warnings: ThemeWarning[] = [];
       const t = createTheme(base, {
         diagram: OPACITY,
