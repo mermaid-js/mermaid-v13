@@ -360,8 +360,8 @@ export function alongside(a: Rect, b: Rect): boolean {
 /**
  * Folds the jog next to `port` (the first point of `p`, or the last when `last`) into the port, in
  * place: when the route leaves the port by a stub and then jogs across to a place on the port's
- * own side, the end moves there and leaves straight. For an end that may move along its side,
- * such as one on a group's border (D721).
+ * own side, the end moves there and leaves straight (D721). The jog must land strictly inside
+ * `port`'s box, which for an end on a node is only the part its ends may meet.
  */
 export function foldJog(p: number[], port: Port, last: boolean): void {
   if (p.length < 6) return;

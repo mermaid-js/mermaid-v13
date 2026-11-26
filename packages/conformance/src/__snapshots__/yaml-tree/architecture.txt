@@ -14,6 +14,7 @@ e2e/diagrams/architecture/nightly-check/layout-group-edge-detours-round-a-servic
 e2e/diagrams/architecture/nightly-check/layout-icon-size-and-padding.mmd 1 92f98433e46916b0
 e2e/diagrams/architecture/nightly-check/layout-layered-draws-a-junction-with-lines-on-named-sides.mmd 1 133aae9bbd2160d5
 e2e/diagrams/architecture/nightly-check/layout-level-edge-label-wraps-to-the-line.mmd 1 42ac8694fb6e78c6
+e2e/diagrams/architecture/nightly-check/layout-service-edge-beside-junction.mmd 1 da63b9e6037f1076
 e2e/diagrams/architecture/nightly-check/should-align-siblings-in-a-row-when-their-edges-feed-a-common-downstream-node.mmd 1 e0355d9aff664d21
 e2e/diagrams/architecture/nightly-check/should-render-a-grid-via-combined-row-column-alignments.mmd 1 535dc68d8d6a7136
 e2e/diagrams/architecture/nightly-check/should-render-a-simple-architecture-diagram-with-titleandaccessibilities.mmd 1 a43702e5cfafc84d
