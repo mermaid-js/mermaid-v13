@@ -51,7 +51,7 @@ export const theme: DiagramThemeTable = {
     // and `lineColor`.
     classic: {
       rules: {
-        sectionBkgColor: 'bandBkg',
+        sectionBkgColor: 'darkenHsl(mainBkg, 10%)',
         sectionBkgColor2: 'mainBkg',
         taskBkgColor: 'mainBkg',
         activeTaskBkgColor: 'lightenHsl(mainBkg, 23%)',
@@ -64,6 +64,7 @@ export const theme: DiagramThemeTable = {
       // theme's misses AA on the grey active bar.
       dark: {
         rules: {
+          sectionBkgColor: 'lightenHsl(mainBkg, 30%)',
           critBkgColor: 'darkenHsl(red, 20%)',
           taskTextDarkColor: 'contrast(activeTaskBkgColor, textColor, white)',
         },

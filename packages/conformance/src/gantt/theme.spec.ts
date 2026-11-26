@@ -9,7 +9,15 @@
  * #385), so a change in either direction fails until the list is updated.
  */
 import { readdirSync, readFileSync } from 'node:fs';
-import { THEME_NAMES, createTheme, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
+import {
+  THEME_NAMES,
+  contrastRatio,
+  createTheme,
+  loadTheme,
+  parseColor,
+  type Rgba,
+  type ThemeName,
+} from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { gantt } from '@mermaid-js/diagram-gantt';
 import { REPO_ROOT } from '../index.ts';
@@ -164,6 +172,36 @@ describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
       expect(await css(name, 'activeTaskBorderColor'), name).toBe(
         'var(--mermaid-activeTaskBorderColor,var(--_gdl))'
       );
+  });
+
+  // #1249, D726: the first band is visibly a band, in every classic theme, against the page
+  // behind it and against the third band, which reads `mainBkg`.
+  describe('the first section band is distinct (#1249, D726)', () => {
+    const BAND = 1.2;
+    const rgba = (v: unknown): Rgba => parseColor(String(v))!;
+    it.each(CLASSIC.map((n) => [n]))(
+      '%s: at least 1.2:1 against the background and band 3',
+      async (name) => {
+        const theme = createTheme(await loadTheme(name), {
+          diagram: gantt.theme,
+          cssVariables: false,
+        });
+        const band = rgba(theme.value('sectionBkgColor'));
+        expect(contrastRatio(band, rgba(theme.value('background')))).toBeGreaterThanOrEqual(BAND);
+        expect(contrastRatio(band, rgba(theme.value('sectionBkgColor2')))).toBeGreaterThanOrEqual(
+          BAND
+        );
+      }
+    );
+
+    it.each(CLASSIC.map((n) => [n]))("%s: an author's sectionBkgColor still wins", async (name) => {
+      const theme = createTheme(await loadTheme(name), {
+        diagram: gantt.theme,
+        cssVariables: false,
+        themeVariables: { sectionBkgColor: '#123456' },
+      });
+      expect(hex(theme.value('sectionBkgColor'), String)).toBe('#123456');
+    });
   });
 
   it('v12 draws a clickable label #003163 in every theme: a renderer constant, no variable', () => {
