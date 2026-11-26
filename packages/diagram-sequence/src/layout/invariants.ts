@@ -4,12 +4,13 @@
  * not build by construction: no NaN; every message and note of the model laid out; messages
  * inside their participants' span and columns; frames holding their members (lines, labels,
  * notes, nested frames), their tab, title and section labels; notes clear of participant
- * boxes; activation bars on their lifeline or touching the bar they stack on. Each violation is
- * one readable line. Comparisons allow a float tolerance.
+ * boxes; a wrapped label between neighbouring participants clear of both lifelines; activation
+ * bars on their lifeline or touching the bar they stack on. Each violation is one readable line.
+ * Comparisons allow a float tolerance.
  *
  * Not checked: that `bounds` holds everything, because the layout grows it to do so.
  */
-import type { SequenceModel, SequenceStatement } from '../model.ts';
+import type { SequenceMessage, SequenceModel, SequenceStatement } from '../model.ts';
 import type {
   ActivationLayout,
   MessageLayout,
@@ -175,6 +176,48 @@ function numbersClear(layout: SequenceLayout, out: string[]): void {
   }
 }
 
+/** The messages of `list`, at any depth. */
+function messagesOf(list: readonly SequenceStatement[], out: SequenceMessage[] = []) {
+  for (const s of list) {
+    if (s.kind === 'message') out.push(s);
+    const inner = innerOf(s);
+    if (inner) messagesOf(inner, out);
+  }
+  return out;
+}
+
+/**
+ * The label of a wrapped message between neighbouring participants stays between their
+ * lifelines, in every `messageAlign` (#1239, D724). A self message and a message across several
+ * columns are not checked: their labels may reach past a lifeline, as in v12. Nor is a message
+ * whose line leaves the lifelines, when activation bars wider than the gap cover the other one.
+ * Cells have their own rule: a label keeps off the lifeline columns and off box borders, and may
+ * move past a lifeline to do so (the conformance spec `layout-corpus.spec.ts` checks it).
+ */
+function wrappedInside(
+  model: SequenceModel,
+  layout: SequenceLayout,
+  autoWrap: boolean,
+  out: string[]
+): void {
+  if (layout.units !== 'px') return;
+  const wraps = new Map(messagesOf(model.statements).map((s) => [s.ast, s.wrap ?? autoWrap]));
+  const order = new Map(layout.participants.map((p, i) => [p.id, i]));
+  for (const msg of layout.messages) {
+    const a = order.get(msg.from);
+    const b = order.get(msg.to);
+    if (!msg.label || !wraps.get(msg.ast) || a === undefined || b === undefined) continue;
+    if (Math.abs(a - b) !== 1) continue;
+    const left = layout.participants[Math.min(a, b)] as ParticipantLayout;
+    const right = layout.participants[Math.max(a, b)] as ParticipantLayout;
+    const ends = [msg.startX, msg.stopX];
+    if (!ends.every((e) => within(e, left.lifeline.x, right.lifeline.x))) continue;
+    const { x, width } = msg.label;
+    if (x < left.lifeline.x - EPS || x + width > right.lifeline.x + EPS)
+      out.push(`the wrapped label of message ${msg.ast} crosses a lifeline`);
+  }
+}
+
 /**
  * A first bar covers its lifeline; a stacked bar starts inside the bar below it (depth one
  * less, open at the time) and right of its left edge. All stay within the participant's span.
@@ -231,8 +274,15 @@ function rowsHold(layout: SequenceLayout, out: string[]): void {
   }
 }
 
-/** Every invariant `layout` breaks; empty when it holds them all. */
-export function sequenceLayoutViolations(model: SequenceModel, layout: SequenceLayout): string[] {
+/**
+ * Every invariant `layout` breaks; empty when it holds them all. `sequence` is the `sequence`
+ * config the layout was made with: its `wrap` says which messages wrap.
+ */
+export function sequenceLayoutViolations(
+  model: SequenceModel,
+  layout: SequenceLayout,
+  sequence: { readonly wrap?: unknown } = {}
+): string[] {
   const out: string[] = [];
   numbers(layout, 'layout', out);
   const parts = new Map(layout.participants.map((p) => [p.id, p]));
@@ -245,6 +295,7 @@ export function sequenceLayoutViolations(model: SequenceModel, layout: SequenceL
   framesHold(model, layout, rectsOf, out);
   notesClear(layout, out);
   numbersClear(layout, out);
+  wrappedInside(model, layout, sequence.wrap === true, out);
   activationsOnLifeline(layout, parts, out);
   rowsHold(layout, out);
   return out;

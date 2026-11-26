@@ -48,7 +48,7 @@ const violations = (
   cell = false,
   sequence: Record<string, unknown> = {},
   theme: Parameters<typeof lay>[4] = {}
-) => sequenceLayoutViolations(m, lay(m, cell, sequence, [], theme));
+) => sequenceLayoutViolations(m, lay(m, cell, sequence, [], theme), sequence);
 
 describe('sequence layout, review regressions', () => {
   it('a box centred on a destroying message clears the row above', () => {
@@ -189,6 +189,27 @@ describe('sequence layout, review regressions', () => {
     // A self label centred on its number sits 2 px above the circle (radius 12) on its line.
     const self = lay(m).messages.find((x) => x.from === 'A' && x.to === 'A')!;
     expect(self.y - self.label!.y - self.label!.height).toBeCloseTo(14, 6);
+  });
+
+  it('wraps a message between neighbouring participants inside their lifelines (#1239)', () => {
+    // The two examples in #1239: a `:wrap` message, and `wrap: true` with each `messageAlign`.
+    const debate = "John! Are you still debating about how you're doing? How long does it take??";
+    const align = 'a message that is long enough to see the alignment and wrapping happen';
+    const m = model(
+      [p('Bob'), p('John'), p('A'), p('B')],
+      [msg('Bob', 'John', debate, 'solid_cross', { wrap: true }), msg('A', 'B', align)]
+    );
+    for (const classic of [false, true])
+      for (const messageAlign of ['center', 'left', 'right'])
+        for (const sequence of [{ messageAlign }, { messageAlign, wrap: true }]) {
+          expect(violations(m, false, sequence, { classic })).toEqual([]);
+          const l = lay(m, false, sequence, [], { classic });
+          const lines = (i: number) =>
+            l.messages.find((x) => x.ast === m.statements[i]!.ast)!.label!.text.lines.length;
+          // Both examples wrap: the check does not pass on a one-line label.
+          expect(lines(0)).toBeGreaterThan(1);
+          if (sequence.wrap) expect(lines(1)).toBeGreaterThan(1);
+        }
   });
 
   it('message ends stay on their columns when bars or wrapped boxes are wide', () => {

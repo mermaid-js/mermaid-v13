@@ -72,7 +72,7 @@ describe('sequence layout invariants', () => {
         for (const [name, model] of Object.entries(FIXTURES)) {
           it(`${name}, ${theme}, ${unit}, ${config}`, () => {
             const layout = lay(model, units, measurer, sequence, theme);
-            expect(sequenceLayoutViolations(model, layout)).toEqual([]);
+            expect(sequenceLayoutViolations(model, layout, sequence)).toEqual([]);
             expect(layout.units).toBe(unit);
           });
         }

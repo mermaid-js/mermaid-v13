@@ -127,6 +127,16 @@ class XPass {
     else if (s.activation === 'deactivate') this.deactivate(s.from);
   }
 
+  /** Whether no shown column stands between `a` and `b`. */
+  private neighbours(a: Column, b: Column): boolean {
+    const { env } = this;
+    const i = env.index.get(a.p.id) ?? 0;
+    const j = env.index.get(b.p.id) ?? 0;
+    for (let k = Math.min(i, j) + 1; k < Math.max(i, j); k++)
+      if (env.columns.get(env.order[k] ?? '')?.visible === true) return false;
+    return true;
+  }
+
   private messageX(s: SequenceMessage, from: Column, to: Column): MessageX {
     const { m } = this.env;
     const [fromLeft, fromRight] = this.barBounds(from);
@@ -152,9 +162,11 @@ class XPass {
     }
     const span = Math.abs(startx - stopx);
     const wrap = (s.wrap ?? this.env.autoWrap) && s.text !== '';
-    // In cells a wrapped label stays inside the span, a space clear of each lifeline: written
-    // over a lifeline it would erase it. A self message's label sits right of its lifeline.
-    const inside = m.cells && s.from !== s.to;
+    // A wrapped label between neighbouring columns stays inside the span, `wrapPadding` clear of
+    // each lifeline (#1239, D724: v12 wraps at `span + 2·wrapPadding` and runs over both). In
+    // cells every wrapped label does: written over a lifeline it would erase it. A self
+    // message's label sits right of its lifeline; one across several columns keeps v12's rule.
+    const inside = s.from !== s.to && (m.cells || this.neighbours(from, to));
     let max = Infinity;
     if (wrap)
       max = inside
