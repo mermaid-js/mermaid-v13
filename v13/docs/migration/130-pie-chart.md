@@ -29,8 +29,8 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   lightness alone follow the theme's base colours and hue-turned and `cScale` slots are fixed
   values, so in `redux-color` and `redux-dark-color` a `cScale<n>` override no longer recolours
   `pie<n+1>` (set `pie<n+1>`).
-  `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
-  `THEME_VARIABLE_DROPPED`.
+  `pieOpacity` is a number from 0 to 1 (D221) or a percentage from `0%` to `100%`, read as
+  N/100 as CSS reads it (D707); any other value is dropped with `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
   `cScale`*n*, so the first slice is `cScale1`). v12 `dark` left `pie12` unset, so a twelfth
   slice drew black; it is now `cScale0`, as in `neutral`.
