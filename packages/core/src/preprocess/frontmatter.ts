@@ -1,10 +1,11 @@
 /**
  * The shared front-matter parser (DESIGN §4.1). A line scanner finds the opening `---` on the
- * first non-blank line and the closing `---` at the same indent; the YAML between them is read
- * in place. Nothing is rewritten and every range is an offset into the original source. A byte
- * order mark as the first character is skipped, not read as the fence's indent (D642).
+ * first line that is not blank, a `%%` comment or a whole directive (D704), and the closing `---`
+ * at the same indent; the YAML between them is read in place. Nothing is rewritten and every
+ * range is an offset into the original source. A byte order mark as the first character is
+ * skipped, not read as the fence's indent (D642).
  */
-import { BOM, CR, LF } from '../parser-kit/char-codes.ts';
+import { BOM, CR, LF, LBRACE } from '../parser-kit/char-codes.ts';
 import { isSpace } from '../parser-kit/chars.ts';
 import type { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Range } from '../parser-kit/positions.ts';
@@ -33,6 +34,11 @@ export interface FrontMatterScan {
   frontMatter?: FrontMatter;
   /** Where the diagram text starts (after the front matter, or 0 when there is none). */
   bodyStart: number;
+  /**
+   * Where the opening fence's line starts (0 when there is no fence). Blank, `%%` comment and
+   * directive lines may come before it (D704); directives there are still read (D705).
+   */
+  fenceStart: number;
 }
 
 /** Horizontal whitespace as v12's fence regex sees it (`\s` without line breaks). */
@@ -60,21 +66,40 @@ function isFence(src: string, start: number, end: number, indent: string): boole
   return hspace(src, dash + 3) === end;
 }
 
+/**
+ * When the line at `start` is blank, a `%%` comment, or one directive closed on the same line
+ * with nothing after it, the offset of the next line; otherwise -1. A line that ends the
+ * source is never skipped: no fence can follow it.
+ */
+function skippableLine(src: string, start: number): number {
+  const first = hspace(src, start);
+  const end = lineEnd(src, first);
+  if (end >= src.length) return -1;
+  if (end > first) {
+    if (!src.startsWith('%%', first)) return -1;
+    if (src.charCodeAt(first + 2) === LBRACE) {
+      const close = src.indexOf('}%%', first + 3);
+      if (close === -1 || close >= end || hspace(src, close + 3) !== end) return -1;
+    }
+  }
+  return nextLine(src, end);
+}
+
 /** Find, read and interpret the front matter at the start of `src`. */
 export function scanFrontMatter(src: string, diagnostics: Diagnostics): FrontMatterScan {
-  // The opening fence is on the first non-blank line. A leading BOM is how the file was saved,
-  // not text: skip it, or it would be the fence's indent and no closing `---` would match (D642).
+  // The opening fence is on the first line that is not blank, a `%%` comment or a whole
+  // `%%{…}%%` directive (D704). A leading BOM is how the file was saved, not text: skip it,
+  // or it would be the fence's indent and no closing `---` would match (D642).
   let lineStart = src.charCodeAt(0) === BOM ? 1 : 0;
   for (;;) {
-    const first = hspace(src, lineStart);
-    const nl = newlineAt(src, first);
-    if (nl === 0) break;
-    lineStart = first + nl;
+    const next = skippableLine(src, lineStart);
+    if (next === -1) break;
+    lineStart = next;
   }
   const dash = hspace(src, lineStart);
   const openEnd = lineEnd(src, dash);
   const indent = src.slice(lineStart, dash);
-  if (!isFence(src, lineStart, openEnd, indent)) return { bodyStart: 0 };
+  if (!isFence(src, lineStart, openEnd, indent)) return { bodyStart: 0, fenceStart: 0 };
 
   const opener: Range = { start: dash, end: dash + 3 };
   const yamlStart = nextLine(src, openEnd);
@@ -85,6 +110,7 @@ export function scanFrontMatter(src: string, diagnostics: Diagnostics): FrontMat
       const bodyStart = nextLine(src, end);
       return {
         bodyStart,
+        fenceStart: lineStart,
         frontMatter: interpret(
           src,
           { start: lineStart, end: bodyStart },
@@ -106,7 +132,7 @@ export function scanFrontMatter(src: string, diagnostics: Diagnostics): FrontMat
     { related: [{ message: 'The front matter starts here.', range: opener }] }
   );
   // The unclosed block runs to the end, like an unclosed string; nothing is left for the diagram.
-  return { bodyStart: src.length };
+  return { bodyStart: src.length, fenceStart: lineStart };
 }
 
 function interpret(
