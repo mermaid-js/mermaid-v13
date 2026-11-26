@@ -1,0 +1,17 @@
+---
+description: >-
+  Markdown only in markdown strings (D710, D712). Plain cards draw backticks,
+  a leading "- " or "1." and ** as written, and still draw <br>, the tags and
+  entities; a label wholly in backticks is a markdown string. Columns,
+  tickets and assignees follow the same rule.
+---
+kanban
+  todo[Todo]
+    a[Use `npm ci` first]
+    b[- not a list]
+    c["`**bold** card`"]
+    d[1. not a list either]
+    e[**stars** stay]
+  done["`*Done* column`"]
+    f[First<br>second &amp; <b>bold</b> <i>it</i>]@{ ticket: '<u>T-1</u>', assigned: '`**md**`' }
+    g[<s>struck</s> H<sub>2</sub>O]

@@ -163,6 +163,8 @@ interface ItemData {
 interface ItemParts {
   nodeId: string | undefined;
   text: string;
+  /** Whether the shape's text was a markdown string (D712). */
+  markdown?: true;
   /** The indent width as written. */
   indent: number;
   range: Range;
@@ -351,6 +353,7 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
   private shape(parts: ItemParts): void {
     const { opener, text } = this.shapeOpen(parts);
     parts.text = this.raw(text);
+    if (this.c.tokens.kind[text - 1] === T.MdStringStart) parts.markdown = true;
     this.shapeClose(parts, opener, text);
   }
 
@@ -515,7 +518,7 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
 
   /** v12 `addNode`: the item's column, its data, and the misplaced-indent error. */
   private addItem(parts: ItemParts): void {
-    const { nodeId, text, indent, range, data, value } = parts;
+    const { nodeId, text, indent, range, data, value, markdown } = parts;
     const id = nodeId ?? text;
     const node: KanbanItemNode = {
       id: this.st.ids.node(id.trim()),
@@ -550,6 +553,7 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
       column: isColumn ? this.columns.length : this.columns.length - 1,
       classes: [],
     };
+    if (markdown) item.markdown = true;
     if (value) {
       applyData(item, value.value, () => this.priorityText(value));
       if (item.assigned !== undefined && data)
@@ -624,7 +628,10 @@ function jsString(v: YamlValue): string {
  * source text, from `priorityText`.
  */
 function applyData(item: OpenItem, doc: YamlMap, priorityText: () => string): void {
-  if (truthy(doc.label)) item.label = jsString(doc.label ?? '');
+  if (truthy(doc.label)) {
+    item.label = jsString(doc.label ?? '');
+    delete item.markdown;
+  }
   if (truthy(doc.icon)) item.icon = jsString(doc.icon ?? '');
   if (truthy(doc.assigned)) item.assigned = jsString(doc.assigned ?? '');
   if (truthy(doc.ticket)) item.ticket = jsString(doc.ticket ?? '');

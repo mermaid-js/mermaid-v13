@@ -8,8 +8,9 @@
  * - ids and labels as v12's grammar handed them to its DB, line breaks kept and entities as
  *   written (`&amp;` stays `&amp;`; v12's `#35;` form reads `&#35;`): nothing here decodes them,
  *   core's label layout does when the text is laid out. v12 passed them through `sanitizeText`;
- *   v13 writes text escaped instead, so nothing is removed here. Every label is markdown (v12
- *   set `labelType: 'markdown'`);
+ *   v13 writes text escaped instead, so nothing is removed here. A label written as a markdown
+ *   string in its shape (`["`…`"]`) is held without its wrapper, as v12's grammar handed it on,
+ *   and marked `markdown` (D712);
  * - `@{ … }` data as v12's `addNode` read it: a truthy `label` replaces the text; truthy
  *   `ticket`, `assigned` and `icon` are kept as JavaScript strings (`[x, y]` reads `x,y`); a
  *   truthy `priority` is kept, a string as it is and any other value as its YAML text as
@@ -33,6 +34,11 @@ export interface KanbanItem {
   readonly id: string;
   /** v12's `label`: the text in the shape (the inside of a string), the id, or `label:`'s value. */
   readonly label: string;
+  /**
+   * Whether the shape's text was a markdown string (`["`…`"]`), whose wrapper `label` does not
+   * hold: it is laid out as markdown (D710, D712). Undefined otherwise.
+   */
+  readonly markdown?: true;
   /** v12's `level`: the indent width as written (tabs count 1); 0 with none. */
   readonly level: number;
   /** Whether the item is a column (at the first item's level) or a card. */
