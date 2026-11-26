@@ -32,7 +32,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, block, railroad, usecase |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, block, usecase |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn, agentflow, railroad, usecase |
-| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `background` | `background` | | flowchart, state, agentflow, block, class, usecase |
+| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `background` | `background` | | flowchart, state, agentflow, block, c4, class, usecase |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | | flowchart, state, agentflow, block |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | dark | architecture |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral |  |
@@ -170,9 +170,11 @@ flags and opacities, which are read literally.
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `c4RelationColor` | | color | `#444444` | `#444444` | `#cccccc` | `#cccccc` | `#444444` | `#d3d3d3` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
+| `c4RelationColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `c4BoundaryColor` | | color | `#444444` | `#444444` | `#ffffff` | `#ffffff` | `#444444` | `#cccccc` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
 | `c4TitleColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `c4EdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `c4EdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `c4PersonColor` | | color | `#08427b` | `#08427b` | `#449ff4` | `#449ff4` | `#08427b` | `#449ff4` | `#08427b` | `#08427b` | `#08427b` | `#08427b` | `#449ff4` |
 | `c4PersonBorder` | | color | `#073b6f` | `#073b6f` | `#0a7fe5` | `#0a7fe5` | `#073b6f` | `#0a7fe5` | `#073b6f` | `#073b6f` | `#073b6f` | `#073b6f` | `#0a7fe5` |
 | `c4SoftwareSystemColor` | | color | `#1168bd` | `#1168bd` | `#51a0ec` | `#51a0ec` | `#1168bd` | `#51a0ec` | `#1168bd` | `#1168bd` | `#1168bd` | `#1168bd` | `#51a0ec` |
