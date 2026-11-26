@@ -166,6 +166,7 @@ e2e/diagrams/class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-s
 e2e/diagrams/class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd 1 6f622ff7ef848405
 e2e/diagrams/class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd 1 28246f6b0a665a56
 e2e/diagrams/class-diagram/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-the-handdrawn-look.mmd 1 ce9e1c46a147ec25
+e2e/diagrams/class-diagram/nightly-check/elk-self-relationship.mmd 1 5b5c9ee34e7bed7d
 e2e/diagrams/class-diagram/nightly-check/front-matter-title.mmd 1 64dec21277ff543c
 e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-0-should-render-a-simple-class-diagram.mmd 1 ec6b598a77ac4c9a
 e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-1-1-should-render-a-simple-class-diagram-without-htmllabels.mmd 1 468a31d8c918af4e

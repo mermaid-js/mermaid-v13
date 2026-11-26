@@ -1,7 +1,21 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { layered, validateLayout, type LayoutGraph } from '@mermaid-js/core/layout';
+import {
+  layered,
+  pxProfile,
+  validateLayout,
+  type LayoutContext,
+  type LayoutGraph,
+  type LayoutModel,
+  type LayoutModelNode,
+  type Point,
+  type Side,
+} from '@mermaid-js/core/layout';
+import { createMermaid } from 'mermaid';
 import { elkEngine, takeNotes, toElkGraph, type ElkAlgorithm } from './adapter.ts';
+import elkLayouts from './index.ts';
 
 const spacing = { node: 50, rank: 50, edge: 20 };
 
@@ -400,5 +414,133 @@ describe('elkEngine (LayoutGraph → ELK → LayoutModel)', () => {
         String(152 + 40 + spacing.node)
       );
     });
+  });
+});
+
+/** The source of fixture `e2e/diagrams/<path>.mmd`. */
+const fixture = (path: string): string =>
+  readFileSync(
+    fileURLToPath(new URL(`../../../e2e/diagrams/${path}.mmd`, import.meta.url)),
+    'utf8'
+  );
+
+/** Renders `source` with the package registered; the graph ELK got and the model it gave. */
+async function laidOut(source: string): Promise<{ graph: LayoutGraph; model: LayoutModel }> {
+  const laid: { graph: LayoutGraph; model: LayoutModel }[] = [];
+  const m = createMermaid();
+  m.initialize({ deterministic: true });
+  m.registerLayoutLoaders(
+    elkLayouts.map((l) => ({
+      ...l,
+      loader: async () => {
+        const engine = await l.loader();
+        return (graph: LayoutGraph, ctx?: LayoutContext) => {
+          const model = engine(graph, ctx);
+          laid.push({ graph, model });
+          return model;
+        };
+      },
+    }))
+  );
+  await m.render('d', source);
+  expect(laid).toHaveLength(1);
+  return laid[0]!;
+}
+
+/** How far `p` lies out from `side` of box `b`, and where it lies along that side. */
+function outAlong(b: LayoutModelNode, side: Side, p: Point): { out: number; along: number } {
+  const [w, h] = [b.width / 2, b.height / 2];
+  if (side === 'left') return { out: b.x - w - p.x, along: p.y };
+  if (side === 'right') return { out: p.x - b.x - w, along: p.y };
+  if (side === 'top') return { out: b.y - h - p.y, along: p.x };
+  return { out: p.y - b.y - h, along: p.x };
+}
+
+/**
+ * Each self-loop's geometry, measured from its node's side: how far each leg reaches out before
+ * it turns, the two ends along the side, and its label's box (out and along) when it has one.
+ */
+function selfLoops({ graph, model }: { graph: LayoutGraph; model: LayoutModel }) {
+  return graph.edges
+    .filter((e) => e.source === e.target)
+    .map((e) => {
+      const b = model.nodes.get(e.source)!;
+      const { points, ports, label } = model.edges.get(e.id)!;
+      const side = ports.source;
+      const at = (p: Point) => outAlong(b, side, p);
+      const across = side === 'left' || side === 'right';
+      const box =
+        label && e.label
+          ? (() => {
+              const c = at(label);
+              const [o, a] = across
+                ? [e.label.width / 2, e.label.height / 2]
+                : [e.label.height / 2, e.label.width / 2];
+              return { out: [c.out - o, c.out + o], along: [c.along - a, c.along + a] };
+            })()
+          : undefined;
+      return {
+        id: e.id,
+        side,
+        same: ports.target === side,
+        ends: [at(points[0]!), at(points.at(-1)!)],
+        reach: [at(points[1]!).out, at(points.at(-2)!).out],
+        label: box,
+      };
+    });
+}
+
+/** Whether the ranges `[a0, a1]` and `[b0, b1]` overlap by more than rounding. */
+const overlaps = ([a0, a1]: number[], [b0, b1]: number[]): boolean =>
+  Math.min(a1!, b1!) - Math.max(a0!, b0!) > 1e-6;
+
+describe('self-loops reach `metrics.loop` out before they turn (#1233, D719)', () => {
+  // diagram-er's marks (`PX_END`): half a crow's foot or bar across the line, and a mark's reach.
+  const ER_HALF_SPAN = 9;
+
+  it.each([
+    ['er-diagram/visual-check/an-er-diagram-with-a-recursive-relationship-elk-layout', 1],
+    ['class-diagram/nightly-check/elk-self-relationship', 1],
+    ['flowchart/nightly-check/elk-self-loops', 2],
+  ])('%s', async (path, count) => {
+    const laid = await laidOut(fixture(path));
+    const { loop, loopGap } = laid.graph.metrics ?? pxProfile.engine;
+    const loops = selfLoops(laid);
+    expect(loops).toHaveLength(count);
+    for (const l of loops) {
+      expect(l.same, l.id).toBe(true);
+      // Both ends sit on the side, and each leg runs straight out `loop` before it turns.
+      for (const end of l.ends) expect(Math.abs(end.out), l.id).toBeLessThan(1e-6);
+      for (const r of l.reach) expect(r, l.id).toBeGreaterThanOrEqual(loop - 1e-6);
+      // The label sits past the loop, `loopGap` clear of it, not across the legs.
+      if (l.label) expect(l.label.out[0]!, l.id).toBeGreaterThanOrEqual(loop + loopGap - 1e-6);
+    }
+  });
+
+  it('keeps both ER marks full size and apart, and the label clear of them', async () => {
+    const laid = await laidOut(
+      fixture('er-diagram/visual-check/an-er-diagram-with-a-recursive-relationship-elk-layout')
+    );
+    const { loop } = laid.graph.metrics!;
+    // ER asks for a longer loop than the engine's default: its marks reach further (D719).
+    expect(loop).toBeGreaterThan(pxProfile.engine.loop);
+    const [l] = selfLoops(laid);
+    const [a, b] = l!.ends.map((e) => e.along).sort((x, y) => x - y);
+    // The two marks, each a span across its leg, do not touch.
+    expect(b! - a!).toBeGreaterThanOrEqual(2 * ER_HALF_SPAN);
+    const marks = { out: [0, loop], along: [a! - ER_HALF_SPAN, b! + ER_HALF_SPAN] };
+    const label = l!.label!;
+    expect(overlaps(label.out, marks.out) && overlaps(label.along, marks.along)).toBe(false);
+  });
+
+  it('sets nothing on a graph with no self-loop', () => {
+    const built = toElkGraph(grouped(), 'layered');
+    for (const n of built.nodes.values()) {
+      const keys = Object.keys(n.layoutOptions ?? {});
+      expect(
+        keys.filter((k) => /individual|portAlignment/.test(k)),
+        n.id
+      ).toEqual([]);
+    }
   });
 });
