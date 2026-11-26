@@ -20,7 +20,6 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  decodeEntities,
   layoutLabel,
   markdownString,
   type FontKey,
@@ -51,7 +50,7 @@ import type {
  * (`units.id` `cell`) it does not warn: text draws none of those values.
  */
 export type RailroadLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn' | 'units'>>;
+  Partial<Pick<RenderContext, 'warn' | 'units' | 'inline'>>;
 
 /**
  * A choice's main line and its branches' tops (`tops`, moved in place) from v12's stacking:
@@ -110,7 +109,10 @@ export function layoutRailroad(
     return { ...canvas, units, metrics: m, config, fonts, rules: [], bounds: canvas };
   }
 
-  const place = new Placer(options, m, measurer, text, ruleName, cells ?? { guard: pxGuard });
+  const place = new Placer(options, m, measurer, text, ruleName, {
+    ...(cells ?? { guard: pxGuard }),
+    ...(ctx.inline ? { inline: ctx.inline } : {}),
+  });
   const rules: RailroadRuleLayout[] = [];
   let y = options.padding;
   let widest = 0;
@@ -179,8 +181,13 @@ class Placer {
     private readonly measurer: Measurer,
     private readonly font: FontKey,
     private readonly ruleFont: FontKey,
-    /** The main-line rule, and the rows below a rule's definition in cells (px: `2 × padding`). */
-    private readonly cells: Pick<RailroadCellOptions, 'guard'> & Partial<RailroadCellOptions>
+    /**
+     * The main-line rule, and the rows below a rule's definition in cells (px: `2 × padding`);
+     * the render's `inline`, which collects the tags a special drops (`HTML_DROPPED`).
+     */
+    private readonly cells: Pick<RailroadCellOptions, 'guard'> &
+      Partial<RailroadCellOptions> &
+      Pick<RenderContext, 'inline'>
   ) {
     this.lineHeight = measurer.metrics(font).lineHeight;
   }
@@ -321,23 +328,24 @@ class Placer {
    * A special, `? text ?` in a dashed box (L473-499). Its text follows the label rule (D710):
    * `<br>`, the drawn tags and character references, and Markdown only in a markdown string.
    * A text that draws formatting is laid out in lines and its box sized from them (in px; the
-   * text output draws its plain text). Any other is drawn as one string, as before: its
-   * entities decoded, a markdown string without its backticks. The SVG draws a special on one
-   * line, so a line break or tab written in it is a space. A special made from tokens (PEG's
+   * text output draws its plain text). Any other is drawn as one string, the label's text: its
+   * entities decoded, a dropped tag gone (`HTML_DROPPED`), a markdown string without its
+   * backticks. The SVG draws a special on one line, so a line break or tab written in it is a
+   * space. A special made from tokens (PEG's
    * `&X`, `!X` and `.`, `literal`) is drawn as written, as a token is.
    */
   private special(node: RailroadSpecial): Sized {
     if (node.literal) return this.leaf(node, `? ${oneLine(node.text)} ?`, 0, this.m.specialDash);
     const { text: source, markup } = markdownString(node.text);
     const written = `? ${source} ?`;
-    const label = layoutLabel(oneLine(written), this.font, Infinity, this.measurer, { markup });
+    const label = layoutLabel(oneLine(written), this.font, Infinity, this.measurer, {
+      markup,
+      ...(this.cells.inline ? { inline: this.cells.inline } : {}),
+    });
     const dash = this.m.specialDash;
-    if (isFormatted(label)) {
-      const text = plainText(label);
-      return this.leaf(node, written, 0, dash, this.cells.measurer ? { text } : { text, label });
-    }
-    const text = markup === 'plain' ? decodeEntities(written) : plainText(label);
-    return this.leaf(node, written, 0, dash, { text });
+    const text = plainText(label);
+    const drawn = isFormatted(label) && !this.cells.measurer ? { text, label } : { text };
+    return this.leaf(node, written, 0, dash, drawn);
   }
 
   /** Elements in a row on one track, `horizontalSeparation` apart (L167-217). */

@@ -61,6 +61,14 @@ describe('HTML_DROPPED (R-TEXT-3, D566)', () => {
     expect(dropped(warnings)).toEqual(['Labels do not draw <span>.']);
   });
 
+  it('names the tags a railroad special loses, with or without formatting (D710)', async () => {
+    const out = await draw('railroad/nightly-check/label-markup.mmd');
+    expect(out.labels).toContain('? kept text ?');
+    expect(out.labels.join('|')).not.toContain('<span>');
+    expect(out.text).toContain('? kept text ?');
+    for (const messages of out.dropped) expect(messages).toEqual(['Labels do not draw <span>.']);
+  });
+
   it('names the tags the text of a mindmap ::icon() loses', async () => {
     const { svg, warnings } = await svgOf('mindmap/nightly-check/html-dropped-icon-text.mmd');
     expect(drawn(svg)).toContain('fa fa-book');
