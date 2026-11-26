@@ -411,7 +411,6 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
 
   const n = real + dummies;
   const W = f64(n);
-  const BIAS = f64(n);
   const H = f64(n);
   const KIND = u8(n);
   const RANK = i32(n);
@@ -419,7 +418,6 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
   for (let i = 0; i < real; i++) {
     const node = nodes[i]!;
     W[i] = node.w;
-    BIAS[i] = node.bias;
     H[i] = node.h;
     KIND[i] = node.kind;
     RANK[i] = node.rank;
@@ -627,12 +625,14 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
   };
   setPositions();
 
+  const [LEFT, RIGHT] = reachOf(nodes, W, real, n);
   const g: Graph = {
     n,
     real,
     maxRank,
     W,
-    BIAS,
+    LEFT,
+    RIGHT,
     KIND,
     RANK,
     EF,
@@ -851,7 +851,7 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
     return gridRow ? gridRow(r, count, onTrack) : trackAt(r, count, onTrack);
   };
 
-  let [minX, maxX] = extentOf(xs, W, BIAS, n);
+  let [minX, maxX] = extentOf(xs, LEFT, RIGHT, n);
   if (hooks) {
     minX = hooks.floor(minX);
     maxX = hooks.ceil(maxX);
@@ -1033,8 +1033,10 @@ export interface Graph {
   real: number;
   maxRank: number;
   W: Float64Array;
-  // Where the middle of each node's room lies from its middle (`LNode.bias`).
-  BIAS: Float64Array;
+  // How far each node's room reaches left and right of its middle: `W` / 2 less and plus its
+  // `LNode.bias`.
+  LEFT: Float64Array;
+  RIGHT: Float64Array;
   KIND: Uint8Array;
   RANK: Int32Array;
   // Segment endpoints, and where each segment attaches on them.
@@ -1416,17 +1418,16 @@ function endOf({ g, nodes, xs, free }: Align, e: number, side: number): [number,
 // two labels, half of one between a label and a line that passes it. A label or bend has no bias
 // of its own; a neighbour's room reaches `side` (-1 left, 1 right) of it.
 function roomOf({ g, xs, opt }: Align, v: number): [number, number] {
-  const { KIND, RANK, W, BIAS, layerStart, order, pos } = g;
+  const { KIND, RANK, W, LEFT, RIGHT, layerStart, order, pos } = g;
   const s = layerStart[RANK[v]!]!;
   const i = s + pos[v]!;
-  const clear = (other: number, side: number): number =>
-    W[other]! / 2 -
-    side * BIAS[other]! +
-    W[v]! / 2 +
-    gapBetween(KIND[other]!, KIND[v]!, opt.nodeSep, opt.edgeSep);
+  const clear = (other: number, reach: number): number =>
+    reach + W[v]! / 2 + gapBetween(KIND[other]!, KIND[v]!, opt.nodeSep, opt.edgeSep);
+  const left = order[i - 1]!;
+  const right = order[i + 1]!;
   return [
-    i > s ? xs[order[i - 1]!]! + clear(order[i - 1]!, -1) : -Infinity,
-    i + 1 < layerStart[RANK[v]! + 1]! ? xs[order[i + 1]!]! - clear(order[i + 1]!, 1) : Infinity,
+    i > s ? xs[left]! + clear(left, RIGHT[left]!) : -Infinity,
+    i + 1 < layerStart[RANK[v]! + 1]! ? xs[right]! - clear(right, LEFT[right]!) : Infinity,
   ];
 }
 
@@ -2607,21 +2608,37 @@ export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   return [best, declared];
 }
 
-// How far across the flow the rooms of the first `n` nodes reach each way: at `xs`, `W` wide,
-// their middles `BIAS` off.
+// How far each node's room reaches left and right of its middle (`Graph.LEFT`, `RIGHT`), from
+// its width `W` and, for the first `real`, its bias.
+function reachOf(
+  nodes: LNode[],
+  W: Float64Array,
+  real: number,
+  n: number
+): [Float64Array, Float64Array] {
+  const left = f64(n);
+  const right = f64(n);
+  for (let i = 0; i < n; i++) {
+    const half = W[i]! / 2;
+    const bias = i < real ? nodes[i]!.bias : 0;
+    left[i] = half - bias;
+    right[i] = half + bias;
+  }
+  return [left, right];
+}
+
+// How far across the flow the rooms of the first `n` nodes at `xs` reach each way.
 function extentOf(
   xs: Float64Array,
-  W: Float64Array,
-  BIAS: Float64Array,
+  LEFT: Float64Array,
+  RIGHT: Float64Array,
   n: number
 ): [number, number] {
   let lo = Infinity;
   let hi = -Infinity;
   for (let i = 0; i < n; i++) {
-    const half = W[i]! / 2;
-    const mid = xs[i]! + BIAS[i]!;
-    if (mid - half < lo) lo = mid - half;
-    if (mid + half > hi) hi = mid + half;
+    if (xs[i]! - LEFT[i]! < lo) lo = xs[i]! - LEFT[i]!;
+    if (xs[i]! + RIGHT[i]! > hi) hi = xs[i]! + RIGHT[i]!;
   }
   return [lo, hi];
 }
@@ -2638,7 +2655,7 @@ function gapsOf(g: Graph, opt: LayeredOptions, side: number): Float64Array {
 // edge passes through, and needs no more than a bend.
 function halfRoom(g: Graph, opt: LayeredOptions, v: number, side: number): number {
   const sep = g.KIND[v]! === Kind.Node ? opt.nodeSep : opt.edgeSep;
-  return g.W[v]! / 2 + side * g.BIAS[v]! + sep / 2;
+  return (side < 0 ? g.LEFT[v]! : g.RIGHT[v]!) + sep / 2;
 }
 
 // Pulls what leads to a held end towards it (#650, new in v13). Brandes-Köpf lines up only one
@@ -2728,8 +2745,8 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   const {
     n,
     maxRank,
-    W,
-    BIAS,
+    LEFT,
+    RIGHT,
     KIND,
     EF,
     ET,
@@ -2898,7 +2915,7 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   const mins: number[] = [];
   const maxs: number[] = [];
   for (let k = 0; k < 4; k++) {
-    const [lo, hi] = extentOf(results[k]!, W, BIAS, n);
+    const [lo, hi] = extentOf(results[k]!, LEFT, RIGHT, n);
     mins.push(lo);
     maxs.push(hi);
     if (hi - lo < bestWidth) {
