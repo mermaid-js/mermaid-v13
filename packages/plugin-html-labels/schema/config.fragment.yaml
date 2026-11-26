@@ -24,7 +24,8 @@ properties:
           in a label is rendered after sanitizing, and a markdown string becomes HTML. On once
           the plugin is registered; `false` (or v12's `htmlLabels: false`) draws SVG labels.
           Only in a browser: without a DOM, in a deterministic render and in text output labels
-          are SVG text. A label with math (`$$…$$`) or an icon (`fa:…`) stays SVG.
+          are SVG text. Math (`$$…$$`) and icons (`fa:…`) in an HTML label are drawn by the math
+          and icons plugins, as without this plugin.
         type: boolean
         default: true
         x-mermaid: { status: honoured, since: 13.0.0 }
