@@ -536,7 +536,7 @@ export class Rows {
                 r.x + m.half(m.labelBoxWidth) + m.half(r.width) - m.half(title.width),
                 title.width
               ),
-              textY(r.y)
+              this.frameLabelY(title, r.y, textY)
             ),
           }
         : {}),
@@ -548,12 +548,27 @@ export class Rows {
               label: placed(
                 sec.text,
                 this.inFrame(r, r.x + m.half(r.width - sec.text.width), sec.text.width),
-                textY(sec.y)
+                this.frameLabelY(sec.text, sec.y, textY)
               ),
             }
           : {}),
       })),
     };
+  }
+
+  /**
+   * The top of a frame title or section label hung from the line at `y` (#1238, D723). v12 drew
+   * the first baseline `boxMargin + boxTextMargin` and half a `boxTextMargin` below that line
+   * (17.5 px at the defaults; the glyph box centred 12.5 px below it in Chromium), whatever the
+   * font. The label never rises above its line, and never sinks below `textY`, which the frame
+   * is sized to hold. Cells keep the label at `textY`.
+   */
+  private frameLabelY(label: MeasuredLabel, y: number, textY: (y: number) => number): number {
+    const { m } = this.env;
+    const top = textY(y);
+    if (m.cells) return top;
+    const first = label.baselines?.[0] ?? label.baseline;
+    return Math.min(top, Math.max(y, top + m.half(m.boxTextMargin.y) - first));
   }
 
   /** A frame label's x, moved clear of the box borders inside the frame (cells only). */
