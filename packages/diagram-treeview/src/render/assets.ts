@@ -5,21 +5,13 @@
  * qualified it, `pack:name`) is asked of the extensions' glyphs (`ctx.icon`), in the icon's
  * square, painted with the icon colour.
  *
- * An icon that cannot be drawn gets v12's unknown-icon glyph in its slot, the blue `?` square
- * v12 drew (D702): no icons extension, or none has the name (`undefined`), and treeView names it
- * in the render's one `ICON_NOT_RENDERED`; or an extension reported it unresolved (`null`) and
- * warned itself (D291). While its pack is still loading in a placeholder render (`'pending'`,
- * D299) the slot stays empty, quietly, so the `?` never shows for an icon that will be drawn.
+ * Not drawn, the slot stays empty (the layout keeps its width, as v12 kept it for its unknown
+ * icon): no icons extension, or none has the name (`undefined`), and treeView names it in the
+ * render's one `ICON_NOT_RENDERED`; an extension reported it unresolved (`null`) and warned
+ * itself (D291); or its pack is still loading in a placeholder render (`'pending'`, D299),
+ * quietly.
  */
-import {
-  scale,
-  transforms,
-  translate,
-  writeFragment,
-  type Paint,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
-import { UNKNOWN_ICON_SIZE, unknownIcon } from '@mermaid-js/shared/svg/unknown-icon';
+import { translate, writeFragment, type Paint, type SvgWriter } from '@mermaid-js/core/svg';
 import type { TreeViewIcon } from '../layout/index.ts';
 import type { TreeViewRenderContext } from './context.ts';
 import { builtinGlyph } from './glyphs.ts';
@@ -31,7 +23,7 @@ const LISTED = 8;
 const LONGEST = 60;
 
 /**
- * Draws `icon` for the node `id` (none for the root row). False when it could not be drawn and no
+ * Draws `icon` for the node `id` (none for the root row). False when it is not drawn and no
  * extension warned about it, for {@link iconsNotRendered}.
  */
 export function drawIcon(
@@ -44,7 +36,8 @@ export function drawIcon(
   const { box, name } = icon;
   const builtin = builtinGlyph(name, box.width);
   const glyph = builtin ? undefined : ctx.icon?.(name, box.width, { paint, pending: true });
-  if (glyph === 'pending') return true;
+  if (!builtin && (glyph === undefined || glyph === null || glyph === 'pending'))
+    return glyph !== undefined;
   w.open('g', {
     class: 'treeView-node-icon',
     'data-id': id,
@@ -52,19 +45,9 @@ export function drawIcon(
     color: paint,
   });
   if (builtin) w.leaf('path', builtin);
-  else if (glyph) writeFragment(w, glyph);
-  else writeFragment(w, unknown(box.width));
+  else if (glyph && glyph !== 'pending') writeFragment(w, glyph);
   w.close();
-  return builtin !== undefined || glyph !== undefined;
-}
-
-/** v12's unknown-icon glyph, drawn in its own square and scaled to the slot's `size`. */
-function unknown(size: number) {
-  const glyph = unknownIcon();
-  return {
-    ...glyph,
-    attrs: { ...glyph.attrs, transform: transforms(scale(size / UNKNOWN_ICON_SIZE)) },
-  };
+  return true;
 }
 
 /**
@@ -81,8 +64,8 @@ export function iconsNotRendered(ctx: TreeViewRenderContext, names: readonly str
   const warning = {
     code: ICON_NOT_RENDERED,
     message: ctx.icon
-      ? `Icons not rendered: ${quoted}${more}. No icons extension draws them; treeView draws only its own file and folder icons, and a "?" square in their place.`
-      : `Icons are not rendered without an icons extension: ${quoted}${more}. TreeView draws only its own file and folder icons, and a "?" square in their place.`,
+      ? `Icons not rendered: ${quoted}${more}. No icons extension draws them; treeView draws only its own file and folder icons, and leaves the slot empty.`
+      : `Icons are not rendered without an icons extension: ${quoted}${more}. TreeView draws only its own file and folder icons, and leaves the slot empty.`,
   };
   if (ctx.inline) ctx.inline.warn(warning);
   else ctx.warn(warning);

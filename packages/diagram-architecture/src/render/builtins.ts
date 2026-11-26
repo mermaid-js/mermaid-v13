@@ -1,7 +1,7 @@
 /**
  * Architecture's seven built-in icons (D505) as package constants: v12's `architectureIcons.ts`
  * (`#087ebf` squares with white strokes, the same in every theme, D152) and its `unknownIcon`
- * (`@mermaid-js/shared/svg/unknown-icon`, which treeView draws too), each element as v12 wrote it, its `style` written as presentation
+ * (`rendering-util/icons.ts`), each element as v12 wrote it, its `style` written as presentation
  * attributes and its `id`/`data-name` dropped (they would repeat on a page). They are drawn in
  * v12's 80 px icon square (`ART_SIZE`, the art's own, whatever the schema default) and scaled to
  * the document's `iconSize`.
@@ -9,9 +9,8 @@
  * Icon art, not layout: the literal gate (`conformance/src/architecture/layout-literals.spec.ts`)
  * exempts this file, as it does the metrics table.
  */
-import { checkColor, type Attrs, type PathData } from '@mermaid-js/core/svg';
+import { checkColor, checkStyle, type Attrs, type PathData } from '@mermaid-js/core/svg';
 import type { SvgFragment } from '@mermaid-js/core/text';
-import { unknownIcon } from '@mermaid-js/shared/svg/unknown-icon';
 
 /** v12's pack, whose names a name without one resolves in (`fallbackPrefix`). */
 export const BUILTIN_PACK = 'mermaid-architecture';
@@ -71,6 +70,10 @@ let builtins: ReadonlyMap<string, SvgFragment> | undefined;
 /** v12's seven icons, built once. */
 export function builtinIcons(): ReadonlyMap<string, SvgFragment> {
   if (builtins) return builtins;
+  const question = {
+    fill: WHITE,
+    ...checkStyle(['font-family: ArialMT, Arial', 'font-size: 67.75px']).text,
+  };
   builtins = new Map<string, SvgFragment>([
     [
       'database',
@@ -134,8 +137,8 @@ export function builtinIcons(): ReadonlyMap<string, SvgFragment> {
         ),
       ]),
     ],
-    // v12's `unknownIcon`, shared with treeView (D702).
-    ['unknown', unknownIcon()],
+    // v12's `unknownIcon`, its `translate(21.16 64.67)` written as the text's position.
+    ['unknown', wrap([el('text', { x: 21.16, y: 64.67, ...question }, ['?'])])],
     ['blank', wrap([])],
   ]);
   return builtins;

@@ -112,7 +112,6 @@ describe('workspace layout (DESIGN §2)', () => {
         './svg/graph',
         './svg/node-paint',
         './svg/route',
-        './svg/unknown-icon',
         './testing/layout-invariants',
         './testing/parser-reference',
         './testing/render-harness',
