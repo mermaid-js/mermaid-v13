@@ -82,6 +82,7 @@ class Scheduler {
     { id: string; kind: UnknownRef['kind']; milestone: boolean }
   >();
   private readonly bad = new Set<string>();
+  private readonly milestoneBad = new Set<string>();
 
   /** What each walked day costs (`steps.ts`). */
   private readonly cost: number;
@@ -131,6 +132,7 @@ class Scheduler {
       unknownIds: [...this.unknown],
       unknownRefs: [...this.unknownRefs.values()],
       badDurations: [...this.bad],
+      milestoneBadDurations: [...this.milestoneBad],
       steps: this.steps.taken,
     };
   }
@@ -239,11 +241,17 @@ class Scheduler {
     }
     const [value, unit] = parseDuration(str);
     if (Number.isNaN(value)) {
-      this.bad.add(str);
+      this.noteBadDuration(i, str);
       return start;
     }
     const end = add(new Date(start), value, unit);
     return isValid(end) ? end.getTime() : start;
+  }
+
+  /** Notes an end field that is no date or duration, and whether a milestone (task `i`) wrote it. */
+  private noteBadDuration(i: number, text: string): void {
+    this.bad.add(text);
+    if (this.tasks[i]!.tags.includes('milestone')) this.milestoneBad.add(text);
   }
 
   /** v12 `checkTaskDates` and `fixTaskDates`: each excluded day pushes the end one day. */

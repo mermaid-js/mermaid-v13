@@ -115,6 +115,14 @@ describe('schedule follows v12 getTasks()', () => {
     expect(s.badDurations).toEqual(['m1']);
   });
 
+  it('lists the bad durations a milestone wrote apart from the others', () => {
+    const s = run(
+      ymd().addTask('M1', 'milestone, 2023-01-01, m1').addTask('t', 't1, 2023-01-01, soon')
+    );
+    expect(s.badDurations).toEqual(['m1', 'soon']);
+    expect(s.milestoneBadDurations).toEqual(['m1']);
+  });
+
   it('pushes ends past excluded days, keeping where the bar ends', () => {
     const s = run(
       ymd()

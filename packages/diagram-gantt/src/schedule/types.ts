@@ -52,6 +52,8 @@ export interface Schedule {
   readonly unknownRefs: readonly UnknownRef[];
   /** End fields that are neither a date nor a duration, in first-seen order (D276). */
   readonly badDurations: readonly string[];
+  /** The `badDurations` a milestone wrote: the id of a milestone put where the duration goes. */
+  readonly milestoneBadDurations: readonly string[];
   /** The steps the schedule took (`steps.ts`, D542), on the counter it was given. */
   readonly steps: number;
 }

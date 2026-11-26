@@ -48,14 +48,19 @@ export const theme: DiagramThemeTable = {
     // alone there, as in v12; `base` derives `mainBkg` from it (D657). The lines read
     // `guideLineColor`, the line colour those four themes pin where v12 keeps its own under an
     // override (D656); in `base` it is `lineColor`. The first band is `mainBkg` moved away from
-    // the page and from the third band, darker in the light themes and lighter in `dark`, whose
-    // `background` is lighter than `mainBkg`: v12's `default` has a lavender band, its other
-    // themes pale ones the page barely tells apart (D726, amending D656's pin and D541's rows;
-    // #1249). Every classic theme reaches 1.2:1 against `background` and against the third band
-    // (`conformance/src/gantt/theme.spec.ts`). An author's `sectionBkgColor` still wins.
+    // everything drawn on or beside it: darker than the page, the third band, the grid lines and
+    // every bar fill in the light themes (darker than `lightgrey`, which the grid and the done
+    // bars use), and darker than all of them in `dark`, where `mainBkg` is the darkest fill but
+    // the page is lighter. A plain HSL darkening cannot do both for a pale saturated `mainBkg`
+    // (`base`'s needs a deep step that leaves `default`'s too dark for its text), so the light
+    // rule darkens a little in HSL and then mixes in black. v12's `default` has a lavender band,
+    // its other themes pale ones the page barely tells apart (D726, amending D656's pin and
+    // D541's rows; #1249). `conformance/src/gantt/theme.spec.ts` holds every classic theme to
+    // 1.2:1 against `background`, `sectionBkgColor2`, `gridColor` and the bar fills, and to AA
+    // for the text on the band. An author's `sectionBkgColor` still wins.
     classic: {
       rules: {
-        sectionBkgColor: 'darkenHsl(mainBkg, 16%)',
+        sectionBkgColor: 'mix(darkenHsl(mainBkg, 10%), black, 18%)',
         sectionBkgColor2: 'mainBkg',
         taskBkgColor: 'mainBkg',
         activeTaskBkgColor: 'lightenHsl(mainBkg, 23%)',
@@ -68,7 +73,7 @@ export const theme: DiagramThemeTable = {
       // theme's misses AA on the grey active bar.
       dark: {
         rules: {
-          sectionBkgColor: 'lightenHsl(mainBkg, 18%)',
+          sectionBkgColor: 'darkenHsl(mainBkg, 15%)',
           critBkgColor: 'darkenHsl(red, 20%)',
           taskTextDarkColor: 'contrast(activeTaskBkgColor, textColor, white)',
         },
