@@ -37,19 +37,26 @@ import { eventModelingGateCorpus } from './corpus.ts';
  *   at its line end and reports `UNCLOSED_DIRECTIVE` (an error: v13 rejects the source,
  *   asserted); v12's directive regex removed more. The difference is in core's directive
  *   reading, shared by every type (pie's, radar's, treemap's and wardley's gates list it too),
- *   not in an event modeling lexer rule.
+ *   not in an event modeling lexer rule. Also `e2e/nightly-check/comment-before-frontmatter.mmd`
+ *   in every variant, a `%%` line above the front matter: core reads that front matter (D704)
+ *   and the lexer starts after it; v12 did not find it, so its lexer saw the block as hidden
+ *   `EM_YAML`. That difference is in core's front-matter scanner, shared by every type.
  * - {@link NOT_REACHED}: the sources v12 never lexed as event modeling: `EventModeling`
  *   (detection is case-sensitive) in every variant, and the `commented()` copies of short
  *   sources, whose cut falls inside the header.
  */
 const UNCLOSED = 'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)';
+const BEFORE_FENCE = 'core reads front matter after a leading `%%` line (D704)';
 const variants = (id: string) => [id, `${id} (CRLF)`, `${id} (commented)`];
-const EXCLUDED: ReadonlyMap<string, string> = new Map(
-  [
+const EXCLUDED: ReadonlyMap<string, string> = new Map([
+  ...[
     ...variants('eventmodeling-cases/unclosed-directive'),
     ...variants('eventmodeling-cases/directive-in-line-unclosed'),
-  ].map((id) => [id, UNCLOSED])
-);
+  ].map((id) => [id, UNCLOSED] as const),
+  ...variants('e2e/nightly-check/comment-before-frontmatter.mmd').map(
+    (id) => [id, BEFORE_FENCE] as const
+  ),
+]);
 const CUT_HEADER = 'the commented() cut falls inside the header';
 const NOT_REACHED: ReadonlyMap<string, string> = new Map([
   ...variants('eventmodeling-cases/header-upper').map(
@@ -164,10 +171,15 @@ describe('event modeling lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)
       if (EXCLUDED.has(item.id)) {
         // Still different, and for the reason given: v13 rejects the source in preprocess.
         if (tokens ?? hidden) excluded.push(item.id);
-        const unclosed = preprocess(item.source).diagnostics.some(
-          (d) => d.code === 'UNCLOSED_DIRECTIVE' && d.severity === 'error'
-        );
-        if (!unclosed) accepted.push(item.id);
+        const pre = preprocess(item.source);
+        // D704: the front matter below the `%%` line is read.
+        const forReason =
+          EXCLUDED.get(item.id) === BEFORE_FENCE
+            ? pre.frontMatter !== undefined
+            : pre.diagnostics.some(
+                (d) => d.code === 'UNCLOSED_DIRECTIVE' && d.severity === 'error'
+              );
+        if (!forReason) accepted.push(item.id);
         continue;
       }
       if (tokens) diffs.push(`${item.id} tokens ${tokens}`);
@@ -183,7 +195,7 @@ describe('event modeling lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)
     expect(headerKept).toEqual([]);
     // Every e2e fixture reaches the lexer: 25 through #604, 8 baselines from #611, the later
     // ones and #1035's override fixture.
-    expect(e2e).toBe(39);
+    expect(e2e).toBe(40);
     expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
 });

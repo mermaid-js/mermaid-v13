@@ -6,6 +6,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { loadDivergences } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
 import { DIVERGENCES_DIR } from '../registry.ts';
+import { beforeFenceResults, BEFORE_FENCE_COMMENTED } from '../before-fence.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { eventModelingGateCorpus } from './corpus.ts';
@@ -49,10 +50,11 @@ async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
   yield* items;
 }
 
+/** Leaves out {@link BEFORE_FENCE_COMMENTED} (D704), checked on its own below. */
 const run = async () =>
   runParity({
     adapters: [eventModelingAdapter],
-    corpus: each(await eventModelingGateCorpus()),
+    corpus: each((await eventModelingGateCorpus()).filter((i) => i.id !== BEFORE_FENCE_COMMENTED)),
     divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
@@ -92,6 +94,15 @@ describe('event modeling oracle parity with mermaid@12', () => {
       expect(listed?.detail(d.detail), `${d.id}: ${d.detail}`).toBe(true);
     }
   }, 300_000);
+
+  it('still rejects the YAML of the commented copy below a `%%` line (D704)', async () => {
+    const corpus = await eventModelingGateCorpus();
+    const { items, results } = await beforeFenceResults(eventModelingAdapter, corpus);
+    expect(items.length).toBe(1);
+    expect(results.map((r) => [r.divergence?.kind, r.divergence?.detail])).toEqual([
+      ['reject', expect.stringMatching(/^YAML_SYNTAX/)],
+    ]);
+  }, 60_000);
 
   it("reports the duplicate frame id v12's DB threw, word for word, as an error", async () => {
     const oracle = await loadOracle();

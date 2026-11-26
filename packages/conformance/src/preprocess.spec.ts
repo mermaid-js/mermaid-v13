@@ -95,7 +95,14 @@ const CORPUS_DIR = 'e2e/diagrams';
  * Decided divergences (see `packages/core/src/preprocess/divergences.spec.ts`). A fixture
  * that stops differing must be removed from here.
  */
+const BEFORE_FENCE =
+  'A `%%` or directive line before the opening fence: v12 reads no front matter; v13 reads it (D704).';
 const DIVERGENT: Record<string, string> = {
+  'e2e/diagrams/architecture/nightly-check/comment-before-frontmatter.mmd': BEFORE_FENCE,
+  'e2e/diagrams/conf-and-directives/pr-check/comment-before-frontmatter.mmd': BEFORE_FENCE,
+  'e2e/diagrams/conf-and-directives/pr-check/directive-before-frontmatter.mmd': BEFORE_FENCE,
+  'e2e/diagrams/eventmodeling/nightly-check/comment-before-frontmatter.mmd': BEFORE_FENCE,
+  'e2e/diagrams/pie/nightly-check/comment-before-frontmatter.mmd': BEFORE_FENCE,
   'e2e/diagrams/requirement/visual-check/with-a-theme-default.mmd':
     'Leading blank line before the opening fence: v12 render() rejects it (run() trims it first); v13 accepts.',
 };
@@ -120,6 +127,63 @@ describe('preprocess parity with v12 over the e2e corpus', async () => {
       if (JSON.stringify(got) !== JSON.stringify(want)) differing.push(id);
     }
     expect(differing).toEqual(Object.keys(DIVERGENT));
+  });
+});
+
+/** Registered types with no front-matter fixture this test can render, and why that is enough. */
+const NO_FIXTURE: Record<string, string> = {
+  'flowchart-elk':
+    'No fixture opens with `flowchart-elk`, and it needs the elk layout plugin; the flowchart package parses it from `bodyStart` as it does `flowchart-v2`.',
+};
+
+/**
+ * Preprocess is shared, so a `%%` line or a directive above the fence must not change what any
+ * type draws: one front-matter fixture per registered type, with and without the line.
+ */
+describe('a `%%` line before the front matter, for every diagram type (#1216, D704, D705)', async () => {
+  const items: CorpusItem[] = [];
+  for await (const item of corpusFromDir(join(REPO_ROOT, CORPUS_DIR), CORPUS_DIR)) items.push(item);
+  const m = createMermaid();
+  m.initialize({ deterministic: true });
+  const types = m
+    .getRegisteredDiagramsMetadata()
+    .map((d) => d.id)
+    .filter((id) => id !== 'error' && id !== '---');
+
+  /** The first fixture per type that opens with front matter and renders without it. */
+  const perType = new Map<string, CorpusItem>();
+  for (const item of items) {
+    if (!/^\s*---/.test(item.source) || !preprocess(item.source).frontMatter) continue;
+    let type: string;
+    try {
+      type = m.detectType(item.source);
+    } catch {
+      continue;
+    }
+    if (perType.has(type)) continue;
+    try {
+      await m.render('x', item.source);
+    } catch {
+      continue;
+    }
+    perType.set(type, item);
+  }
+
+  it('has a front-matter fixture for every registered type', () => {
+    expect(types.filter((t) => !perType.has(t))).toEqual(Object.keys(NO_FIXTURE));
+  });
+
+  it.each([
+    ['a `%%` comment line', '%% a comment before the front matter\n'],
+    ['an empty `%%{init}%%` directive line', '%%{init: {}}%%\n'],
+  ])('draws the same SVG after %s', async (_name, head) => {
+    const differing: string[] = [];
+    for (const [type, { id, source }] of perType) {
+      const [want, got] = [await m.render('x', source), await m.render('x', head + source)];
+      if (got.svg !== want.svg || got.diagramType !== want.diagramType)
+        differing.push(`${type} ${id}`);
+    }
+    expect(differing).toEqual([]);
   });
 });
 
