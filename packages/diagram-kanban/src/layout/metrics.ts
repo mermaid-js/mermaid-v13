@@ -171,6 +171,9 @@ export const CELL_UNITS: KanbanUnits = { lengths: KANBAN_CELL_METRICS, meta: CEL
 /** v12 places every column's top at `−COLUMN_TOP × W`: a multiple of `W`, not a length. */
 export const COLUMN_TOP = 1.5;
 
+/** A one-line title, measured for the room a one-line title leaves in the title row. */
+export const TITLE_PROBE = 'M';
+
 /** Labels are drawn in the theme font at normal weight (v12's HTML labels). */
 export const FONT_WEIGHT = 400;
 

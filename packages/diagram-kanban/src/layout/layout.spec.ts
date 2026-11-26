@@ -136,7 +136,8 @@ describe('kanban layout: v12 label and column geometry', () => {
 
 // A second 12.2.0 render, `sectionWidth: 0`, a column title on three lines (72 px), one card
 // under it and one under a short title, and an empty column: every column took the 72 px
-// title row (heights 126, 126 and 97), both cards' tops sat at −300 + 72, and W was 200.
+// title row (heights 126, 126 and 97), both cards' tops sat at −300 + 72, and W was 200. The row
+// here is 73: 1 px more, the room the 25 px row leaves under a 24 px line (the title room).
 describe('kanban layout: the shared title row', () => {
   const input = board(
     '  a[Short]',
@@ -148,9 +149,9 @@ describe('kanban layout: the shared title row', () => {
 
   it('is the tallest title, shared by every column', () => {
     const layout = lay(input, { sectionWidth: 0 });
-    expect(layout.titleRow).toBe(72);
-    expect(layout.columns.map((c) => c.height)).toEqual([126, 126, 97]);
-    expect(layout.cards.map((c) => c.y)).toEqual([-228, -228]);
+    expect(layout.titleRow).toBe(73);
+    expect(layout.columns.map((c) => c.height)).toEqual([127, 127, 98]);
+    expect(layout.cards.map((c) => c.y)).toEqual([-227, -227]);
     expect(layout.sectionWidth).toBe(200);
   });
 
@@ -158,6 +159,30 @@ describe('kanban layout: the shared title row', () => {
     const layout = lay(board('  a[A]', '  b[B]'));
     expect(layout.titleRow).toBe(25);
     expect(layout.columns.map((c) => c.height)).toEqual([50, 50]);
+  });
+});
+
+// A column title keeps the room under its last line that a one-line title has, however many
+// lines it wraps to (the title room): with the table measurer a 16 px line is shorter than the
+// 25 px row, so without it a title of two lines ends on the first card's top border.
+describe('kanban layout: the room under a column title', () => {
+  const roomUnder = (title: string): number => {
+    const { columns, cards } = layoutKanban(board(`  a[${title}]`, '    c[Card]'), {
+      config: { kanban: {} } as ResolvedConfig,
+      measurer: tableMeasurer,
+      units: pxProfile,
+      theme: createTheme(spec),
+      warn: () => undefined,
+    });
+    const label = columns[0]!.title!;
+    return cards[0]!.y - (label.y + label.height);
+  };
+
+  it('is the same under one, two and three lines', () => {
+    const one = roomUnder('One');
+    expect(one).toBeGreaterThan(0);
+    expect(roomUnder('One<br>two')).toBeCloseTo(one, 6);
+    expect(roomUnder('One<br>two<br>three')).toBeCloseTo(one, 6);
   });
 });
 
