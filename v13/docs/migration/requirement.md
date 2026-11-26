@@ -39,7 +39,13 @@
   documented and never read, now take effect, with `relationColor` and `relationLabelColor`
   added; unset, they draw v12's colours, but for the label tag's fill, which is the theme
   background in every theme (D628; v12's redux chip was white, dark `#16141f`), so it follows an
-  author's `background`, where v12's kept its own fill or followed `secondaryColor`. The box fill
+  author's `background`, where v12's kept its own fill or followed `secondaryColor`. The label
+  ink is chosen against that fill (D713): `textColor` where it meets AA, else black or white,
+  whichever reads better, so a light `background` under a dark theme gets dark label text. Its
+  base is `textColor`, not v12's `nodeTextColor`, so redux-dark, redux-dark-color and neo-dark
+  write their labels in `#cccccc` where v12 wrote `#e0dfdf`. The tag also has diagram-level
+  names, `requirementEdgeLabelBackground` and `requirementEdgeLabelColor` (D715);
+  `relationLabelBackground` and `relationLabelColor` read them and, when set, win. The box fill
   and text follow the overrides v12's drawn box and text follow (`mainBkg`, the text ink), not
   those of v12's unused `requirementBackground` and `requirementTextColor`. See
   [theme-variables.md](./theme-variables.md).
