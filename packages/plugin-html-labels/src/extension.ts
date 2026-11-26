@@ -4,7 +4,13 @@
  */
 import type { ExtensionPlugin, HookContext } from '@mermaid-js/core';
 import type { InlineBox, LabelRequest } from '@mermaid-js/core/text';
-import { PLACEHOLDER_CLASS, type measure, type Measured, type mountLabels } from './dom.ts';
+import {
+  LABEL_CLASS,
+  PLACEHOLDER_CLASS,
+  type measure,
+  type Measured,
+  type mountLabels,
+} from './dom.ts';
 import { configFragment } from './generated/config-fragment.ts';
 import { labelHtml } from './html.ts';
 import type { LinkRules, Sanitize } from './sanitize.ts';
@@ -36,22 +42,27 @@ function enabled(ctx: HookContext): boolean {
   return html?.labels !== false && ctx.deterministic !== true;
 }
 
-/** The label `raw` measured in `document`, once per render for each font and wrap width. */
+/** The wrapper's classes: v12 gave a node's and a group's label `nodeLabel`, an edge's `edgeLabel`. */
+const classOf = (role: LabelRequest['role']): string =>
+  role ? `${LABEL_CLASS} ${role === 'edge' ? 'edgeLabel' : 'nodeLabel'}` : LABEL_CLASS;
+
+/** The label `raw` measured in `document`, once per render for each font, wrap width and role. */
 function measured(
   env: Env,
   document: Document,
   raw: string,
-  { font, maxWidth, markup }: LabelRequest,
+  { font, maxWidth, markup, role }: LabelRequest,
   ctx: HookContext
 ): Measured {
   const state = ctx.state as State;
   // Layout and drawing may both ask for a label.
-  const key = [markup, maxWidth, font.family, font.size, font.weight, raw].join('\n');
+  const key = [markup, maxWidth, role, font.family, font.size, font.weight, raw].join('\n');
   const known = (state.measured ??= new Map<string, Measured>());
   let label = known.get(key);
   if (!label) {
     state.sanitize ??= env.sanitizer(document, ctx);
-    label = env.measure(document, state.sanitize, labelHtml(raw, markup), font, maxWidth);
+    const source = { html: labelHtml(raw, markup), font, maxWidth, className: classOf(role) };
+    label = env.measure(document, state.sanitize, source);
     known.set(key, label);
   }
   return label;

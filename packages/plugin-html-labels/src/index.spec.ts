@@ -39,6 +39,8 @@ describe('@mermaid-js/plugin-html-labels in Node', () => {
     const { warnings } = await m.render('x', FLOW);
     expect(warnings.map((w) => w.code)).toEqual(['CONFIG_REMOVED_KEY']);
     expect(warnings[0]!.message).toContain('the HTML labels plugin');
+    // `mermaid` names the package, which core cannot (D153, D700).
+    expect(warnings[0]!.message).toContain('register @mermaid-js/plugin-html-labels');
   });
 
   it('mountHtmlLabels does nothing for an element without a window', () => {

@@ -9,7 +9,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertInert } from '@mermaid-js/core/svg';
-import { PAYLOADS, V12_XSS_CASES } from '@mermaid-js/core/svg/testing';
+import { hostileLabelSources } from '@mermaid-js/core/svg/testing';
 import { createMermaid, MermaidError, type Mermaid } from 'mermaid';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { extensionWith } from './extension.ts';
@@ -31,7 +31,7 @@ beforeAll(async () => {
     extensionWith({
       document: () => ({}) as Document,
       sanitizer: () => (() => undefined) as never,
-      measure: (_document, _sanitize, html) => (boxed++, { width: 120, height: 42, html }),
+      measure: (_document, _sanitize, { html }) => (boxed++, { width: 120, height: 42, html }),
       mount: () => 0,
     }),
   ]);
@@ -63,24 +63,9 @@ describe('HTML labels over the corpus', () => {
 });
 
 describe('hostile labels with HTML labels on', () => {
-  /** `text` as a flowchart node label and an edge label. */
-  const asLabel = (text: string): string => {
-    const label = text.replace(/"/g, '#quot;');
-    return `flowchart LR\n  A["${label}"] -->|"${label}"| B`;
-  };
-  // v12's flowchart sources as written, and every hostile text of v12's cases as a label.
-  const sources: [string, string][] = V12_XSS_CASES.flatMap((c) => [
-    ...(c.source === undefined ? [] : [[c.id, c.source] as [string, string]]),
-    ...(c.text ?? []).map((t, i): [string, string] => [`${c.id} (text ${i})`, asLabel(t)]),
-  ]);
-
-  it.each(sources)('%s', async (_id, source) => {
+  // v12's flowchart sources as written, and every hostile text as a node and an edge label.
+  it.each(hostileLabelSources())('%s', async (_id, source) => {
     const svg = await draw(source);
-    if (svg !== undefined) assertInert(svg);
-  });
-
-  it.each(PAYLOADS.map((p, i) => [i, p] as const))('payload %i as a label', async (_i, payload) => {
-    const svg = await draw(asLabel(payload));
     if (svg !== undefined) assertInert(svg);
   });
 });

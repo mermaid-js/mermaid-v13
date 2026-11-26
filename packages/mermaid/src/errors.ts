@@ -24,18 +24,25 @@ export function unsupportedDiagram(type: string): MermaidError {
 const WARNING_KEYS = ['path', 'source', 'feature', 'shapes', 'astIds'] as const;
 
 /**
- * A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`).
- * `LOOK_REMOVED` names the hand-drawn package here, core never names one (D153, as D173), and
- * only while no registered fragment declares `handDrawn` (the plugin's, or any that takes it).
+ * The package a warning of core's is about, which core never names (D153, as D173), while no
+ * registered fragment declares the key that package owns (its own fragment, or any that takes
+ * the key): `@mermaid-js/plugin-hand-drawn` for `LOOK_REMOVED`, `@mermaid-js/plugin-html-labels`
+ * for a removed `htmlLabels` key (D700). One template for both, to save bytes (R-PERF-8).
+ */
+function hint(w: Warning, fragments: readonly ConfigFragment[]): string {
+  const html = w.code === 'CONFIG_REMOVED_KEY' && w.path?.endsWith('htmlLabels');
+  const key = html ? 'html' : w.code === 'LOOK_REMOVED' && 'handDrawn';
+  return !key || fragments.some((f) => key in f.keys)
+    ? ''
+    : ` For ${html ? 'HTML labels' : key}, register @mermaid-js/plugin-${html ? 'html-labels' : 'hand-drawn'}.`;
+}
+
+/**
+ * A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`),
+ * its message ending with the package it is about ({@link hint}).
  */
 export const toWarning = (w: Warning, fragments: readonly ConfigFragment[]): Warning => {
-  const out: Plain = {
-    code: w.code,
-    message:
-      w.code === 'LOOK_REMOVED' && !fragments.some((f) => 'handDrawn' in f.keys)
-        ? `${w.message} For handDrawn, register @mermaid-js/plugin-hand-drawn.`
-        : w.message,
-  };
+  const out: Plain = { code: w.code, message: w.message + hint(w, fragments) };
   for (const k of WARNING_KEYS) {
     const v = w[k];
     if (v !== undefined) out[k] = Array.isArray(v) ? [...(v as unknown[])] : v;

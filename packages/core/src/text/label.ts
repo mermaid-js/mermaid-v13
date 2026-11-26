@@ -47,6 +47,12 @@ export interface MeasuredLabel extends LabelBox {
  */
 export type LabelMarkup = 'plain' | 'emphasis' | 'markdown';
 
+/**
+ * What a label names in its diagram (D699): a node, an edge (a relation between nodes) or a group
+ * (a container of nodes). A whole-label provider gets it as `LabelRequest.role`.
+ */
+export type LabelRole = 'node' | 'edge' | 'group';
+
 export interface LabelOptions {
   /** The label's mode. Default `plain`. A markdown string (`"`…`"`) is `markdown`. */
   readonly markup?: LabelMarkup;
@@ -69,6 +75,11 @@ export interface LabelOptions {
    * word, instead of splitting it between characters. Default false.
    */
   readonly keepWords?: boolean;
+  /**
+   * What the label names (D699). Only a whole-label provider reads it (`LabelRequest.role`): core
+   * lays every role out the same way. Leave it out for text that is none of the three.
+   */
+  readonly role?: LabelRole;
 }
 
 interface Piece {
@@ -108,8 +119,8 @@ const markupOf = (options: LabelOptions): LabelMarkup =>
   options.markdown ? 'markdown' : (options.markup ?? 'plain');
 
 /**
- * The label's boxes: a whole-label provider's (D695), which is asked first and whose box is then
- * the label's only span, or else those of its inline spans (D177).
+ * The label's boxes: a whole-label provider's (D695), which is asked first, with the label's role
+ * (D699), and whose box is then the label's only span, or else those of its inline spans (D177).
  */
 const boxesOf = (
   raw: string,
@@ -117,9 +128,10 @@ const boxesOf = (
   maxWidth: number,
   measurer: Measurer,
   markup: LabelMarkup,
-  spans?: InlineSpans
+  { inline: spans, role }: LabelOptions
 ): LabelBoxes | undefined =>
-  spans?.label?.(raw, font, measurer, maxWidth, markup) ?? spans?.extract(raw, font, measurer);
+  spans?.label?.(raw, font, measurer, maxWidth, markup, role) ??
+  spans?.extract(raw, font, measurer);
 
 /**
  * Lays out a label: splits it into lines, applies the markdown and HTML subsets, and wraps
@@ -135,7 +147,7 @@ export function layoutLabel(
   const base = options.style ?? 0;
   const { ascent, lineHeight } = measurer.metrics(font);
   const markup = markupOf(options);
-  const spans = boxesOf(raw, font, maxWidth, measurer, markup, options.inline);
+  const spans = boxesOf(raw, font, maxWidth, measurer, markup, options);
   const src = spans?.source ?? raw;
   let left = false;
   const box = (lines: Run[][], indents: number[], widths: number[]): MeasuredLabel => {

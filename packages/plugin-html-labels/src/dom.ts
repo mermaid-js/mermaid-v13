@@ -11,6 +11,16 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 /** The class of a label's placeholder `<g>` in the svg, and of its HTML wrapper once mounted. */
 export const PLACEHOLDER_CLASS = 'mermaid-html-label';
 export const LABEL_CLASS = 'html-label';
+/** A label to measure: its HTML and how it is set. */
+export interface LabelSource {
+  /** The label as HTML, not yet safe. */
+  readonly html: string;
+  readonly font: FontKey;
+  /** The width the label wraps at, in px; `Infinity` for none. */
+  readonly maxWidth: number;
+  /** The wrapper's classes: `html-label`, and v12's class for the label's role (D699). */
+  readonly className: string;
+}
 
 /** A measured label: its size in px and the HTML to mount, wrapper included. */
 export interface Measured {
@@ -20,19 +30,14 @@ export interface Measured {
 }
 
 /**
- * Lays `content` (label HTML, not yet safe) out in `document` as the mounted label will be: in a
- * wrapper with the label's font, centred, wrapped at `maxWidth`, with a word wider than that
- * kept whole as v12's HTML labels kept it (#649). The wrapper's own HTML is what is mounted.
+ * Lays `label` out in `document` as the mounted label will be: in a wrapper with the label's
+ * font, centred, wrapped at its `maxWidth`, with a word wider than that kept whole as v12's HTML
+ * labels kept it (#649). The wrapper's own HTML is what is mounted.
  */
-export function measure(
-  document: Document,
-  sanitize: Sanitize,
-  content: string,
-  font: FontKey,
-  maxWidth: number
-): Measured {
+export function measure(document: Document, sanitize: Sanitize, label: LabelSource): Measured {
+  const { font, maxWidth } = label;
   const wrapper = document.createElement('div');
-  wrapper.className = LABEL_CLASS;
+  wrapper.className = label.className;
   const { style } = wrapper;
   style.display = 'inline-block';
   style.boxSizing = 'border-box';
@@ -43,7 +48,7 @@ export function measure(
   style.fontSize = `${font.size}px`;
   style.fontWeight = String(font.weight);
   if (Number.isFinite(maxWidth)) style.maxWidth = `${maxWidth}px`;
-  wrapper.append(sanitize(content));
+  wrapper.append(sanitize(label.html));
   // Out of flow and unseen, but laid out: `display: none` would measure nothing.
   const host = document.createElement('div');
   host.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;width:max-content';

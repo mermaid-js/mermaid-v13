@@ -95,6 +95,38 @@ describe('config fragments (D153)', () => {
     expect(r).not.toContain(hint);
   });
 
+  it('hints at the HTML labels plugin for a removed `htmlLabels` key until a fragment declares `html` (D700)', async () => {
+    const hint = 'For HTML labels, register @mermaid-js/plugin-html-labels.';
+    const removed = (ws: readonly Warning[]) =>
+      ws.filter((w) => w.code === 'CONFIG_REMOVED_KEY').map((w) => [w.path, w.message]);
+    // In diagram text and in initialize(), at the root and in the two sections v12 had it in.
+    const front = `---\nconfig:\n  htmlLabels: true\n  class:\n    htmlLabels: false\n---\n${FLOW}`;
+    const bare = createMermaid();
+    bare.initialize({ flowchart: { htmlLabels: true } } as never);
+    const warned = removed((await bare.render('a', front)).warnings);
+    expect(warned.map(([path]) => path).sort()).toEqual([
+      'class.htmlLabels',
+      'flowchart.htmlLabels',
+      'htmlLabels',
+    ]);
+    for (const [, message] of warned) {
+      expect(message).toMatch(/removed/);
+      expect(message!.endsWith(hint)).toBe(true);
+    }
+
+    // Another removed key gets no hint.
+    const other = await createMermaid().render('a', `---\nconfig:\n  themeCSS: x\n---\n${FLOW}`);
+    expect(removed(other.warnings)).toHaveLength(1);
+    expect(removed(other.warnings)[0]![1]).not.toContain('@mermaid-js');
+
+    // A fragment that declares `html` but aliases nothing: the key still warns, without the hint.
+    const m = createMermaid();
+    await m.registerExternalDiagrams([fixture({ id: 'labels', keys: { html: { labels: 0 } } })]);
+    const mine = removed((await m.render('a', front)).warnings);
+    expect(mine).toHaveLength(2);
+    for (const [, message] of mine) expect(message).not.toContain(hint);
+  });
+
   it('gives the plugin its own theme variables, with defaults an author can override', async () => {
     const m = createMermaid();
     await m.registerExternalDiagrams([fixture()]);

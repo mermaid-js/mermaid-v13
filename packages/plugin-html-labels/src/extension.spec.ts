@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { createMermaid, type ExtensionPlugin } from 'mermaid';
-import type { Measured } from './dom.ts';
+import type { LabelSource, Measured } from './dom.ts';
 import { extensionWith, type Env } from './extension.ts';
 import type { LinkRules } from './sanitize.ts';
 
 /** What the stand-in environment was asked. */
 interface Calls {
-  measured: { html: string; maxWidth: number; family: string }[];
+  measured: LabelSource[];
   links: LinkRules[];
   mounted: number;
 }
@@ -25,9 +25,10 @@ function standIn(hasDocument = true): { env: Env; calls: Calls } {
       calls.links.push({ linkSchemes: links.linkSchemes, securityLevel: links.securityLevel });
       return (() => undefined) as never;
     },
-    measure(_document, _sanitize, html, font, maxWidth): Measured {
-      calls.measured.push({ html, maxWidth, family: font.family });
-      return { width: 200, height: 60, html: `<div class="html-label">${html}</div>` };
+    measure(_document, _sanitize, label): Measured {
+      calls.measured.push(label);
+      const html = `<div class="${label.className}">${label.html}</div>`;
+      return { width: 200, height: 60, html };
     },
     mount: () => ++calls.mounted,
   };
@@ -51,7 +52,7 @@ describe('the HTML labels extension', () => {
     const r = await (await api(extensionWith(env))).render('x', FLOW);
     expect(count(r.svg, PLACEHOLDER)).toBe(3);
     expect(r.svg).toContain(
-      '<desc>&lt;div class=&quot;html-label&quot;&gt;Alpha &lt;b&gt;one&lt;/b&gt;&lt;/div&gt;</desc>'
+      '<desc>&lt;div class=&quot;html-label nodeLabel&quot;&gt;Alpha &lt;b&gt;one&lt;/b&gt;&lt;/div&gt;</desc>'
     );
     expect(r.svg).toContain('&lt;strong&gt;Beta&lt;/strong&gt;');
     expect(calls.measured.map((m) => m.html)).toContain('goes');
@@ -70,7 +71,24 @@ describe('the HTML labels extension', () => {
     await (await api(extensionWith(env))).render('x', 'flowchart LR\n  A["Same"] --> B["Same"]');
     expect(calls.measured).toHaveLength(1);
     expect(calls.measured[0]!.maxWidth).toBeGreaterThan(0);
-    expect(calls.measured[0]!.family).not.toBe('');
+    expect(calls.measured[0]!.font.family).not.toBe('');
+  });
+
+  it("gives a node's and a group's label v12's nodeLabel class, an edge's edgeLabel (D699)", async () => {
+    const { env, calls } = standIn();
+    const text = 'flowchart LR\n  subgraph G["Group"]\n    A["Alpha"]\n  end\n  A -->|goes| B';
+    await (await api(extensionWith(env))).render('x', text);
+    const classOf = (html: string) => calls.measured.find((m) => m.html === html)?.className;
+    expect(classOf('Alpha')).toBe('html-label nodeLabel');
+    expect(classOf('Group')).toBe('html-label nodeLabel');
+    expect(classOf('goes')).toBe('html-label edgeLabel');
+  });
+
+  it('gives the label of a diagram that names no role the plain class', async () => {
+    const { env, calls } = standIn();
+    await (await api(extensionWith(env))).render('x', 'pie\n  title Pets\n  "Dogs" : 3');
+    expect(calls.measured.length).toBeGreaterThan(0);
+    expect(calls.measured.every((m) => m.className === 'html-label')).toBe(true);
   });
 
   it('mounts through bindFunctions, with the sanitizer of the render', async () => {

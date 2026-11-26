@@ -4,7 +4,7 @@
 import type { Resource } from '../pipeline/errors.ts';
 import type { IconPacks } from '../pipeline/icon-packs.ts';
 import type { InlineBox, LabelBoxSpan } from '../svg/writer.ts';
-import type { LabelMarkup } from './label.ts';
+import type { LabelMarkup, LabelRole } from './label.ts';
 import type { FontKey, Measurer, VerticalMetrics } from './measurer.ts';
 
 /** What a provider gets with each span: the label's font and how to size against it. */
@@ -63,12 +63,20 @@ export interface InlinePatternProvider {
   box(source: string, request: InlineRequest): InlineBox | undefined;
 }
 
-/** What a whole-label provider gets with each label (D695): the inline request and how it wraps. */
+/**
+ * What a whole-label provider gets with each label (D695): the inline request, how the label
+ * wraps and what it names (D699).
+ */
 export interface LabelRequest extends InlineRequest {
   /** The width the label wraps at, in px; `Infinity` for a label that wraps only where it says. */
   readonly maxWidth: number;
   /** The label's mode (D562). */
   readonly markup: LabelMarkup;
+  /**
+   * What the label names in its diagram (D699): `LabelOptions.role`, when the diagram set it.
+   * `undefined` says nothing about the label.
+   */
+  readonly role?: LabelRole;
 }
 
 /** One render's whole-label providers as one function: the first box, or `undefined`. */
@@ -105,7 +113,8 @@ export interface InlineSpans {
     font: FontKey,
     measurer: Measurer,
     maxWidth: number,
-    markup: LabelMarkup
+    markup: LabelMarkup,
+    role?: LabelRole
   ): LabelBoxes | undefined;
   /** The render's whole-label providers (D695). The hook run sets it when an extension has one. */
   boxer?: LabelBoxer;
@@ -318,9 +327,14 @@ export function inlineSpans(
     scratch,
     dropped: new Set(),
     notRendered: (feature) => notDrawn.has(feature),
-    label(raw, font, measurer, maxWidth, markup) {
+    label(raw, font, measurer, maxWidth, markup, role) {
       if (ascii || !self.boxer || RE_PLACEHOLDER.test(raw)) return undefined;
-      const box = self.boxer(raw, { ...requestFor(font, measurer), maxWidth, markup });
+      const box = self.boxer(raw, {
+        ...requestFor(font, measurer),
+        maxWidth,
+        markup,
+        role,
+      });
       if (!box) return undefined;
       const { width, height, baseline, node } = box;
       return {

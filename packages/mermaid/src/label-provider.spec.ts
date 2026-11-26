@@ -190,4 +190,27 @@ describe('a whole-label provider (D695)', () => {
     await m.render('x', FLOW);
     expect(asked[0]!.deterministic).toBeUndefined();
   });
+
+  it('says what each flowchart label names: a node, an edge or a group (D699)', async () => {
+    const asked: Asked[] = [];
+    const { m, ready } = api(boxer('whole', asked, () => false));
+    await ready;
+    await m.render(
+      'x',
+      'flowchart LR\n  subgraph G["Group"]\n    A["Alpha"]\n  end\n  A -->|goes| B'
+    );
+    const roleOf = (raw: string) => asked.find((a) => a.raw === raw)?.request.role;
+    expect(roleOf('Alpha')).toBe('node');
+    expect(roleOf('goes')).toBe('edge');
+    expect(roleOf('Group')).toBe('group');
+  });
+
+  it('gets no role from a diagram that sets none', async () => {
+    const asked: Asked[] = [];
+    const { m, ready } = api(boxer('whole', asked, () => false));
+    await ready;
+    await m.render('x', 'pie\n  title Pets\n  "Dogs" : 3');
+    expect(asked.length).toBeGreaterThan(0);
+    expect(asked.every((a) => a.request.role === undefined)).toBe(true);
+  });
 });

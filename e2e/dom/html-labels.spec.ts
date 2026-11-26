@@ -6,7 +6,7 @@
  * holds no HTML, and what is mounted has been through the sanitizer.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { PAYLOADS, V12_XSS_CASES } from '../../packages/core/src/svg/testing/index.ts';
+import { hostileLabelSources } from '../../packages/core/src/svg/testing/index.ts';
 
 const FLOW = 'flowchart LR\n  A["Alpha <b>one</b>"] -->|goes| B("`**Beta** two`")';
 
@@ -80,6 +80,27 @@ test('run() mounts each label as HTML of the size it was measured at', async ({ 
     expect(label.color).toBe(label.fill);
   }
   await expect(page.locator('#d text')).toHaveCount(0);
+});
+
+test("a node's label and an edge's carry v12's classes (D699)", async ({ page }) => {
+  await open(page);
+  await run(page, 'flowchart LR\n  subgraph G["Group"]\n    A["Alpha"]\n  end\n  A -->|goes| B');
+  const classes = await page.evaluate(() =>
+    Object.fromEntries(
+      [...document.querySelectorAll('#d foreignObject > div')].map((w) => [
+        w.textContent,
+        w.className,
+      ])
+    )
+  );
+  expect(classes).toEqual({
+    Alpha: 'html-label nodeLabel',
+    B: 'html-label nodeLabel',
+    Group: 'html-label nodeLabel',
+    goes: 'html-label edgeLabel',
+  });
+  // v12's selectors find them again.
+  await expect(page.locator('#d .edgeLabel .edgeLabel')).toHaveText('goes');
 });
 
 test('a node is laid out around its HTML label', async ({ page }) => {
@@ -183,11 +204,9 @@ test('what is mounted has been sanitized', async ({ page }) => {
 
 test('hostile labels run nothing once mounted', async ({ page }) => {
   await open(page);
-  // Core's payloads and every hostile text of v12's XSS cases, each as a node and an edge label.
-  const sources = [...PAYLOADS, ...V12_XSS_CASES.flatMap((c) => c.text ?? [])].map((text) => {
-    const label = text.replace(/"/g, '#quot;');
-    return `flowchart LR\n  A["${label}"] -->|"${label}"| B`;
-  });
+  // v12's XSS sources as written, and every hostile text (v12's and core's payloads) as a node
+  // label and an edge label.
+  const sources = hostileLabelSources().map(([, source]) => source);
   const seen = await page.evaluate(async (all) => {
     const trap = (): void => void (window.pwned = 1);
     Object.assign(window, { alert: trap, xssAttack: trap, msgbox: trap });

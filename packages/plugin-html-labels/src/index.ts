@@ -17,6 +17,9 @@
  * (D696). The provider declines, and core draws the SVG label, when the key is false, there is
  * no DOM, the render is deterministic, or the label holds math or an icon (D697). Text output
  * never asks it.
+ *
+ * The label's wrapper carries v12's `nodeLabel` or `edgeLabel` class where the diagram says what
+ * the label names (D699).
  */
 import type { ExtensionPlugin } from '@mermaid-js/core';
 import { measure, mountLabels } from './dom.ts';
