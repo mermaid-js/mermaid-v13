@@ -311,13 +311,11 @@ describe('treeView render: icons (D485, D486, D299)', () => {
       const drawn = icon && tree.children(icon)[0]!;
       out[textOf(tree, label)] = !drawn
         ? '-'
-        : tree.tag(drawn) === 'g' && textOf(tree, drawn) === '?'
-          ? '?'
-          : tree.tag(drawn) === 'path'
-            ? attr(tree, drawn, 'fill-rule') === 'evenodd'
-              ? 'file'
-              : 'folder'
-            : classOf(tree, drawn).replace('glyph ', '');
+        : tree.tag(drawn) === 'path'
+          ? attr(tree, drawn, 'fill-rule') === 'evenodd'
+            ? 'file'
+            : 'folder'
+          : classOf(tree, drawn).replace('glyph ', '');
     }
     return out;
   }
@@ -408,11 +406,10 @@ describe('treeView render: icons (D485, D486, D299)', () => {
     ]);
   });
 
-  it("draws v12's ? square for a glyph that cannot be drawn (D702), nothing while one loads (D299), the render warning once", async () => {
+  it('leaves the slot empty when a glyph is not drawn (D299), the render warning once', async () => {
     const m = await api({});
     const r = await render(probe('glyphs'), {}, m);
-    // pk:bad is unresolved and other:x has no extension: v12's unknown icon. pk:wait is pending.
-    expect(slots(r.tree)).toEqual({ '/': '-', ok: 'pk:ok', bad: '?', wait: '-', none: '?' });
+    expect(slots(r.tree)).toEqual({ '/': '-', ok: 'pk:ok', bad: '-', wait: '-', none: '-' });
     // pk:bad is the extension's to warn about, and its warning is the render's one
     // ICON_NOT_RENDERED (core keeps the first); pk:wait loads quietly.
     expect(codes(r)).toEqual(['ICON_NOT_RENDERED']);
@@ -425,13 +422,12 @@ describe('treeView render: icons (D485, D486, D299)', () => {
     );
   });
 
-  it("draws the built-ins with no icons extension, v12's ? square for every other icon, and names each once", async () => {
+  it('draws the built-ins with no icons extension, and names every other icon once', async () => {
     const m = await treeViewApi({ treeView: { showIcons: true } });
     const r = await render(probe('icons'), {}, m);
     const s = slots(r.tree);
     expect(s.constructor).toBe('file');
-    expect(s.plain).toBe('?');
-    expect(s['pinned.ts']).toBe('?');
+    expect(s.plain).toBe('-');
     expect(codes(r)).toEqual(['ICON_NOT_RENDERED']);
     expect(r.warnings[0]!.message).toMatch(
       /^Icons are not rendered without an icons extension: "pk:pin", "mermaid-treeview:star", "mermaid-treeview:constructor"\./
