@@ -45,7 +45,7 @@ export interface EdgePaint {
   readonly heads: Arrowheads;
   /** `blockEdgeLabelBackground`. */
   readonly labelFill: Paint;
-  /** `nodeTextColor`: v12's `.label` and `span` rules reached edge labels too. */
+  /** `blockEdgeLabelColor` (D713, D715); v12 inked edge labels with `nodeTextColor`. */
   readonly labelText: Paint;
 }
 
