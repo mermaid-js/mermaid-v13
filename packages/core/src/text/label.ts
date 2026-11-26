@@ -810,25 +810,36 @@ function splitWord(
   return rest;
 }
 
-/**
- * Merges same-style pieces, trims the line ends, resolves soft hyphens and measures the runs. A
- * zero-width space is kept (D646).
- */
-function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measurer): Run[] {
+/** Copies of `line`'s pieces, with neighbours of one style merged; a box stays a piece. */
+function mergePieces(line: Piece[]): Piece[] {
   const merged: Piece[] = [];
   for (const piece of line) {
     const last = merged[merged.length - 1];
     if (last && !last.box && !piece.box && last.style === piece.style) last.text += piece.text;
     else merged.push({ ...piece });
   }
-  const first = merged[0];
+  return merged;
+}
+
+/** Trims the white space at both ends of a line's `pieces`, in place; `broken` is a wrapped line. */
+function trimEnds(pieces: Piece[], broken: boolean): void {
+  const first = pieces[0];
   if (first && !first.box) first.text = first.text.trimStart();
-  const last = merged[merged.length - 1];
+  const last = pieces[pieces.length - 1];
   if (last && !last.box) {
     last.text = last.text.trimEnd();
     // A soft hyphen at a line break shows as '-'.
     if (broken && last.text.endsWith(SHY)) last.text = last.text.slice(0, -1) + '-';
   }
+}
+
+/**
+ * Merges same-style pieces, trims the line ends, resolves soft hyphens and measures the runs. A
+ * zero-width space is kept (D646).
+ */
+function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measurer): Run[] {
+  const merged = mergePieces(line);
+  trimEnds(merged, broken);
   const runs: Run[] = [];
   for (const piece of merged) {
     if (piece.box) {
