@@ -134,32 +134,37 @@ function unknownByKind(
   return { ids, milestone: plan.unknownRefs.some((r) => r.milestone) };
 }
 
+/** The clause for the ids one statement named that no task has, if any. */
+function unknownClause(kind: Reference, named: ReadonlySet<string>): string | undefined {
+  const plain = [...named].filter((id) => id !== NEVER_STORED);
+  if (plain.length === 0) return undefined;
+  const who =
+    kind === 'click'
+      ? `No task written before the click has the id ${quoted(plain)}`
+      : `No task has the id ${quoted(plain)} (named by "${kind}")`;
+  return `${who}: ${CONSEQUENCE[kind].task}.`;
+}
+
+/** The clause for the reserved id, naming what each statement that used it does. */
+function reservedClause(kinds: readonly Reference[]): string | undefined {
+  if (kinds.length === 0) return undefined;
+  const effects = kinds.map((kind) => CONSEQUENCE[kind].reserved);
+  const last = effects.pop()!;
+  const list =
+    effects.length === 0
+      ? last
+      : `${effects.join(', ')}${effects.length > 1 ? ',' : ''} and ${last}`;
+  return `The id "${NEVER_STORED}" is reserved and cannot be referenced: ${list}.`;
+}
+
 /** D727: the text of the one `GANTT_UNKNOWN_TASK` warning: a clause per statement involved. */
 function unknownTaskMessage(model: GanttModel, plan: Schedule): string | undefined {
   const { ids, milestone } = unknownByKind(model, plan);
-  const clauses: string[] = [];
-  const reserved: Reference[] = [];
-  for (const kind of ['after', 'until', 'click'] as const) {
-    const named = ids.get(kind);
-    if (named === undefined) continue;
-    const plain = [...named].filter((id) => id !== NEVER_STORED);
-    if (named.has(NEVER_STORED)) reserved.push(kind);
-    if (plain.length === 0) continue;
-    const who =
-      kind === 'click'
-        ? `No task written before the click has the id ${quoted(plain)}`
-        : `No task has the id ${quoted(plain)} (named by "${kind}")`;
-    clauses.push(`${who}: ${CONSEQUENCE[kind].task}.`);
-  }
-  if (reserved.length > 0) {
-    const effects = reserved.map((kind) => CONSEQUENCE[kind].reserved);
-    const last = effects.pop()!;
-    const list =
-      effects.length === 0
-        ? last
-        : `${effects.join(', ')}${effects.length > 1 ? ',' : ''} and ${last}`;
-    clauses.push(`The id "${NEVER_STORED}" is reserved and cannot be referenced: ${list}.`);
-  }
+  const kinds = (['after', 'until', 'click'] as const).filter((kind) => ids.has(kind));
+  const clauses = [
+    ...kinds.map((kind) => unknownClause(kind, ids.get(kind)!)),
+    reservedClause(kinds.filter((kind) => ids.get(kind)!.has(NEVER_STORED))),
+  ].filter((c): c is string => c !== undefined);
   if (clauses.length === 0) return undefined;
   if (milestone) clauses.push(HINT_MILESTONE);
   return clauses.join(' ');
