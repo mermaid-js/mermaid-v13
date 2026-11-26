@@ -9,6 +9,12 @@ describe('diagramStart', () => {
     ['leading blanks', '\n\n  \tgraph TD', 'graph TD'],
     ['unicode spaces, as v12 \\s', ' ﻿ graph TD', 'graph TD'],
     ['front matter', '---\ntitle: x\n---\n\nflowchart LR', 'flowchart LR'],
+    ['a comment before front matter (D704)', '%% c\n---\ntitle: x\n---\npie', 'pie'],
+    [
+      'a directive before front matter (D705)',
+      '%%{init: {}}%%\n\n---\ntitle: x\n---\n%% c\n%%{wrap}%%\npie',
+      'pie',
+    ],
     ['comments', '%% one\n  %% two\r\n%%\nflowchart LR', 'flowchart LR'],
     ['directive', '%%{init: {"theme": "dark"}}%%\ngraph TD', 'graph TD'],
     ['directive then keyword on one line', '%%{wrap}%%graph TD', 'graph TD'],

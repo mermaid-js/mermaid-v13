@@ -1,0 +1,13 @@
+%% intent: a %% comment before front matter
+---
+title: Comment Before Front Matter
+description: >-
+  A %% comment line above the front matter (#1216, D704). The front matter is
+  still read: the title is drawn and the forest theme applies.
+config:
+  theme: forest
+---
+architecture-beta
+    service a(server)[A]
+    service b(server)[B]
+    a:R -- L:b

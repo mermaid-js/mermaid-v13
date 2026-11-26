@@ -97,17 +97,15 @@ function symbolTokens(list: readonly Occurrence[], declaredOnly: boolean): Seman
   return out;
 }
 
-/** Comments and directives of a document with no facet. */
-function genericTokens(ctx: DocumentContext): SemanticToken[] {
+/** Comments and directives that start in `[from, to)`, in order. */
+function triviaTokens(ctx: DocumentContext, from: number, to: number): SemanticToken[] {
   const { text, pre } = ctx;
-  const out: SemanticToken[] = pre.directives.map((d) => ({
-    range: d.range,
-    type: 'macro' as const,
-    modifiers: [],
-  }));
+  const out: SemanticToken[] = pre.directives
+    .filter((d) => d.range.start >= from && d.range.start < to)
+    .map((d) => ({ range: d.range, type: 'macro' as const, modifiers: [] }));
   const comment = /^[ \t]*(%%(?!\{)[^\r\n]*)/gm;
-  comment.lastIndex = pre.bodyStart;
-  for (let m = comment.exec(text); m; m = comment.exec(text)) {
+  comment.lastIndex = from;
+  for (let m = comment.exec(text); m && m.index < to; m = comment.exec(text)) {
     const start = m.index + m[0].length - (m[1]?.length ?? 0);
     const range = { start, end: m.index + m[0].length };
     if (!pre.directives.some((d) => d.range.start < range.end && range.start < d.range.end))
@@ -116,12 +114,21 @@ function genericTokens(ctx: DocumentContext): SemanticToken[] {
   return out.sort((a, b) => a.range.start - b.range.start);
 }
 
+/** The `%%` lines above the front matter (D704), which no lexer reads. */
+const headTokens = (ctx: DocumentContext): SemanticToken[] =>
+  triviaTokens(ctx, 0, ctx.pre.frontMatter?.range.start ?? 0);
+
+/** Comments and directives of a document with no facet. */
+function genericTokens(ctx: DocumentContext): SemanticToken[] {
+  return [...headTokens(ctx), ...triviaTokens(ctx, ctx.pre.bodyStart, Infinity)];
+}
+
 export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]): SemanticToken[] {
   const { result, facet, text } = ctx;
   const tokens = result?.tokens;
   if (!facet || !tokens) return genericTokens(ctx);
   const symbols = symbolTokens(list, facet.declaredOnly === true);
-  const out: SemanticToken[] = [];
+  const out: SemanticToken[] = headTokens(ctx);
   /** Push `[start, end)` without its surrounding blanks. */
   const push = (from: number, to: number, type: SemanticTokenType) => {
     let start = from;

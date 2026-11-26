@@ -49,6 +49,21 @@ describe('snapshots', () => {
     expect(doc.semanticTokens().map((t) => t.type)).toEqual(['comment']);
   });
 
+  it('colours `%%` and directive lines above the front matter (D704)', async () => {
+    const text = '%% note\n%%{init: {}}%%\n---\ntitle: x\n---\nflowchart TD\n  A --> B\n';
+    const head = (doc: DocumentSnapshot) =>
+      doc
+        .semanticTokens()
+        .filter((t) => t.range.start < text.indexOf('---'))
+        .map((t) => [t.type, doc.text.slice(t.range.start, t.range.end)]);
+    const want = [
+      ['comment', '%% note'],
+      ['macro', '%%{init: {}}%%'],
+    ];
+    expect(head(createLanguageService().update('file:///head-cold.mmd', text))).toEqual(want);
+    expect(head(await open(text, 'file:///head.mmd'))).toEqual(want);
+  });
+
   it('is immutable: a later update does not change an earlier snapshot', async () => {
     const a = await open('flowchart TD\n  A --> B\n', 'file:///imm.mmd');
     const b = await open('flowchart TD\n  A --> C\n', 'file:///imm.mmd');

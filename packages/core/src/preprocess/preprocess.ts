@@ -15,7 +15,7 @@ export interface PreprocessResult {
   /** Offset where the diagram text starts; detection and the diagram parser start here. */
   bodyStart: number;
   frontMatter?: FrontMatter;
-  /** Every `%%{…}%%` in the body, in source order. They stay in the text as trivia. */
+  /** Every `%%{…}%%` above the front matter and in the body, in source order; they stay as trivia. */
   directives: Directive[];
   /** Errors and warnings from the front matter and the directives. */
   diagnostics: Diagnostic[];
@@ -24,8 +24,12 @@ export interface PreprocessResult {
 /** Preprocess one diagram source. Linear in its length; never throws on any input. */
 export function preprocess(src: string): PreprocessResult {
   const diagnostics = new Diagnostics();
-  const { bodyStart, frontMatter } = scanFrontMatter(src, diagnostics);
-  const directives = scanDirectives(src, bodyStart, diagnostics);
+  const { bodyStart, fenceStart, frontMatter } = scanFrontMatter(src, diagnostics);
+  // Directives above the fence still apply (D705); the YAML between the fences is never read
+  // for them. The head is cut off at the fence, so its ranges are offsets into `src` as well.
+  const head = fenceStart > 0 ? scanDirectives(src.slice(0, fenceStart), 0, diagnostics) : [];
+  const body = scanDirectives(src, bodyStart, diagnostics);
+  const directives = head.length > 0 ? [...head, ...body] : body;
   const result: PreprocessResult = { bodyStart, directives, diagnostics: diagnostics.list };
   if (frontMatter) result.frontMatter = frontMatter;
   return result;
