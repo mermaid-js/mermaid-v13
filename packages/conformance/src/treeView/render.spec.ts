@@ -89,14 +89,21 @@ const TOL = 0.01;
  */
 function extents(tree: SvgView): { x: number; y: number; tag: string }[] {
   const out: { x: number; y: number; tag: string }[] = [];
-  const walk = (node: SvgElement, dx: number, dy: number): void => {
+  // A point (x, y) inside `node` is drawn at (dx + k·x, dy + k·y), its transforms applied.
+  const walk = (node: SvgElement, dx0: number, dy0: number, k0: number): void => {
     const tag = tree.tag(node);
     if (tag === undefined && node !== tree.root) return;
+    let [dx, dy, k] = [dx0, dy0, k0];
+    for (const [, op, args] of (tree.getAttr(node, 'transform') ?? '').matchAll(
+      /(translate|scale)\(([^)]*)\)/g
+    )) {
+      const [a = 0, b = 0] = args!.split(/[\s,]+/).map(Number);
+      if (op === 'translate') [dx, dy] = [dx + k * a, dy + k * b];
+      else k *= a;
+    }
     const at = (name: string): number => Number(tree.getAttr(node, name) ?? 0);
-    const put = (x: number, y: number): void => void out.push({ x: x + dx, y: y + dy, tag: tag! });
-    const t = /^translate\((-?[\d.]+),(-?[\d.]+)\)$/.exec(tree.getAttr(node, 'transform') ?? '');
-    const x0 = t ? dx + Number(t[1]) : dx;
-    const y0 = t ? dy + Number(t[2]) : dy;
+    const put = (x: number, y: number): void =>
+      void out.push({ x: dx + k * x, y: dy + k * y, tag: tag! });
     if (tag === 'rect') {
       const half = tree.getAttr(node, 'stroke') === undefined ? 0 : at('stroke-width') / 2;
       put(at('x') - half, at('y') - half);
@@ -116,13 +123,13 @@ function extents(tree: SvgView): { x: number; y: number; tag: string }[] {
       const d = tree.getAttr(node, 'd') ?? '';
       for (const seg of d.match(/[MLAZ][^MLAZ]*/g) ?? []) {
         const p = (seg.slice(1).match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
-        if (seg.startsWith('A')) out.push({ x: p[5]! + x0, y: p[6]! + y0, tag: 'path' });
-        else if (p.length >= 2) out.push({ x: p[0]! + x0, y: p[1]! + y0, tag: 'path' });
+        if (seg.startsWith('A')) put(p[5]!, p[6]!);
+        else if (p.length >= 2) put(p[0]!, p[1]!);
       }
     }
-    for (const c of tree.children(node)) walk(c, x0, y0);
+    for (const c of tree.children(node)) walk(c, dx, dy, k);
   };
-  walk(tree.root, 0, 0);
+  walk(tree.root, 0, 0, 1);
   return out;
 }
 
@@ -188,14 +195,18 @@ describe('treeView render properties over the corpus', () => {
       const labels = (c.result.svg.match(/class="treeView-node-label/g) ?? []).length;
       expect(labels, c.id).toBe(model.nodes.length + 1);
       if (c.variant !== 'icons') continue;
-      // Every row whose icon is a built-in glyph draws it; the others need an extension.
+      // Every row with an icon draws one: its built-in glyph, or with no icons extension v12's
+      // `?` square for any other (D702).
       const options = { showIcons: true, defaultIconPack: '', ...c.prepared.config.treeView };
-      const builtin = [{ name: '/', directory: true }, ...model.nodes].filter((n) =>
-        BUILTIN.has(resolveIcon(n, options as TreeViewIconOptions) ?? '')
-      ).length;
+      const names = [{ name: '/', directory: true }, ...model.nodes].map((n) =>
+        resolveIcon(n, options as TreeViewIconOptions)
+      );
+      const withIcon = names.filter((n) => n !== undefined);
       const icons = (c.result.svg.match(/class="treeView-node-icon"/g) ?? []).length;
-      expect(icons, c.id).toBe(builtin);
-      expect(builtin, c.id).toBeGreaterThan(0);
+      expect(icons, c.id).toBe(withIcon.length);
+      const unknown = (c.result.svg.match(/>\?<\/text>/g) ?? []).length;
+      expect(unknown, c.id).toBe(withIcon.filter((n) => !BUILTIN.has(n)).length);
+      expect(withIcon.filter((n) => BUILTIN.has(n)).length, c.id).toBeGreaterThan(0);
     }
   });
 

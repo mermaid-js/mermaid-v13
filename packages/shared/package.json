@@ -101,6 +101,11 @@
       "types": "./dist/svg/node-paint.d.ts",
       "default": "./dist/svg/node-paint.js"
     },
+    "./svg/unknown-icon": {
+      "mermaid-source": "./src/svg/unknown-icon.ts",
+      "types": "./dist/svg/unknown-icon.d.ts",
+      "default": "./dist/svg/unknown-icon.js"
+    },
     "./svg/route": {
       "mermaid-source": "./src/svg/route.ts",
       "types": "./dist/svg/route.d.ts",
