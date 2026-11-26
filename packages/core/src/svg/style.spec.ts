@@ -3,6 +3,7 @@ import {
   checkColor,
   checkCssColor,
   checkStyle,
+  joinStyle,
   px,
   streamWriter,
   styleText,
@@ -258,6 +259,18 @@ describe('checkStyle', () => {
           decls.join(',')
         ).toEqual(['STYLE_PROPERTY_DROPPED']);
       }
+    });
+
+    it('joinStyle joins one statement; checkStyle with joined pieces joins nothing more', () => {
+      expect(joinStyle(['font-family:Georgia', ' serif', 'fill:rgb(1', '2', '3)'])).toEqual([
+        'font-family:Georgia, serif',
+        'fill:rgb(1, 2, 3)',
+      ]);
+      const { warnings, warn } = collect();
+      expect(checkStyle(['font-family:Georgia', 'bold'], warn, true).text).toEqual({
+        'font-family': 'Georgia',
+      });
+      expect(warnings.map((w) => w.code)).toEqual(['STYLE_PROPERTY_DROPPED']);
     });
 
     it('stops joining once the parentheses are closed', () => {

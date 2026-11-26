@@ -1,15 +1,26 @@
 ---
 description: >-
   A comma inside a style value (#1312, D706): rgb() and hsl() colours and a font-family list
-  are kept whole. v12 dropped the pieces after each comma.
+  are kept whole, also when two values or two classDefs share pieces (D and E). v12 dropped
+  the pieces after each comma.
 ---
 classDiagram
   class A
   class B
   class C
+  class D
+  class E
   A --> B
   B --> C
+  C --> D
+  D --> E
   style A fill:rgb(255, 200, 200)
   style B stroke:hsl(210, 60%, 40%),stroke-width:3px
   classDef serif color:#333,font-family:Georgia, "Times New Roman", serif
   cssClass "C" serif
+  classDef red fill:rgb(255, 0, 0),stroke:rgb(0, 0, 0)
+  cssClass "D" red
+  classDef blue stroke:rgb(10, 0, 0)
+  classDef pink fill:rgb(255, 0, 0)
+  cssClass "E" blue
+  cssClass "E" pink

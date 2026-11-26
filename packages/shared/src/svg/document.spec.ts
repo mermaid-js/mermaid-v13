@@ -118,4 +118,19 @@ describe('render helpers', () => {
     expect(styleOf(['k'], [' stroke:blue '])).toBe(styleOf(['k'], ['stroke:blue']));
     expect(styleOf(['k']).shape).toMatchObject({ fill: 'red' });
   });
+
+  it('styleCache joins comma pieces within each statement, never across two (D706)', () => {
+    const warnings: string[] = [];
+    const styleOf = styleCache(
+      new Map([
+        ['a', ['font-family:Georgia']],
+        ['b', ['bold', 'fill:rgb(255', ' 0', ' 0)']],
+      ]),
+      (w) => warnings.push(w.code)
+    );
+    const { shape, text } = styleOf(['a', 'b'], ['stroke:rgb(0', ' 0', ' 0)']);
+    expect(text).toMatchObject({ 'font-family': 'Georgia' });
+    expect(shape).toMatchObject({ fill: 'rgb(255, 0, 0)', stroke: 'rgb(0, 0, 0)' });
+    expect(warnings).toEqual(['STYLE_PROPERTY_DROPPED']);
+  });
 });

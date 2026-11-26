@@ -16,7 +16,12 @@ const COLOURS = [
 ];
 const EXPECTED: Readonly<Record<string, readonly string[]>> = {
   'state-diagram-v2': COLOURS,
-  'class-diagram': COLOURS,
+  // D has fill and stroke with the same pieces (` 0`, ` 0)`), E two classDefs that share them.
+  'class-diagram': [
+    ...COLOURS,
+    'fill="rgb(255, 0, 0)" stroke="rgb(0, 0, 0)"',
+    'fill="rgb(255, 0, 0)" stroke="rgb(10, 0, 0)"',
+  ],
   flowchart: [
     'fill="#fcc"',
     'font-family="Georgia, Times New Roman, serif"',

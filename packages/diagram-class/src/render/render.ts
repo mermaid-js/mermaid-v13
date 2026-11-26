@@ -8,6 +8,7 @@ import {
   checkLinkTarget,
   checkStyle,
   checkUrl,
+  joinStyle,
   translate,
   type Attrs,
   type CheckedStyle,
@@ -210,30 +211,31 @@ function openRoot(
  * The checked style of a class, in v12's order: the `classDef`s of its CSS classes (v12's
  * generated `.name > *` rules), then its inline `style` (the model's `styles`, which already
  * holds the `classDef`s v12's `defineClass` copied in). A declaration is checked once: one
- * already inline is not repeated from the class rules, and the inline one wins as in v12.
+ * already inline is not repeated from the class rules, and the inline one wins as in v12. Each
+ * list's comma pieces are joined first (D706), so a repeat is a whole declaration.
  */
 function styleCache(model: ClassModel, ctx: ClassRenderContext): (node: ClassNode) => CheckedStyle {
   const defs = new Map<string, readonly string[]>();
-  for (const sc of model.styleClasses) defs.set(sc.id, sc.styles);
+  for (const sc of model.styleClasses)
+    defs.set(sc.id, joinStyle(sc.styles.flatMap((s) => s.split(','))));
   const seen = new Map<string, CheckedStyle>();
   return (node) => {
-    const inline = new Set(node.styles.map((d) => d.trim()));
+    const own = joinStyle(node.styles);
+    const inline = new Set(own.map((d) => d.trim()));
     const decls: string[] = [];
     const taken = new Set<string>();
     for (const c of node.classes) {
-      for (const s of defs.get(c) ?? []) {
-        for (const d of s.split(',')) {
-          const k = d.trim();
-          if (inline.has(k) || taken.has(k)) continue;
-          taken.add(k);
-          decls.push(d);
-        }
+      for (const d of defs.get(c) ?? []) {
+        const k = d.trim();
+        if (inline.has(k) || taken.has(k)) continue;
+        taken.add(k);
+        decls.push(d);
       }
     }
-    decls.push(...node.styles);
+    decls.push(...own);
     const key = decls.join(';');
     let style = seen.get(key);
-    if (!style) seen.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
+    if (!style) seen.set(key, (style = checkStyle(decls, (w) => ctx.warn(w), true)));
     return style;
   };
 }
