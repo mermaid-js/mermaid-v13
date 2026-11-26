@@ -92,7 +92,8 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     // v12 neo strokes class boxes and their dividers with the gradient; notes keep
     // noteBorderColor (v12 `note.ts` writes it as an inline `!important` style).
     stroke: theme.outline('nodeBorder'),
-    // v12 `classText`: every class-diagram text but notes and namespace titles.
+    // v12 `classText`: every class-diagram text but notes, namespace titles and relation
+    // labels, whose tag takes `classEdgeLabelColor` (D713, D715).
     text: theme.color('classText'),
   };
   const shadow = theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow');
