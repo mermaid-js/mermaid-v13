@@ -2,9 +2,10 @@ name: Nightly visual baseline
 
 # R-TEST-5, D631: every tier of the .mmd fixtures (ci.yml's `visual` job runs only `pr-check`
 # and `baseline`), rendered in Chromium on mermaid-v13 every night. The screenshots go to Argos
-# as their own build, `nightly`, which Argos compares with the night before. Report only: a
-# difference shows in Argos for a maintainer to look at and fails nothing here. Also runs on
-# demand.
+# as their own build, `nightly`, in monitoring mode (D703): Argos compares it with the last
+# nightly a maintainer approved, not with the night before, and never approves it by itself.
+# Report only: a difference waits in Argos for a maintainer to look at and fails nothing here.
+# Also runs on demand.
 on:
   schedule:
     - cron: '53 3 * * *'
@@ -48,6 +49,10 @@ jobs:
           ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
           ARGOS_REFERENCE_BRANCH: mermaid-v13
           ARGOS_BUILD_NAME: nightly
+          # D703: compared with the last approved nightly and never auto-approved. In CI mode,
+          # Argos approved every build on mermaid-v13 by itself, so nightly differences went
+          # unseen. Monitoring builds have their own baselines; the PR builds are unaffected.
+          ARGOS_MODE: monitoring
           # About 290 screenshots a part, the size the PR job's upload is known to pass with.
           ARGOS_UPLOAD_PARTS: '12'
           ARGOS_PARALLEL_NONCE: ${{ github.run_id }}-${{ github.run_attempt }}
