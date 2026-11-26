@@ -75,7 +75,7 @@ export interface LabelRequest extends InlineRequest {
 export type LabelBoxer = (raw: string, request: LabelRequest) => InlineBox | undefined;
 
 /** What {@link InlineSpans.extract} and {@link InlineSpans.label} give label layout. */
-interface Boxed {
+export interface LabelBoxes {
   readonly source: string;
   readonly boxes: readonly LabelBoxSpan[];
 }
@@ -93,7 +93,7 @@ export interface InlineSpans {
    * Replaces each span a provider boxes with a placeholder character (U+FDD0 + its index) and
    * returns the boxes, or `undefined` when the label has none.
    */
-  extract(raw: string, font: FontKey, measurer: Measurer): Boxed | undefined;
+  extract(raw: string, font: FontKey, measurer: Measurer): LabelBoxes | undefined;
   /**
    * The whole label as one box (D695), when {@link InlineSpans.boxer} is set and boxes it: the
    * source is then one placeholder character. Label layout asks this before `extract`. Text
@@ -106,7 +106,7 @@ export interface InlineSpans {
     measurer: Measurer,
     maxWidth: number,
     markup: LabelMarkup
-  ): Boxed | undefined;
+  ): LabelBoxes | undefined;
   /** The render's whole-label providers (D695). The hook run sets it when an extension has one. */
   boxer?: LabelBoxer;
   /**

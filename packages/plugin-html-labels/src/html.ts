@@ -2,10 +2,17 @@
  * Label source to HTML (D697): what v12 handed the browser with `htmlLabels: true`. The tags the
  * plugin allows stay as written for the sanitizer to check; any other text shaped like a tag
  * (`List<T>`) is escaped, so it is shown and not lost. In the `emphasis` and `markdown` modes the
- * marks core reads (D562) become elements. Nothing here touches the DOM, and the result is not
- * safe to insert: `sanitize.ts` makes it so.
+ * marks core reads (D562) become elements, found by core's own rules (`emphasisAt`,
+ * `markdownLines`), so a label reads the same with and without the plugin. Nothing here touches
+ * the DOM, and the result is not safe to insert: `sanitize.ts` makes it so.
  */
-import type { LabelMarkup } from '@mermaid-js/core/text';
+import {
+  emphasisAt,
+  markdownLines,
+  Style,
+  type LabelMarkup,
+  type StyleBits,
+} from '@mermaid-js/core/text';
 
 /** The HTML elements a label may hold. The sanitizer allows exactly these. */
 export const ALLOWED_TAGS: readonly string[] = (
@@ -21,41 +28,41 @@ const DROPPED = new Set(['script', 'style']);
 const RE_TAG = /<\/?([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
 const RE_BREAK = /<br\s*\/?>|\r\n?/gi;
 const RE_PLAIN_BREAK = /\\n|\n/;
-const RE_BULLET = /^([ \t]*)[-*] +(?=\S)/;
 const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
-const RE_WORD = /[\p{L}\p{N}]/u;
 
 const escape = (text: string): string =>
   text.replace(/[<>]/g, (ch) => (ch === '<' ? '&lt;' : '&gt;'));
 
+/** A piece of a line as HTML, and how many characters of source it stands for. */
+type Piece = readonly [html: string, length: number];
+
 /** The tag at `i`, when it is one the sanitizer gets to see. */
-function tagAt(source: string, i: number): string | undefined {
+function tagAt(source: string, i: number): Piece | undefined {
   RE_TAG.lastIndex = i;
   const m = RE_TAG.exec(source);
   const name = m?.[1]?.toLowerCase();
-  return m && name !== undefined && (ALLOWED.has(name) || DROPPED.has(name)) ? m[0] : undefined;
+  return m && name !== undefined && (ALLOWED.has(name) || DROPPED.has(name))
+    ? [m[0], m[0].length]
+    : undefined;
+}
+
+/** A backslash escape or an inline code span at `i`, which only markdown has. */
+function markdownAt(source: string, i: number): Piece | undefined {
+  const ch = source[i];
+  const next = source[i + 1] ?? '';
+  if (ch === '\\' && RE_ESCAPABLE.test(next)) return [escape(next), 2];
+  const end = ch === '`' ? source.indexOf('`', i + 1) : -1;
+  return end > i + 1
+    ? [`<code>${escape(source.slice(i + 1, end))}</code>`, end + 1 - i]
+    : undefined;
 }
 
 /** The emphasis open in a line, outermost first. */
 type Marks = ('strong' | 'em')[];
 
-/**
- * The length (1, or 2 for bold) of the mark `ch` at `i` when it opens or closes emphasis, as
- * core's label layout reads it: an opening mark needs text after it and its closing mark later
- * in the line, a closing one text before it, and `_` inside a word is text.
- */
-function emphasisAt(source: string, i: number, ch: string, marks: Marks): number {
-  const double = source[i + 1] === ch;
-  const len = double ? 2 : 1;
-  const prev = source[i - 1] ?? ' ';
-  const next = source[i + len] ?? ' ';
-  const opening = !marks.includes(double ? 'strong' : 'em');
-  const can = opening
-    ? next.trim() !== '' && source.includes(double ? ch + ch : ch, i + len + 1)
-    : prev.trim() !== '';
-  const intraWord = ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next);
-  return can && !intraWord ? len : 0;
-}
+/** `marks` as the style bits core's `emphasisAt` reads. */
+const bitsOf = (marks: Marks): StyleBits =>
+  (marks.includes('strong') ? Style.Bold : 0) | (marks.includes('em') ? Style.Italic : 0);
 
 /**
  * Opens `name`, or closes it when it is open. Elements nest, so closing one that is not the
@@ -73,6 +80,22 @@ function toggle(marks: Marks, name: 'strong' | 'em'): string {
   return `${close.join('')}</${name}>${inner.map((n) => `<${n}>`).join('')}`;
 }
 
+/** An emphasis mark at `i` that opens or closes emphasis, as core reads it. */
+function markAt(source: string, i: number, marks: Marks): Piece | undefined {
+  const ch = source[i] as string;
+  const length = ch === '*' || ch === '_' ? emphasisAt(source, i, ch, bitsOf(marks)) : 0;
+  return length > 0 ? [toggle(marks, length === 2 ? 'strong' : 'em'), length] : undefined;
+}
+
+/** What starts at `i`: a tag, markdown, an emphasis mark, or one character of text. */
+function pieceAt(source: string, i: number, markup: LabelMarkup, marks: Marks): Piece {
+  return (
+    (source[i] === '<' ? tagAt(source, i) : undefined) ??
+    (markup === 'markdown' ? markdownAt(source, i) : undefined) ??
+    (markup === 'plain' ? undefined : markAt(source, i, marks)) ?? [escape(source[i] as string), 1]
+  );
+}
+
 /** Closes what `marks` still has open; an element that would be empty is taken back instead. */
 function closeAll(html: string, marks: Marks): string {
   let out = html;
@@ -84,66 +107,15 @@ function closeAll(html: string, marks: Marks): string {
 /** One line of source as HTML. Emphasis stays in its line, as in core. */
 function inline(line: string, markup: LabelMarkup): string {
   const source = line.trim();
-  const markdown = markup === 'markdown';
-  const emphasis = markdown || markup === 'emphasis';
   const marks: Marks = [];
   let out = '';
-  let i = 0;
-  while (i < source.length) {
-    const ch = source[i] as string;
-    const next = source[i + 1] ?? '';
-    const tag = ch === '<' ? tagAt(source, i) : undefined;
-    const end = markdown && ch === '`' ? source.indexOf('`', i + 1) : -1;
-    const mark = emphasis && (ch === '*' || ch === '_') ? emphasisAt(source, i, ch, marks) : 0;
-    if (tag !== undefined) {
-      out += tag;
-      i += tag.length;
-    } else if (markdown && ch === '\\' && RE_ESCAPABLE.test(next)) {
-      out += escape(next);
-      i += 2;
-    } else if (end > i + 1) {
-      out += `<code>${escape(source.slice(i + 1, end))}</code>`;
-      i = end + 1;
-    } else if (mark > 0) {
-      out += toggle(marks, mark === 2 ? 'strong' : 'em');
-      i += mark;
-    } else {
-      out += escape(ch);
-      i++;
-    }
+  for (let i = 0; i < source.length; ) {
+    const [html, length] = pieceAt(source, i, markup, marks);
+    out += html;
+    i += length;
   }
   // A mark left open is closed, so the next line starts plain.
   return closeAll(out, marks);
-}
-
-/** One markdown source line; `bullet` is the nesting level of a bullet item. */
-interface Line {
-  readonly source: string;
-  readonly bullet?: 0 | 1;
-}
-
-/** Markdown lines as core reads them: blank lines dropped, `- ` and `* ` items, one nesting level. */
-function markdownLines(text: string): Line[] {
-  const source = text.replace(RE_BREAK, '\n').split('\n');
-  let common = Infinity;
-  for (const line of source)
-    if (line.trim() !== '') common = Math.min(common, line.length - line.trimStart().length);
-  const out: Line[] = [];
-  let top: number | undefined;
-  for (const raw of source) {
-    if (raw.trim() === '') continue;
-    const line = raw.slice(common);
-    const m = RE_BULLET.exec(line);
-    if (!m) {
-      out.push({ source: line });
-      continue;
-    }
-    const indent = (m[1] as string).length;
-    const nested = top !== undefined && indent > top;
-    if (!nested) top = indent;
-    out.push({ source: line.slice(m[0].length), bullet: nested ? 1 : 0 });
-  }
-  return out;
 }
 
 /** Markdown lines as HTML: text lines broken by `<br>`, bullet items as nested lists. */

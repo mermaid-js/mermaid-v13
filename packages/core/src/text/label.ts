@@ -6,7 +6,7 @@
 import type { LabelBox, LabelBoxSpan, LabelSpan } from '../svg/writer.ts';
 import type { SafeValue } from '../svg/types.ts';
 import { entityAt } from './entities.ts';
-import { PLACEHOLDER, type InlineSpans } from './inline.ts';
+import { PLACEHOLDER, type InlineSpans, type LabelBoxes } from './inline.ts';
 import { SPACE } from '../parser-kit/char-codes.ts';
 import { Style, type FontKey, type Measurer, type StyleBits } from './measurer.ts';
 import { SLICE, UNITS, unitsWidth, type SliceMeasurer, type Units } from './table.ts';
@@ -103,6 +103,24 @@ const RE_PIECE = new RegExp(
   'g'
 );
 
+/** The label's mode; the deprecated `markdown` flag wins while callers still pass it (D562). */
+const markupOf = (options: LabelOptions): LabelMarkup =>
+  options.markdown ? 'markdown' : (options.markup ?? 'plain');
+
+/**
+ * The label's boxes: a whole-label provider's (D695), which is asked first and whose box is then
+ * the label's only span, or else those of its inline spans (D177).
+ */
+const boxesOf = (
+  raw: string,
+  font: FontKey,
+  maxWidth: number,
+  measurer: Measurer,
+  markup: LabelMarkup,
+  spans?: InlineSpans
+): LabelBoxes | undefined =>
+  spans?.label?.(raw, font, measurer, maxWidth, markup) ?? spans?.extract(raw, font, measurer);
+
 /**
  * Lays out a label: splits it into lines, applies the markdown and HTML subsets, and wraps
  * greedily at `maxWidth` (pass `Infinity` to wrap only at explicit breaks).
@@ -116,11 +134,8 @@ export function layoutLabel(
 ): MeasuredLabel {
   const base = options.style ?? 0;
   const { ascent, lineHeight } = measurer.metrics(font);
-  const markup = options.markdown ? 'markdown' : (options.markup ?? 'plain');
-  // A whole-label provider (D695) is asked first: its box is then the label's only span.
-  const spans =
-    options.inline?.label?.(raw, font, measurer, maxWidth, markup) ??
-    options.inline?.extract(raw, font, measurer);
+  const markup = markupOf(options);
+  const spans = boxesOf(raw, font, maxWidth, measurer, markup, options.inline);
   const src = spans?.source ?? raw;
   let left = false;
   const box = (lines: Run[][], indents: number[], widths: number[]): MeasuredLabel => {
@@ -266,7 +281,7 @@ function grownBaselines(
 }
 
 /** One source line of a label; `bullet` is the list nesting level of a bullet item. */
-interface SourceLine {
+export interface SourceLine {
   source: string;
   bullet?: 0 | 1;
 }
@@ -291,7 +306,7 @@ function plainLines(text: string, backslashBreak?: boolean): SourceLine[] {
  * Markdown lines: `<br>` and newlines break, blank lines are dropped, and a line starting with
  * `- ` or `* ` is a bullet item, nested one level when indented more than the item before.
  */
-function markdownLines(text: string): SourceLine[] {
+export function markdownLines(text: string): SourceLine[] {
   const out: SourceLine[] = [];
   let top: number | undefined;
   const source = text.replace(RE_MD_BREAK, '\n').split('\n');
@@ -358,7 +373,7 @@ function tagAt(source: string, i: number): RegExpExecArray | undefined {
  * The length (1, or 2 for bold) of the emphasis mark `ch` at `i` when it opens or closes
  * emphasis, given the bits `marked` already open; 0 when it is plain text.
  */
-function emphasisAt(source: string, i: number, ch: string, marked: number): number {
+export function emphasisAt(source: string, i: number, ch: string, marked: number): number {
   const double = source[i + 1] === ch;
   const len = double ? 2 : 1;
   const prev = source[i - 1] ?? ' ';
