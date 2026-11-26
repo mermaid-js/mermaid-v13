@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-packet",
-  "version": "13.0.0-alpha.2",
+  "version": "13.0.0-alpha.3",
   "description": "Packet diagram plugin for Mermaid: parser, layout, SVG renderer and text output.",
   "type": "module",
   "license": "MIT",

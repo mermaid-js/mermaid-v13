@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-treeview",
-  "version": "13.0.0-alpha.1",
+  "version": "13.0.0-alpha.2",
   "description": "TreeView plugin for Mermaid: parser, layout, SVG and text renderers and language facet.",
   "type": "module",
   "license": "MIT",

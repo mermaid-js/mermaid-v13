@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/language-service",
-  "version": "13.0.0-alpha.3",
+  "version": "13.0.0-alpha.4",
   "description": "Editor-agnostic Mermaid language service: diagnostics, navigation, rename, folding, semantic tokens.",
   "type": "module",
   "license": "MIT",

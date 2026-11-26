@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/plugin-autoload",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "Opt-in plugin discovery for Mermaid v13 in Node: registers the plugins your package.json lists, with one await (D589).",
   "type": "module",
   "license": "MIT",

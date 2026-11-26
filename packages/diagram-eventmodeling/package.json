@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-eventmodeling",
-  "version": "13.0.0-alpha.1",
+  "version": "13.0.0-alpha.2",
   "description": "Event modeling plugin for Mermaid: parser, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",

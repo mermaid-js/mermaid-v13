@@ -1,5 +1,20 @@
 # @mermaid-js/language-service-monaco
 
+## 13.0.0-alpha.4
+
+### Patch Changes
+
+- [#740](https://github.com/mermaid-js/mermaid-v13/pull/740) [`a366530`](https://github.com/mermaid-js/mermaid-v13/commit/a3665307895a2b4b4043b91ddba5c74c0e087732) Thanks [@knsv-bot](https://github.com/knsv-bot)! - fix: CodeMirror and Monaco highlight a C4 `title` or `accDescription` with a `#` in it as one title, up to the end of the line.
+
+- [#788](https://github.com/mermaid-js/mermaid-v13/pull/788) [`2653108`](https://github.com/mermaid-js/mermaid-v13/commit/2653108f8391cb7b13403deadcb1868fc7ad97c2) Thanks [@filipsajdak](https://github.com/filipsajdak)! - fix: a C4 quote left open no longer swallows the next statement. The string stops at the line break before a line that starts a statement, with an `UNCLOSED_STRING` error that names the line, and the statements after it parse. A tab before an opening quote is a blank, and a `"` inside an unquoted argument (as in `"A \"q\" B"`, since C4 text has no escapes) gives a `C4_QUOTE_IN_ARGUMENT` warning (#681).
+
+- [#952](https://github.com/mermaid-js/mermaid-v13/pull/952) [`8b5690c`](https://github.com/mermaid-js/mermaid-v13/commit/8b5690cb758a7b04ad5a940cf25f950703b39a62) Thanks [@knsv-bot](https://github.com/knsv-bot)! - fix: a flowchart edge id may follow a node directly, as in v12 12.3.0: `A[bla]e1@--> B`, `A@{ shape: circle } e1@--> B` and `A[me@example.com] --> B` now parse. An edge id can no longer contain `[ ] ( ) { } |` (`A e[1]@--> B` is a syntax error). Agentflow is unchanged.
+
+- [#1221](https://github.com/mermaid-js/mermaid-v13/pull/1221) [`c84bdba`](https://github.com/mermaid-js/mermaid-v13/commit/c84bdbaab8d979e5d2c91534190ae8b02a2d8621) Thanks [@knsv-bot](https://github.com/knsv-bot)! - chore: regenerate the agentflow first-paint grammar; highlighting is unchanged.
+
+- Updated dependencies [[`85b2f3e`](https://github.com/mermaid-js/mermaid-v13/commit/85b2f3e17547ebcac5f33772bb1f99a8f1204fc0), [`ade9f95`](https://github.com/mermaid-js/mermaid-v13/commit/ade9f95d7ba97fadc1306c3da0b19812a80212d3), [`89f1703`](https://github.com/mermaid-js/mermaid-v13/commit/89f170364e4a08c2e0f52f86e5d5509e52413af1), [`d62d9bb`](https://github.com/mermaid-js/mermaid-v13/commit/d62d9bbf9ff2889f831751e67ef1715c3a914103), [`0ef50dc`](https://github.com/mermaid-js/mermaid-v13/commit/0ef50dc23dbaa9ef734270d1de431d126f76b7ec), [`8c7a866`](https://github.com/mermaid-js/mermaid-v13/commit/8c7a8660e60718a5b8b2053320d0de5b4fa0c58a), [`3522ee7`](https://github.com/mermaid-js/mermaid-v13/commit/3522ee7e99a2b1c108da009ccf940f8eb41691ab), [`5a5809c`](https://github.com/mermaid-js/mermaid-v13/commit/5a5809c25cfa8961786be39292d9050f7693f4c4), [`cbe3030`](https://github.com/mermaid-js/mermaid-v13/commit/cbe3030cd4ffaf020c53b562c1d3054ad9aa680d), [`7aa00d4`](https://github.com/mermaid-js/mermaid-v13/commit/7aa00d44519498656963f87f53a58ca891883d0d), [`ed7caff`](https://github.com/mermaid-js/mermaid-v13/commit/ed7caff12d94814d6584bc8592556aed4383cd8d), [`80cd58b`](https://github.com/mermaid-js/mermaid-v13/commit/80cd58b4ae0ef318127b3c014cc7afd2b6d2df4a), [`73a652e`](https://github.com/mermaid-js/mermaid-v13/commit/73a652e1c25f8512d889aa221b1740a9be973e69)]:
+  - @mermaid-js/language-service@13.0.0-alpha.4
+
 ## 13.0.0-alpha.3
 
 ### Patch Changes

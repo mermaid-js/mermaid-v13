@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/plugin-icons",
-  "version": "13.0.0-alpha.3",
+  "version": "13.0.0-alpha.4",
   "description": "Iconify icon packs in Mermaid v13: icons drawn as allow-listed SVG nodes, packs loaded only for diagrams that use them (D290, D295).",
   "type": "module",
   "license": "MIT",

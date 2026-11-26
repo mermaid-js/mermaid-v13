@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-mindmap",
-  "version": "13.0.0-alpha.2",
+  "version": "13.0.0-alpha.3",
   "description": "Mindmap diagram plugin for Mermaid: parser, model, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",

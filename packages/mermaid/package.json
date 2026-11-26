@@ -1,6 +1,6 @@
 {
   "name": "mermaid",
-  "version": "13.0.0-alpha.3",
+  "version": "13.0.0-alpha.4",
   "description": "Markdown-ish syntax for generating flowcharts and other diagrams.",
   "type": "module",
   "license": "MIT",

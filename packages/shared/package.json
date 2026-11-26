@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/shared",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "Code shared by several Mermaid diagram packages: lexer and parser families, node shapes, edge drawing, graph layout helpers and ASCII drawing. Each subpath loads only with the diagrams that use it.",
   "type": "module",
   "license": "MIT",
