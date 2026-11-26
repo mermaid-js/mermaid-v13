@@ -209,11 +209,11 @@ const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.c
 
 /**
  * An opacity: a plain number from 0 to 1 (D221), `RE_SIZE` without its `px`, or a percentage from
- * 0% to 100%, kept as N/100 so that `number()` still reads 0 to 1 (D707).
+ * 0% to 100%, kept as N/100 to 6 decimals so that `number()` still reads 0 to 1 (D707).
  */
 function checkOpacity(v: string): string | undefined {
   const pct = RE_PERCENT.exec(v);
-  if (pct) return +pct[1]! <= 100 ? String(+pct[1]! / 100) : undefined;
+  if (pct) return +pct[1]! <= 100 ? String(Math.round(+pct[1]! * 1e4) / 1e6) : undefined;
   return RE_SIZE.test(v) && +v <= 1 ? v : undefined;
 }
 

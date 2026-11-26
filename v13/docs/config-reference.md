@@ -314,7 +314,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `timeline.activationWidth` | number | `10` | ignored (13.0.0) | v12's timeline never read it. | Width of activation box |
 | `timeline.textPlacement` | string | `"fo"` | ignored (13.0.0) | v12's timeline never read it. | text placement as: tspan \| fo \| old only text as before |
 | `timeline.actorColours` | array | `["#8FBC8F","#7CFC00","#00FFFF","#20B2AA","#B0E0E6","#FFFFE0"]` | ignored (13.0.0) | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
-| `timeline.sectionFills` | array | `["#191970","#8B008B","#4B0082","#2F4F4F","#800000","#8B4513","#00008B"]` | removed (13.0.0) | v12 never read it. Replacement: `cScale<n>`, or `mainBkg` by theme. |  |
+| `timeline.sectionFills` | array | `["#191970","#8B008B","#4B0082","#2F4F4F","#800000","#8B4513","#00008B"]` | removed (13.0.0) | v12 never read it. Replacement: `cScale<n>`, `mainBkg` or `borderColorArray` by theme. |  |
 | `timeline.sectionColours` | array | `["#fff"]` | ignored (13.0.0) | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `timeline.disableMulticolor` | boolean | `false` | honoured (13.0.0) | With no sections, every period and its events take colour slot 0 instead of one slot per period, as v12. With sections it does nothing, as in v12. | Draws a timeline without sections in one colour slot instead of one slot per period. |
 

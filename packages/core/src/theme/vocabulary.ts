@@ -14,9 +14,10 @@
  * because the classic themes follow `flowchart.padding` (D152). A `flag` is `true` or `false`,
  * read literally at render time like geometry, so it has no CSS variable (D182). An `opacity` is
  * a number from 0 to 1, or a percentage from 0% to 100% kept as N/100 (D707), read with
- * `Theme.number` like geometry, so it has no CSS variable either (D221). A `palette` is a diagram table's list of colours, set as palettes are (an array or a
- * comma-separated string) and read with `Theme.palette` as literal colours, so it has no CSS
- * variable either; its rule names the shared palette it reads (`PALETTE_VARIABLES`, D545).
+ * `Theme.number` like geometry, so it has no CSS variable either (D221). A `palette` is a
+ * diagram table's list of colours, set as palettes are (an array or a comma-separated string)
+ * and read with `Theme.palette` as literal colours, so it has no CSS variable either; its rule
+ * names the shared palette it reads (`PALETTE_VARIABLES`, D545).
  */
 export type ThemeVarKind =
   | 'color'

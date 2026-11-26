@@ -277,7 +277,7 @@ e2e/diagrams/class-diagram/nightly-check/should-render-nested-namespaces-with-do
 e2e/diagrams/class-diagram/nightly-check/should-render-syntactically-nested-namespaces.mmd 1 61c6ab2bfcc7ed25
 e2e/diagrams/class-diagram/nightly-check/should-render-two-classes-with-text-labels.mmd 1 08e57b20be1a3b7f
 e2e/diagrams/class-diagram/nightly-check/should-render-with-newlines-in-title-and-an-annotation.mmd 1 150f9b811573a6e0
-e2e/diagrams/class-diagram/nightly-check/style-comma-values.mmd 1 5c1d536e25149bd9
+e2e/diagrams/class-diagram/nightly-check/style-comma-values.mmd 1 836da738da0260ef
 e2e/diagrams/class-diagram/pr-check/1-should-render-a-simple-class-diagram.mmd 1 00488a16d57ddfa7
 e2e/diagrams/class-diagram/pr-check/16b-should-handle-the-direction-statement-with-tb-2.mmd 1 22b77d823a7c27d8
 e2e/diagrams/class-diagram/pr-check/16b-should-handle-the-direction-statement-with-tb.mmd 1 3e63a78637241eed

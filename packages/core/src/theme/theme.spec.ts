@@ -402,6 +402,10 @@ describe('createTheme: opacity (D221, D707)', () => {
       ['100%', 1],
       [' 33.5% ', 0.335],
       ['7%', 0.07],
+      // Kept to 6 decimals: no float noise, no exponent.
+      ['14.3%', 0.143],
+      ['0.00001%', 0],
+      ['0.0001%', 0.000001],
     ] as const) {
       const t = createTheme(base, { diagram: OPACITY, themeVariables: { sliceOpacity: given } });
       expect(t.number('sliceOpacity'), String(given)).toBe(read);

@@ -328,7 +328,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `timeline.activationWidth` | ignored | v12's timeline never read it. |  |
 | `timeline.textPlacement` | ignored | v12's timeline never read it. |  |
 | `timeline.actorColours` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
-| `timeline.sectionFills` | removed | v12 never read it. | `cScale<n>`, or `mainBkg` by theme |
+| `timeline.sectionFills` | removed | v12 never read it. | `cScale<n>`, `mainBkg` or `borderColorArray` by theme |
 | `timeline.sectionColours` | ignored | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -1786,14 +1786,14 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   a base colour as v12's do (D656): `default` keeps all twelve slots, as v12 computed them before
   the override; `forest` and `base` recompute all twelve, hue turns included; `dark` and
   `neutral` keep their `cScale` values. In the redux and neo themes, slots v12 derives by
-  lightness alone follow the theme's base colours and hue-turned and `cScale` slots are fixed
-  values, so in `redux-color` and `redux-dark-color` a `cScale<n>` override no longer recolours
-  `pie<n+1>` (set `pie<n+1>`).
+  lightness alone follow the theme's base colours and hue-turned slots are fixed values; a
+  `cScale<n>` override recolours the slot that reads it, as in v12 (D334).
   `pieOpacity` is a number from 0 to 1 (D221) or a percentage from `0%` to `100%`, read as
   N/100 as CSS reads it (D707); any other value is dropped with `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
   `cScale`*n*, so the first slice is `cScale1`). v12 `dark` left `pie12` unset, so a twelfth
-  slice drew black; it is now `cScale0`, as in `neutral`.
+  slice drew black; it is now `cScale0`, as in `neutral`, so under `dark` a `primaryColor`
+  override (which sets `cScale0`) also recolours the twelfth slice.
 - **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
   which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
   by v12's own formula (`default` writes the result as a fixed value, which v12 keeps under an
