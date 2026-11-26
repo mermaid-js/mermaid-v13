@@ -157,7 +157,6 @@ describe('timeline config (#315, spec #291 "Config")', () => {
     ['activationWidth', 99],
     ['textPlacement', 'tspan'],
     ['actorColours', ['#123456']],
-    ['sectionFills', ['#123456']],
     ['sectionColours', ['#123456']],
     ['useWidth', 99],
   ])('ignores %s, which v12’s timeline never read', async (key, value) => {
@@ -165,6 +164,15 @@ describe('timeline config (#315, spec #291 "Config")', () => {
     const set = await withInit({ timeline: { [key]: value } });
     expect(set.svg).toBe(base.svg);
     expect(set.warnings).toEqual([]);
+  });
+
+  it('warns that sectionFills was removed and draws as without it (#1293, D708)', async () => {
+    const base = await withInit({});
+    const set = await withInit({ timeline: { sectionFills: ['#123456'] } });
+    expect(set.svg).toBe(base.svg);
+    expect(set.warnings).toEqual([
+      expect.objectContaining({ code: 'CONFIG_REMOVED_KEY', path: 'timeline.sectionFills' }),
+    ]);
   });
 
   it('takes a numbered cScale override', async () => {

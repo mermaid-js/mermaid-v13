@@ -308,7 +308,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `journey.rightAngles` | ignored | v12's journey renderer never read it. |  |
 | `journey.activationWidth` | ignored | v12's journey renderer never read it. |  |
 | `journey.textPlacement` | ignored | Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode. |  |
-| `journey.sectionFills` | ignored | Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme. |  |
+| `journey.sectionFills` | removed | v12's `fillType<n>` style rules hid it in every theme (D241, D708). | the `fillType<n>` theme variables, n from 0 to 7 |
 | `timeline.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the timeline renderer never did. |  |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `timeline.diagramMarginX` | ignored | v12's timeline never read it. |  |
@@ -328,7 +328,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `timeline.activationWidth` | ignored | v12's timeline never read it. |  |
 | `timeline.textPlacement` | ignored | v12's timeline never read it. |  |
 | `timeline.actorColours` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
-| `timeline.sectionFills` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionFills` | removed | v12's timeline never read it (D708). | the `cScale<n>` theme variables in the classic themes, else `mainBkg` or `borderColorArray` (D227, D257) |
 | `timeline.sectionColours` | ignored | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -1485,8 +1485,8 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 - **Section fills (D241):** sections cycle over all eight `fillType0`–`fillType7`, so an
   eighth section takes `fillType7` and a ninth `fillType0`. v12 cycled over seven (the length
   of `sectionFills`, read once at module load), so `fillType7` never showed although the redux
-  themes tune eight. `sectionFills` is ignored: v12's `fillType<n>` style rules hid it in
-  every theme anyway.
+  themes tune eight. `sectionFills` is removed and warns `CONFIG_REMOVED_KEY` (D708): v12's
+  `fillType<n>` style rules hid it in every theme anyway. Set `fillType0`–`fillType7` instead.
 - **The empty actor (D244):** a trailing comma (`Task: 5: Me,`) still adds the actor `''` to
   the model, but it is not drawn: no legend row, no dot, no colour. v12 drew a nameless row
   and dot, and as `''` sorts first it took the first colour and shifted every other actor's.
@@ -1516,7 +1516,9 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 - **Ignored**, accepted without a warning: `noteMargin`, `messageMargin`, `messageAlign`,
   `bottomMarginAdj`, `rightAngles`, `activationWidth` and `useWidth` (v12's journey renderer
   never read them), `boxMargin` (read only in a loop over an empty list), `textPlacement`
-  (every label is SVG text, D225) and `sectionFills` (D241).
+  (every label is SVG text, D225).
+- **Removed**, with a `CONFIG_REMOVED_KEY` warning: `sectionFills` (D241, D708). The theme's
+  `fillType0`–`fillType7` fill the sections.
 - **`actorColours` replaces the defaults:** an author's list is the whole palette, cycling
   from the first actor. v12 appended the author's colours after its six defaults (`#8FBC8F`,
   `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`), so they reached only the seventh
@@ -1590,8 +1592,11 @@ Legend entries carry `data-id="a:<name>"` only.
   `diagramMarginX`, `diagramMarginY`, `width`, `height`, `boxMargin`, `boxTextMargin`,
   `noteMargin`, `messageMargin`, `messageAlign`, `bottomMarginAdj`, `rightAngles`,
   `taskFontSize`, `taskFontFamily`, `taskMargin`, `activationWidth`, `textPlacement`,
-  `actorColours`, `sectionFills`, `sectionColours` and `useWidth`. Box colours come from the
-  `cScale`, `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+  `actorColours`, `sectionColours` and `useWidth`. Box colours come from the `cScale`,
+  `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+- **Removed**, with a `CONFIG_REMOVED_KEY` warning: `sectionFills` (D708). v12's timeline never
+  read it either. Box fills come from the `cScale<n>` theme variables in the classic themes,
+  otherwise from `mainBkg` or the `borderColorArray` palette (D227, D257).
 - **`cScale<n>`, `cScaleLabel<n>` and `cScaleInv<n>` overrides** recolour a timeline only in the
   classic themes (`default`, `base`, `dark`, `forest`, `neutral`). They change nothing in the
   redux themes, the default `redux-color` included, or under `theme: 'auto'` (which is
