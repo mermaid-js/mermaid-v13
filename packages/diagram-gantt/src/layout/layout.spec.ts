@@ -442,6 +442,12 @@ describe('warnings and errors (D274, D276)', () => {
       expect(milestone).toContain('A milestone needs an id and a duration');
     });
 
+    it('gives no milestone hint for the reserved id', () => {
+      const text = messageOf(fixture().addTask('m', 'milestone, m1, after __proto__, 0d'));
+      expect(text).toContain('"__proto__" is reserved');
+      expect(text).not.toContain('A milestone needs');
+    });
+
     it('calls __proto__ reserved for after, until and click', () => {
       const text = messageOf(
         fixture()

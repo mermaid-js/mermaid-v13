@@ -1,0 +1,11 @@
+---
+description: >-
+  From v12's ganttDb.spec.ts (issue 4121): the milestone M1 has its id "m1" in the duration
+  field, so it has no id and "after m1" names no task. The unknown-id warning says what
+  "after" does and adds the milestone hint, though the task that wrote the "after" is no
+  milestone.
+---
+gantt
+  dateFormat YYYY-MM-DD
+  M1 :milestone, 2023-01-01, m1
+  task :t1, after m1, 1d

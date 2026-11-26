@@ -69,7 +69,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     sectionBkgColor2: ['#46ecd5', '#1f2020'],
   },
   default: {
-    sectionBkgColor: ['#6666ff7d', '#9a9aff'],
+    sectionBkgColor: ['#6666ff7d', '#9898d1'],
     sectionBkgColor2: ['#fff400', '#ececff'],
     vertLineColor: ['#000080', '#333333'],
     taskBkgColor: ['#8a90dd', '#ececff'],
@@ -81,7 +81,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     taskTextDarkColor: ['#000000', '#333333'],
   },
   dark: {
-    sectionBkgColor: ['#b4ac76', '#4c4f4f'],
+    sectionBkgColor: ['#b4ac76', '#000000'],
     altSectionBkgColor: ['#333333', '#ffffff'],
     sectionBkgColor2: ['#eae8d9', '#1f2020'],
     excludeBkgColor: ['#9f9758', '#eeeeee'],
@@ -99,7 +99,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     taskTextDarkColor: ['#2c2c2c', '#ffffff'],
   },
   forest: {
-    sectionBkgColor: ['#6eaa49', '#aed357'],
+    sectionBkgColor: ['#6eaa49', '#98b25c'],
     sectionBkgColor2: ['#6eaa49', '#cde498'],
     vertLineColor: ['#00bfff', '#000000'],
     taskBkgColor: ['#487e3a', '#cde498'],
@@ -109,7 +109,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     taskTextColor: ['#ffffff', '#000000'],
   },
   neutral: {
-    sectionBkgColor: ['#bdbdbd', '#c5c5c5'],
+    sectionBkgColor: ['#bdbdbd', '#aeaeae'],
     sectionBkgColor2: ['#bdbdbd', '#eeeeee'],
     gridColor: ['#e6e6e6', '#d3d3d3'],
     todayLineColor: ['#dd4422', '#ff0000'],
@@ -127,7 +127,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     taskTextDarkColor: ['#333333', '#000000'],
   },
   base: {
-    sectionBkgColor: ['#f6f9ff', '#ffda8b'],
+    sectionBkgColor: ['#f6f9ff', '#d1bb8b'],
     vertLineColor: ['#000080', '#0b0b0b'],
     taskBorderColor: ['#eeddbb', '#d9cfbc'],
     activeTaskBorderColor: ['#fff4dd', '#0b0b0b'],
@@ -175,25 +175,46 @@ describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
       );
   });
 
-  // #1249, D726: the first band is visibly a band, in every classic theme, against the page
-  // behind it and against the third band, which reads `mainBkg`.
+  // #1249, D726: the first band is visibly a band, in every classic theme: against the page
+  // behind it, against the third band (`mainBkg`) and against the marks drawn on it, the grid
+  // lines and the bars in each state; and what is written on it stays readable.
   describe('the first section band is distinct (#1249, D726)', () => {
     const BAND = 1.2;
+    const AA = 4.5;
     const rgba = (v: unknown): Rgba => parseColor(String(v))!;
+    const BEHIND = [
+      'background',
+      'sectionBkgColor2',
+      'gridColor',
+      'doneTaskBkgColor',
+      'activeTaskBkgColor',
+      'taskBkgColor',
+    ] as const;
+    const INK = ['taskTextOutsideColor', 'titleColor'] as const;
+    const resolve = async (name: ThemeName) =>
+      createTheme(await loadTheme(name), { diagram: gantt.theme, cssVariables: false });
+
     it.each(CLASSIC.map((n) => [n]))(
-      '%s: at least 1.2:1 against the background and band 3',
+      '%s: at least 1.2:1 against the page, band 3, the grid and every bar fill',
       async (name) => {
-        const theme = createTheme(await loadTheme(name), {
-          diagram: gantt.theme,
-          cssVariables: false,
-        });
+        const theme = await resolve(name);
         const band = rgba(theme.value('sectionBkgColor'));
-        expect(contrastRatio(band, rgba(theme.value('background')))).toBeGreaterThanOrEqual(BAND);
-        expect(contrastRatio(band, rgba(theme.value('sectionBkgColor2')))).toBeGreaterThanOrEqual(
-          BAND
+        const ratios = Object.fromEntries(
+          BEHIND.map((v) => [v, contrastRatio(band, rgba(theme.value(v)))])
         );
+        for (const v of BEHIND)
+          expect(ratios[v], `${name}: band vs ${v}`).toBeGreaterThanOrEqual(BAND);
       }
     );
+
+    it.each(CLASSIC.map((n) => [n]))('%s: text on the band reads (4.5:1)', async (name) => {
+      const theme = await resolve(name);
+      const band = rgba(theme.value('sectionBkgColor'));
+      for (const v of INK)
+        expect(contrastRatio(rgba(theme.value(v)), band), `${name}: ${v}`).toBeGreaterThanOrEqual(
+          AA
+        );
+    });
 
     it.each(CLASSIC.map((n) => [n]))("%s: an author's sectionBkgColor still wins", async (name) => {
       const theme = createTheme(await loadTheme(name), {

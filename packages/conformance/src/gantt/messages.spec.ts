@@ -94,6 +94,14 @@ describe('gantt GANTT_UNKNOWN_TASK text', () => {
     );
   });
 
+  it('adds the milestone hint when the id is the one a milestone wrote as its duration', async () => {
+    expect(
+      await unknownTask('should-hint-at-a-milestone-id-written-as-its-duration-issue-4121.mmd')
+    ).toBe(
+      'No task has the id "m1" (named by "after"): the task starts at midnight today. A milestone needs an id and a duration, e.g. "Milestone :milestone, m1, 2023-01-01, 0d".'
+    );
+  });
+
   it('calls a click on __proto__ reserved, not unknown', async () => {
     const text = await unknownTask('should-warn-about-a-reserved-id-in-a-click.mmd');
     expect(text).toBe(

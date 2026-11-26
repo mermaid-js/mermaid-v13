@@ -114,7 +114,11 @@ const CONSEQUENCE: Readonly<Record<Reference, { task: string; reserved: string }
 const HINT_MILESTONE =
   'A milestone needs an id and a duration, e.g. "Milestone :milestone, m1, 2023-01-01, 0d".';
 
-/** The unknown ids by statement, in first-seen order, with the ones a milestone named. */
+/**
+ * The unknown ids by statement, in first-seen order, and whether the milestone hint applies: a
+ * milestone named one, or one is the id a milestone wrote where its duration goes (#4121). The
+ * reserved id is never stored, so it never calls for the hint.
+ */
 function unknownByKind(
   model: GanttModel,
   plan: Schedule
@@ -131,7 +135,13 @@ function unknownByKind(
       if (at === undefined) add('click', model.clicks[i]!.ids[k]!);
     })
   );
-  return { ids, milestone: plan.unknownRefs.some((r) => r.milestone) };
+  const written = new Set(plan.milestoneBadDurations);
+  const milestone =
+    plan.unknownRefs.some((r) => r.id !== NEVER_STORED && r.milestone) ||
+    [...ids.values()].some((named) =>
+      [...named].some((id) => id !== NEVER_STORED && written.has(id))
+    );
+  return { ids, milestone };
 }
 
 /** The clause for the ids one statement named that no task has, if any. */
