@@ -27,13 +27,17 @@ import { BOTTOM, DX, DY, LEFT, placeOnGrid, RIGHT, TOP, type Grid } from './grid
 import { METRICS as M } from './metrics.ts';
 import { titleAlign, titleLow } from '../title.ts';
 import {
+  alongside,
   clearSpot,
-  detour,
+  cleared,
+  foldJog,
   hits,
+  isClear,
   route,
   simplify,
   Space,
   toRoute,
+  type Blocked,
   type Port,
   type Rect,
 } from './route.ts';
@@ -156,6 +160,14 @@ const pick = (d: number, lo: number, mid: number, hi: number): number => {
   return d > 0 ? hi : mid;
 };
 
+/** `r` half a pixel bigger each way, so a run with no width or height can meet another. */
+const wider = (r: Rect): Rect => ({
+  x0: r.x0 - 0.5,
+  y0: r.y0 - 0.5,
+  x1: r.x1 + 0.5,
+  y1: r.y1 + 0.5,
+});
+
 /** Moves `end` (on a group's side) along that side to be in line with `other`, if it fits. */
 function inLine(end: Port, other: Port): void {
   if (end.dx !== 0) end.y = Math.min(end.y1, Math.max(end.y0, other.y));
@@ -212,6 +224,8 @@ class Pixels {
   nodeSpace = new Space(1);
   clutter = new Space(1);
   lines = new Space(1);
+  // Each edge's route points so far, by edge index.
+  readonly paths: number[][] = [];
   // Vertical runs of the edges, to keep group titles out from under them.
   readonly runs: number[] = [];
 
@@ -493,17 +507,54 @@ class Pixels {
   }
 
   /**
-   * Edge `k`'s route from `s` to `e`, simplified, with each run of a route with two or more
-   * bends that would cross a node other than the edge's ends moved off it (#767, D720).
+   * Edge `k`'s route from `s` to `e`, simplified. A route with two or more bends has each run
+   * that would cross a node other than the edge's ends moved off it (#767, D720). Then a route
+   * that crosses such a node or runs along an edge routed before it is moved apart, when the
+   * moved route is clear of both (D721): one with at most one bend keeps v12's look otherwise
+   * (D507), and a straight one is only ever offset, so it stays straight.
    */
   routePoints(k: number, s: Port, e: Port): number[] {
+    const [onNode, either] = this.blockers(k, s, e);
+    const routed = simplify(route(s, e));
+    const kept = routed.length >= 8 ? cleared(routed, onNode, true) : routed;
+    if (isClear(kept, either)) return kept;
+    const apart = cleared(kept, either, false);
+    if (apart === kept) return kept;
+    const out = this.folded(apart, [s, e], either);
+    return routed.length > 4 || out.length === 4 ? out : kept;
+  }
+
+  /**
+   * What blocks a run of edge `k` from `s` to `e`: a node other than its ends; and that, or a run
+   * of an edge routed before it that runs along it, unless that edge shares exactly one end with
+   * this one (a bundle from that port).
+   */
+  blockers(k: number, s: Port, e: Port): [Blocked, Blocked] {
     const a = this.endA[k]!;
     const b = this.endB[k]!;
-    const blocked = (r: Rect): Rect | undefined => this.nodeSpace.hit(r, (i) => i === a || i === b);
-    const routed = simplify(route(s, e));
-    const moved = detour(routed, blocked);
-    // Simplified again only when it moved: a second pass folds a loop's out-and-back run.
-    return moved === routed ? routed : simplify(moved);
+    const at = (i: number, p: Port): boolean => {
+      const q = this.paths[i]!;
+      const n = q.length;
+      return (q[0] === p.x && q[1] === p.y) || (q[n - 2] === p.x && q[n - 1] === p.y);
+    };
+    const onNode: Blocked = (r) => this.nodeSpace.hit(r, (i) => i === a || i === b);
+    const onEdge: Blocked = (r) =>
+      this.lines.hit(wider(r), (i, run) => at(i, s) !== at(i, e) || !alongside(run, r));
+    return [onNode, (r) => onNode(r) ?? onEdge(r)];
+  }
+
+  /**
+   * `p` with each end moved along its side to take the detour's first jog where the jog lands on
+   * that side (D721), so the route leaves the side straight from there: an offset rather than a
+   * detour. `p` when that is not clear, and for ends on like sides, which a fold could join.
+   */
+  folded(p: number[], [s, e]: [Port, Port], blocked: Blocked): number[] {
+    if (s.dx === e.dx && s.dy === e.dy) return p;
+    const q = [...p];
+    foldJog(q, s, false);
+    foldJog(q, e, true);
+    const out = simplify(q);
+    return isClear(out, blocked) ? out : p;
   }
 
   routeEdge(k: number): LayoutModelEdge {
@@ -544,8 +595,12 @@ class Pixels {
     return placed;
   }
 
-  /** Records an edge's runs (owned by it) and its markers, for end labels to keep clear of. */
+  /**
+   * Records an edge's runs (owned by it) and its markers, for end labels and later routes to keep
+   * clear of.
+   */
   addLines(k: number, edge: LayoutEdge, points: number[]): void {
+    this.paths[k] = points;
     for (let i = 0; i + 3 < points.length; i += 2) {
       const [x0, x1] = [points[i]!, points[i + 2]!].sort((p, q) => p - q);
       const [y0, y1] = [points[i + 1]!, points[i + 3]!].sort((p, q) => p - q);

@@ -9,6 +9,7 @@ e2e/diagrams/architecture/nightly-check/dark-theme-base-colour-overrides.mmd 1 f
 e2e/diagrams/architecture/nightly-check/layout-bends-follow-written-sides.mmd 1 78e61f6ce9f02c6e
 e2e/diagrams/architecture/nightly-check/layout-dagre-ranks-services-and-attaches-lines-on-named-sides.mmd 1 b86f9aa443844eb9
 e2e/diagrams/architecture/nightly-check/layout-detour-neighbour-blocked.mmd 1 32d64e37563c3e28
+e2e/diagrams/architecture/nightly-check/layout-group-edge-beside-junction.mmd 1 660a6f7c312fcd48
 e2e/diagrams/architecture/nightly-check/layout-group-edge-detours-round-a-service.mmd 1 2b9d92e9e140961a
 e2e/diagrams/architecture/nightly-check/layout-icon-size-and-padding.mmd 1 92f98433e46916b0
 e2e/diagrams/architecture/nightly-check/layout-layered-draws-a-junction-with-lines-on-named-sides.mmd 1 133aae9bbd2160d5

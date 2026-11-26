@@ -7,7 +7,8 @@
 // Changed from Pele: `route` split into one function per case, with the same cases in the same
 // order; route points with an axis; `clearSpot`, which moves an edge label off any node; and
 // `detour`, which slides a run of a route with two or more bends off a node it would cross (#767,
-// D507, D720), end runs included. Pele's router sees only the two end boxes.
+// D507, D720), end runs included, and off another edge's run (D721), with `foldJog` turning a
+// detour next to a port into an offset along its side. Pele's router sees only the two end boxes.
 import type { Point, RoutePoint } from '../types.ts';
 import type { Rect } from '../layered/end-markers.ts';
 import { METRICS } from './metrics.ts';
@@ -65,16 +66,19 @@ export class Space {
     }
   }
 
-  /** The first-added rect `r` overlaps, other than those owned by `skip` (or it says to skip). */
-  hit(r: Rect, skip: number | ((owner: number) => boolean) = -2): Rect | undefined {
+  /**
+   * The first-added rect `r` overlaps, other than those owned by `skip` (or that it says to skip,
+   * given the owner and the rect).
+   */
+  hit(r: Rect, skip: number | ((owner: number, rect: Rect) => boolean) = -2): Rect | undefined {
     const skips = typeof skip === 'number' ? (o: number) => o === skip : skip;
     let best = -1;
     const [cx0, cy0, cx1, cy1] = this.span(r);
     for (let cx = cx0; cx <= cx1; cx++) {
       for (let cy = cy0; cy <= cy1; cy++) {
         for (const k of this.buckets.get((cx + OFFSET) * SPAN + cy + OFFSET) ?? []) {
-          if ((best < 0 || k < best) && !skips(this.owners[k]!) && hits(this.rects[k]!, r))
-            best = k;
+          const rect = this.rects[k]!;
+          if ((best < 0 || k < best) && hits(rect, r) && !skips(this.owners[k]!, rect)) best = k;
         }
       }
     }
@@ -303,41 +307,90 @@ function elbows(p: readonly number[]): number[] {
  * direction until it is clear: half a cell gap past the node, or a stub past it, on the nearer
  * side first. An end run slides from a stub out of its port, where the route gains an elbow. The
  * runs on either side stretch with it and keep their direction; one that the slide puts on a
- * node slides too (D720), and the slide is kept only when all three are clear. A route with fewer
- * than two bends is returned as it is (D507 keeps v12's look for those), and so is a route no
- * slide clears.
+ * node slides too (D720), and the slide is kept only when all three are clear. A route no run of
+ * which is blocked is returned as it is, and so is a route no slide clears. `fixes` as in `slid`.
  */
-export function detour(p: number[], blocked: (r: Rect) => Rect | undefined): number[] {
-  const n = p.length / 2;
-  if (n < 4) return p;
-  let k = 0;
-  while (k < n - 1 && !blocked(runBox(p, k))) k++;
-  if (k === n - 1) return p;
+function detour(p: number[], blocked: Blocked, fixes: readonly boolean[]): number[] {
+  if (isClear(p, blocked)) return p;
   let out = elbows(p);
   let moved = false;
-  for (k = 1; k <= out.length / 2 - 3; k++) {
+  for (let k = 1; k <= out.length / 2 - 3; k++) {
     const b = blocked(runBox(out, k));
-    const q = b && slid(out, k, b, blocked, true);
+    const q = b && slid(out, k, b, blocked, fixes);
     if (q) [out, moved] = [q, true];
   }
   return moved ? out : p;
 }
 
+/** What a run of a route with box `r` lies on, if anything. */
+export type Blocked = (r: Rect) => Rect | undefined;
+
+/** Whether no run of `p` is blocked. */
+export function isClear(p: readonly number[], blocked: Blocked): boolean {
+  for (let k = 0; k < p.length / 2 - 1; k++) if (blocked(runBox(p, k))) return false;
+  return true;
+}
+
 /**
- * `p` with run `k` slid off the node box `b`, or undefined when no slide keeps it clear. When
- * `deep`, a neighbouring inner run that the slide puts on a node is slid off it in turn.
+ * `p` (simplified) detoured past what `blocked` reports and simplified again, or `p` itself when
+ * nothing moved. When `partial` (D720), a detour may leave a run blocked. Otherwise (D721) it may
+ * not, and a slide that clears its neighbours as they are is taken before a nearer one that has
+ * to slide a neighbour too.
+ */
+export function cleared(p: number[], blocked: Blocked, partial: boolean): number[] {
+  const moved = detour(p, blocked, partial ? [true] : [false, true]);
+  if (moved === p) return p;
+  // Simplified again: a second pass folds a loop's out-and-back run.
+  const q = simplify(moved);
+  return partial || isClear(q, blocked) ? q : p;
+}
+
+/**
+ * Whether run boxes `a` and `b` lie on one line and run together along it for longer than a
+ * corner, a stub: two edges that leave one port both start with its stub. A crossing is not.
+ */
+export function alongside(a: Rect, b: Rect): boolean {
+  const flat = a.y1 - a.y0 < 0.5 && b.y1 - b.y0 < 0.5 && Math.abs(a.y0 - b.y0) < 0.5;
+  const upright = a.x1 - a.x0 < 0.5 && b.x1 - b.x0 < 0.5 && Math.abs(a.x0 - b.x0) < 0.5;
+  const { stub } = METRICS;
+  if (flat) return Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0) > stub;
+  return upright && Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) > stub;
+}
+
+/**
+ * Folds the jog next to `port` (the first point of `p`, or the last when `last`) into the port, in
+ * place: when the route leaves the port by a stub and then jogs across to a place on the port's
+ * own side, the end moves there and leaves straight. For an end that may move along its side,
+ * such as one on a group's border (D721).
+ */
+export function foldJog(p: number[], port: Port, last: boolean): void {
+  if (p.length < 6) return;
+  const i = last ? p.length - 2 : 0;
+  const d = last ? -2 : 2;
+  // The coordinate along the side (y for a left or right side), and the one along the normal.
+  const c = port.dx !== 0 ? 1 : 0;
+  const v = p[i + 2 * d + c]!;
+  const stubOut = Math.abs(p[i + d + c]! - p[i + c]!) < 0.01;
+  const jogAcross = Math.abs(p[i + 2 * d + 1 - c]! - p[i + d + 1 - c]!) < 0.01;
+  const [lo, hi] = c ? [port.y0, port.y1] : [port.x0, port.x1];
+  if (!stubOut || !jogAcross || v <= lo || v >= hi) return;
+  p[i + c] = p[i + d + c] = v;
+}
+
+/**
+ * `p` with run `k` slid off the box `b`, or undefined when no slide keeps it clear. Each entry of
+ * `fixes` is a pass over the slides, nearest first: in a pass that is true, a neighbouring inner
+ * run that the slide puts on a node is slid off it in turn.
  */
 function slid(
   p: readonly number[],
   k: number,
   b: Rect,
-  blocked: (r: Rect) => Rect | undefined,
-  deep: boolean
+  blocked: Blocked,
+  fixes: readonly boolean[]
 ): number[] | undefined {
   const flat = Math.abs(p[2 * k + 1]! - p[2 * k + 3]!) < 0.01;
-  // The coordinate that slides: y for a flat run, x for an upright one.
-  const c = flat ? 1 : 0;
-  const at = p[2 * k + c]!;
+  const at = p[2 * k + (flat ? 1 : 0)]!;
   const [lo, hi] = flat ? (['y0', 'y1'] as const) : (['x0', 'x1'] as const);
   const past = (r: Rect, dir: number, room: number): number =>
     dir > 0 ? r[hi] + room : r[lo] - room;
@@ -350,26 +403,46 @@ function slid(
     [-1, stub],
   ];
   tries.sort((u, v) => Math.abs(past(b, ...u) - at) - Math.abs(past(b, ...v) - at));
-  for (const [dir, room] of tries) {
-    // On past each node the run lands on, the same way, until it lands on none.
-    let q = [...p];
-    for (let hit: Rect | undefined = b; hit; hit = blocked(runBox(q, k))) {
-      q[2 * k + c] = q[2 * k + 2 + c] = past(hit, dir, room);
+  for (const fix of fixes) {
+    for (const [dir, room] of tries) {
+      const q = slideRun(p, k, b, blocked, (r) => past(r, dir, room), fix);
+      if (q) return q;
     }
-    if (!kept(p, q, k - 1) || !kept(p, q, k + 1)) continue;
-    if (deep) q = slidNeighbours(q, k, blocked);
-    if ([k - 1, k, k + 1].every((j) => !blocked(runBox(q, j)))) return q;
   }
   return undefined;
 }
 
+/**
+ * `p` with run `k` slid to `to(b)`, and on past each box it then lands on, the same way, until it
+ * lands on none; undefined when that turns a run beside it around or leaves any of the three
+ * blocked. When `fix`, a neighbour the slide puts on a node is slid off it first.
+ */
+function slideRun(
+  p: readonly number[],
+  k: number,
+  b: Rect,
+  blocked: Blocked,
+  to: (r: Rect) => number,
+  fix: boolean
+): number[] | undefined {
+  // The coordinate that slides: y for a flat run, x for an upright one.
+  const c = Math.abs(p[2 * k + 1]! - p[2 * k + 3]!) < 0.01 ? 1 : 0;
+  let q = [...p];
+  for (let hit: Rect | undefined = b; hit; hit = blocked(runBox(q, k))) {
+    q[2 * k + c] = q[2 * k + 2 + c] = to(hit);
+  }
+  if (!kept(p, q, k - 1) || !kept(p, q, k + 1)) return undefined;
+  if (fix) q = slidNeighbours(q, k, blocked);
+  return [k - 1, k, k + 1].every((j) => !blocked(runBox(q, j))) ? q : undefined;
+}
+
 /** `p` with each inner run beside run `k` that lies on a node slid off it, where one slide can. */
-function slidNeighbours(p: number[], k: number, blocked: (r: Rect) => Rect | undefined): number[] {
+function slidNeighbours(p: number[], k: number, blocked: Blocked): number[] {
   const last = p.length / 2 - 2;
   let q = p;
   for (const j of [k - 1, k + 1]) {
     const on = j > 0 && j < last ? blocked(runBox(q, j)) : undefined;
-    if (on) q = slid(q, j, on, blocked, false) ?? q;
+    if (on) q = slid(q, j, on, blocked, [false]) ?? q;
   }
   return q;
 }
