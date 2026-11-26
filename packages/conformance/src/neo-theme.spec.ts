@@ -80,6 +80,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   edgeLabelBackground: 'D628: every edge label is filled with the theme background',
   erEdgeLabelBackground: 'D628: every edge label is filled with the theme background',
   relationLabelBackground: 'D628: every edge label is filled with the theme background',
+  requirementEdgeLabelBackground: 'D715: v12 has no variable; the tag fill, D628',
+  requirementEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
   quadrantPointFill:
     'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
