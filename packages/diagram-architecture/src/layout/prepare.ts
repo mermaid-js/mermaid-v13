@@ -13,6 +13,8 @@
  *   label is measured unwrapped, since v12 wrapped it to the drawn edge (D507: the renderer
  *   places it).
  * - Every `align` statement is one `align` hint, in source order.
+ * - The graph carries core's `honourSides` (D718), so that `layered` draws each edge out of the
+ *   sides it names; flowchart, which names none, does not load it (D557).
  *
  * The lists are read in the model's order (v12's insertion order), so the graph, and with it
  * the layout, is the same on every run.
@@ -26,6 +28,7 @@ import {
   type Side,
   type Size,
 } from '@mermaid-js/core/layout';
+import { honourSides } from '@mermaid-js/core/layout/sides';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { configLengths } from '@mermaid-js/shared/config/readers';
 import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
@@ -208,6 +211,7 @@ export function prepareArchitecture(
     // v12's margin round the drawing is `padding` (`setupGraphViewbox`).
     diagramPadding: padding,
     ...(align.length > 0 ? { align } : {}),
+    honourSides,
   };
   return { graph, sizes, font, nodes, groups, edges };
 }

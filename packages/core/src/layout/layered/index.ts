@@ -24,11 +24,10 @@ import {
   type CEdge,
   type CNode,
 } from './compound.ts';
-import { hits, markerRect, rectOf, type Rect } from './end-markers.ts';
+import { hits, markerRect, OUTWARD, rectOf, type Rect } from './end-markers.ts';
 import { gridHooks, type GridHooks } from './grid.ts';
 import { gridObstacles, type GridBorders } from './grid-obstacles.ts';
 import type { LayeredOptions } from './layered.ts';
-import { honourSides, OUTWARD } from './sides.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 // Length constants (port and loop sizes, corners, the turn breakpoint) come from
@@ -418,7 +417,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     groups,
     direction: rootDir,
   };
-  return hooks ? laid : honourSides(graph, laid, M, index, margin); // sides are hints (D503)
+  // Sides are hints (D503), honoured by the hook a graph that names them brings (D718).
+  return hooks || !graph.honourSides ? laid : graph.honourSides(graph, laid, M, margin);
 }
 
 // Edge-end labels (D102), placed once the routes are final: each sits beside the segment that

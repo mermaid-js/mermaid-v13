@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import type { LayoutEdge, LayoutGraph, LayoutModel, Point, Side } from '../types.ts';
 import { validateLayout } from '../validate.ts';
 import { layered } from './index.ts';
+import { honourSides } from './sides.ts';
 
 const r = (x: number): number => Math.round(x * 100) / 100;
 
@@ -34,6 +35,7 @@ function graph(edges: LayoutEdge[]): LayoutGraph {
     groups: [],
     spacing: { node: 50, rank: 50, edge: 20 },
     diagramPadding: 8,
+    honourSides,
   };
 }
 
@@ -193,6 +195,7 @@ describe('layered: lanes for routes drawn again (D718)', () => {
     groups: [],
     spacing: { node: 50, rank: 50, edge: 20 },
     diagramPadding: 40,
+    honourSides,
   });
   // #1212's repro: a junction with a line on each side, the one below to a second junction.
   const junctionCross = (label = false): LayoutGraph =>

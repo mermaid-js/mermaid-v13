@@ -200,7 +200,25 @@ export interface LayoutGraph {
    * `align row|column`). Only `compass` reads it.
    */
   align?: readonly { axis: 'row' | 'column'; members: readonly string[] }[];
+  /**
+   * How `layered` honours `LayoutEdge.sides` (D503, D718): `honourSides` of
+   * `@mermaid-js/core/layout/sides`, which a diagram whose edges name sides passes in
+   * (architecture), so that flowchart does not load it (D557). Without it `layered` keeps its
+   * own routes and ports and reads no side. Other engines ignore it.
+   */
+  honourSides?: HonourSides;
 }
+
+/**
+ * Draws the edges of `model` that name a side again, once `layered` has placed everything, and
+ * returns the model (`metrics` are the engine's, `margin` the room round the drawing).
+ */
+export type HonourSides = (
+  graph: LayoutGraph,
+  model: LayoutModel,
+  metrics: LayoutMetrics,
+  margin: number
+) => LayoutModel;
 
 export interface LayoutModelNode {
   /** Centre of the node's box. */

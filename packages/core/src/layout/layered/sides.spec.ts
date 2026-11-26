@@ -13,6 +13,7 @@ import type {
 } from '../types.ts';
 import { validateLayout } from '../validate.ts';
 import { layered } from './index.ts';
+import { honourSides } from './sides.ts';
 import { handBuiltFixtures } from './layered.fixtures.ts';
 
 // `LayoutEdge.sides` as hints (D327, D503): `layered` keeps its ranks and node order and uses a
@@ -43,6 +44,7 @@ function graph(
     groups: [],
     spacing: { node: 50, rank: 50, edge: 20 },
     diagramPadding: 8,
+    honourSides,
     ...extra,
   };
 }
@@ -366,6 +368,15 @@ describe('layered reads LayoutEdge.sides as hints (D503)', () => {
       'and only compass checks it (GAPS T0b)'
   );
 
+  // D718: the side code is a subpath of its own (`@mermaid-js/core/layout/sides`, D557) that a
+  // diagram naming sides passes in, so flowchart does not load it. Without it no side is read.
+  it('reads no side without the honourSides hook', () => {
+    for (const dir of DIRS) {
+      const { honourSides: _, ...bare } = graph(chain({ source: 'right', target: 'left' }), dir);
+      expect(plain(layered(bare)), dir).toEqual(plain(layered(graph(chain(), dir))));
+    }
+  });
+
   it('ignores sides on the grid (D140)', () => {
     const cells = { grid: 1, spacing: { node: 4, rank: 4, edge: 2 }, diagramPadding: 1 };
     const sized = (edges: LayoutEdge[]): LayoutGraph => ({
@@ -394,6 +405,7 @@ describe('layered reads LayoutEdge.sides as hints (D503)', () => {
       const g: LayoutGraph = {
         ...f.graph,
         edges: f.graph.edges.map((e) => ({ ...e, sides: { source, target } })),
+        honourSides,
       };
       const m = layered(g);
       expect(validateLayout(g, m), f.name).toEqual([]);

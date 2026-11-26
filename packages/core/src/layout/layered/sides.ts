@@ -7,9 +7,12 @@
 // order and boxes stay; the drawing grows where a stub reaches past it. An edge between a node and
 // its own group, and a self-loop on the sides layered's loop took, keep layered's route. Limits:
 // #525 GAPS (T0b): from stub to stub a route has two corners, so it cannot always go round.
+// `@mermaid-js/core/layout/sides`, a subpath core's index does not re-export (D557, D718): only a
+// diagram whose edges name sides loads it, and hands `honourSides` to layered on its graph
+// (`LayoutGraph.honourSides`), so flowchart's closure (R-PERF-1) does not carry it.
 import type {
+  HonourSides,
   LayoutEdge,
-  LayoutGraph,
   LayoutModel,
   LayoutModelEdge,
   Point,
@@ -17,15 +20,7 @@ import type {
   Side,
 } from '../types.ts';
 import type { LayoutMetrics } from '../units.ts';
-import { hits, rectOf, type Rect } from './end-markers.ts';
-
-/** The axis a side faces along, and which way is out of the box. */
-export const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
-  top: { axis: 'y', sign: -1 },
-  bottom: { axis: 'y', sign: 1 },
-  left: { axis: 'x', sign: -1 },
-  right: { axis: 'x', sign: 1 },
-};
+import { hits, OUTWARD, rectOf, type Rect } from './end-markers.ts';
 
 interface Size {
   width: number;
@@ -237,15 +232,11 @@ function grow(model: LayoutModel, drawn: readonly Point[], margin: number): Layo
  * Draws the edges of `model` that name a side (D503, D718) again, in place: a stub out of each
  * side (`corner`, plus the start marker at the source and the arrowhead's room and end marker at
  * the target), then right angles from stub to stub, each route a wall to the ones after it. Grows
- * the drawing where they reach into its margin. `index` maps ids to node and group indices.
+ * the drawing where they reach into its margin. `layered` calls it as `LayoutGraph.honourSides`.
  */
-export function honourSides(
-  graph: LayoutGraph,
-  model: LayoutModel,
-  M: LayoutMetrics,
-  index: ReadonlyMap<string, number>,
-  margin: number
-): LayoutModel {
+export const honourSides: HonourSides = (graph, model, M, margin) => {
+  // Ids to node indices, then group indices after them, as layered numbers them.
+  const index = new Map([...graph.nodes, ...graph.groups].map((n, i) => [n.id, i]));
   const at = (id: string) => index.get(id)!;
   const parent = (id: string) =>
     (graph.nodes[at(id)] ?? graph.groups[at(id) - graph.nodes.length])?.parent;
@@ -301,4 +292,4 @@ export function honourSides(
     drawn.push({ x: b.x0, y: b.y0 }, { x: b.x1, y: b.y1 });
   }
   return grow(model, drawn, margin);
-}
+};
