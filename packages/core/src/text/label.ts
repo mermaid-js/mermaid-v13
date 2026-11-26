@@ -51,13 +51,14 @@ export type LabelMarkup = 'plain' | 'emphasis' | 'markdown';
 /**
  * A label as written, read by the rule every diagram type shares (D710): a whole label in
  * backticks, with or without double quotes around them, is a markdown string, returned without
- * its wrapper in the `markdown` mode. Any other label is returned as written, `plain`.
+ * its wrapper in the `markdown` mode. A backtick inside the outer pair makes it
+ * no markdown string, so a label of two code spans is plain. Any other label is returned as written, `plain`.
  */
 export function markdownString(label: string): { text: string; markup: LabelMarkup } {
   const md = RE_MARKDOWN_STRING.exec(label.trim())?.[2];
   return md === undefined ? { text: label, markup: 'plain' } : { text: md, markup: 'markdown' };
 }
-const RE_MARKDOWN_STRING = /^("?)`([^]*)`\1$/;
+const RE_MARKDOWN_STRING = /^("?)`([^`]*)`\1$/;
 
 export interface LabelOptions {
   /** The label's mode. Default `plain`. A markdown string (`"`…`"`) is `markdown`. */

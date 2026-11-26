@@ -506,6 +506,12 @@ describe('markdownString (D710)', () => {
       expect(markdownString(label)).toEqual({ text: label, markup: 'plain' });
     }
   });
+
+  it('returns a label with a backtick inside its outer pair as written, plain', () => {
+    for (const label of ['`npm` or `pnpm`', '"`npm` or `pnpm`"', '`a``']) {
+      expect(markdownString(label)).toEqual({ text: label, markup: 'plain' });
+    }
+  });
 });
 
 describe('markdown bullet lists (R-TEXT-11)', () => {

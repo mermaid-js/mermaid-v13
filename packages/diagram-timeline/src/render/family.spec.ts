@@ -277,6 +277,11 @@ describe('label markup (D710, D711)', () => {
     expect(d.r.svg).not.toContain('&lt;b&gt;');
   });
 
+  it('draws two code spans with their backticks: the label is not one markdown string', async () => {
+    const d = await draw(fx.timeline(['s', ['`npm` or `pnpm`']]), { theme: 'default' });
+    expect(runs(d.r.svg, 'per:1')).toBe('`npm` or `pnpm`');
+  });
+
   it('drops other tags, keeps their text, and keeps List<T> and escaped tags as text', async () => {
     const d = await draw(fx.timeline(['s', ['a <span>in</span> c', 'List<T> and &lt;b&gt;']]), {
       theme: 'default',

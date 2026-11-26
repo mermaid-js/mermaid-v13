@@ -286,6 +286,11 @@ describe('label markup (D710, D712)', () => {
     expect(textOf(svg, 'n:e')).toContain('**stars**');
   });
 
+  it('draws two code spans as written: the label is not one markdown string', async () => {
+    const { svg } = await renderKanbanForTest('kanban\n  todo[Todo]\n    a[`npm` or `pnpm`]\n');
+    expect(textOf(svg, 'n:a')).toContain('`npm` or `pnpm`');
+  });
+
   it('draws <br>, the tags and entities in plain labels of every kind', async () => {
     const { svg } = await renderKanbanForTest(
       "kanban\n  todo[To<br>do]\n    a[<b>bold</b> &amp; <i>it</i>]@{ ticket: '<u>T</u>', assigned: '`**md**`' }\n"
