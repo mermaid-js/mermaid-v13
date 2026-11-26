@@ -1,0 +1,15 @@
+---
+description: >-
+  Markdown strings (a whole label in backticks, with or without double
+  quotes) in the title, section names, task names and actors draw as
+  markdown without their wrapper (D225, D710, #1292). Plain labels keep
+  their asterisks literal and still draw <b> and <br>.
+---
+journey
+  title "`**Bold** and *italic* title`"
+  section "`**Markdown** section`"
+    "`**md** task`": 3: `**Me**`
+    `*No quotes*`: 4: Me
+  section Plain **section**
+    Plain **task** <b>tag</b>: 5: Cat
+    Two<br>lines: 2: Me, Cat
