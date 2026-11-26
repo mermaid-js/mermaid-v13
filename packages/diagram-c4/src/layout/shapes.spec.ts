@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { insideAlong, onOutline, personParts, type Outline } from './shapes.ts';
+import {
+  insideAlong,
+  onOutline,
+  personParts,
+  portBox,
+  portMiddle,
+  type Outline,
+} from './shapes.ts';
 import type { Point } from './types.ts';
 
 /**
@@ -89,5 +96,26 @@ describe('insideAlong (#680)', () => {
     expect(
       insideAlong(outline('rounded'), { x: BOX.x + 30, y: BOX.y - 1 }, { x: 1, y: 0 })
     ).toEqual([0, 0]);
+  });
+});
+
+describe('the part of a shape relations reach from the side (D679)', () => {
+  const box = { x: 10, y: 20, width: 200, height: 260 };
+
+  it("is a person's body, below its head", () => {
+    const person = { ...box, form: 'person' as const };
+    const { body } = personParts(person);
+    expect(portBox(person)).toEqual({ ...body, form: 'rounded' });
+    expect(portMiddle('person', box.width, box.height)).toBeCloseTo(
+      body.y - box.y + body.height / 2,
+      9
+    );
+  });
+
+  it('is the whole box of any other shape, and of a person drawn as a box', () => {
+    for (const form of ['rounded', 'cyl', 'h-cyl', 'fr-rect', 'person-box', 'frame'] as const) {
+      expect(portBox({ ...box, form })).toEqual({ ...box, form });
+      expect(portMiddle(form, box.width, box.height)).toBe(box.height / 2);
+    }
   });
 });
