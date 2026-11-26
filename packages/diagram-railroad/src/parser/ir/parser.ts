@@ -82,7 +82,10 @@ export class IrParser extends RailroadParser {
       const s = this.expect(T.String);
       const close = this.expect(T.RParen);
       const type = LEAF_KIND[k] ?? 'terminal';
-      const text = stringValue('railroad', this.raw(s));
+      // A special's text follows the label rule (D710), which decodes its references; a
+      // terminal's or nonterminal's is as written.
+      const value = (c: string) => stringValue('railroad', c);
+      const text = type === 'special' ? value(this.raw(s)) : this.written(s, value);
       if (type === 'nonterminal') this.reference(text, inside(this.range(s)));
       return leaf(type, text, this.span(kw, close));
     }

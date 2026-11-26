@@ -198,7 +198,7 @@ class Placer {
   /** v12's `renderRule` (L535-604): the rule's parts in its own coordinates. */
   rule(rule: RailroadRule, y: number): RailroadRuleLayout {
     const { padding, markerRadius: mR } = this.o;
-    const name = `${decodeEntities(rule.name)} =`;
+    const name = `${rule.name} =`;
     const nameWidth = this.measurer.width(name, this.ruleFont, 0);
     const markerX = nameWidth + this.m.nameGap;
     const defX = markerX + this.m.definitionGap;
@@ -267,8 +267,9 @@ class Placer {
 
   /**
    * A terminal, nonterminal or special: its text padded on every side (L98-162, L473-499).
-   * Entity codes in `written` are decoded (D563), so the box is sized for, and the SVG and the
-   * text output draw, the characters.
+   * A token is drawn as written (D710, amending D563): the parser has already turned each
+   * `#name;` code into its character, and a tag, an `&name;` or Markdown the author typed is
+   * text. A special's `drawn` text is laid out by the label rule.
    */
   private leaf(
     node: RailroadNode,
@@ -277,7 +278,7 @@ class Placer {
     dash?: readonly [number, number],
     drawn?: { readonly text: string; readonly label?: MeasuredLabel }
   ): Sized {
-    const text = drawn?.text ?? decodeEntities(written);
+    const text = drawn?.text ?? written;
     const label = drawn?.label;
     const { padding } = this.o;
     const [tw, th] = label ? [label.width, label.height] : this.textSize(node, text);
@@ -322,9 +323,11 @@ class Placer {
    * A text that draws formatting is laid out in lines and its box sized from them (in px; the
    * text output draws its plain text). Any other is drawn as one string, as before: its
    * entities decoded, a markdown string without its backticks. The SVG draws a special on one
-   * line, so a line break or tab written in it is a space.
+   * line, so a line break or tab written in it is a space. A special made from tokens (PEG's
+   * `&X`, `!X` and `.`, `literal`) is drawn as written, as a token is.
    */
   private special(node: RailroadSpecial): Sized {
+    if (node.literal) return this.leaf(node, `? ${oneLine(node.text)} ?`, 0, this.m.specialDash);
     const { text: source, markup } = markdownString(node.text);
     const written = `? ${source} ?`;
     const label = layoutLabel(oneLine(written), this.font, Infinity, this.measurer, { markup });

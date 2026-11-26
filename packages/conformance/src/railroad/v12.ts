@@ -10,11 +10,13 @@
  *   repetition and `addRule` a `comment: undefined`, which no parser sets;
  * - `max: Infinity` is written `null`, as a JSON copy of either side would write it;
  * - text has v12's `encodeEntities` placeholders decoded back to what the author wrote (the
- *   oracle's DOMPurify is the identity, so `sanitizeText` changes nothing else);
+ *   oracle's DOMPurify is the identity, so `sanitizeText` changes nothing else); in rule names,
+ *   terminals, non-terminals and PEG's specials, which v13 keeps as v12 showed them (D710), each
+ *   placeholder is its character;
  * - the title is the in-text one: the oracle never passes the front matter on, so
  *   `getDiagramTitle()` holds no front-matter title (the v13 side leaves it out too).
  */
-import { v12DecodeEntities as d } from '../v12-entities.ts';
+import { v12DecodeEntities as d, v12ShownText as shown } from '../v12-entities.ts';
 
 export type RailroadNodeSnapshot =
   | { type: 'terminal'; value: string }
@@ -45,19 +47,23 @@ export interface RailroadNodeLike {
   max?: number;
 }
 
-/** The snapshot of one node: its kind's fields only, `Infinity` as `null`, text as `text(…)`. */
+/**
+ * The snapshot of one node: its kind's fields only, `Infinity` as `null`, a terminal's value and
+ * a nonterminal's name as `text(…)`, a special's text as `special(…)`.
+ */
 export function nodeSnapshot(
   n: RailroadNodeLike,
-  text: (s: string) => string = (s) => s
+  text: (s: string) => string = (s) => s,
+  special: (s: string) => string = text
 ): RailroadNodeSnapshot {
-  const sub = (c: RailroadNodeLike | undefined) => nodeSnapshot(c ?? { type: '?' }, text);
+  const sub = (c: RailroadNodeLike | undefined) => nodeSnapshot(c ?? { type: '?' }, text, special);
   switch (n.type) {
     case 'terminal':
       return { type: 'terminal', value: text(n.value ?? '') };
     case 'nonterminal':
       return { type: 'nonterminal', name: text(n.name ?? '') };
     case 'special':
-      return { type: 'special', text: text(n.text ?? '') };
+      return { type: 'special', text: special(n.text ?? '') };
     case 'sequence':
       return { type: 'sequence', elements: (n.elements ?? []).map(sub) };
     case 'choice':
@@ -85,12 +91,19 @@ interface RailroadDbV12 {
   getAccDescription(): string;
 }
 
-export function railroadV12Snapshot(dbValue: unknown): RailroadSnapshot {
+/**
+ * `notation` picks how a special's text is read: PEG's specials are made from tokens (`&X`, `!X`,
+ * `.`), so they are read as tokens; IR's and EBNF's keep v12's references, which the label rule
+ * decodes when they are drawn.
+ */
+export function railroadV12Snapshot(dbValue: unknown, notation?: string): RailroadSnapshot {
   const db = dbValue as RailroadDbV12;
+  const special = notation === 'railroadPeg' ? shown : d;
   return {
-    rules: db
-      .getRules()
-      .map((r) => ({ name: d(r.name), definition: nodeSnapshot(r.definition, d) })),
+    rules: db.getRules().map((r) => ({
+      name: shown(r.name),
+      definition: nodeSnapshot(r.definition, shown, special),
+    })),
     title: d(db.getDiagramTitle()),
     accTitle: d(db.getAccTitle()),
     accDescr: d(db.getAccDescription()),

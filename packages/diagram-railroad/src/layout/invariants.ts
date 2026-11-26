@@ -29,7 +29,7 @@
  *   nothing and a terminal's tab or line break measures as the space it is drawn as (#774); a
  *   special that draws formatting is its laid-out label (D710).
  */
-import { decodeEntities, type Measurer } from '@mermaid-js/core/text';
+import type { Measurer } from '@mermaid-js/core/text';
 import type { RailroadLayoutConfig } from '../config.ts';
 import type { RailroadModel, RailroadNode } from '../model.ts';
 import { visitExpressions } from './geometry.ts';
@@ -285,8 +285,7 @@ function expressionViolations(
 function ruleViolations(rule: RailroadRuleLayout, m: RailroadMetrics, out: string[]): void {
   const { start, end, leadIn, leadOut, definition: d, baseline } = rule;
   const at = rule.ast;
-  if (rule.label.text !== `${decodeEntities(rule.name)} =`)
-    out.push(`${at}: the label is not \`name =\``);
+  if (rule.label.text !== `${rule.name} =`) out.push(`${at}: the label is not \`name =\``);
   if (!near(start.cy, baseline) || !near(end.cy, baseline)) {
     out.push(`${at}: a marker is off the track`);
   }

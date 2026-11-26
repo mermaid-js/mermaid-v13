@@ -4,7 +4,7 @@
  * `ﬂ°°123¶ß`), so its DBs and token streams hold placeholders.
  */
 import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
-import { entityAt } from '@mermaid-js/core/text';
+import { decodeEntities, entityAt } from '@mermaid-js/core/text';
 
 /**
  * v12's own `decodeEntities` (`utils.ts`): each placeholder as the `&name;` or `&#123;` its
@@ -14,6 +14,16 @@ import { entityAt } from '@mermaid-js/core/text';
  */
 export function v12DecodeEntities(text: string): string {
   return text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
+}
+
+/**
+ * A text as v12's page showed it where v12 wrote it with `.text()` (railroad's tokens): each
+ * placeholder as the character of the reference v12 wrote for it, an `&name;` the author typed
+ * as written (`.text()` escaped it). A name the browser does not know stays `&name;`, as v12
+ * showed it.
+ */
+export function v12ShownText(text: string): string {
+  return text.replace(/ﬂ°°?[^¶]*¶ß/g, (p) => decodeEntities(v12DecodeEntities(p)));
 }
 
 /**

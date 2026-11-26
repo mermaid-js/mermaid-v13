@@ -35,7 +35,7 @@ function adapter(notation: RailroadNotation): DiagramAdapter<RailroadModel> {
     detect: (text) => detectRailroad(text) === notation,
     parse: parseRailroadForParity,
     normaliseV13: railroadV13Snapshot,
-    normaliseV12: railroadV12Snapshot,
+    normaliseV12: (db) => railroadV12Snapshot(db, notation),
   };
 }
 

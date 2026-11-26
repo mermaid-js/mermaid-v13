@@ -71,10 +71,23 @@ const CASES: Readonly<Record<string, Case>> = {
   railroad: {
     file: 'railroad/nightly-check/label-markup.mmd',
     br: [['? first', 'second ?']],
-    tag: [['? bold and italic ?', 'bold']],
+    // A special sequence draws its tags and decodes its entities.
+    tag: [
+      ['? bold and italic ?', 'bold'],
+      ['? a < b & c, <b> ?', '<b>'],
+    ],
     md: [['? bold and italic ?', 'bold']],
-    // Terminals stay as written (D710), and so does `**x**` in a special sequence.
-    literal: ['<b>bold</b>', '**not bold**', 'a<br>b', '`**md**`', '? **stays literal** ?'],
+    // Terminals stay as written, a tag and a typed entity included (D710, amending D563), and
+    // so does `**x**` in a special sequence. The fixture writes its entities without `;`, which
+    // the e2e page (`asHostText`) passes on unchanged.
+    literal: [
+      '<b>bold</b>',
+      '**not bold**',
+      'a<br>b',
+      '`**md**`',
+      '<i>&lt x&gt</i> &amp &#60',
+      '? **stays literal** ?',
+    ],
   },
   swimlane: {
     file: 'swimlanes/nightly-check/lane-title-markdown.mmd',

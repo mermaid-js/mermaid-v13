@@ -230,3 +230,31 @@ describe('railroad review fixes (#610)', () => {
     expect(r.diagnostics.map((d) => d.code)).toEqual(['UNEXPECTED']);
   });
 });
+
+// D710, amending D563: a token is drawn as written, so the model holds what is drawn. A `#name;`
+// code is its character (v12 drew it so); an `&name;` the author typed stays as written. A code
+// is read after the string's escapes, so `#bsol;n` is a backslash and an n.
+describe('railroad token text (D710)', () => {
+  const definition = (src: string) => parseRailroad(src).model.rules[0]!.definition;
+
+  it.each([
+    ['railroad-beta\nr = terminal("#lt;&lt;#bsol;n") ;', '<&lt;\\n'],
+    ['railroad-ebnf-beta\nr = "#lt;&lt;#bsol;n" ;', '<&lt;\\n'],
+    ['railroad-abnf-beta\nr = "#lt;&lt;" ;', '<&lt;'],
+    ['railroad-peg-beta\nr <- "#lt;&lt;#quot;" ;', '<&lt;"'],
+  ])('reads %j as written', (src, value) => {
+    expect(definition(src)).toMatchObject({ type: 'terminal', value });
+  });
+
+  it('marks PEG predicates and `.` literal, and no other special', () => {
+    expect(definition('railroad-peg-beta\nr <- &"#lt;" !b . ;')).toMatchObject({
+      elements: [
+        { type: 'special', text: '&"<"', literal: true },
+        { type: 'special', text: '!b', literal: true },
+        { type: 'special', text: '.', literal: true },
+      ],
+    });
+    const ebnf = definition('railroad-ebnf-beta\nr = ? #lt;x ? ;');
+    expect(ebnf).toEqual({ type: 'special', astId: ebnf.astId, text: '&lt;x' });
+  });
+});

@@ -21,6 +21,13 @@ export interface Draft {
   children: Draft[];
   /** Levels of the tree from this node down: 1 for a leaf. */
   height: number;
+  /** A special made from tokens (PEG's predicates and `.`), drawn as written (D710). */
+  literal?: true;
+}
+
+/** A special made from tokens, which draws as written (D710): PEG's `&X`, `!X` and `.`. */
+export function literalSpecial(text: string, range: Range): Draft {
+  return { ...leaf('special', text, range), literal: true };
 }
 
 /** A terminal, nonterminal or special. */
@@ -100,7 +107,7 @@ export function build(d: Draft, id: AstId): [RailroadNode, RailroadExpressionNod
       node = { type: 'nonterminal', astId: id, name: d.text };
       break;
     case 'special':
-      node = { type: 'special', astId: id, text: d.text };
+      node = { type: 'special', astId: id, text: d.text, ...(d.literal ? { literal: true } : {}) };
       break;
     case 'sequence':
       node = { type: 'sequence', astId: id, elements: nodes };

@@ -34,6 +34,16 @@ describe('boxes and track', () => {
     );
   });
 
+  it('draws tokens and PEG predicates as written (D710): a typed &lt; stays, a #lt; is <', async () => {
+    expect(await text('railroad-peg-beta\nr <- "&lt;#lt;" !"<b>" ;')).toBe(
+      lines(
+        '      ╭───────╮ ┌┄┄┄┄┄┄┄┄┄┄┄┄┐',
+        'r = ●─┤ &lt;< ├─┤ ? !"<b>" ? ├─●',
+        '      ╰───────╯ └┄┄┄┄┄┄┄┄┄┄┄┄┘'
+      )
+    );
+  });
+
   it('draws a text as one row: a line break is a space, a wide character two cells', async () => {
     expect(await text('railroad-ebnf-beta\nr = "顧客" , ? multi\nline ? ;')).toBe(
       lines(

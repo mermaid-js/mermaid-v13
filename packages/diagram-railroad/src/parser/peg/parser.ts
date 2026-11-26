@@ -19,7 +19,7 @@ import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { RailroadParseOptions } from '../parser.ts';
 import { stringValue } from '../convert.ts';
 import { T } from '../tokens.ts';
-import { choice, leaf, optional, repetition, sequence } from '../tree.ts';
+import { choice, leaf, literalSpecial, optional, repetition, sequence } from '../tree.ts';
 import type { Draft } from '../tree.ts';
 
 const PRIMARY = [T.String, T.Id, T.LParen, T.Dot];
@@ -90,7 +90,7 @@ export class PegParser extends RailroadParser {
     const op = this.range(this.i++);
     const inner = this.suffix();
     const text = (k === T.Amp ? '&' : '!') + label(inner);
-    return leaf('special', text, { start: op.start, end: this.range(this.i - 1).end });
+    return literalSpecial(text, { start: op.start, end: this.range(this.i - 1).end });
   }
 
   /** `Primary ('?' | '*' | '+')?` */
@@ -113,17 +113,21 @@ export class PegParser extends RailroadParser {
     const range = this.range();
     if (k === T.String) {
       this.i++;
-      return leaf('terminal', stringValue('railroadPeg', this.raw(j)), range);
+      return leaf(
+        'terminal',
+        this.written(j, (s) => stringValue('railroadPeg', s)),
+        range
+      );
     }
     if (k === T.Id) {
       this.i++;
-      const name = this.raw(j);
+      const name = this.written(j);
       this.reference(name, range);
       return leaf('nonterminal', name, range);
     }
     if (k === T.Dot) {
       this.i++;
-      return leaf('special', '.', range);
+      return literalSpecial('.', range);
     }
     if (k !== T.LParen) this.fail(PRIMARY);
     this.i++;

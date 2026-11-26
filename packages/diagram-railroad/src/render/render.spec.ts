@@ -464,6 +464,31 @@ describe('label markup (D710)', () => {
     expect([nt!.text, nt!.tspans.length]).toEqual(['<i>y</i><br>z', 0]);
   });
 
+  // A typed `&lt;` is text, as v12's `.text()` showed it; a `#lt;` code is the author's way to
+  // write `<`, which v12 drew as `<` (D710, amending D563).
+  it('draws a typed entity in a token as written and a #name; code as its character', async () => {
+    const { t } = await tree(
+      'railroad-ebnf-beta\nr = "&lt; &amp; #lt;b#gt; #35;" , "<b>x</b> **y**" ;\n'
+    );
+    const terminals = t.find({ class: 'railroad-terminal' }).map((g) => box(t, g));
+    expect(terminals.map((b) => [b.text, b.tspans.length])).toEqual([
+      ['&lt; &amp; <b> #', 0],
+      ['<b>x</b> **y**', 0],
+    ]);
+  });
+
+  it('draws a PEG predicate as written, and an EBNF special by the rule', async () => {
+    const peg = await tree('railroad-peg-beta\nr <- &"<b>a</b>" !"&lt;" "x" ;\n');
+    expect(peg.t.find({ class: 'railroad-special' }).map((g) => box(peg.t, g))).toMatchObject([
+      { text: '? &"<b>a</b>" ?', tspans: [] },
+      { text: '? !"&lt;" ?', tspans: [] },
+    ]);
+    const ebnf = await tree('railroad-ebnf-beta\nr = ? <b>a</b> #35; ? ;\n');
+    const [special] = ebnf.t.find({ class: 'railroad-special' }).map((g) => box(ebnf.t, g));
+    expect(special!.text).toBe('? a # ?');
+    expect(special!.tspans.find((x) => x.text === 'a')?.weight).toBe('bold');
+  });
+
   it('breaks a special at <br> and grows its box by a line', async () => {
     const [br, plain] = await specials('a<br>b');
     expect(br!.tspans.map((s) => s.text)).toEqual(['? a', 'b ?']);

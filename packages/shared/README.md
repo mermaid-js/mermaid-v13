@@ -15,7 +15,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/parser/generic-types` | v12's `parseGenericTypes`, which class and ER diagrams run over a type's `~…~` generics |
 | `/parser/drop` | Offset helpers both lexer families use |
 | `/parser/common-values` | The values of `common.langium`'s strings, `title`, `accTitle` and `accDescr`, for the diagrams that do not load `/parser/rule` |
-| `/parser/display-text` | A source range's text with its `#name;` codes as characters, as v12 drew it, for event modeling and wardley |
+| `/parser/display-text` | A source range's text with its `#name;` codes as characters and a typed `&name;` as written, as v12 drew it, for event modeling, wardley and railroad's tokens |
 | `/parser/seen-tokens` | The token list of a langium-family diagram's lexer as v12's lexer saw it, for the language service and lexer-parity specs |
 | `/parser/facet` | Completion and hover helpers for a diagram's `./language` entry |
 | `/parser/flow` | The lexer, parser and model builder base flowchart shares with the diagrams whose grammar was cut from its own (agentflow) |
