@@ -21,6 +21,8 @@ export interface MessageX {
   readonly fromBounds: number;
   readonly toBounds: number;
   readonly label: MeasuredLabel;
+  /** The label wraps inside the span in px (D724); a whole word may still make it wider. */
+  readonly inside: boolean;
 }
 
 export interface NoteX {
@@ -175,7 +177,8 @@ class XPass {
         ? Math.max(span - 2 * m.wrapPadding, 1)
         : Math.max(span + 2 * m.wrapPadding, m.wrapWidth);
     const font = this.env.fonts.message;
-    const label = this.env.measure(this.env.messageText(s), font, max, inside && !m.cells);
+    const keep = wrap && inside && !m.cells;
+    const label = this.env.measure(this.env.messageText(s), font, max, keep);
     const all = [fromLeft, fromRight, toLeft, toRight];
     const own = wrap ? 0 : label.width + 2 * m.wrapPadding;
     return {
@@ -185,6 +188,7 @@ class XPass {
       fromBounds: Math.min(...all),
       toBounds: Math.max(...all),
       label,
+      inside: keep,
     };
   }
 

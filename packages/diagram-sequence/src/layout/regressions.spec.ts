@@ -231,6 +231,35 @@ describe('sequence layout, review regressions', () => {
     }
   });
 
+  it('a whole word wider than the room inside the lifelines stays on the line', () => {
+    // A wide bar on B leaves room for less than `Acknowledged,` inside the padding, but the line
+    // holds it: with every `messageAlign` the word stays between the lifelines.
+    const m = model(
+      [p('A'), p('B')],
+      [
+        act('B', true),
+        msg('B', 'A', 'Acknowledged, processing everything', 'solid', { wrap: true }),
+        msg('A', 'B', 'Acknowledged, processing everything', 'solid', { wrap: true }),
+      ]
+    );
+    for (const classic of [false, true]) {
+      // The bar width at which the word is wider than the line less the padding, not the line.
+      const fits = (activationWidth: number): boolean => {
+        const [back] = lay(m, false, { activationWidth }, [], { classic }).messages;
+        const line = Math.abs(back!.startX - back!.stopX);
+        return back!.label!.width > line - 20 && back!.label!.width <= line;
+      };
+      const activationWidth = [160, 180, 200, 220].find(fits);
+      expect(activationWidth).toBeDefined();
+      for (const messageAlign of ['left', 'center', 'right']) {
+        const sequence = { activationWidth, messageAlign };
+        expect(violations(m, false, sequence, { classic }), messageAlign).toEqual([]);
+        const [back] = lay(m, false, sequence, [], { classic }).messages;
+        expect(back!.label!.text.lines[0]!.map((r) => r.text).join('')).toBe('Acknowledged,');
+      }
+    }
+  });
+
   it('keeps every message label above its line (#1337 review)', () => {
     // A large wrapPadding, a small message font and a square self message each put the last
     // baseline at or below the line, so the arrow struck through the text.

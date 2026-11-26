@@ -24,10 +24,9 @@ import {
   rectsOverlap as overlaps,
   within,
 } from '@mermaid-js/shared/testing/layout-invariants';
-import { pxProfile } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import { autoWrapOf } from './env.ts';
-import { metricsTable, sequenceMetrics } from './metrics.ts';
+import { metricsTable } from './metrics.ts';
 
 type Participants = ReadonlyMap<string, ParticipantLayout>;
 
@@ -224,7 +223,7 @@ function messagesOf(list: readonly SequenceStatement[], out: SequenceMessage[] =
   return out;
 }
 
-/** Whether a line of `text` is one word, which wrapping cannot break, wider than `room`. */
+/** Whether a line of `text` is one word, which wrapping keeps whole, wider than `room`. */
 function wordWider(text: MeasuredLabel, room: number): boolean {
   return text.lines.some((line, i) => {
     const words = line
@@ -240,8 +239,7 @@ function wordWider(text: MeasuredLabel, room: number): boolean {
  * lifelines, in every `messageAlign` (#1239, D724). A self message and a message across several
  * columns are not checked: their labels may reach past a lifeline, as in v12. Nor is a message
  * whose line leaves the lifelines, when activation bars wider than the gap cover the other one,
- * or whose label is wider than its line less `wrapPadding` on each side: a word that does not
- * fit there stays whole (D724).
+ * or whose label holds a word wider than its line, which stays whole (D724).
  * Cells have their own rule: a label keeps off the lifeline columns and off box borders, and may
  * move past a lifeline to do so (the conformance spec `layout-corpus.spec.ts` checks it).
  */
@@ -249,7 +247,6 @@ function wrappedInside(
   model: SequenceModel,
   layout: SequenceLayout,
   autoWrap: boolean,
-  wrapPadding: number,
   out: string[]
 ): void {
   if (layout.units !== 'px') return;
@@ -264,7 +261,7 @@ function wrappedInside(
     const right = layout.participants[Math.max(a, b)] as ParticipantLayout;
     const ends = [msg.startX, msg.stopX];
     if (!ends.every((e) => within(e, left.lifeline.x, right.lifeline.x))) continue;
-    if (wordWider(msg.label.text, Math.abs(msg.startX - msg.stopX) - 2 * wrapPadding)) continue;
+    if (wordWider(msg.label.text, Math.abs(msg.startX - msg.stopX))) continue;
     const { x, width } = msg.label;
     if (x < left.lifeline.x - EPS || x + width > right.lifeline.x + EPS)
       out.push(`the wrapped label of message ${msg.ast} crosses a lifeline`);
@@ -329,8 +326,7 @@ function rowsHold(layout: SequenceLayout, out: string[]): void {
 
 /**
  * Every invariant `layout` breaks; empty when it holds them all. `config` is the config the
- * layout was made with: its `wrap` and `sequence.wrap` say which messages wrap, as in the layout,
- * and `sequence.wrapPadding` how far a wrapped label keeps from the lifelines.
+ * layout was made with: its `wrap` and `sequence.wrap` say which messages wrap, as in the layout.
  */
 export function sequenceLayoutViolations(
   model: SequenceModel,
@@ -350,8 +346,7 @@ export function sequenceLayoutViolations(
   notesClear(layout, out);
   numbersClear(layout, out);
   labelsAboveLines(layout, out);
-  const { wrapPadding } = sequenceMetrics(pxProfile, config.sequence);
-  wrappedInside(model, layout, autoWrapOf(config), wrapPadding, out);
+  wrappedInside(model, layout, autoWrapOf(config), out);
   activationsOnLifeline(layout, parts, out);
   rowsHold(layout, out);
   return out;

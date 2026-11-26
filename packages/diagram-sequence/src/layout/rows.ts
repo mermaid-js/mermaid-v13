@@ -265,7 +265,7 @@ export class Rows {
     lineY: number,
     numberX: number | undefined
   ): PlacedLabel {
-    const { m, seq } = this.env;
+    const { m } = this.env;
     const { label } = g;
     const self = s.from === s.to;
     const span = [Math.min(g.startx, g.stopx), Math.max(g.startx, g.stopx)] as const;
@@ -273,19 +273,27 @@ export class Rows {
     const x =
       self && m.cells
         ? g.startx + m.lifelineHalf
-        : clearOf(
-            this.borders,
-            alignX(this.env, seq.messageAlign, span, label.width, m.wrapPadding),
-            label.width,
-            span,
-            this.lifelinesOf(s)
-          );
+        : clearOf(this.borders, this.labelX(g, span), label.width, span, this.lifelinesOf(s));
     const y = this.messageLabelY(label, self, starty, lineY);
     return placed(
       label,
       x,
       numberX === undefined ? y : this.clearOfNumber(label, x, y, numberX, lineY)
     );
+  }
+
+  /**
+   * A message label's x at `messageAlign`. A label wrapped inside its span (D724) that a whole
+   * word makes wider than the room inside the padding keeps on its line where the line holds it,
+   * and is centred on the line where it does not.
+   */
+  private labelX(g: MessageX, span: readonly [number, number]): number {
+    const { m, seq } = this.env;
+    const w = g.label.width;
+    const x = alignX(this.env, seq.messageAlign, span, w, m.wrapPadding);
+    if (!g.inside) return x;
+    const [lo, hi] = span;
+    return w > hi - lo ? lo + m.half(hi - lo - w) : Math.min(Math.max(x, lo), hi - w);
   }
 
   /**
