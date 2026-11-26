@@ -51,8 +51,8 @@ export type LabelMarkup = 'plain' | 'emphasis' | 'markdown';
 /**
  * A label as written, read by the rule every diagram type shares (D710): a whole label in
  * backticks, with or without double quotes around them, is a markdown string, returned without
- * its wrapper in the `markdown` mode. A backtick inside the outer pair makes it
- * no markdown string, so a label of two code spans is plain. Any other label is returned as written, `plain`.
+ * its wrapper in the `markdown` mode. A backtick inside the outer pair makes it no markdown
+ * string, so a label of two code spans is plain. Any other label is returned as written, `plain`.
  */
 export function markdownString(label: string): { text: string; markup: LabelMarkup } {
   const md = RE_MARKDOWN_STRING.exec(label.trim())?.[2];
@@ -351,9 +351,9 @@ const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
 // and the rest of the label is matched as group 2, so that it is kept and scanned once.
 const RE_SCRIPT = /(<script(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/script(?:\s[^<>]*)?\/?>)|([^]*))/gi;
 const RE_STYLE = /(<style(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/style(?:\s[^<>]*)?\/?>)|([^]*))/gi;
-// HTML elements whose tags are dropped, text kept (R-TEXT-3), and reported as `HTML_DROPPED`
-// unless they are bold or italic (D566). Anything else shaped like a tag, such as the type in
-// List<T>, is text.
+// HTML elements whose tags are read as tags: a tag of `TAG_STYLE` draws its style (D566, D710)
+// and `<br>` breaks the line; any other is dropped, its text kept (R-TEXT-3), and reported as
+// `HTML_DROPPED`. Anything else shaped like a tag, such as the type in List<T>, is text.
 const HTML_TAGS = new Set(
   (
     'a abbr address article aside audio b bdi bdo big blockquote body br button caption center cite code col ' +
