@@ -41,7 +41,7 @@
   |
   | Type: `boolean | null` · Default: `null`
   |
-  | Status: removed (since 13.0.0). Labels are SVG text only; there is no HTML label mode (D5). Replacement: none; labels support a markdown subset rendered as SVG text.
+  | Status: removed (since 13.0.0). Core draws labels as SVG text only (D5). Replacement: the HTML labels plugin, which reads the key as `html.labels` (D694, D696).
 @ 12:13  mirrorAc|tors: false
   12:5-12:17 "mirrorActors"
   | **sequence.mirrorActors**

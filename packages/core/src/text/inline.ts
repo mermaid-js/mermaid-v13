@@ -97,9 +97,10 @@ export interface InlineSpans {
   /**
    * The whole label as one box (D695), when {@link InlineSpans.boxer} is set and boxes it: the
    * source is then one placeholder character. Label layout asks this before `extract`. Text
-   * output and a label that holds a placeholder character get `undefined`.
+   * output and a label that holds a placeholder character get `undefined`. Optional, so spans
+   * made by hand (a test's) need not have it.
    */
-  label(
+  label?(
     raw: string,
     font: FontKey,
     measurer: Measurer,

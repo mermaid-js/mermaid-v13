@@ -11,8 +11,8 @@ import { defaultIdPrefix, optionsKey } from './config-snapshot.ts';
 import { createMermaid } from './index.ts';
 
 /**
- * The keys of the old literal, in its order, with `dataAst` (#839) after `limits`; text output
- * appends its own after them.
+ * The keys of the old literal, in its order, with `dataAst` (#839) after `limits` and
+ * `deterministic` (D695) after `linkSchemes`; text output appends its own after them.
  */
 const OLD_KEYS = [
   'config',
@@ -23,6 +23,7 @@ const OLD_KEYS = [
   'idPrefix',
   'version',
   'linkSchemes',
+  'deterministic',
   'limits',
   'dataAst',
   'now',

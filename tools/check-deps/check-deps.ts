@@ -47,6 +47,7 @@ export const THIRD_PARTY_ALLOWED: Readonly<Record<string, readonly string[]>> = 
   '@mermaid-js/language-server': ['vscode-languageserver'],
   '@mermaid-js/layout-elk': ['elkjs'],
   '@mermaid-js/plugin-hand-drawn': ['roughjs'],
+  '@mermaid-js/plugin-html-labels': ['dompurify'],
   '@mermaid-js/bundler-plugin': ['unplugin'],
 };
 

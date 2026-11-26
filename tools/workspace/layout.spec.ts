@@ -28,6 +28,7 @@ describe('workspace layout (DESIGN §2)', () => {
     ['packages/layout-elk', '@mermaid-js/layout-elk', false],
     ['packages/plugin-math', '@mermaid-js/plugin-math', false],
     ['packages/plugin-hand-drawn', '@mermaid-js/plugin-hand-drawn', false],
+    ['packages/plugin-html-labels', '@mermaid-js/plugin-html-labels', false],
     ['packages/plugin-icons', '@mermaid-js/plugin-icons', false],
     ['packages/bundler-plugin', '@mermaid-js/bundler-plugin', false],
     ['packages/plugin-autoload', '@mermaid-js/plugin-autoload', false],

@@ -75,6 +75,7 @@ generated/
 !packages/plugin-autoload/src/generated/
 !packages/layout-elk/src/generated/
 !packages/plugin-hand-drawn/src/generated/
+!packages/plugin-html-labels/src/generated/
 # The adapters' per-type Lezer parsers and Monarch files (#35, D134), checked by freshness specs
 !packages/language-service-codemirror/src/generated/
 !packages/language-service-monaco/src/generated/

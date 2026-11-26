@@ -1,0 +1,18 @@
+Third-party notices for @mermaid-js/plugin-html-labels
+======================================================
+
+dompurify
+---------
+
+This package depends on DOMPurify 3.4.17 (https://github.com/cure53/DOMPurify), installed from
+npm as a runtime dependency. No DOMPurify code is copied into this package; `src/sanitize.ts`
+creates a DOMPurify instance and passes every label through it.
+
+DOMPurify is dual-licensed under the Mozilla Public License 2.0 and the Apache License 2.0. This
+package uses it under the terms of the Apache License 2.0:
+
+  SPDX-License-Identifier: Apache-2.0
+
+  DOMPurify: (c) Cure53 and other contributors
+
+The full license text ships with the package, in node_modules/dompurify/LICENSE.

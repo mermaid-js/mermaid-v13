@@ -119,7 +119,7 @@ export function layoutLabel(
   const markup = options.markdown ? 'markdown' : (options.markup ?? 'plain');
   // A whole-label provider (D695) is asked first: its box is then the label's only span.
   const spans =
-    options.inline?.label(raw, font, measurer, maxWidth, markup) ??
+    options.inline?.label?.(raw, font, measurer, maxWidth, markup) ??
     options.inline?.extract(raw, font, measurer);
   const src = spans?.source ?? raw;
   let left = false;
