@@ -145,6 +145,8 @@ flags and opacities, which are read literally.
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `flowContainerStroke` | | color | `#adadad` | `#adadad` | `#2f2f2f` | `#2f2f2f` | `#eeeebc` | `#2f2f2f` | `#b4e599` | `#e3e3e3` | `#cfbcd9` | `#b3b3b3` | `#6c6d6d` |
+| `agentflowEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `agentflowEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### architecture
 

@@ -453,8 +453,8 @@ describe('paints as v12.2.0 drew them (pitfall 17)', () => {
   });
 
   it('has flowContainerStroke on its theme table, ruled by secondaryBorderColor', () => {
-    expect(agentflow.theme.vars).toEqual({ flowContainerStroke: { alias: 'afc', kind: 'color' } });
-    expect(agentflow.theme.rules.light).toEqual({ flowContainerStroke: 'secondaryBorderColor' });
+    expect(agentflow.theme.vars.flowContainerStroke).toEqual({ alias: 'afc', kind: 'color' });
+    expect(agentflow.theme.rules.light.flowContainerStroke).toBe('secondaryBorderColor');
   });
 });
 
