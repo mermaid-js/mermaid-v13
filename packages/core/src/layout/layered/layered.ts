@@ -1054,15 +1054,24 @@ export interface Graph {
   M: LayoutMetrics;
 }
 
-// Reverses the edges that close a cycle, found by depth-first search in declaration order.
+// Reverses the edges that close a cycle, found by depth-first search (#1215, D717). The search
+// starts from the sources, in the order their first edge was written, then from the nodes not yet
+// reached, in declaration order: a node declared before the edge into it no longer becomes the
+// top of its cycle, and a cycle with no source is oriented from its node declared first, as
+// before. An acyclic graph has no edge to reverse, so the order of the roots does not change it.
 export function orient(nodes: LNode[], edges: LEdge[]): void {
   const n = nodes.length;
   const m = edges.length;
   const start = i32(n + 1);
+  // 1 for a node with an incoming edge: not a source.
+  const fed = u8(n);
   for (let i = 0; i < m; i++) {
     const e = edges[i]!;
     e.reversed = nodes[e.head]!.kind === Kind.StartPort || nodes[e.tail]!.kind === Kind.EndPort;
-    if (!e.reversed) start[e.tail + 1]!++;
+    if (!e.reversed) {
+      start[e.tail + 1]!++;
+      fed[e.head] = 1;
+    }
   }
   for (let i = 0; i < n; i++) start[i + 1]! += start[i]!;
   const out = i32(start[n]!);
@@ -1073,8 +1082,10 @@ export function orient(nodes: LNode[], edges: LEdge[]): void {
   const state = u8(n);
   const cursor = copy(start, n);
   const stack: number[] = [];
-  for (let root = 0; root < n; root++) {
-    if (state[root]! !== 0) continue;
+  // The sources first, in the order of their first edge, then every node not yet reached.
+  for (let k = 0; k < m + n; k++) {
+    const root = k < m ? edges[k]!.tail : k - m;
+    if (state[root]! !== 0 || (k < m && fed[root]! === 1)) continue;
     stack.push(root);
     state[root] = 1;
     while (stack.length > 0) {
