@@ -43,7 +43,8 @@
   ink is chosen against that fill (D713): `textColor` where it meets AA, else black or white,
   whichever reads better, so a light `background` under a dark theme gets dark label text. Its
   base is `textColor`, not v12's `nodeTextColor`, so redux-dark, redux-dark-color and neo-dark
-  write their labels in `#cccccc` where v12 wrote `#e0dfdf`. The tag also has diagram-level
+  write their labels in `#cccccc` where v12 wrote `#e0dfdf`, and an author's `nodeTextColor` no
+  longer colours them. The tag also has diagram-level
   names, `requirementEdgeLabelBackground` and `requirementEdgeLabelColor` (D715);
   `relationLabelBackground` and `relationLabelColor` read them and, when set, win. The box fill
   and text follow the overrides v12's drawn box and text follow (`mainBkg`, the text ink), not
