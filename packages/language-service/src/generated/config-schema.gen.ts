@@ -5105,8 +5105,8 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "removed",
             "since": "13.0.0",
-            "reason": "v12's `fillType<n>` style rules hid it in every theme (D241, D708).",
-            "replacement": "the `fillType<n>` theme variables, n from 0 to 7"
+            "reason": "v12's theme rules hid it.",
+            "replacement": "`fillType<n>`, n 0 to 7"
           }
         },
         "sectionColours": {
@@ -5411,8 +5411,8 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "removed",
             "since": "13.0.0",
-            "reason": "v12's timeline never read it (D708).",
-            "replacement": "the `cScale<n>` theme variables in the classic themes, else `mainBkg` or `borderColorArray` (D227, D257)"
+            "reason": "v12 never read it.",
+            "replacement": "`cScale<n>`, or `mainBkg` by theme"
           }
         },
         "sectionColours": {

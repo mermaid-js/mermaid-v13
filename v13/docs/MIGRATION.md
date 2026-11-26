@@ -308,7 +308,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `journey.rightAngles` | ignored | v12's journey renderer never read it. |  |
 | `journey.activationWidth` | ignored | v12's journey renderer never read it. |  |
 | `journey.textPlacement` | ignored | Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode. |  |
-| `journey.sectionFills` | removed | v12's `fillType<n>` style rules hid it in every theme (D241, D708). | the `fillType<n>` theme variables, n from 0 to 7 |
+| `journey.sectionFills` | removed | v12's theme rules hid it. | `fillType<n>`, n 0 to 7 |
 | `timeline.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the timeline renderer never did. |  |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `timeline.diagramMarginX` | ignored | v12's timeline never read it. |  |
@@ -328,7 +328,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `timeline.activationWidth` | ignored | v12's timeline never read it. |  |
 | `timeline.textPlacement` | ignored | v12's timeline never read it. |  |
 | `timeline.actorColours` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
-| `timeline.sectionFills` | removed | v12's timeline never read it (D708). | the `cScale<n>` theme variables in the classic themes, else `mainBkg` or `borderColorArray` (D227, D257) |
+| `timeline.sectionFills` | removed | v12 never read it. | `cScale<n>`, or `mainBkg` by theme |
 | `timeline.sectionColours` | ignored | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
