@@ -5,7 +5,7 @@ import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import type { SequenceModel } from '../model.ts';
+import type { SequenceModel, SequenceStatement } from '../model.ts';
 import { FIXTURES, act, frag, model, msg, note, p } from './fixtures.ts';
 import { layoutSequence, type SequenceLayout } from './index.ts';
 import { sequenceLayoutViolations } from './invariants.ts';
@@ -158,6 +158,37 @@ describe('sequence layout, review regressions', () => {
     });
     const l = lay(hidden, false, { hideUnusedParticipants: true });
     expect([l.boxes.length, l.participants[0]!.top]).toEqual([0, lay(plain).participants[0]!.top]);
+  });
+
+  it('keeps every message label clear of the sequence number circles (#1337)', () => {
+    // Self messages, both directions, reverse and two-headed arrows (the number moves to the
+    // other end), one and two lines, a label as wide as its span.
+    const texts = ['x', 'Self', 'a label as wide as the gap between them', 'two<br>lines'];
+    const arrows = ['solid', 'dotted', 'solid_arrow_top_reverse', 'bidirectional_solid'] as const;
+    const statements: SequenceStatement[] = [{ kind: 'autonumber', ast: 'st:n', visible: true }];
+    for (const [from, to] of ['AB', 'BA', 'AA', 'BB'])
+      for (const arrow of arrows)
+        for (const text of texts) statements.push(msg(from!, to!, text, arrow));
+    const m = model([p('A'), p('B')], statements);
+    const configs = [
+      {},
+      { rightAngles: true },
+      { messageAlign: 'left' },
+      { messageAlign: 'right' },
+      { wrap: true, width: 60 },
+    ];
+    const problems: string[] = [];
+    for (const classic of [false, true])
+      for (const sequence of configs) {
+        const l = lay(m, false, sequence, [], { classic });
+        expect(l.messages.filter((x) => x.number && x.label)).toHaveLength(64);
+        const where = `${classic ? 'default' : 'redux'} ${JSON.stringify(sequence)}`;
+        for (const v of sequenceLayoutViolations(m, l)) problems.push(`${where}: ${v}`);
+      }
+    expect(problems).toEqual([]);
+    // A self label centred on its number sits 2 px above the circle (radius 12) on its line.
+    const self = lay(m).messages.find((x) => x.from === 'A' && x.to === 'A')!;
+    expect(self.y - self.label!.y - self.label!.height).toBeCloseTo(14, 6);
   });
 
   it('message ends stay on their columns when bars or wrapped boxes are wide', () => {
