@@ -77,7 +77,8 @@ interface Paints {
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /** Relationship labels and multiplicities, and the interface names. */
   readonly text?: Color;
-  readonly edgeLabel?: Color;
+  /** A relationship label's tag: its fill and the ink that reads on it (#1327). */
+  readonly edgeLabel?: { fill: Color; text: Color };
   /** Multiplicities' font size (`classTerminalFontSize`, v12 11px). */
   readonly terminalSize?: Length;
   readonly slotOf: (order: number) => PaletteTint | undefined;
@@ -120,8 +121,11 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
   const terminalSize = p.edges.some((e) => e.startLabel ?? e.endLabel)
     ? theme.length('classTerminalFontSize')
     : undefined;
-  // The theme background, as every edge label's fill (D628).
-  const labelFill = labelled ? theme.color('background') : undefined;
+  // The tag: class's own fill, the shared edgeLabelBackground unless set (D628, D715), and the
+  // ink chosen against it (D713, #1327).
+  const labelTag = labelled
+    ? { fill: theme.color('classEdgeLabelBackground'), text: theme.color('classEdgeLabelColor') }
+    : undefined;
   return {
     font: theme.font(),
     fontSize: theme.length('fontSize'),
@@ -134,7 +138,7 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     note,
     cluster,
     text,
-    edgeLabel: labelFill,
+    edgeLabel: labelTag,
     terminalSize,
     slotOf: paletteSlots(theme),
   };
@@ -329,9 +333,9 @@ function drawEdgeLabels({ w, layout, ctx, paint }: Scene, e: ClassEdgeView, id: 
   // The middle label is a tag bordered in the line colour (D626, D627); the ends stay plain.
   if (e.label && at.label && paint.edgeLabel)
     edgeLabel(w, e.label, at.label, id, {
-      fill: paint.edgeLabel,
+      fill: paint.edgeLabel.fill,
       stroke: paint.line,
-      text: { fill: paint.text },
+      text: { fill: paint.edgeLabel.text },
       patch: (ctx.units ?? pxProfile).builder.labelPatch,
     });
   const ends: [MeasuredLabel | undefined, { x: number; y: number } | undefined][] = [
