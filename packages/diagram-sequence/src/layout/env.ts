@@ -91,7 +91,11 @@ export interface Env {
   readonly index: ReadonlyMap<string, number>;
   /** The render's warning sink. */
   readonly warn: SequenceLayoutContext['warn'];
-  measure(text: string, font: FontKey, max: number): MeasuredLabel;
+  /**
+   * `text` laid out in `font`, wrapped at `max`. With `keepWords`, a word wider than `max` stays
+   * whole on a line of its own instead of breaking between characters.
+   */
+  measure(text: string, font: FontKey, max: number, keepWords?: boolean): MeasuredLabel;
 }
 
 const kindsWhere = (
@@ -208,11 +212,12 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
     order: participants.map((p) => p.id),
     index: new Map(participants.map((p, i) => [p.id, i])),
     warn: (w) => ctx.warn(w),
-    measure: (text, font, max) => {
+    measure: (text, font, max, keepWords = false) => {
       // v12 sequence broke a label at `<br>` only: a written `\n` is text (#763, D564).
       const label = layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, {
         backslashBreak: false,
         inline: ctx.inline,
+        keepWords,
       });
       if (!mathShown && showsMath(label) && ctx.inline?.notRendered('math') === true) {
         mathShown = true;

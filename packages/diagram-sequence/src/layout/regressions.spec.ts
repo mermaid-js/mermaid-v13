@@ -212,6 +212,24 @@ describe('sequence layout, review regressions', () => {
         }
   });
 
+  it('a wrapped label between neighbours keeps its words whole when bars eat the span', () => {
+    // A bar 340 px wide on B leaves the B->A line about 25 px: wrapped at that span less the
+    // padding, the label broke into one glyph per line (#1337 review).
+    const words = ['reply', 'with', 'several', 'words'];
+    const m = model(
+      [p('A'), p('B')],
+      [act('B', true), msg('B', 'A', words.join(' '), 'solid', { wrap: true })]
+    );
+    for (const classic of [false, true]) {
+      const sequence = { activationWidth: 340 };
+      expect(violations(m, false, sequence, { classic })).toEqual([]);
+      const l = lay(m, false, sequence, [], { classic });
+      const label = l.messages[0]!.label!;
+      const lines = label.text.lines.map((line) => line.map((r) => r.text).join(''));
+      expect(lines).toEqual(words);
+    }
+  });
+
   it('message ends stay on their columns when bars or wrapped boxes are wide', () => {
     expect(violations(FIXTURES.activations!, false, { activationWidth: 119, width: 40 })).toEqual(
       []

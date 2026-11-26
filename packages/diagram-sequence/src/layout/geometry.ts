@@ -166,13 +166,16 @@ class XPass {
     // each lifeline (#1239, D724: v12 wraps at `span + 2·wrapPadding` and runs over both). In
     // cells every wrapped label does: written over a lifeline it would erase it. A self
     // message's label sits right of its lifeline; one across several columns keeps v12's rule.
+    // In px a word wider than that room stays whole, so activation bars that eat the span cannot
+    // break the label into a glyph per line; it then reaches past the room (D724).
     const inside = s.from !== s.to && (m.cells || this.neighbours(from, to));
     let max = Infinity;
     if (wrap)
       max = inside
         ? Math.max(span - 2 * m.wrapPadding, 1)
         : Math.max(span + 2 * m.wrapPadding, m.wrapWidth);
-    const label = this.env.measure(this.env.messageText(s), this.env.fonts.message, max);
+    const font = this.env.fonts.message;
+    const label = this.env.measure(this.env.messageText(s), font, max, inside && !m.cells);
     const all = [fromLeft, fromRight, toLeft, toRight];
     const own = wrap ? 0 : label.width + 2 * m.wrapPadding;
     return {
