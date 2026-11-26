@@ -1,0 +1,14 @@
+swimlane-beta LR
+  subgraph plain ["**Bold** lane"]
+    A
+  end
+  subgraph quoted ["`*Italic* **bold** lane`"]
+    B
+  end
+  subgraph bare [`**Bare** lane`]
+    C
+  end
+  subgraph tags ["two<br>lines <b>bold</b> &amp; <i>it</i>"]
+    D
+  end
+  A --> B --> C --> D

@@ -16,8 +16,13 @@ import {
   foldedTypeText,
 } from '@mermaid-js/core/svg/folded';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
+import {
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
+import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveReporter, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
@@ -262,13 +267,26 @@ function nodeViews(
       turnBar(view, nest, m.cells);
     }
   }
+  // Under the swimlane engine a top-level subgraph is a lane (`ctx.layoutPart`, render.ts).
+  const lanes = typeof m.ctx.layoutPart === 'function';
   for (const view of groups) {
-    const sg = subgraphs.get(view.id)!;
     const [f, bits] = textStyle(view.style, m.font);
-    view.label = m.label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
+    const [title, md] = groupTitle(subgraphs.get(view.id)!, lanes && view.parent === undefined);
+    view.label = m.label(title, md, f, Infinity, bits);
   }
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
+}
+
+/**
+ * A group's title and whether it is markdown. A lane title reads a markdown string with or
+ * without quotes (D710); the parser strips only the quoted form's wrapper, so the bare form is
+ * read here. A subgraph title keeps flowchart's reading.
+ */
+function groupTitle(sg: FlowModelSubgraph, lane: boolean): [string, boolean] {
+  if (sg.labelType === 'markdown' || !lane) return [sg.title, sg.labelType === 'markdown'];
+  const { text, markup } = markdownString(sg.title);
+  return [text, markup === 'markdown'];
 }
 
 /** A size's label shift sideways, none when it has no `dx`. */
