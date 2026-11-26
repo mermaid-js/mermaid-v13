@@ -350,19 +350,26 @@ function slid(
     [-1, stub],
   ];
   tries.sort((u, v) => Math.abs(past(b, ...u) - at) - Math.abs(past(b, ...v) - at));
-  const last = p.length / 2 - 2;
   for (const [dir, room] of tries) {
-    let q = [...p];
     // On past each node the run lands on, the same way, until it lands on none.
+    let q = [...p];
     for (let hit: Rect | undefined = b; hit; hit = blocked(runBox(q, k))) {
       q[2 * k + c] = q[2 * k + 2 + c] = past(hit, dir, room);
     }
     if (!kept(p, q, k - 1) || !kept(p, q, k + 1)) continue;
-    for (const j of [k - 1, k + 1]) {
-      const on = deep && j > 0 && j < last ? blocked(runBox(q, j)) : undefined;
-      if (on) q = slid(q, j, on, blocked, false) ?? q;
-    }
+    if (deep) q = slidNeighbours(q, k, blocked);
     if ([k - 1, k, k + 1].every((j) => !blocked(runBox(q, j)))) return q;
   }
   return undefined;
+}
+
+/** `p` with each inner run beside run `k` that lies on a node slid off it, where one slide can. */
+function slidNeighbours(p: number[], k: number, blocked: (r: Rect) => Rect | undefined): number[] {
+  const last = p.length / 2 - 2;
+  let q = p;
+  for (const j of [k - 1, k + 1]) {
+    const on = j > 0 && j < last ? blocked(runBox(q, j)) : undefined;
+    if (on) q = slid(q, j, on, blocked, false) ?? q;
+  }
+  return q;
 }
