@@ -84,6 +84,10 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   requirementBorderSize:
     "D435, D541, D183: v12 resolved '1' and drew strokeWidth (1 in v12 neo-dark); v13 strokeWidth is 2",
   relationLabelBackground: 'D628: every edge label is filled with the theme background',
+  relationLabelColor:
+    'D713: textColor (#cccccc) where it reads on the tag; v12 drew nodeTextColor (#e0dfdf)',
+  requirementEdgeLabelBackground: 'D715: v12 has no variable; the tag fill, D628',
+  requirementEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
   edgeLabelBackground: 'D628: every edge label is filled with the theme background',
   classEdgeLabelBackground: 'D628, D715: v13 class tag fill; edgeLabelBackground here',
   classEdgeLabelColor: 'D713: v13 ink for the class tag; textColor here, where it reads',

@@ -5,7 +5,15 @@
  * classic themes and `look: neo` for the rest): classic lines 1px, box stroke 1.3, a 20 × 20
  * chevron with 1px strokes; neo lines and marker strokes `strokeWidth`, the chevron at 0.8.
  */
-import { createTheme, loadTheme, THEME_NAMES, THEME_VARIABLES } from '@mermaid-js/core/theme';
+import {
+  contrastRatio,
+  createTheme,
+  loadTheme,
+  parseColor,
+  THEME_NAMES,
+  THEME_VARIABLES,
+  type Rgba,
+} from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { theme as table } from './table.ts';
 
@@ -19,6 +27,8 @@ const OWN = [
   'relationLabelColor',
   'relationStrokeWidth',
   'relationArrowScale',
+  'requirementEdgeLabelBackground',
+  'requirementEdgeLabelColor',
 ];
 const CLASSIC = ['default', 'dark', 'forest', 'neutral', 'base'] as const;
 const REDUX = ['redux', 'redux-dark', 'redux-color', 'redux-dark-color'] as const;
@@ -91,11 +101,20 @@ describe('the requirement theme table (D435)', () => {
       neo: '#333333',
       'neo-dark': '#e0dfdf',
     };
+    // The relation label ink is the theme's textColor on the tag (D713, D715), which reads in
+    // every theme: the same as the box text but in redux-dark, redux-dark-color and neo-dark,
+    // whose nodeTextColor (#e0dfdf, v12's label ink) is not their textColor.
+    const LABEL_INK: Readonly<Record<string, string>> = {
+      ...INK,
+      'redux-dark': '#cccccc',
+      'redux-dark-color': '#cccccc',
+      'neo-dark': '#cccccc',
+    };
     for (const name of THEME_NAMES) {
       const ink = await themed(name);
       expect([ink.value('requirementTextColor'), ink.value('relationLabelColor')], name).toEqual([
         INK[name],
-        INK[name],
+        LABEL_INK[name],
       ]);
     }
     // An author's textColor reaches the text where the theme writes no nodeTextColor.
@@ -116,7 +135,12 @@ describe('the requirement theme table (D435)', () => {
         'relationColor',
         'relationLabelColor',
       ].map((v) => o.value(v))
-    ).toEqual(['#123456', '#654321', '#abcdef', '#fedcba', '#abcdef']);
+    ).toEqual(['#123456', '#654321', '#abcdef', '#fedcba', '#000000']);
+    // The label ink follows textColor where it reads on the tag; #abcdef on redux's light tag
+    // misses AA, so above it falls to black (#1322, D713).
+    expect((await themed('redux', { textColor: '#123456' })).value('relationLabelColor')).toBe(
+      '#123456'
+    );
     const own = await themed('neo', { requirementBackground: '#010203', relationColor: '#040506' });
     expect([own.value('requirementBackground'), own.value('relationColor')]).toEqual([
       '#010203',
@@ -137,5 +161,72 @@ describe('the requirement theme table (D435)', () => {
     }
     const own = await themed('redux-dark', { relationLabelBackground: '#123456' });
     expect(own.value('relationLabelBackground')).toBe('#123456');
+  });
+
+  it('contrasts the relation label ink with the tag fill (#1322, D713)', async () => {
+    const ratio = (t: Awaited<ReturnType<typeof themed>>) =>
+      contrastRatio(
+        parseColor(t.value('relationLabelColor')) as Rgba,
+        parseColor(t.value('relationLabelBackground')) as Rgba
+      );
+    // The issue's repro: the dark theme's light ink on an author's light background.
+    const repro = await themed('dark', { background: '#fff2cc' });
+    expect(ratio(repro)).toBeGreaterThanOrEqual(4.5);
+    // Today's ink where it reads, else black or white, whichever reads better.
+    expect(repro.value('relationLabelColor')).toBe('#000000');
+    expect((await themed('default', { background: '#123456' })).value('relationLabelColor')).toBe(
+      '#ffffff'
+    );
+    // An author's own label ink still wins, readable or not.
+    const own = await themed('dark', { background: '#fff2cc', relationLabelColor: '#eeeeee' });
+    expect(own.value('relationLabelColor')).toBe('#eeeeee');
+  });
+
+  it('reads the tag from requirementEdgeLabel*, under the v12 relationLabel* names (D715)', async () => {
+    // The fill: edgeLabelBackground (or a theme's linkLabelBkg) by default; the diagram-level
+    // variable recolours the tag only, and the v12 name still wins over it.
+    const fill = await themed('default', { requirementEdgeLabelBackground: '#123456' });
+    expect([fill.value('relationLabelBackground'), fill.value('background')]).toEqual([
+      '#123456',
+      '#ffffff',
+    ]);
+    // The ink is contrasted with the fill actually drawn, whichever name set it.
+    expect(fill.value('relationLabelColor')).toBe('#ffffff');
+    const v12 = await themed('default', {
+      requirementEdgeLabelBackground: '#123456',
+      relationLabelBackground: '#fff2cc',
+    });
+    expect([v12.value('relationLabelBackground'), v12.value('relationLabelColor')]).toEqual([
+      '#fff2cc',
+      '#333333',
+    ]);
+    // The ink: an author's requirementEdgeLabelColor reaches the tag, relationLabelColor wins.
+    expect(
+      (await themed('dark', { requirementEdgeLabelColor: '#010203' })).value('relationLabelColor')
+    ).toBe('#010203');
+    expect(
+      (
+        await themed('dark', {
+          requirementEdgeLabelColor: '#010203',
+          relationLabelColor: '#040506',
+        })
+      ).value('relationLabelColor')
+    ).toBe('#040506');
+  });
+
+  it('chooses the relation label ink in CSS on the live tag fill (R-THEME-4)', async () => {
+    const t = createTheme(await loadTheme('default'), { diagram: table });
+    t.color('relationLabelColor');
+    const root = t.rootStyle();
+    // The tag fill chains to the host's --mermaid-background; the ink reads the drawn fill in
+    // CSS, and a host's ink under either name overrides it (D715).
+    expect(root['--_rqlc']).toBe('var(--mermaid-relationLabelColor,var(--_rqec))');
+    expect(root['--_rqec']).toMatch(
+      /^var\(--mermaid-requirementEdgeLabelColor,color\(from color\(from var\(--_rqlb\) srgb-linear /
+    );
+    expect(root['--_rqlb']).toBe('var(--mermaid-relationLabelBackground,var(--_rqeb))');
+    expect(root['--_rqeb']).toBe('var(--mermaid-requirementEdgeLabelBackground,var(--_el))');
+    expect(root['--_el']).toBe('var(--mermaid-edgeLabelBackground,var(--_bg))');
+    expect(root['--_bg']).toBe('var(--mermaid-background,#ffffff)');
   });
 });

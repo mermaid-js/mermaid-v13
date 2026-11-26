@@ -82,6 +82,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   relationLabelBackground: 'D628: every edge label is filled with the theme background',
   classEdgeLabelBackground: 'D628, D715: v13 class tag fill; edgeLabelBackground here',
   classEdgeLabelColor: 'D713: v13 ink for the class tag; textColor here, where it reads',
+  requirementEdgeLabelBackground: 'D715: v12 has no variable; the tag fill, D628',
+  requirementEdgeLabelColor: 'D715: v12 has no variable; the tag ink, D713',
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
   quadrantPointFill:
     'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
