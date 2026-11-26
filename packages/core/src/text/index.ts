@@ -9,9 +9,19 @@ export type { FontTable, TableMeasurerOptions } from './font-tables.ts';
 // `emphasisAt` and `markdownLines`: how a label's emphasis marks and markdown lines are read,
 // for an extension that lays labels out itself (D695) and must read them as core does.
 export { emphasisAt, layoutLabel, markdownLines } from './label.ts';
-export type { BoxRun, LabelMarkup, LabelOptions, MeasuredLabel, Run, SourceLine } from './label.ts';
+export type {
+  BoxRun,
+  LabelMarkup,
+  LabelOptions,
+  LabelRole,
+  MeasuredLabel,
+  Run,
+  SourceLine,
+} from './label.ts';
 export { decodeEntities, entityAt } from './entities.ts';
-export { inlineSpans } from './inline.ts';
+// `PLACEHOLDER`: the character that stands for box `i` in what `LabelRequest.inline` returns
+// (D698), for a whole-label provider that places those boxes itself.
+export { inlineSpans, PLACEHOLDER } from './inline.ts';
 export type {
   InlinePairProvider,
   InlinePatternProvider,

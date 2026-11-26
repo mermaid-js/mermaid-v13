@@ -6,7 +6,7 @@
  * `V12_XSS_CASES` are the attacks from mermaid v12's XSS/GHSA e2e pages
  * (`e2e/platform/xss*.html`, `ghsa*.html`, `css-injection.html`, `e2e/other/pr-check/*.spec.js`):
  * the full flowchart sources for renderer tests, and the hostile parts on their own, by the
- * writer entry point they reach.
+ * writer entry point they reach. `hostileLabelSources()` gives both lists as diagrams to draw.
  */
 
 import type { PathBuilder } from '../path.ts';
@@ -283,6 +283,27 @@ function outlineD(tag: OutlineTag, a: Attrs, p: PathBuilder): string {
     case 'path':
       return a.d ?? '';
   }
+}
+
+/**
+ * The hostile inputs as diagrams, for a test of anything that draws labels itself (an extension's
+ * whole-label provider, say): v12's flowchart sources as written, and each hostile text, of
+ * v12's cases and of {@link PAYLOADS}, as a flowchart with it as a node label and as an edge
+ * label. Each is `[id, source]`. Some are diagrams v13 rejects, as v12 did: a test draws what
+ * draws.
+ */
+export function hostileLabelSources(): readonly (readonly [id: string, source: string])[] {
+  const asLabel = (text: string): string => {
+    const label = text.replace(/"/g, '#quot;');
+    return `flowchart LR\n  A["${label}"] -->|"${label}"| B`;
+  };
+  return [
+    ...V12_XSS_CASES.flatMap(({ id, source, text = [] }) => [
+      ...(source === undefined ? [] : [[id, source] as const]),
+      ...text.map((t, i) => [`${id} (text ${i})`, asLabel(t)] as const),
+    ]),
+    ...PAYLOADS.map((p, i) => [`payload ${i}`, asLabel(p)] as const),
+  ];
 }
 
 /**

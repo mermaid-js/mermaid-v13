@@ -16,7 +16,12 @@ import {
   foldedTypeText,
 } from '@mermaid-js/core/svg/folded';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  type FontKey,
+  type LabelRole,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
@@ -125,7 +130,8 @@ interface Measure {
     markdown: boolean,
     f: FontKey,
     max: number,
-    bits?: number
+    bits?: number,
+    role?: LabelRole
   ) => MeasuredLabel;
   /** `curveKind` for this render: an unknown name warns once (D602). */
   readonly curveOf: (curve: string | undefined) => CurveKind;
@@ -158,7 +164,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
     // `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
-    label: (text, markdown, f, max, bits = 0) =>
+    label: (text, markdown, f, max, bits = 0, role = 'node') =>
       layoutLabel(
         text,
         f,
@@ -168,6 +174,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
           markdown,
           style: bits,
           inline,
+          role,
         }
       ),
     curveOf: curveReporter((w) => ctx.warn(w)),
@@ -265,7 +272,7 @@ function nodeViews(
   for (const view of groups) {
     const sg = subgraphs.get(view.id)!;
     const [f, bits] = textStyle(view.style, m.font);
-    view.label = m.label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
+    view.label = m.label(sg.title, sg.labelType === 'markdown', f, Infinity, bits, 'group');
   }
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
@@ -379,7 +386,7 @@ function edgeViews(
       id,
       source,
       target,
-      label: m.label(e.text, e.labelType === 'markdown', f, edgeWrap, bits),
+      label: m.label(e.text, e.labelType === 'markdown', f, edgeWrap, bits, 'edge'),
       style,
       start,
       end,
