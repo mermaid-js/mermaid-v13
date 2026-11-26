@@ -122,7 +122,6 @@ export const LIGHT_RULES: ThemeRuleTable = {
   canvasItemBkg: 'primaryColor',
   canvasItemBkg3: 'tertiaryColor',
   canvasNodeBkg: 'mainBkg',
-  bandBkg: 'tertiaryColor',
   guideLineColor: 'lineColor',
 };
 

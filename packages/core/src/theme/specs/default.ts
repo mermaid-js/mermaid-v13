@@ -48,8 +48,7 @@ const theme: ThemeSpec = {
     // colours), the inverted text inks, and the note and error colours, which darkMode leaves
     // alone. Not the arrowhead: v12's `.marker` draws it in lineColor (D575).
     mainBkg: '#ececff',
-    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
-    bandBkg: '#f9ffec',
+    // v12's constructor line colour (`guideLineColor` in vocabulary.ts).
     guideLineColor: '#333333',
     border1: '#9370db',
     primaryBorderColor: '#c7c7f1',

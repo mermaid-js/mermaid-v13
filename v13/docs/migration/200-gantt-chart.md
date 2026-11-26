@@ -101,7 +101,9 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   `neutral` is `#c5c5c5` (v12 `#bdbdbd`), `forest` `#aed357` (v12 `#6eaa49`), `base` `#ffda8b`
   (v12 `#f6f9ff`) and `dark` `#4c4f4f` (v12 `#b4ac76`). An author's `sectionBkgColor` wins in
   every theme; an author's `mainBkg` also moves the band, and `base`'s band no longer follows
-  `tertiaryColor`. The `bandBkg` variable no longer reaches gantt.
+  `tertiaryColor`. The v13-only `bandBkg` variable is removed (it never existed in v12): a
+  `themeVariables.bandBkg` is ignored without a warning, like any unknown name; set
+  `sectionBkgColor`.
 - **A `mainBkg` override moves the bars (D657):** an author's `mainBkg` recolours the task
   bars, the active bar and the third band in every classic theme, where v12's `default`,
   `forest` and `neutral` kept their own; under `dark` the text on the active bar follows that

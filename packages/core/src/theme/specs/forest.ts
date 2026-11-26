@@ -56,8 +56,7 @@ const theme: ThemeSpec = {
     // tertiary one from its primaryColor), and the note and error colours, which darkMode leaves
     // alone.
     mainBkg: '#cde498',
-    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
-    bandBkg: '#e1efc0',
+    // v12's constructor line colour (`guideLineColor` in vocabulary.ts).
     guideLineColor: '#000000',
     border1: '#13540c',
     primaryBorderColor: '#abb594',

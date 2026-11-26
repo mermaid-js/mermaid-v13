@@ -103,7 +103,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `canvasItemBkg` | `--mermaid-canvasItemBkg` | derived | color | `primaryColor` | `primaryColor` | default | quadrant, venn |
 | `canvasItemBkg3` | `--mermaid-canvasItemBkg3` | derived | color | `tertiaryColor` | `tertiaryColor` | default | sequence, venn |
 | `canvasNodeBkg` | `--mermaid-canvasNodeBkg` | derived | color | `mainBkg` | `mainBkg` | default | state |
-| `bandBkg` | `--mermaid-bandBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | gantt |
 | `guideLineColor` | `--mermaid-guideLineColor` | derived | color | `lineColor` | `lineColor` | default, dark, forest, neutral | gantt |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
