@@ -104,6 +104,21 @@ function expectClean(points: readonly RoutePoint[], what: string): void {
 
 const legLength = (p: Point, q: Point): number => Math.abs(p.x - q.x) + Math.abs(p.y - q.y);
 
+// Half the px profile's `portPitch`: the room a label moved beside its route keeps (D718).
+const ACROSS = 8;
+
+// Whether a label of `size` at `at` sits beside the route: no leg runs through it, and one passes
+// within `ACROSS` of it.
+function beside(points: readonly Point[], at: Point, size: { width: number; height: number }) {
+  const gaps = points.slice(1).map((q, i) => {
+    const p = points[i]!;
+    const cx = Math.max(Math.min(at.x, Math.max(p.x, q.x)), Math.min(p.x, q.x));
+    const cy = Math.max(Math.min(at.y, Math.max(p.y, q.y)), Math.min(p.y, q.y));
+    return Math.max(Math.abs(cx - at.x) - size.width / 2, Math.abs(cy - at.y) - size.height / 2);
+  });
+  return Math.min(...gaps) >= -EPS && Math.min(...gaps) <= ACROSS + EPS;
+}
+
 function expectSides(g: LayoutGraph, m: LayoutModel, id: string, s: Side, t: Side): void {
   const e = g.edges.find((x) => x.id === id)!;
   const placed: LayoutModelEdge = m.edges.get(id)!;
@@ -219,19 +234,16 @@ describe('layered reads LayoutEdge.sides as hints (D503)', () => {
     }
   });
 
-  it.each(ROUTINGS)('keeps the label where layered put it (%s)', (routing) => {
+  // The route no longer goes through layered's label point, which turned it back on itself; the
+  // label moves beside the route instead, clear of the nodes (D718).
+  it.each(ROUTINGS)('puts the label beside the route drawn again (%s) (D718)', (routing) => {
     for (const s of SIDES) {
       const g = graph(chain({ source: s, target: 'right' }, 'ab', true), 'TB', routing);
       const m = layered(g);
-      const free = layered(graph(chain(undefined, 'ab', true), 'TB', routing));
       expect(validateLayout(g, m)).toEqual([]);
       expectSides(g, m, 'ab', s, 'right');
-      const rel = (x: LayoutModel): Point => {
-        const a = x.nodes.get('a')!;
-        const l = x.edges.get('ab')!.label!;
-        return { x: l.x - a.x, y: l.y - a.y };
-      };
-      expect(rel(m), s).toEqual(rel(free));
+      const { points, label } = m.edges.get('ab')!;
+      expect(beside(points, label!, g.edges[0]!.label!), s).toBe(true);
     }
   });
 
@@ -268,11 +280,6 @@ describe('layered reads LayoutEdge.sides as hints (D503)', () => {
       expect(len(pts[n - 1]!, pts[n - 2]!)).toBeGreaterThanOrEqual(marker.length);
     }
   });
-
-  it.todo(
-    'spreads every end on a side apart: dropped for size (T0b rework); a moved end goes to the ' +
-      "side's middle and may meet another end there (GAPS T0b)"
-  );
 
   it('meets left and right sides at anchorY when the node sets one (D501)', () => {
     const g = graph(chain({ source: 'right', target: 'left' }));
@@ -331,11 +338,26 @@ describe('layered reads LayoutEdge.sides as hints (D503)', () => {
     expect(end.x).toBeCloseTo(box.x - box.width / 2);
   });
 
-  it('changes nothing where the sides named are the ones layered took', () => {
+  // Every named-side route is drawn again (D718), so that it is a wall to the ones after it and
+  // its end is spread with the others on its side; layered's placement stays.
+  it('draws an edge again, square, where the sides named are the ones layered took (D718)', () => {
     for (const dir of DIRS) {
       const free = layered(graph(chain(), dir));
       const ports = free.edges.get('ab')!.ports;
-      expect(plain(layered(graph(chain({ ...ports }), dir)))).toEqual(plain(free));
+      const g = graph(chain({ ...ports }), dir);
+      const m = layered(g);
+      expect(validateLayout(g, m), dir).toEqual([]);
+      expect(placement(m), dir).toEqual(placement(free));
+      expectSides(g, m, 'ab', ports.source, ports.target);
+      expectClean(m.edges.get('ab')!.points, dir);
+    }
+  });
+
+  it('changes nothing where no edge names a side', () => {
+    for (const dir of DIRS) {
+      const g = graph(chain(), dir);
+      const named = graph(chain({}), dir);
+      expect(plain(layered(named)), dir).toEqual(plain(layered(g)));
     }
   });
 
@@ -501,7 +523,7 @@ describe('layered side hints: review findings (T0b)', () => {
   });
 
   it.each(SIDES.flatMap((s) => SIDES.filter((t) => t !== s).map((t) => [s, t] as const)))(
-    'draws a self-loop from %s to %s cleanly, its label on the loop (5)',
+    'draws a self-loop from %s to %s cleanly, its label beside the loop (5)',
     (s, t) => {
       const label = { width: 20, height: 12 };
       const g = graph([
@@ -520,18 +542,8 @@ describe('layered side hints: review findings (T0b)', () => {
       if (free.source === s && free.target === t) return;
       expectClean(placed.points, 'aa');
       expect(crossesEnd(g, m, 'aa')).toBe(false);
-      // The label touches the route: some leg passes within its box.
-      const at = placed.label!;
-      const near = placed.points.some((q, i) => {
-        const p = placed.points[i - 1];
-        if (!p) return false;
-        const cx = Math.max(Math.min(at.x, Math.max(p.x, q.x)), Math.min(p.x, q.x));
-        const cy = Math.max(Math.min(at.y, Math.max(p.y, q.y)), Math.min(p.y, q.y));
-        return (
-          Math.abs(cx - at.x) <= label.width / 2 + 1 && Math.abs(cy - at.y) <= label.height / 2 + 1
-        );
-      });
-      expect(near).toBe(true);
+      // The label sits beside the loop (D718).
+      expect(beside(placed.points, placed.label!, label)).toBe(true);
     }
   );
 

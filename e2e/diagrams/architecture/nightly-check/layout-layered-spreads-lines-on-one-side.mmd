@@ -1,0 +1,19 @@
+---
+description: >-
+  Issue #1212 (D718): under `layout: layered`, every line is drawn again at right angles from the
+  sides it names, kept off the lines drawn before it. Hub's two lines on its left leave it apart,
+  and so do its two on the right; no two lines share a run, and each label sits beside its own
+  line, clear of every line and service.
+config:
+  layout: layered
+---
+architecture-beta
+    service hub(server)[Hub]
+    service a(database)[A]
+    service b(database)[B]
+    service c(disk)[C]
+    service d(internet)[D]
+    hub:L -[reads]- R:a
+    hub:L -- R:b
+    hub:R -[writes]- L:c
+    hub:R -- L:d
