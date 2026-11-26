@@ -125,13 +125,20 @@ function drawExpression(parts: Parts, e: RailroadExpressionLayout, translated = 
   w.close();
 }
 
-/** A text on its anchor: a box's centred both ways (v12's CSS), a rule name on its baseline. */
+/**
+ * A text on its anchor: a box's centred both ways (v12's CSS), a rule name on its baseline. A
+ * special that draws formatting (D710) is drawn from its laid-out lines, centred on the anchor.
+ */
 function drawText(
   w: SvgWriter,
   t: PlacedText,
   id: string,
   attrs: Parameters<SvgWriter['open']>[1]
 ): void {
+  if (t.label) {
+    w.label(t.label, t.x, t.y, { ...attrs, 'data-id': id });
+    return;
+  }
   const centred = t.anchor === 'middle';
   w.open('text', {
     ...attrs,

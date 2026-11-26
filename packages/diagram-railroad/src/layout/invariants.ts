@@ -26,7 +26,8 @@
  *   primitives, half the stroke included;
  * - with a measurer: every text measures what it says, the rule name at the bold weight (D514),
  *   and each box is its text plus `padding` on every side; in px a blank terminal measures
- *   nothing and a terminal's tab or line break measures as the space it is drawn as (#774).
+ *   nothing and a terminal's tab or line break measures as the space it is drawn as (#774); a
+ *   special that draws formatting is its laid-out label (D710).
  */
 import { decodeEntities, type Measurer } from '@mermaid-js/core/text';
 import type { RailroadLayoutConfig } from '../config.ts';
@@ -35,6 +36,7 @@ import { visitExpressions } from './geometry.ts';
 import { BOLD_WEIGHT, CELL_MAIN_CLEARANCE, metricsFor, type RailroadMetrics } from './metrics.ts';
 import { drawnText, isBlankText } from './text.ts';
 import type {
+  PlacedText,
   Point,
   RailroadExpressionLayout,
   RailroadLayout,
@@ -421,20 +423,32 @@ function measuredViolations(
   const px = layout.units !== 'cell';
   const walk = (e: RailroadExpressionLayout) => {
     if (e.text && e.box) {
-      // A terminal in px measures as drawn, a blank one as nothing (#774).
-      const literal = px && e.kind === 'terminal';
-      const blank = literal && isBlankText(e.text.text);
-      const drawn = literal ? drawnText(e.text.text) : e.text.text;
-      const w = blank ? 0 : measurer.width(drawn, text, 0);
+      const [w, h] = textSize(e, e.text, px, (s) => measurer.width(s, text, 0), lineHeight);
       if (!near(e.text.box.width, w) || !near(e.box.width, w + 2 * p)) {
         out.push(`${e.ast}: its text measures ${w}, the box is ${e.box.width} wide`);
       }
-      if (!near(e.box.height, (blank ? 0 : lineHeight) + 2 * p))
-        out.push(`${e.ast}: the box is not one line high`);
+      if (!near(e.box.height, h + 2 * p)) out.push(`${e.ast}: the box is not its text's height`);
     }
     e.children.forEach(walk);
   };
   walk(rule.definition);
+}
+
+/**
+ * A box's text size: a special that draws formatting (D710) is its laid-out label; a terminal
+ * in px measures as drawn, a blank one as nothing (#774); any other text is one measured line.
+ */
+function textSize(
+  e: RailroadExpressionLayout,
+  t: PlacedText,
+  px: boolean,
+  width: (s: string) => number,
+  lineHeight: number
+): [number, number] {
+  if (t.label) return [t.label.width, t.label.height];
+  const literal = px && e.kind === 'terminal';
+  if (literal && isBlankText(t.text)) return [0, 0];
+  return [width(literal ? drawnText(t.text) : t.text), lineHeight];
 }
 
 /**

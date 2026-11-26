@@ -427,3 +427,70 @@ describe('blank and spaced terminals (#774)', () => {
       expect(t.getAttr(kids(t, g)[1]!, 'xml:space')).toBeUndefined();
   });
 });
+
+// D710 (spec #1333 T3): terminals and names stay literal, as D268 keeps identifiers; a special
+// sequence follows the label rule (`<br>`, the drawn tags, entities, markdown only in a markdown
+// string), and its box is sized from the measured label.
+describe('label markup (D710)', () => {
+  const box = (t: SvgTree, g: SvgNode) => {
+    const [rect, text] = kids(t, g);
+    return {
+      text: textOf(t, text!),
+      tspans: kids(t, text!).map((s) => ({
+        text: textOf(t, s),
+        weight: t.getAttr(s, 'font-weight'),
+        style: t.getAttr(s, 'font-style'),
+      })),
+      width: Number(t.getAttr(rect!, 'width')),
+      height: Number(t.getAttr(rect!, 'height')),
+    };
+  };
+  const specials = async (...texts: string[]) => {
+    const args = texts.map((s) => `special(${JSON.stringify(s)})`).join(', ');
+    const { t } = await tree(`railroad-beta\na = sequence(${args}, special("plain")) ;\n`);
+    return t.find({ class: 'railroad-special' }).map((g) => box(t, g));
+  };
+
+  it('draws terminals, nonterminals and rule names as written', async () => {
+    const { t } = await tree(
+      'railroad-beta\na = sequence(terminal("<b>x</b>"), nonterminal("<i>y</i><br>z"), terminal("**w**")) ;\n'
+    );
+    const terminals = t.find({ class: 'railroad-terminal' }).map((g) => box(t, g));
+    expect(terminals.map((b) => [b.text, b.tspans.length])).toEqual([
+      ['<b>x</b>', 0],
+      ['**w**', 0],
+    ]);
+    const [nt] = t.find({ class: 'railroad-nonterminal' }).map((g) => box(t, g));
+    expect([nt!.text, nt!.tspans.length]).toEqual(['<i>y</i><br>z', 0]);
+  });
+
+  it('breaks a special at <br> and grows its box by a line', async () => {
+    const [br, plain] = await specials('a<br>b');
+    expect(br!.tspans.map((s) => s.text)).toEqual(['? a', 'b ?']);
+    expect(br!.height).toBeGreaterThan(plain!.height);
+  });
+
+  it('draws a special’s <b> and <i> bold and italic, without the tags', async () => {
+    const [s] = await specials('<b>bold</b> and <i>it</i>');
+    expect(s!.text).toBe('? bold and it ?');
+    expect(s!.tspans.find((x) => x.text === 'bold')?.weight).toBe('bold');
+    expect(s!.tspans.find((x) => x.text === 'it')?.style).toBe('italic');
+  });
+
+  it('renders a special in backticks as markdown; without them, asterisks stay', async () => {
+    const [md, literal] = await specials('`**bold** *it*`', '**x**');
+    expect(md!.text).toBe('? bold it ?');
+    expect(md!.tspans.find((x) => x.text === 'bold')?.weight).toBe('bold');
+    expect(literal!.text).toBe('? **x** ?');
+    expect(literal!.tspans).toEqual([]);
+  });
+
+  it('sizes a formatted special’s box from the measured label', async () => {
+    const { layout } = await tree('railroad-beta\na = special("<b>wide bold text</b>") ;\n');
+    const e = layout.rules[0]!.definition;
+    const p = layout.config.lengths.padding;
+    expect(e.text?.label).toBeDefined();
+    expect(e.box!.width).toBeCloseTo(e.text!.label!.width + 2 * p, 6);
+    expect(e.box!.height).toBeCloseTo(e.text!.label!.height + 2 * p, 6);
+  });
+});

@@ -19,16 +19,23 @@
  * choices v12 overshot change.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { decodeEntities, type FontKey, type Measurer } from '@mermaid-js/core/text';
+import {
+  decodeEntities,
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+  type Measurer,
+} from '@mermaid-js/core/text';
 import {
   railroadConfig,
   railroadConfigWarning,
   railroadSection,
   type RailroadLayoutConfig,
 } from '../config.ts';
-import type { RailroadModel, RailroadNode, RailroadRule } from '../model.ts';
+import type { RailroadModel, RailroadNode, RailroadRule, RailroadSpecial } from '../model.ts';
 import { Box, shifted, Track, visitRule } from './geometry.ts';
-import { drawnText, isBlankText } from './text.ts';
+import { drawnText, isBlankText, isFormatted, oneLine, plainText } from './text.ts';
 import { BOLD_WEIGHT, NORMAL_WEIGHT, RAILROAD_METRICS, type RailroadMetrics } from './metrics.ts';
 import type {
   PlacedText,
@@ -240,7 +247,7 @@ class Placer {
       case 'nonterminal':
         return this.leaf(node, node.name, 0);
       case 'special':
-        return this.leaf(node, `? ${node.text} ?`, 0, this.m.specialDash);
+        return this.special(node);
       case 'sequence':
         return this.sequence(
           node,
@@ -267,16 +274,13 @@ class Placer {
     node: RailroadNode,
     written: string,
     cornerRadius: number,
-    dash?: readonly [number, number]
+    dash?: readonly [number, number],
+    drawn?: { readonly text: string; readonly label?: MeasuredLabel }
   ): Sized {
-    const text = decodeEntities(written);
+    const text = drawn?.text ?? decodeEntities(written);
+    const label = drawn?.label;
     const { padding } = this.o;
-    // A terminal in px is measured as the SVG draws it (#774): a blank one as nothing, so its
-    // box is the padding alone (v12's empty bbox). The text output keeps its cell of room.
-    const literal = node.type === 'terminal' && this.cells.measurer === undefined;
-    const blank = literal && isBlankText(text);
-    const tw = blank ? 0 : this.width(literal ? drawnText(text) : text);
-    const th = blank ? 0 : this.lineHeight;
+    const [tw, th] = label ? [label.width, label.height] : this.textSize(node, text);
     const width = tw + 2 * padding;
     const h = th + 2 * padding;
     return {
@@ -296,8 +300,41 @@ class Placer {
         y: h / 2,
         anchor: 'middle',
         box: { x: width / 2 - tw / 2, y: h / 2 - th / 2, width: tw, height: th },
+        ...(label ? { label } : {}),
       },
     };
+  }
+
+  /**
+   * A one-line text's width and height. A terminal in px is measured as the SVG draws it (#774):
+   * a blank one as nothing, so its box is the padding alone (v12's empty bbox). The text output
+   * keeps its cell of room.
+   */
+  private textSize(node: RailroadNode, text: string): [number, number] {
+    const literal = node.type === 'terminal' && this.cells.measurer === undefined;
+    if (literal && isBlankText(text)) return [0, 0];
+    return [this.width(literal ? drawnText(text) : text), this.lineHeight];
+  }
+
+  /**
+   * A special, `? text ?` in a dashed box (L473-499). Its text follows the label rule (D710):
+   * `<br>`, the drawn tags and character references, and Markdown only in a markdown string.
+   * A text that draws formatting is laid out in lines and its box sized from them (in px; the
+   * text output draws its plain text). Any other is drawn as one string, as before: its
+   * entities decoded, a markdown string without its backticks. The SVG draws a special on one
+   * line, so a line break or tab written in it is a space.
+   */
+  private special(node: RailroadSpecial): Sized {
+    const { text: source, markup } = markdownString(node.text);
+    const written = `? ${source} ?`;
+    const label = layoutLabel(oneLine(written), this.font, Infinity, this.measurer, { markup });
+    const dash = this.m.specialDash;
+    if (isFormatted(label)) {
+      const text = plainText(label);
+      return this.leaf(node, written, 0, dash, this.cells.measurer ? { text } : { text, label });
+    }
+    const text = markup === 'plain' ? decodeEntities(written) : plainText(label);
+    return this.leaf(node, written, 0, dash, { text });
   }
 
   /** Elements in a row on one track, `horizontalSeparation` apart (L167-217). */
