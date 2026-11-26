@@ -78,7 +78,7 @@ import { offHead } from './heads.ts';
 import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
 import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
 import { crowdedEnds, LAST_LEG, type Pinned } from './spread.ts';
-import { projectLabelOntoStraightenedRun, straightenEdgeTerminals } from './straighten.ts';
+import { straightenRoutes } from './straighten.ts';
 import { slideOffTitles, type SlideEdge, type SlideNode } from './titles.ts';
 import { layoutSync } from './sync.ts';
 import { ROOT, findCommonAncestor, orderNestedEdgeEnds, type Tree } from './tree.ts';
@@ -725,22 +725,28 @@ function elkLabel(built: Built, edgeId: string, kind: keyof typeof LABEL_KINDS):
 type Routes = Map<string, { points: Point[]; placedByElk: boolean }>;
 
 /**
- * straightenEdges (on by default): the step at an edge's ends goes, both ports stay. Rewrites
- * `routes`; returns where each main label ELK placed on a run that moved went with it.
+ * straightenEdges (`jogs`, on by default): the step at an edge's ends goes, both ports stay. And
+ * a box too small for ELK's corner margins moves onto its ends (D722). Rewrites `routes` and
+ * `rects`; returns where each main label ELK placed on a run that moved went with it.
  */
-function straighten(graph: LayoutGraph, built: Built, routes: Routes): Map<string, Point> {
-  const labelMoved = new Map<string, Point>();
+function straighten(
+  graph: LayoutGraph,
+  built: Built,
+  routes: Routes,
+  rects: Map<string, Rect>,
+  jogs: boolean
+): Map<string, Point> {
   const items = graph.edges.map((e) => {
     const { points, placedByElk } = routes.get(e.id)!;
     const c = placedByElk && e.label ? elkLabel(built, e.id, 'label') : undefined;
-    return { id: e.id, points, ...(c && e.label ? { ...c, label: true, ...e.label } : {}) };
+    const fixed = !placedByElk || e.source === e.target;
+    return { ...e, fixed, points, ...(c && e.label ? { ...c, label: true, ...e.label } : {}) };
   });
-  for (const { edge, runs } of straightenEdgeTerminals(items, graph.spacing.edge)) {
-    routes.get(edge.id)!.points = edge.points;
-    if (edge.x === undefined || edge.y === undefined) continue;
-    const moved = projectLabelOntoStraightenedRun({ x: edge.x, y: edge.y }, runs);
-    if (moved) labelMoved.set(edge.id, moved);
-  }
+  const free = (id: string) =>
+    built.nodes.get(id)!.layoutOptions?.['elk.portConstraints'] !== 'FIXED_POS';
+  const o = { jogs, labelGap: graph.spacing.edge, boxes: rects, free, corner: CORNER };
+  const labelMoved = straightenRoutes(items, o);
+  for (const edge of items) routes.get(edge.id)!.points = edge.points;
   return labelMoved;
 }
 
@@ -897,8 +903,7 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
     routes.set(e.id, { points, placedByElk: routed && built.layered });
   }
 
-  const labelMoved =
-    elk.straightenEdges === false ? new Map<string, Point>() : straighten(graph, built, routes);
+  const labelMoved = straighten(graph, built, routes, rects, elk.straightenEdges !== false);
   offTitles(graph, built, rects, routes, labelMoved);
 
   const { dx, dy, width, height } = extent(

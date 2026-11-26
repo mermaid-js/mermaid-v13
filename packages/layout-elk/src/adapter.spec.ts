@@ -544,3 +544,26 @@ describe('self-loops reach `metrics.loop` out before they turn (#1233, D719)', (
     }
   });
 });
+
+describe('a box too small for the corner margins sits centred on its lone ends (#1303, D722)', () => {
+  // Start and end states are 14 wide, less than ELK's two 12 px corner margins. The issue showed
+  // `[*] --> [*]` 4 px off; under a wider state ELK put the edge on that state's centre instead.
+  it.each([
+    ['state-diagram-v2/nightly-check/elk/elk-start-end-edge-centering', 'root_start', 'root_end'],
+    [
+      'state-diagram-v2/pr-check/composite-with-a-loop-starts-on-its-start-state',
+      'apa_start',
+      'Still',
+    ],
+  ])('%s: the edge from %s runs through both centres', async (path, from, to) => {
+    const { model } = await laidOut(fixture(path));
+    const a = model.nodes.get(from)!;
+    const b = model.nodes.get(to)!;
+    // In both, `edge0` is the first transition, the one out of the start state.
+    expect(a.width).toBeLessThan(24);
+    for (const p of model.edges.get('edge0')!.points) {
+      expect(Math.abs(p.x - a.x)).toBeLessThan(0.5);
+      expect(Math.abs(p.x - b.x)).toBeLessThan(0.5);
+    }
+  });
+});
