@@ -149,6 +149,25 @@ describe('pie theme variables against v12 12.2.0 (#325, D221, D228)', () => {
     }
   );
 
+  // D334: the slots v12 reads from `cScale` follow an author's `cScale` override (#1202).
+  it.each(THEME_NAMES.map((n) => [n]))(
+    '%s: the slices follow a cScale1 override as in v12',
+    async (name) => {
+      const themeVariables = { cScale1: '#ff0000' };
+      const old = v12Vars(name, themeVariables);
+      const theme = createTheme(await loadTheme(name), {
+        diagram: DIAGRAM_TABLES.pie,
+        themeVariables,
+        cssVariables: false,
+      });
+      const exception = Object.keys(DIFFERENCES[name] ?? {});
+      const names = SLOTS.filter((n) => !exception.includes(n));
+      expect(Object.fromEntries(names.map((n) => [n, now(theme, n)]))).toEqual(
+        Object.fromEntries(names.map((n) => [n, then(old, n)]))
+      );
+    }
+  );
+
   it('base: the slots v12 derives by lightness follow custom base colours', async () => {
     const themeVariables = {
       primaryColor: '#1d3557',
