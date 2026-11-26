@@ -332,17 +332,25 @@ function checkFragment(node: unknown, depth = 0): void {
   const f = node as { tag?: unknown; attrs?: unknown; children?: unknown } | null;
   if (typeof f !== 'object' || f === null || typeof f.tag !== 'string' || !isAllowedTag(f.tag))
     throw new TypeError(`a node holds ${describe(f)}, not an allowed SVG element`);
-  if (f.attrs !== undefined) {
-    if (typeof f.attrs !== 'object' || f.attrs === null)
-      throw new TypeError(`<${f.tag}> has attrs that are not an object`);
-    for (const name of Object.keys(f.attrs))
-      if (!isAllowedAttr(name))
-        throw new TypeError(`${name} on <${f.tag}> is not an allowed attribute`);
-  }
-  if (f.children === undefined) return;
-  if (!Array.isArray(f.children))
-    throw new TypeError(`<${f.tag}> has children that are not an array`);
-  for (const child of f.children as unknown[])
+  checkAttrs(f.tag, f.attrs);
+  checkChildren(f.tag, f.children, depth);
+}
+
+/** The attributes of a `<tag>` fragment: none, or an object of allowed names. */
+function checkAttrs(tag: string, attrs: unknown): void {
+  if (attrs === undefined) return;
+  if (typeof attrs !== 'object' || attrs === null)
+    throw new TypeError(`<${tag}> has attrs that are not an object`);
+  for (const name of Object.keys(attrs))
+    if (!isAllowedAttr(name))
+      throw new TypeError(`${name} on <${tag}> is not an allowed attribute`);
+}
+
+/** The children of a `<tag>` fragment at `depth`: none, or an array of strings and fragments. */
+function checkChildren(tag: string, children: unknown, depth: number): void {
+  if (children === undefined) return;
+  if (!Array.isArray(children)) throw new TypeError(`<${tag}> has children that are not an array`);
+  for (const child of children as unknown[])
     if (typeof child !== 'string') checkFragment(child, depth + 1);
 }
 
@@ -611,11 +619,12 @@ export class HookRunner<El = unknown, R = unknown> {
       const { pending: asked, ...rest } = options ?? {};
       const request: GlyphRequest = { ...rest, size, warn, iconPacks, scratch };
       let unresolved = false;
-      let pending = false;
+      // A placeholder counts only for a caller that asks.
+      let pending: true | undefined;
       for (const p of list) {
         try {
           const glyph = p.glyphs!.glyph(name, request);
-          if (glyph === 'pending') pending = true;
+          if (glyph === 'pending') pending = asked;
           else if (glyph) return (checkFragment(glyph), glyph);
           else if (glyph === null) unresolved = true;
         } catch (e) {
@@ -623,7 +632,7 @@ export class HookRunner<El = unknown, R = unknown> {
         }
       }
       if (unresolved) return null;
-      return asked && pending ? 'pending' : undefined;
+      return pending ? 'pending' : undefined;
     };
     return lookup as IconLookup;
   }
