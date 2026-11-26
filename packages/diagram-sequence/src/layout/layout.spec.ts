@@ -135,7 +135,8 @@ describe('sequence layout in px follows v12', () => {
     expect([m!.startX, m!.stopX]).toEqual([76, 271]);
     // v12 puts the line at the row top + 10 + one line + the text height - 10 + boxMargin.
     expect(m!.y - 2 * m!.label!.text.lineHeight).toBeCloseTo(65 + 10);
-    expect(m!.label!.y).toBe(75);
+    // Its baseline sits 1 em less half the wrap padding above the line (#1237, D723).
+    expect(m!.y - m!.label!.y - m!.label!.text.baseline).toBeCloseTo(16 - 5);
     // Mirrored boxes start two boxMargins below the last row; the viewBox is v12's.
     expect(b!.bottom).toBe(m!.y + 20);
     expect([l.bounds.x, l.bounds.width]).toEqual([-50, 450]);
@@ -198,6 +199,54 @@ describe('sequence layout in px follows v12', () => {
   it('numbers messages from autonumber until it is turned off', () => {
     const l = lay(FIXTURES.numbersAndWrap!);
     expect(l.messages.map((m) => m.number?.value)).toEqual([10, 15, undefined, undefined]);
+  });
+});
+
+describe('message label height above its line (#1237, D723)', () => {
+  // mermaid 12.2.0 (the conformance oracle's dist) in Chromium at 16 px: the last line's
+  // alphabetic baseline sits 10.81 px above the message line in `default` (6.81 px from its
+  // glyph box) and 10.86 px in `redux`, for every arrow and a curved self message; 0.81 px for a
+  // self message with `rightAngles`, whose line v12 draws a boxMargin higher. v13's `redux`
+  // draws messages at 14 px, so it is measured here at v12's 16.
+  const V12_GAP: Readonly<Record<ThemeName, number>> = { default: 10.81, redux: 10.86 };
+  const AT_16 = { fontSize: '16px' };
+  const lastBaseline = (l: SequenceLayout['messages'][number]): number => {
+    const t = l.label!.text;
+    const n = t.lines.length;
+    return l.label!.y + (t.baselines?.[n - 1] ?? (n - 1) * t.lineHeight + t.baseline);
+  };
+  const ARROWS = [
+    ['solid', msg('A', 'B', 'Hello John, how are you?', 'solid')],
+    ['dotted', msg('B', 'A', 'Great, thanks!', 'dotted')],
+    ['async', msg('A', 'B', 'See you later!', 'solid_point')],
+    ['self', msg('B', 'B', 'self message', 'solid')],
+  ] as const;
+
+  for (const theme of THEMES)
+    for (const lines of ['one line', 'two lines'] as const)
+      for (const [kind, m] of ARROWS)
+        it(`${kind}, ${lines}, ${theme}: v12's gap, within 1 px`, () => {
+          const text = lines === 'one line' ? m.text : m.text.replace(' ', '<br>');
+          const model = modelOf([part('A'), part('B')], [{ ...m, text }]);
+          const l = lay(model, pxProfile, tableMeasurer, {}, theme, AT_16);
+          const [placed] = l.messages;
+          expect(placed!.label!.text.lines).toHaveLength(lines === 'one line' ? 1 : 2);
+          const gap = placed!.y - lastBaseline(placed!);
+          expect(Math.abs(gap - V12_GAP[theme])).toBeLessThanOrEqual(1);
+        });
+
+  it('a self message with rightAngles keeps v12 text over its higher line', () => {
+    const l = lay(modelOf([part('A')], [msg('A', 'A', 'self')]), pxProfile, tableMeasurer, {
+      rightAngles: true,
+    });
+    const [placed] = l.messages;
+    expect(Math.abs(placed!.y - lastBaseline(placed!) - 0.81)).toBeLessThanOrEqual(1);
+  });
+
+  it('leaves cells as they were: the label on the row above its line', () => {
+    const l = lay(hello, cellProfile(), cellMeasurer);
+    const [m] = l.messages;
+    expect([m!.label!.y, m!.y]).toEqual([4, 5]);
   });
 });
 

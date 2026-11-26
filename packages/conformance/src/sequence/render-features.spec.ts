@@ -104,6 +104,49 @@ describe('messages', () => {
   });
 });
 
+describe('message label above its line (#1237, D723)', () => {
+  // mermaid 12.2.0 (the oracle's dist) in Chromium, `default` theme at 16 px, measured the
+  // same way: every message's last alphabetic baseline sits 10.81 px above its line.
+  const V12_GAP = 10.81;
+  const num = (s: string, re: RegExp): number => Number(re.exec(s)?.[1]);
+  /** Each message's line y less its last baseline, in document order. */
+  const gaps = (svg: string): number[] =>
+    svg
+      .split('<g class="message"')
+      .slice(1)
+      .map((g) => {
+        const text = /<text class="messageText".*?<\/text>/.exec(g)?.[0] ?? '';
+        const baseline = Number([...text.matchAll(/ y="([\d.]+)"/g)].at(-1)?.[1]);
+        const line = g.includes('<line class="messageLine')
+          ? num(g, /<line class="messageLine\d"[^>]* y1="([\d.]+)"/)
+          : num(g, /<path class="messageLine\d"[^>]* d="M[\d.]+,([\d.]+)/);
+        return line - baseline;
+      });
+  let classic: Mermaid;
+  beforeAll(async () => {
+    classic = sequenceApi('default');
+    await classic.render('warm', 'sequenceDiagram\n  A->>B: x');
+  });
+  const baselineSvg = async (name: string): Promise<string> =>
+    (
+      await classic.render(
+        's',
+        readFileSync(join(REPO_ROOT, 'e2e/diagrams/sequence/baseline', name), 'utf8')
+      )
+    ).svg;
+
+  for (const name of [
+    'messages/arrows.mmd',
+    'messages/self-and-central.mmd',
+    'text/line-breaks-and-unicode.mmd',
+  ])
+    it(`${name}: v12's gap under every label, within 1 px`, async () => {
+      const found = gaps(await baselineSvg(name));
+      expect(found.length).toBeGreaterThan(1);
+      for (const gap of found) expect(Math.abs(gap - V12_GAP)).toBeLessThanOrEqual(1);
+    });
+});
+
 describe('notes, frames, activations, rects and boxes', () => {
   it('uses v12 class names', async () => {
     const svg = await render(

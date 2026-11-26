@@ -29,6 +29,7 @@ v12 element classes (`actor`, `actor-top`, `actor-bottom`, `actor-man`, `actor-b
 | A front-matter `title` was drawn above the diagram like a `title` statement | The same: drawn as a `title` statement when the text has none; a `title` statement wins. It does not feed the accessible name: only `accTitle` does (D133) | D218, D652 |
 | `actor`/`link` popup menus (`actorPopupMenu`, `onclick`) | Not drawn by the renderer; the interactions plugin adds them | No script in output (R-SVG-4) |
 | Labels broke at `<br>` only; a `\n` written as two characters was drawn | The same: a written `\n` is text in participant, message, note and block labels (it broke the line in earlier v13 alphas) | D564, #763 |
+| A message's text as separate `<text>` elements with `dominant-baseline="middle"` and `dy="1em"`, its last baseline about 11 px above the line at 16 px | One `<text>` on alphabetic baselines, placed so the last baseline sits `messageFontSize + boxMargin − 10 − wrapPadding / 2` above the line (11 px at the defaults). Lines, rows and the diagram height are unchanged. Earlier v13 alphas drew the text about 11 px higher | D723, #1237 |
 
 The `data-ast` ids are built from the names as written (R-PARSE-8): `p:<id>` for a participant
 (its later mentions `p:<id>@2`, `@3`, …), `m:<from>><to>` for the first message between two
