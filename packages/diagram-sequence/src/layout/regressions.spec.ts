@@ -48,7 +48,7 @@ const violations = (
   cell = false,
   sequence: Record<string, unknown> = {},
   theme: Parameters<typeof lay>[4] = {}
-) => sequenceLayoutViolations(m, lay(m, cell, sequence, [], theme), sequence);
+) => sequenceLayoutViolations(m, lay(m, cell, sequence, [], theme), { sequence });
 
 describe('sequence layout, review regressions', () => {
   it('a box centred on a destroying message clears the row above', () => {
@@ -106,7 +106,7 @@ describe('sequence layout, review regressions', () => {
     ]);
     // The left-out message still takes its number, as the participant v12 adds would.
     expect(l.messages.map((x) => x.number?.value)).toEqual([2]);
-    expect(sequenceLayoutViolations(m, l)).toEqual([
+    expect(sequenceLayoutViolations(m, l, {})).toEqual([
       `${m.statements[1]!.ast} is not laid out`,
       `${m.statements[2]!.ast} is not laid out`,
     ]);
@@ -183,7 +183,8 @@ describe('sequence layout, review regressions', () => {
         const l = lay(m, false, sequence, [], { classic });
         expect(l.messages.filter((x) => x.number && x.label)).toHaveLength(64);
         const where = `${classic ? 'default' : 'redux'} ${JSON.stringify(sequence)}`;
-        for (const v of sequenceLayoutViolations(m, l)) problems.push(`${where}: ${v}`);
+        for (const v of sequenceLayoutViolations(m, l, { sequence }))
+          problems.push(`${where}: ${v}`);
       }
     expect(problems).toEqual([]);
     // A self label centred on its number sits 2 px above the circle (radius 12) on its line.
@@ -256,6 +257,20 @@ describe('sequence layout, review regressions', () => {
         for (const v of violations(m, false, sequence, { classic }))
           problems.push(`${classic ? 'default' : 'redux'} ${JSON.stringify(sequence)}: ${v}`);
     expect(problems).toEqual([]);
+  });
+
+  it('checks wrapped labels when the top-level `wrap` or `sequence.wrap` is set', () => {
+    // The layout wraps every message when either is set (#1337 review): so does the check.
+    const m = model([p('A'), p('B')], [msg('A', 'B', 'a label that is long enough to wrap')]);
+    const l = lay(m);
+    const [first] = l.messages;
+    const right = l.participants[1]!.lifeline.x;
+    const label = { ...first!.label!, x: right - first!.label!.width / 2 };
+    const broken: SequenceLayout = { ...l, messages: [{ ...first!, label }] };
+    const crosses = `the wrapped label of message ${first!.ast} crosses a lifeline`;
+    expect(sequenceLayoutViolations(m, broken, { wrap: true })).toContain(crosses);
+    expect(sequenceLayoutViolations(m, broken, { sequence: { wrap: true } })).toContain(crosses);
+    expect(sequenceLayoutViolations(m, broken, {})).not.toContain(crosses);
   });
 
   it('message ends stay on their columns when bars or wrapped boxes are wide', () => {

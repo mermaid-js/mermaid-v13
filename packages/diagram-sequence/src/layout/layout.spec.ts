@@ -72,7 +72,7 @@ describe('sequence layout invariants', () => {
         for (const [name, model] of Object.entries(FIXTURES)) {
           it(`${name}, ${theme}, ${unit}, ${config}`, () => {
             const layout = lay(model, units, measurer, sequence, theme);
-            expect(sequenceLayoutViolations(model, layout, sequence)).toEqual([]);
+            expect(sequenceLayoutViolations(model, layout, { sequence })).toEqual([]);
             expect(layout.units).toBe(unit);
           });
         }
@@ -116,7 +116,7 @@ describe('sequence layout invariants', () => {
       messages: [{ ...first!, y: NaN }, ...good.messages.slice(1)],
       notes: good.notes.map((n) => ({ ...n, y: 0 })),
     };
-    const found = sequenceLayoutViolations(model, broken);
+    const found = sequenceLayoutViolations(model, broken, {});
     expect(found).toContain('layout.messages[0].y is NaN');
     expect(found.some((v) => v.startsWith(`frame ${frame!.ast} does not contain`))).toBe(true);
     expect(found.some((v) => v.includes(' overlaps the box of '))).toBe(true);
@@ -538,7 +538,7 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
       for (const sequence of [{}, VARIANT])
         for (const [name, m] of Object.entries(models)) {
           const l = lay(m, pxProfile, tableMeasurer, sequence, 'redux', { actorGlyphBand: band });
-          expect(sequenceLayoutViolations(m, l), `${name}, band ${band}`).toEqual([]);
+          expect(sequenceLayoutViolations(m, l, { sequence }), `${name}, band ${band}`).toEqual([]);
         }
   });
 
@@ -550,13 +550,13 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
 
   it('catches a symbol or label off its band and a lifeline inside its row', () => {
     const good = neo(SYMBOLS);
-    expect(sequenceLayoutViolations(SYMBOLS, good)).toEqual([]);
+    expect(sequenceLayoutViolations(SYMBOLS, good, {})).toEqual([]);
     const u = good.participants.findIndex((p) => p.id === 'U');
     const p = good.participants[u]!;
     const broken = (q: Partial<typeof p>): string[] => {
       const participants = [...good.participants];
       participants[u] = { ...p, ...q };
-      return sequenceLayoutViolations(SYMBOLS, { ...good, participants });
+      return sequenceLayoutViolations(SYMBOLS, { ...good, participants }, {});
     };
     expect(broken({ band: { ...p.band!, top: p.height + 1 } })).toContain(
       'the top glyph band of U leaves its row'

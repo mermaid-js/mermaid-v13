@@ -189,6 +189,15 @@ export function sequenceNumbers(
   return out;
 }
 
+/**
+ * Whether every label wraps without its own `wrap`: the top-level `wrap` or `sequence.wrap`, as
+ * in v12. The layout invariants read the config the same way.
+ */
+export const autoWrapOf = (config: {
+  readonly wrap?: unknown;
+  readonly sequence?: { readonly wrap?: unknown };
+}): boolean => config.wrap === true || config.sequence?.wrap === true;
+
 /** The shared state of one layout, before the columns are measured. */
 export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<Env, 'columns'> {
   const seq = ctx.config.sequence ?? {};
@@ -200,7 +209,7 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
     m,
     fonts: fontsOf(ctx, (w) => ctx.warn(w)),
     seq,
-    autoWrap: ctx.config.wrap === true || seq.wrap === true,
+    autoWrap: autoWrapOf(ctx.config),
     mirror: seq.mirrorActors !== false,
     rightAngles: !m.cells && seq.rightAngles === true,
     numbers,

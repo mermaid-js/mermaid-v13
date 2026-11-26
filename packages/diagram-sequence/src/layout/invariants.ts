@@ -26,6 +26,7 @@ import {
 } from '@mermaid-js/shared/testing/layout-invariants';
 import { pxProfile } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
+import { autoWrapOf } from './env.ts';
 import { metricsTable, sequenceMetrics } from './metrics.ts';
 
 type Participants = ReadonlyMap<string, ParticipantLayout>;
@@ -304,13 +305,14 @@ function rowsHold(layout: SequenceLayout, out: string[]): void {
 }
 
 /**
- * Every invariant `layout` breaks; empty when it holds them all. `sequence` is the `sequence`
- * config the layout was made with: its `wrap` says which messages wrap.
+ * Every invariant `layout` breaks; empty when it holds them all. `config` is the config the
+ * layout was made with: its `wrap` and `sequence.wrap` say which messages wrap, as in the layout,
+ * and `sequence.wrapPadding` how far a wrapped label keeps from the lifelines.
  */
 export function sequenceLayoutViolations(
   model: SequenceModel,
   layout: SequenceLayout,
-  sequence: Readonly<Record<string, unknown>> = {}
+  config: { readonly wrap?: unknown; readonly sequence?: Readonly<Record<string, unknown>> }
 ): string[] {
   const out: string[] = [];
   numbers(layout, 'layout', out);
@@ -325,8 +327,8 @@ export function sequenceLayoutViolations(
   notesClear(layout, out);
   numbersClear(layout, out);
   labelsAboveLines(layout, out);
-  const { wrapPadding } = sequenceMetrics(pxProfile, sequence);
-  wrappedInside(model, layout, sequence.wrap === true, wrapPadding, out);
+  const { wrapPadding } = sequenceMetrics(pxProfile, config.sequence);
+  wrappedInside(model, layout, autoWrapOf(config), wrapPadding, out);
   activationsOnLifeline(layout, parts, out);
   rowsHold(layout, out);
   return out;
