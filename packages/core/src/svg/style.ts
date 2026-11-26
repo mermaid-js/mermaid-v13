@@ -347,17 +347,51 @@ export interface CheckedStyle {
 
 const EMPTY: CheckedStyle = Object.freeze({ shape: Object.freeze({}), text: Object.freeze({}) });
 
+/** Whether `s` has a `(` that no `)` after it closes. */
+function openParen(s: string): boolean {
+  let depth = 0;
+  for (const c of s) {
+    if (c === '(') depth++;
+    else if (c === ')' && depth > 0) depth--;
+  }
+  return depth > 0;
+}
+
+/**
+ * The parsers split a statement on every comma, as v12 did. This joins a piece with no `:`
+ * back onto the one before it when that one has an open parenthesis (`rgb(255, 200, 200)`) or
+ * is a `font-family` list (D706). A piece with a `:` always starts a declaration, so an
+ * unclosed parenthesis never swallows the ones after it.
+ */
+function rejoin(declarations: readonly string[]): readonly string[] {
+  if (declarations.length < 2) return declarations;
+  const out: string[] = [];
+  for (const piece of declarations) {
+    const prev = out.at(-1);
+    if (
+      prev !== undefined &&
+      !piece.includes(':') &&
+      piece.trim() !== '' &&
+      (openParen(prev) || /^\s*font-family\s*:/i.test(prev))
+    ) {
+      out[out.length - 1] = prev.trimEnd() + ', ' + piece.trim();
+    } else out.push(piece);
+  }
+  return out;
+}
+
 /**
  * Checks Mermaid style declarations (`['fill:#f9f', 'stroke-width:4px']`, as the parser
- * splits a `style`/`classDef`/`linkStyle` statement). Unknown properties and unsafe values
- * are dropped with a warning. Later declarations win.
+ * splits a `style`/`classDef`/`linkStyle` statement). Pieces of one value that the split cut
+ * at a comma are joined first (D706). Unknown properties and unsafe values are dropped with a
+ * warning. Later declarations win.
  */
 export function checkStyle(declarations: readonly string[], warn?: Warn): CheckedStyle {
   if (declarations.length === 0) return EMPTY;
   const shape: Record<string, string> = {};
   const text: Record<string, string> = {};
   let any = false;
-  for (const decl of declarations) {
+  for (const decl of rejoin(declarations)) {
     const at = decl.indexOf(':');
     const prop = (at < 0 ? decl : decl.slice(0, at)).trim().toLowerCase();
     if (prop === '') continue;

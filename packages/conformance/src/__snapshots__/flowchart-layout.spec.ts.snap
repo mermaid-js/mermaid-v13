@@ -398,6 +398,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/nightly-check/shape-themes/38-connect-all-shapes-with-each-other.mmd": 1,
   "flowchart/nightly-check/shape-themes/39-connect-all-shapes-with-each-other.mmd": 1,
   "flowchart/nightly-check/shape-themes/40-connect-all-shapes-with-each-other.mmd": 1,
+  "flowchart/nightly-check/style-comma-values.mmd": 0,
   "flowchart/nightly-check/title-position-unknown.mmd": 0,
   "flowchart/nightly-check/v2/01-7-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd": 0,
   "flowchart/nightly-check/v2/02-8-should-render-a-flowchart-when-usemaxwidth-is-false.mmd": 0,

@@ -1,0 +1,12 @@
+---
+description: >-
+  A comma inside a style value (#1312, D706): rgb() and hsl() colours and a font-family list
+  are kept whole. v12 dropped the pieces after each comma.
+---
+stateDiagram-v2
+  A --> B
+  B --> C
+  style A fill:rgb(255, 200, 200)
+  style B stroke:hsl(210, 60%, 40%),stroke-width:3px
+  classDef serif font-family:Georgia, "Times New Roman", serif
+  class C serif

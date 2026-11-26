@@ -1,5 +1,9 @@
 ## State diagram
 
+- **A comma inside a `style` or `classDef` value** (D706, #1312): `fill:rgb(255, 200, 200)`,
+  `stroke:hsl(210, 60%, 40%)` and `font-family:Georgia, "Times New Roman", serif` keep the
+  whole value. v12 split the statement at every comma, so the colour was lost and the font list
+  kept only its first name, without a warning.
 - **Label text** (D564, D610, #763, #836): state text, composite titles, transition text and
   notes read bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` is drawn
   as written: no bullet. A code span is drawn as written, backticks included and no monospace,
