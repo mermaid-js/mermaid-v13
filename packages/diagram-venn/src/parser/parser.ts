@@ -296,17 +296,11 @@ class VennParser {
       perOccurrence: this.options.perOccurrence === true,
     });
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
-    // D218: the in-text title if non-empty, else the front-matter one; D416 for the quotes.
-    const inText = this.title === undefined ? '' : titleText(this.title);
-    const title = inText || pre.frontMatter?.title;
-    // A title written as `"`…`"` is a markdown string (#1368), its quotes gone (D416).
-    const titleMark = inText && isMarkdownString(this.title?.trim() ?? '');
     const model: VennModel = {
       subsets: this.subsets.map((p) => p.value),
       textNodes: this.textNodes.map((p) => p.value),
       styles: this.styles.map((p) => p.value),
-      ...(title ? { title } : {}),
-      ...(titleMark ? { titleMarkdown: true as const } : {}),
+      ...titleOf(this.title, pre.frontMatter?.title),
       warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
     };
     const ast: VennDocument = {
@@ -854,6 +848,23 @@ class VennParser {
       this.st.symbol(t.name, text ? 'text' : 'set', t.range, 'ref');
     }
   }
+}
+
+/**
+ * The model's title (D218): the in-text one (`written`, after `title `) if non-empty, else the
+ * front-matter one; one pair of quotes removed (D416). An in-text title written as `"`…`"` is a
+ * markdown string, which the model marks, as its quotes are gone (#1368).
+ */
+function titleOf(
+  written: string | undefined,
+  front: string | undefined
+): Pick<VennModel, 'title' | 'titleMarkdown'> {
+  const inText = written === undefined ? '' : titleText(written);
+  if (inText)
+    return isMarkdownString(written!.trim())
+      ? { title: inText, titleMarkdown: true }
+      : { title: inText };
+  return front ? { title: front } : {};
 }
 
 /** The label and size of a tail, as AST fields (absent when not written). */

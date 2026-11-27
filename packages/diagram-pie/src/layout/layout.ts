@@ -35,6 +35,28 @@ const ignoreWarning = (): void => undefined;
 type LegendPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
 const POSITIONS: ReadonlySet<string> = new Set(['top', 'bottom', 'left', 'right', 'center']);
 
+/** Lays out a label: its text as written, a plain suffix, and the parser's markdown mark. */
+type Measure = (text: string, f: FontKey, suffix?: string, markdown?: boolean) => MeasuredLabel;
+
+/**
+ * Title and legend go through core's label handler and label layout (D225, #1368), unwrapped as
+ * v12 drew them; the handler also warns about markdown drawn as written. A slice the parser
+ * marked as a markdown string holds its backticks, without its quotes. `suffix` is plain text.
+ */
+function labelMeasurer(ctx: PieLayoutContext): Measure {
+  const inline = ctx.inline ? { inline: ctx.inline } : {};
+  const reading: MarkdownWarningContext = {
+    config: ctx.config,
+    warn: ctx.warn ?? ignoreWarning,
+    ...inline,
+  };
+  return (text, f, suffix = '', markdown = false) => {
+    const written = markdown ? text.slice(1, -1) : text;
+    const source = readLabel(written, { markdown }, reading);
+    return layoutLabel(source.text + suffix, f, Infinity, ctx.measurer, { ...inline, ...source });
+  };
+}
+
 /** Lays out a pie chart in px. */
 export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
   const family = ctx.theme.value('fontFamily');
@@ -44,20 +66,7 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     section: font(ctx.theme.number('pieSectionTextSize')),
     legend: font(ctx.theme.number('pieLegendTextSize')),
   };
-  // Title and legend go through core's label handler and label layout (D225, #1368), unwrapped
-  // as v12 drew them; the handler also warns about markdown drawn as written. A slice the parser
-  // marked as a markdown string holds its backticks, without its quotes. `suffix` is plain text.
-  const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const reading: MarkdownWarningContext = {
-    config: ctx.config,
-    warn: ctx.warn ?? ignoreWarning,
-    ...inline,
-  };
-  const measure = (text: string, f: FontKey, suffix = '', markdown = false): MeasuredLabel => {
-    const written = markdown ? text.slice(1, -1) : text;
-    const source = readLabel(written, { markdown }, reading);
-    return layoutLabel(source.text + suffix, f, Infinity, ctx.measurer, { ...inline, ...source });
-  };
+  const measure = labelMeasurer(ctx);
 
   const outerStrokeWidth = ctx.theme.number('pieOuterStrokeWidth');
   const strokeWidth = ctx.theme.number('pieStrokeWidth');
