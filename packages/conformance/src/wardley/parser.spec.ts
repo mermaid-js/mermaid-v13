@@ -258,6 +258,18 @@ describe('wardley model: v12 population rules', () => {
     expect(d && src.slice(d.range.start, d.range.end)).toBe('c');
   });
 
+  it('quotes a dropped link without an arrow as drawn, backticks and all (#1273)', () => {
+    // The `#35;` code is quoted as the `#` v12 drew; a backtick lengthens the code span.
+    const src = 'wardley-beta\ncomponent A [0.5, 0.5]\nclick A "a`b #35; c"\n';
+    const { diagnostics } = parse(src);
+    expect(diagnostics.map((d) => [d.code, d.message])).toEqual([
+      [
+        WARDLEY_LINK_DROPPED,
+        'The link ``click A "a`b # c"`` is not drawn: `click A` and ``a`b # c`` name no anchor or component.',
+      ],
+    ]);
+  });
+
   it('quotes a dropped link without an arrow as written (#1273)', () => {
     const src = nightly('parser-link-without-arrow');
     const { model, diagnostics } = parse(src);

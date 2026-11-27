@@ -11,7 +11,14 @@
  * them; the value is kept as 100, so one mistake gives one diagnostic and no other follows from
  * it. v12's silent drops warn (D425), and so do coordinates in (1, 2) (D428).
  */
-import type { AstId, Diagnostics, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
+import type {
+  AstId,
+  Diagnostics,
+  Range,
+  RelatedInfo,
+  SourceView,
+} from '@mermaid-js/core/parser-kit';
+import { code as inCode } from '@mermaid-js/shared/parser/facet';
 import { checkLimits, type WardleyLimitOptions } from './limits.ts';
 import {
   WARDLEY_COORDINATE_AMBIGUOUS,
@@ -49,13 +56,14 @@ import type {
   WardleyPipelineNode,
   WardleyStatementNode,
 } from './ast.ts';
-import { toPercent } from './convert.ts';
+import { displayText, toPercent } from './convert.ts';
 import { astName, childId } from './ids.ts';
 
 /** What the parser read, for {@link normalise}. */
 export interface Parsed {
-  /** The source text, which a warning quotes. */
+  /** The source text, which a warning quotes as drawn (`displayText`), and its view. */
   src: string;
+  view: SourceView;
   /** The statements in source order (only the ones that parsed). */
   statements: readonly WardleyStatementNode[];
   /** Components of pipelines whose name failed to parse (no node; values still checked). */
@@ -449,9 +457,10 @@ class Populate {
       ...(flow && { flow }),
       astId: l.id,
     });
+    const { src, view } = this.parsed;
     const quoted = arrow
       ? `${l.from.value} -> ${l.to.value}`
-      : this.parsed.src.slice(l.range.start, l.range.end).trim();
+      : displayText(src, l.range.start, l.range.end, view).trim();
     return { link, range: l.range, from: l.from.value, to: l.to.value, quoted };
   }
 
@@ -531,20 +540,20 @@ class Populate {
     };
     for (const { link, range, from, to, quoted } of links) {
       const unknown: string[] = [];
-      if (!this.nodes.has(link.source)) unknown.push(`\`${from}\``);
-      if (!this.nodes.has(link.target) && to !== from) unknown.push(`\`${to}\``);
+      if (!this.nodes.has(link.source)) unknown.push(inCode(from));
+      if (!this.nodes.has(link.target) && to !== from) unknown.push(inCode(to));
       let why: string | undefined;
       if (unknown.length > 0) {
         why = `${unknown.join(' and ')} ${unknown.length > 1 ? 'name' : 'names'} no anchor or component`;
-      } else if (link.source === link.target) why = `it links \`${from}\` to itself`;
+      } else if (link.source === link.target) why = `it links ${inCode(from)} to itself`;
       else if (together(link.source, link.target))
-        why = `\`${from}\` and \`${to}\` are at the same place`;
+        why = `${inCode(from)} and ${inCode(to)} are at the same place`;
       if (!why) continue;
       this.raise(WARDLEY_LINK_DROPPED, {
-        message: `The link \`${quoted}\` is not drawn: ${why}.`,
+        message: `The link ${inCode(quoted)} is not drawn: ${why}.`,
         range,
         astId: link.astId,
-        also: `the link \`${quoted}\` is not drawn either: ${why}`,
+        also: `the link ${inCode(quoted)} is not drawn either: ${why}`,
       });
     }
   }
