@@ -114,6 +114,9 @@ lineHops?: (false | true | "arc" | "gap")
  * set, then the type's default (`rounded` for flowchart, swimlane, class,
  * requirement and agentflow; S-curves for state and usecase; today's
  * routes for eventmodeling). Other diagram types take no curve (D748).
+ * A swimlane diagram (`swimlane-beta`) reads `swimlane.curve`, then
+ * `flowchart.curve`, before this key; a flowchart with `layout:
+ * swimlane` reads only `flowchart.curve` (D749).
  * 
  */
 curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
@@ -484,11 +487,13 @@ lineHops?: (boolean | ("arc" | "gap"))
 /**
  * How swimlane edges are drawn between their route points (D733).
  * 
- * Defaults to `rounded`, as flowchart's. Precedence: a per-edge curve
- * (`curve:` on an edge, `linkStyle … interpolate`), then this key when
- * set, then `flowchart.curve` when set, then the top-level `curve`
- * when set, then `rounded`. Within one config source this key wins
- * over `flowchart.curve`, as every key both sections have (D534).
+ * Defaults to `rounded`, as flowchart's. Precedence in a
+ * `swimlane-beta` diagram: a per-edge curve (`curve:` on an edge,
+ * `linkStyle … interpolate`), then this key when set in any config
+ * source (front matter, a directive or `initialize()`), then
+ * `flowchart.curve` when set, then the top-level `curve` when set,
+ * then `rounded` (D749). It is the diagram's key, not the layout's: a
+ * flowchart drawn with `layout: swimlane` ignores it.
  * 
  */
 curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")

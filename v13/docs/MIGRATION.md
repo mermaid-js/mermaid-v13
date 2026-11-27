@@ -1368,7 +1368,7 @@ them keep working.
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
 | `nodeSpacing`/`rankSpacing` below the arrowhead: a subgraph level used its parent's `nodesep` and `ranksep + 25`, so frames were never drawn as tight as asked | Spacing is literal, except a rank gap is never smaller than an arrowhead plus its 6 px lead (13 px classic, 19.5 px neo), so the edge between two subgraphs stays visible | D601, #399 |
 | Icon shape frames (`form` `square`, `rounded`, `circle`): the glyph plus `flowchart.padding` (63 px around a 48 px icon), rounded corners 5; a circle as wide as the glyph's diagonal plus 40, about 108 px | The glyph plus half of `flowchart.padding` (55.5 px), rounded corners 5; a circle as wide as the glyph's diagonal plus half of `flowchart.padding`, about 75 px. The label sits 8 px from the frame, as in v12 | Tighter frames (D685, #1150) |
-| `flowchart.curve` was the only curve key, and the resolved config (`getConfig()`) showed its default | A top-level `curve` sets the curve of every diagram type that draws edges, and `swimlane.curve` that of a swimlane diagram. A flowchart takes a per-edge curve, then `flowchart.curve`, then `curve`, then `rounded`; a swimlane diagram takes `swimlane.curve` before `flowchart.curve`. `rounded` is now a default in code, so `getConfig()`, the config reference and the editor hover show no default for `flowchart.curve`. Drawing with nothing set is unchanged | One `curve` for every type, and a key without a default is unset only when the author did not set it (D733, #1377) |
+| `flowchart.curve` was the only curve key, and the resolved config (`getConfig()`) showed its default | A top-level `curve` sets the curve of every diagram type that draws edges, and `swimlane.curve` that of a swimlane diagram. A flowchart takes a per-edge curve, then `flowchart.curve`, then `curve`, then `rounded`; a swimlane diagram takes `swimlane.curve`, set in any source, before `flowchart.curve`, and a flowchart with `layout: swimlane` ignores `swimlane.curve` (D749). `rounded` is now a default in code, so `getConfig()`, the config reference and the editor hover show no default for `flowchart.curve`. Drawing with nothing set is unchanged | One `curve` for every type, and a key without a default is unset only when the author did not set it (D733, #1377) |
 
 ## Sequence SVG structure
 
@@ -3154,10 +3154,10 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   `swimlane.*` (in each source; a later source, front matter or a directive, still outranks
   `initialize()`). So `flowchart.layout: elk` or `flowchart.theme` moves a swimlane diagram
   unless `swimlane.layout` / `swimlane.theme` is set too, and a key both sections have
-  (`theme`, `layout`, `useMaxWidth`, `useWidth`) resolves the same way in both. An
-  `%%{init: {"config": …}}%%` key goes to `swimlane` when it is one of swimlane's own keys
-  (`theme`, `layout`, `useMaxWidth`, `lineHops` and the three below), else to `flowchart` (v12
-  sent all of it to `swimlane`). `flowchart.*` keys (spacing, curve, labels, padding) apply as
+  (`theme`, `layout`, `useMaxWidth`, `useWidth`, but not `curve`, D749) resolves the same way
+  in both. An `%%{init: {"config": …}}%%` key goes to `swimlane` when it is one of swimlane's
+  own keys (`theme`, `layout`, `useMaxWidth`, `lineHops`, `curve` and the three below), else
+  to `flowchart` (v12 sent all of it to `swimlane`). `flowchart.*` keys (spacing, curve, labels, padding) apply as
   in v12. `swimlane.look` is ignored, as `look` is everywhere (D153).
 - **Engine keys**, all honoured as in v12: `swimlane.ignoreCrossLaneEdges` (default `true`:
   each lane is ranked on its own edges), `optimizeRanksByCrossings` (default `true`; as in v12
@@ -3166,8 +3166,11 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
 - **Curve.** Edges draw `rounded` unless the author sets a curve. v12's engine forced `rounded`
   when the curve was unset or `basis`; in v13 an author's curve (`basis` included) wins: a
   per-edge curve or `linkStyle default interpolate`, then the new `swimlane.curve`, then
-  `flowchart.curve`, then the new top-level `curve` (D733). Within one config source
-  `swimlane.curve` wins over `flowchart.curve`, as every key both sections have does.
+  `flowchart.curve`, then the new top-level `curve` (D733). `swimlane.curve` wins whenever it
+  is set, from any source: an `initialize()` `swimlane.curve` beats a front-matter
+  `flowchart.curve`. Config does not copy `curve` between the two sections, as it does the
+  keys both have. A flowchart drawn with `layout: swimlane` ignores `swimlane.curve`: it is the
+  diagram's key, not the layout's (D749).
 - **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
   (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
   then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned

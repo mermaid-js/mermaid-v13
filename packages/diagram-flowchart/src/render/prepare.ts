@@ -26,7 +26,7 @@ import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '..
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveResolver, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
-import { FLOWCHART_CURVE } from './curve.ts';
+import { configCurve, FLOWCHART_CURVE } from './curve.ts';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
@@ -380,7 +380,6 @@ function edgeViews(
   views: ReadonlyMap<string, NodeView>,
   m: Measure
 ): EdgeView[] {
-  const flow = m.ctx.config.flowchart ?? {};
   const edgeWrap = (m.ctx.units ?? pxProfile).builder.edgeWrap;
   const edges: EdgeView[] = [];
   const ids = new Set<string>();
@@ -410,8 +409,9 @@ function edgeViews(
       style,
       start,
       end,
-      // `flowchart.curve` holds a swimlane's `swimlane.curve` too: config chains the sections (D534).
-      curve: m.curveOf(e.interpolate, model.defaultInterpolate, flow.curve),
+      // The edge's own curve, then the diagram's: a swimlane-beta's `swimlane.curve`, then
+      // `flowchart.curve` (D749), then the global `curve`.
+      curve: m.curveOf(e.interpolate, model.defaultInterpolate, configCurve(model, m.ctx.config)),
     });
   }
   return edges;
@@ -448,7 +448,7 @@ function layoutGraph(
   );
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.
-  const curve = m.curveOf(model.defaultInterpolate, flow.curve);
+  const curve = m.curveOf(model.defaultInterpolate, configCurve(model, m.ctx.config));
   const titleAt = titlePositions(m.cells ? undefined : flow.subGraphTitlePosition, (w) =>
     m.ctx.warn(w)
   );

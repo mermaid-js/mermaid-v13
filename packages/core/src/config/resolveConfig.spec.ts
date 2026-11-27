@@ -513,3 +513,24 @@ describe('CORE_DEFAULTS', () => {
     });
   });
 });
+
+describe('chained sections (D534) leave curve to each section (D749)', () => {
+  const chained = (initialize: MermaidConfig, frontMatter: ConfigInput) =>
+    resolveConfig(CORE_DEFAULTS, initialize, frontMatter, [], undefined, {
+      section: ['swimlane', 'flowchart'],
+    });
+
+  it('keeps each section its own curve, from whichever source sets it', () => {
+    const config = chained({ swimlane: { curve: 'basis' } }, { flowchart: { curve: 'linear' } });
+    expect(config.swimlane?.curve).toBe('basis');
+    expect(config.flowchart?.curve).toBe('linear');
+    const unset = chained({}, { flowchart: { curve: 'linear' } });
+    expect(unset.swimlane?.curve).toBeUndefined();
+  });
+
+  it('still chains the keys both sections have', () => {
+    const config = chained({ swimlane: { useMaxWidth: false } }, { flowchart: { theme: 'dark' } });
+    expect(config.flowchart?.useMaxWidth).toBe(false);
+    expect(config.swimlane?.theme).toBe('dark');
+  });
+});

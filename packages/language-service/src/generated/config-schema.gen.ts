@@ -887,7 +887,7 @@ export const configSchema: ConfigSchema = {
     },
     "curve": {
       "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
-      "description": "How edges are drawn between their route points, for every diagram type\nthat draws edges and has a `curve` key of its own (D733). Unset by\ndefault: each type then draws its own default curve.\n\nPrecedence, per type: a per-edge curve where the type has one, then\nthe type's own key (`flowchart.curve`, `swimlane.curve`,\n`class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,\n`usecase.curve`, `eventmodeling.curve`) when set, then this key when\nset, then the type's default (`rounded` for flowchart, swimlane, class,\nrequirement and agentflow; S-curves for state and usecase; today's\nroutes for eventmodeling). Other diagram types take no curve (D748).\n",
+      "description": "How edges are drawn between their route points, for every diagram type\nthat draws edges and has a `curve` key of its own (D733). Unset by\ndefault: each type then draws its own default curve.\n\nPrecedence, per type: a per-edge curve where the type has one, then\nthe type's own key (`flowchart.curve`, `swimlane.curve`,\n`class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,\n`usecase.curve`, `eventmodeling.curve`) when set, then this key when\nset, then the type's default (`rounded` for flowchart, swimlane, class,\nrequirement and agentflow; S-curves for state and usecase; today's\nroutes for eventmodeling). Other diagram types take no curve (D748).\nA swimlane diagram (`swimlane-beta`) reads `swimlane.curve`, then\n`flowchart.curve`, before this key; a flowchart with `layout:\nswimlane` reads only `flowchart.curve` (D749).\n",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
@@ -6091,7 +6091,7 @@ export const configSchema: ConfigSchema = {
         },
         "curve": {
           "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
-          "description": "How swimlane edges are drawn between their route points (D733).\n\nDefaults to `rounded`, as flowchart's. Precedence: a per-edge curve\n(`curve:` on an edge, `linkStyle … interpolate`), then this key when\nset, then `flowchart.curve` when set, then the top-level `curve`\nwhen set, then `rounded`. Within one config source this key wins\nover `flowchart.curve`, as every key both sections have (D534).\n",
+          "description": "How swimlane edges are drawn between their route points (D733).\n\nDefaults to `rounded`, as flowchart's. Precedence in a\n`swimlane-beta` diagram: a per-edge curve (`curve:` on an edge,\n`linkStyle … interpolate`), then this key when set in any config\nsource (front matter, a directive or `initialize()`), then\n`flowchart.curve` when set, then the top-level `curve` when set,\nthen `rounded` (D749). It is the diagram's key, not the layout's: a\nflowchart drawn with `layout: swimlane` ignores it.\n",
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
