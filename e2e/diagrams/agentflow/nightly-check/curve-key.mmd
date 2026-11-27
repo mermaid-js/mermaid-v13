@@ -1,0 +1,16 @@
+---
+description: >-
+  `agentflow.curve` (D733, #1378) draws every edge: straight segments here (`linear`), where
+  the default draws rounded right angles. `flowchart.curve` no longer reaches an agentflow
+  diagram, so the `basis` it sets here changes nothing.
+config:
+  agentflow:
+    curve: linear
+  flowchart:
+    curve: basis
+---
+agentflow-beta TB
+  triage["Triage"]@{ shape: decision }
+  triage -- bug --> bugfix["Bug Fix"]
+  triage -- feature --> feature_work["Feature Work"]
+  triage -- question --> answer["Answer"]
