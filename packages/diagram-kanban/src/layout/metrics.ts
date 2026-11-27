@@ -26,7 +26,10 @@ export interface KanbanMetrics {
   readonly sectionWidth: number;
   /** `kanban.padding`'s default: the outer margin (D378). */
   readonly padding: number;
-  /** Column titles wrap at `W − titleInset` (v12: at `W`). */
+  /**
+   * Column titles wrap at `W − titleInset` and are centred inside it: `2 × labelInset`, in line
+   * with the card text (D764; v12 wrapped them at `W`).
+   */
   readonly titleInset: number;
   /** Between two columns (v12 `padding / 2`). */
   readonly columnGap: number;
@@ -36,7 +39,11 @@ export interface KanbanMetrics {
   readonly cardInset: number;
   /** Between two cards (v12 `padding / 2`). */
   readonly cardGap: number;
-  /** Card labels wrap at `W − wrapInset` (v12 `width − 15 − 10`). */
+  /**
+   * Card labels wrap at `W − wrapInset`: `cardInset + 2 × labelInset`, so every line ends
+   * `labelInset` inside the card's right edge, as v12 drew it (D764; v12 measured at
+   * `width − 15 − 10`, then padded the label).
+   */
   readonly wrapInset: number;
   /** The least width a label wraps at. */
   readonly minWrap: number;
@@ -63,12 +70,12 @@ export const KANBAN_METRICS: KanbanMetrics = {
   // The `kanban` config defaults (`pnpm gen:config`, the plugin's `configDefaults`).
   sectionWidth: SCHEMA_DEFAULTS.sectionWidth,
   padding: SCHEMA_DEFAULTS.padding,
-  titleInset: 0,
+  titleInset: 20,
   columnGap: 5,
   titleRow: 25,
   cardInset: 15,
   cardGap: 5,
-  wrapInset: 25,
+  wrapInset: 35,
   minWrap: 1,
   labelInset: 10,
   cardPadY: 10,

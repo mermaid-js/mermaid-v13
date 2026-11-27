@@ -114,7 +114,7 @@ export function resolveLimits(
   if (config?.maxEdges !== undefined) out.maxEdges = checked('maxEdges', config.maxEdges);
   if (overrides) {
     for (const name of NAMES) {
-      if (!Object.prototype.hasOwnProperty.call(overrides, name)) continue;
+      if (!Object.hasOwn(overrides, name)) continue;
       const value = overrides[name];
       if (value !== undefined) out[name] = checked(name, value);
     }

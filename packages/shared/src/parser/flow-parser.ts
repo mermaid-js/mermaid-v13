@@ -127,15 +127,16 @@ export abstract class FlowParser<
 
   /** The AST id of a node mention of `name` (`n:<name>`, `n:<name>@2`, …). */
   protected nodeMention(name: string): AstId {
-    this.styledOnly.delete(name);
+    if (this.styledOnly.size > 0) this.styledOnly.delete(name);
     return this.ids.node(name);
   }
 
   /** A mention that may create the vertex: its definition when it does. */
   protected nodeSymbol(name: string, r: Range): void {
-    // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
-    if (this.namesEdge(name)) return this.edgeSymbol(name, r);
-    const creates = !this.db.vertices.has(name) && this.creates(name);
+    // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex (`namesEdge`).
+    const known = this.db.vertices.has(name);
+    if (!known && this.db.hasEdge(name)) return this.edgeSymbol(name, r);
+    const creates = !known && this.creates(name);
     this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
   }
 

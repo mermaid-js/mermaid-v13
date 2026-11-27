@@ -246,12 +246,12 @@ describe('gitGraph render: classic themes (v12 normalTheme)', () => {
     expect(byClass(tree, 'arrow').map((n) => tree.getAttr(n, 'stroke-width'))).toContain('8');
   });
 
-  it('leaves a cherry-pick body unpainted (black, as v12) with white marks, black on a dark theme', async () => {
+  it('fills a classic cherry-pick body with textColor (v12 root rule) with white marks, black on a dark theme', async () => {
     const light = await draw(EVERY, literal('default'));
     const cp = (tree: SvgView) =>
       tree.children(byClass(tree, 'commit-cherry-pick').find((n) => tree.tag(n) === 'g')!);
     const [body, dot, , stem] = cp(light);
-    expect(attr(light, body!, 'fill')).toBeUndefined();
+    expect(attr(light, body!, 'fill')).toBe(NODE.textColor);
     expect([attr(light, dot!, 'fill'), attr(light, stem!, 'stroke')]).toEqual([
       '#ffffff',
       '#ffffff',
@@ -259,6 +259,20 @@ describe('gitGraph render: classic themes (v12 normalTheme)', () => {
     expect(attr(light, dot!, 'r')).toBe('2.75');
     const dark = await draw(EVERY, literal('dark'));
     expect(attr(dark, cp(dark)[1]!, 'fill')).toBe('#000000');
+    expect(attr(dark, cp(dark)[0]!, 'fill')).toBe(NODE.textColor);
+  });
+
+  it.each([
+    ['dark', '#cccccc', '#000000'],
+    ['default', '#333333', '#ffffff'],
+    ['base', '#333333', '#ffffff'],
+  ])('%s: the cherry-pick body is %s under the %s ink (#1287)', async (theme, body, ink) => {
+    const t = await draw(
+      EVERY,
+      deterministicApi({ theme, output: { cssVariables: false } } as MermaidConfig)
+    );
+    const cp = t.children(byClass(t, 'commit-cherry-pick').find((n) => t.tag(n) === 'g')!);
+    expect([attr(t, cp[0]!, 'fill'), attr(t, cp[1]!, 'fill')]).toEqual([body, ink]);
   });
 
   it('cycles nine branches round eight slots (D267)', async () => {
