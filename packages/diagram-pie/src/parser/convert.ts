@@ -9,6 +9,7 @@
 export {
   accDescrValue,
   accTitleValue,
+  isMarkdownString,
   stringValue as labelValue,
   titleValue,
 } from '@mermaid-js/shared/parser/rule';

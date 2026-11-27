@@ -530,9 +530,11 @@ describe('journey render: legend, title and activity line', () => {
     expect(tree.children(title).map((n) => textIn(tree, n))).toEqual(['One', 'two']);
   });
 
-  it('draws markdown strings as bold runs without their wrapper, other names as written (#1292)', () => {
+  it('draws markdown strings as bold runs without their wrapper, other names as written (#1292, #1368)', () => {
     const md = '"`**md** x`"';
-    const { tree } = render(journey(md, section(md), task(md, 3, '`**Me**`'), task('**md** x', 3)));
+    const { tree } = render(
+      journey(md, section(md), task(md, 3, '"`**Me**`"'), task('**md** x', 3), task('`**b**`', 3))
+    );
     const first = (cls: string, i = 0): SvgNode => tree.children(byClass(tree, cls)[i]!)[0]!;
     for (const cls of ['journey-title', 'section-label', 'task-label', 'legend']) {
       const run = first(cls);
@@ -540,6 +542,7 @@ describe('journey render: legend, title and activity line', () => {
       expect(textIn(tree, byClass(tree, cls)[0]!), cls).toBe(cls === 'legend' ? 'Me' : 'md x');
     }
     expect(textIn(tree, byClass(tree, 'task-label')[1]!)).toBe('**md** x');
+    expect(textIn(tree, byClass(tree, 'task-label')[2]!)).toBe('`**b**`');
   });
 
   it('escapes hostile names and stays inert', () => {

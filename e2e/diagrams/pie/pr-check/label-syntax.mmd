@@ -1,0 +1,15 @@
+---
+description: >-
+  Label syntax (#1368): the title written as plain markdown, and the slice labels written as
+  plain markdown, a quoted markdown string (also with single quotes), a code span, tags and a
+  written \n. Only the markdown strings are bold and italic; the plain markdown and the code
+  span are drawn as written. Slice labels are always quoted, so they have no bare form.
+---
+pie
+  title title **bold** _ital_
+  "slice **bold** _ital_" : 10
+  "`slice **bold** _ital_`" : 10
+  '`slice single **bold**`' : 10
+  "slice a `code` b" : 10
+  "slice <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" : 10
+  "slice one\ntwo" : 10

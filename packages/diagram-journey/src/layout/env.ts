@@ -3,13 +3,8 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import { checkStyle } from '@mermaid-js/core/svg';
-import {
-  fontSizePx,
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { FONT_WEIGHT, journeyMetrics, TITLE_FONT, type JourneyMetrics } from './metrics.ts';
 
 /** What the layout reads from the render context. */
@@ -32,8 +27,9 @@ export interface Env {
   readonly warn: JourneyLayoutContext['warn'];
   /**
    * A label wrapped at `max` (`Infinity` breaks at explicit breaks only); with `keepWords`, a word
-   * wider than `max` stays whole (#649). A markdown string (core's `markdownString`, D710) is laid
-   * out as markdown without its wrapper (D225, #1292); any other label is plain.
+   * wider than `max` stays whole (#649). Read by core's label handler (#1368), which also warns
+   * about markdown drawn as written: a markdown string (`"`…`"`) is laid out as markdown without
+   * its wrapper (D225, #1292); any other label is plain, or markdown under `markdownAlwaysOn`.
    */
   measure(text: string, font: FontKey, max: number, keepWords?: boolean): MeasuredLabel;
 }
@@ -88,11 +84,11 @@ export function envOf(ctx: JourneyLayoutContext): Env {
     fonts: fontsOf(ctx, (w) => ctx.warn(w)),
     warn: (w) => ctx.warn(w),
     measure: (text, font, max, keepWords = false) => {
-      const { text: source, markup } = markdownString(text);
-      return layoutLabel(source, font, max > 0 ? max : 1, ctx.measurer, {
+      const source = readLabel(text, {}, ctx);
+      return layoutLabel(source.text, font, max > 0 ? max : 1, ctx.measurer, {
+        ...source,
         inline: ctx.inline,
         keepWords,
-        markup,
       });
     },
   };

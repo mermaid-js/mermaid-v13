@@ -63,8 +63,8 @@ describe('journey lexer parity with mermaid@12 (jison)', () => {
     );
     // Every e2e fixture reaches the journey lexer: the 18 v12 fixtures, the 17 #327 baselines,
     // #649's long word, #769's tall labels, #1035's override fixture, D690's misspelt colours and
-    // #1292's markdown strings.
-    expect(e2e).toBe(40);
+    // #1292's markdown strings and #1368's two label-syntax fixtures.
+    expect(e2e).toBe(42);
     expect(skipped).toEqual([]);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

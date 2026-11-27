@@ -290,13 +290,15 @@ describe('label markup (D710, D711)', () => {
     expect(textOf(d.r.svg, 'ev:1.1')).toBe('List&lt;T&gt; and &lt;b&gt;');
   });
 
-  it('lays out markdown strings as markdown; markdown elsewhere stays as written', async () => {
-    const d = await draw(fx.timeline(['"`**md** sec`"', ['`*em*`', '**not** md']]), {
+  it('lays out markdown strings as markdown; markdown elsewhere stays as written (#1368)', async () => {
+    const d = await draw(fx.timeline(['"`**md** sec`"', ['"`*em*`"', '**not** md', '`*bare*`']]), {
       theme: 'default',
     });
     expect(runs(d.r.svg, 'sec:1')).toBe('<tspan font-weight="bold">md</tspan><tspan> sec</tspan>');
     expect(runs(d.r.svg, 'per:1')).toBe('<tspan font-style="italic">em</tspan>');
     expect(textOf(d.r.svg, 'ev:1.1')).toBe('**not** md');
+    // Bare backticks are no markdown string: drawn as written.
+    expect(textOf(d.r.svg, 'ev:1.2')).toBe('`*bare*`');
   });
 });
 

@@ -29,6 +29,12 @@ export interface VennSubset {
   readonly size: number;
   /** The `[…]` label, when written and not empty. */
   readonly label?: string;
+  /**
+   * Set when the text drawn for it, the label or else a set's id, was written as a markdown
+   * string (`["`…`"]`, `set "`…`"`, #1368). Its quotes are gone; without them a text in backticks
+   * is drawn as written, so the parser marks it. The text keeps its backticks, as v12's did.
+   */
+  readonly markdown?: true;
 }
 
 /** A `text` statement or an indented `text` line, v12's `VennTextData`. */
@@ -44,6 +50,8 @@ export interface VennTextNode {
   readonly id: string;
   /** The `[…]` label, when written and not empty. */
   readonly label?: string;
+  /** As for {@link VennSubset.markdown}: the label, or else the id. */
+  readonly markdown?: true;
 }
 
 /** A `style` statement, v12's `VennStyleData`. */
@@ -68,6 +76,8 @@ export interface VennModel {
    * surrounding quotes removed (D416). Absent when neither.
    */
   readonly title?: string;
+  /** Set when the in-text title was written as a markdown string (`title "`…`"`, #1368). */
+  readonly titleMarkdown?: true;
   /** Warnings of the parse (also in `ParseResult.diagnostics`, D417). */
   readonly warnings: readonly Diagnostic[];
 }

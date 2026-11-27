@@ -1,9 +1,10 @@
 ---
 description: >-
-  Markdown strings (a whole label in backticks, with or without double
-  quotes) in the title, section names, task names and actors draw as
-  markdown without their wrapper (D225, D710, #1292). Plain labels keep
-  their asterisks literal and still draw <b> and <br>.
+  Markdown strings ("`…`") in the title, section names, task names and
+  actors draw as markdown without their wrapper (D225, #1292). A label in
+  backticks without the quotes is no markdown string and is drawn as
+  written (#1368). Plain labels keep their asterisks literal and still
+  draw <b> and <br>.
 ---
 journey
   title "`**Bold** and *italic* title`"

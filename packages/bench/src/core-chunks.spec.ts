@@ -227,6 +227,8 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
         'railroad',
         'treemap',
         'treeview',
+        // Venn reads `isMarkdownString` from it (#1368).
+        'venn',
         'wardley',
       ].sort()
     );

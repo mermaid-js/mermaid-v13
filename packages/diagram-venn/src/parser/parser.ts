@@ -58,6 +58,7 @@ import {
   skipTo,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
+import { isMarkdownString } from '@mermaid-js/shared/parser/common-values';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
@@ -194,6 +195,8 @@ const LAST_ASCII = 0x7f;
 /** The optional `[label]` and `: size` after the ids of a `set` or `union`, and where they end. */
 interface Tail {
   label?: string;
+  /** Set when the label is a markdown string (`["`…`"]`, #1368). */
+  markdown?: true;
   size?: number;
   end: number;
 }
@@ -206,6 +209,8 @@ interface SubsetParts {
   written: number;
   tail: Tail;
   range: Range;
+  /** Whether the text drawn for it (`VennSubset.markdown`) is a markdown string. */
+  drawn: boolean;
 }
 
 /** Parse a venn diagram. Never throws: problems are error diagnostics. */
@@ -294,11 +299,14 @@ class VennParser {
     // D218: the in-text title if non-empty, else the front-matter one; D416 for the quotes.
     const inText = this.title === undefined ? '' : titleText(this.title);
     const title = inText || pre.frontMatter?.title;
+    // A title written as `"`…`"` is a markdown string (#1368), its quotes gone (D416).
+    const titleMark = inText && isMarkdownString(this.title?.trim() ?? '');
     const model: VennModel = {
       subsets: this.subsets.map((p) => p.value),
       textNodes: this.textNodes.map((p) => p.value),
       styles: this.styles.map((p) => p.value),
       ...(title ? { title } : {}),
+      ...(titleMark ? { titleMarkdown: true as const } : {}),
       warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
     };
     const ast: VennDocument = {
@@ -362,6 +370,14 @@ class VennParser {
   /** An id token: its model value (v12's `normalizeText`) and range. */
   private name(i = this.i): VennName {
     return { name: normalizeText(this.raw(i)), range: this.range(i) };
+  }
+
+  /**
+   * Whether the id at `name` was written as a markdown string (`"`…`"`, #1368): its quotes are
+   * gone from the model, and without them an id in backticks would be drawn as written.
+   */
+  private markdownId(name: VennName): boolean {
+    return isMarkdownString(this.src.slice(name.range.start, name.range.end));
   }
 
   /** The source text of `r` as a message shows it: its first line, at most 24 characters. */
@@ -565,12 +581,15 @@ class VennParser {
   }
 
   /** `[ label ]`: the label as v12's DB kept it (an empty one is none), and where it ends. */
-  private label(end: number): { label?: string; end: number } {
+  private label(end: number): { label?: string; markdown?: true; end: number } {
     this.tested(P_LABEL);
     if (!this.is(LABEL_KINDS)) return { end };
     const raw = this.raw();
-    const at = this.range(this.i++).end;
-    return raw ? { label: normalizeText(raw), end: at } : { end: at };
+    const range = this.range(this.i++);
+    // `["`…`"]`: a markdown string (#1368), its quotes inside the brackets.
+    const quoted = this.src.slice(range.start + 1, range.end - 1);
+    const mark = isMarkdownString(quoted) ? { markdown: true as const } : {};
+    return raw ? { label: normalizeText(raw), ...mark, end: range.end } : { end: range.end };
   }
 
   /** `[ label ] [ ":" NUMERIC ]` after the ids ending at `end`; the size as v12's `parseFloat`. */
@@ -614,7 +633,8 @@ class VennParser {
     this.symbol('set', name);
     this.knownSets.add(name.name);
     this.block = this.st.statement('set', { ...range });
-    this.addSubset({ ast: node.id, sets: [name.name], written: 1, tail, range });
+    const drawn = tail.label === undefined ? this.markdownId(name) : tail.markdown === true;
+    this.addSubset({ ast: node.id, sets: [name.name], written: 1, tail, range, drawn });
     return node;
   }
 
@@ -657,7 +677,8 @@ class VennParser {
       );
       return node;
     }
-    this.addSubset({ ast: node.id, sets, written: members.length, tail, range });
+    const drawn = tail.markdown === true;
+    this.addSubset({ ast: node.id, sets, written: members.length, tail, range, drawn });
     return node;
   }
 
@@ -691,9 +712,8 @@ class VennParser {
     if (!number && !this.is(ID_KINDS)) this.fail(TEXT_ID, indented ? undefined : TEXT_HINT);
     const name = this.name(this.i++);
     // A number id takes no label (v12's grammar).
-    const { label, end } = number
-      ? { label: undefined, end: name.range.end }
-      : this.label(name.range.end);
+    const { label, end, markdown } = number ? { end: name.range.end } : this.label(name.range.end);
+    const drawn = label === undefined ? !number && this.markdownId(name) : markdown === true;
     const range = { start, end };
     const node: VennTextStatementNode = {
       id: this.id(`text:${esc(name.name)}`),
@@ -719,6 +739,7 @@ class VennParser {
       sets,
       id: name.name,
       ...(label !== undefined ? { label } : {}),
+      ...(drawn ? { markdown: true as const } : {}),
     };
     this.textNodes.push({ value, range, what: 'the text node', quote: name.range, ids: members });
     this.counted(range);
@@ -791,13 +812,14 @@ class VennParser {
   // ---- model and symbols --------------------------------------------------------------
 
   /** v12's `addSubsetData`: sorted ids, the size or `10 / n²`, the last sets for `text`. */
-  private addSubset({ ast, sets, written, tail, range }: SubsetParts): void {
+  private addSubset({ ast, sets, written, tail, range, drawn }: SubsetParts): void {
     this.currentSets = sets;
     const value: VennSubset = {
       ast,
       sets,
       size: tail.size ?? 10 / Math.pow(written, 2),
       ...(tail.label !== undefined ? { label: tail.label } : {}),
+      ...(drawn ? { markdown: true as const } : {}),
     };
     this.subsets.push({ value, range, quote: range });
     this.counted(range);

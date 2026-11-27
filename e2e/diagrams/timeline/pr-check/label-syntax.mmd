@@ -1,0 +1,21 @@
+---
+description: >-
+  Label syntax (#1368): the title written as plain markdown, and each section, period and event
+  written as plain markdown, a quoted markdown string, bare backticks, a code span, tags and a
+  written \n. Only the markdown strings are bold and italic; the plain markdown, the bare
+  backticks and the code span are drawn as written.
+---
+timeline
+  title title **bold** _ital_
+  section section **bold** _ital_
+    period **bold** _ital_ : event **bold** _ital_
+  section "`section **bold** _ital_`"
+    "`period **bold** _ital_`" : "`event **bold** _ital_`"
+  section `section **bold** _ital_`
+    `period **bold** _ital_` : `event **bold** _ital_`
+  section section a `code` b
+    period a `code` b : event a `code` b
+  section section <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    period <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O : event <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  section section one\ntwo
+    period one\ntwo : event one\ntwo

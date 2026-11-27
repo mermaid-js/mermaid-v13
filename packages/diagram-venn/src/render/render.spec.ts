@@ -7,6 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Attrs, OutlineDraw, OutlineRole, OutlineTag } from '@mermaid-js/core/svg';
 import { formatColor, parseColor } from '@mermaid-js/core/theme';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { fixture, fixtureSource } from '../layout/mmd.fixtures.ts';
 import { venn } from '../plugin.ts';
 import { renderVennForTest, type RenderVennOptions } from './harness.ts';
@@ -160,7 +161,8 @@ describe('label markup (D710, spec #1333 T5)', () => {
     expect(textWith(svg, 'literal')).toContain('**literal**');
     expect(textWith(svg, 'literal')).not.toContain('font-weight');
     expect(textWith(svg, 'Plain')).toMatch(/font-weight="bold">tag<\/tspan><tspan[^>]*>two lines</);
-    expect(warnings).toEqual([]);
+    // The plain `**literal**` is markdown drawn as written: one warning (#1368).
+    expect(warnings.map((w) => w.code)).toEqual([MARKDOWN_NOT_READ.code]);
   });
 });
 

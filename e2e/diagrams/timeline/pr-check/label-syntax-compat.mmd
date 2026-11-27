@@ -1,0 +1,23 @@
+---
+description: >-
+  label-syntax.mmd with markdownAlwaysOn (#1368): every label is markdown, so the plain
+  **bold** _ital_ title, section, period and event draw bold and italic, the code spans draw as
+  inline code and a label in bare backticks is one code span; markdown strings, tags and the
+  written \n draw as in the default mode. The picture differs from label-syntax.mmd.
+config:
+  markdownAlwaysOn: true
+---
+timeline
+  title title **bold** _ital_
+  section section **bold** _ital_
+    period **bold** _ital_ : event **bold** _ital_
+  section "`section **bold** _ital_`"
+    "`period **bold** _ital_`" : "`event **bold** _ital_`"
+  section `section **bold** _ital_`
+    `period **bold** _ital_` : `event **bold** _ital_`
+  section section a `code` b
+    period a `code` b : event a `code` b
+  section section <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    period <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O : event <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  section section one\ntwo
+    period one\ntwo : event one\ntwo

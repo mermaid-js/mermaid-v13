@@ -1,0 +1,24 @@
+---
+description: >-
+  label-syntax.mmd with markdownAlwaysOn (#1368): every label is markdown, so the plain
+  **bold** _ital_ title, set, union and text node draw bold and italic, the code spans draw as
+  inline code and a label in backticks without quotes is one code span; markdown strings, tags
+  and the written \n draw as in the default mode. The picture differs from label-syntax.mmd.
+config:
+  markdownAlwaysOn: true
+---
+venn-beta
+  title title **bold** _ital_
+  set A["set **bold** _ital_"]
+    text a1["text **bold** _ital_"]
+    text a2["`text **bold** _ital_`"]
+  set B["`set **bold** _ital_`"]
+    text b1[`text **bold** _ital_`]
+    text b2["text a `code` b"]
+  set C[`set **bold** _ital_`]
+    text c1["text <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+    text c2["text one\ntwo"]
+  union A, B["union a `code` b"]
+  union B, C["union <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+  union A, C["union one\ntwo"]
+  union A, B, C["union **bold** _ital_"]

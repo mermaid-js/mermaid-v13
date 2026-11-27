@@ -50,6 +50,15 @@ export function stringValue(image: string): string {
   return unquote(image);
 }
 
+/**
+ * Whether a string as written, quotes included, is a markdown string (#1368): a backtick right
+ * inside each quote (`"`…`"` or `'`…`'`) and none between them. A parser that removes the
+ * quotes marks such a label in its model, since without them a label in backticks is plain
+ * text; its value keeps the backticks, as v12's did.
+ */
+export const isMarkdownString = (image: string): boolean => RE_MARKDOWN_STRING.test(image);
+const RE_MARKDOWN_STRING = /^(["'])`[^`]*`\1$/;
+
 /** `match[1].trim().replace(/[\t ]{2,}/gm, ' ')`: the one-line value. */
 export function oneLine(text: string): string {
   const t = text.trim();
