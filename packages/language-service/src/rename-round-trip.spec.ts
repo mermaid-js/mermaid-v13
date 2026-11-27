@@ -137,6 +137,9 @@ const KNOWN_REFUSALS = [
   // renamed alone it would name a new node, not the edge. Renaming `B` or `D` renames it (#170).
   "flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd L_B_D_0@420: 'renamedZq7' would not read as the same edge id everywhere it is used.",
   "flowchart/nightly-check/handdrawn/03-fdh49-should-add-edge-animation.mmd L_B_D_0@428: 'renamedZq7' would not read as the same edge id everywhere it is used.",
+  // `note right of A : raw &lt; x`: the `;` ends the note's text and is a state id of its own,
+  // in v12 too (#1356). A name that does not start with `;` would join the note's text there.
+  "state-diagram-v2/nightly-check/entity-without-semicolon.mmd ;@359: 'renamedZq7' would not read as the same state id everywhere it is used.",
 ];
 
 /**

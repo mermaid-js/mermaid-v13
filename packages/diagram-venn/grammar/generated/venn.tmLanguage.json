@@ -101,9 +101,9 @@
         }
       ]
     },
-    "switch-23": {
-      "begin": "(?i)[^\"]*(?=\"\\])",
-      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)\"?\\s*\\])",
+    "switch-quotedLabel-23": {
+      "begin": "(?:\\G|(?!(?i)\"?\\s*\\]))(?i)[^\"]*(?=\"\\])",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)\"?\\s*\\])",
       "patterns": [
         {
           "include": "#mode-labelEnd"
@@ -113,27 +113,27 @@
         "0": {
           "name": "string.quoted.mermaid-venn"
         }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "string.quoted.mermaid-venn"
-        }
       }
     },
     "rule-22": {
       "begin": "(?i)\\[\"(?=[^\"]*\"\\])",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)((?i)\"?\\s*\\])|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-quotedLabel"
         },
         {
-          "include": "#switch-23"
+          "include": "#switch-quotedLabel-23"
         }
       ],
       "beginCaptures": {
         "0": {
+          "name": "string.quoted.mermaid-venn"
+        }
+      },
+      "endCaptures": {
+        "1": {
           "name": "string.quoted.mermaid-venn"
         }
       }
@@ -147,9 +147,9 @@
         }
       ]
     },
-    "switch-25": {
-      "begin": "(?i)[^\\]\"]*?(?=\\s*\\])",
-      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)\"?\\s*\\])",
+    "switch-label-25": {
+      "begin": "(?:\\G|(?!(?i)\"?\\s*\\]))(?i)[^\\]\"]*?(?=\\s*\\])",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)\"?\\s*\\])",
       "patterns": [
         {
           "include": "#mode-labelEnd"
@@ -159,27 +159,27 @@
         "0": {
           "name": "string.quoted.mermaid-venn"
         }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "string.quoted.mermaid-venn"
-        }
       }
     },
     "rule-24": {
       "begin": "(?i)\\[\\s*(?=[^\\]\"]+\\])",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)((?i)\"?\\s*\\])|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-label"
         },
         {
-          "include": "#switch-25"
+          "include": "#switch-label-25"
         }
       ],
       "beginCaptures": {
         "0": {
+          "name": "string.quoted.mermaid-venn"
+        }
+      },
+      "endCaptures": {
+        "1": {
           "name": "string.quoted.mermaid-venn"
         }
       }
@@ -332,12 +332,25 @@
         }
       ]
     },
-    "switch-3": {
-      "begin": "(?i)[ \\t]+(?=text\\b)",
-      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)text\\b)",
+    "switch-onBol-3": {
+      "begin": "(?:\\G|(?!(?i)text\\b))(?i)[ \\t]+(?=text\\b)",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)text\\b)",
       "patterns": [
         {
           "include": "#mode-indentText"
+        }
+      ]
+    },
+    "rule-9": {
+      "begin": "(?i)[\\n\\r]+",
+      "end": "(?!\\G)((?i)text\\b)|(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-onBol"
+        },
+        {
+          "include": "#switch-onBol-3"
         }
       ],
       "endCaptures": {
@@ -345,19 +358,6 @@
           "name": "keyword.control.mermaid-venn"
         }
       }
-    },
-    "rule-9": {
-      "begin": "(?i)[\\n\\r]+",
-      "end": "(?!\\G)",
-      "applyEndPatternLast": 1,
-      "patterns": [
-        {
-          "include": "#phase-onBol"
-        },
-        {
-          "include": "#switch-3"
-        }
-      ]
     },
     "rule-17": {
       "match": "(?i)set\\b",

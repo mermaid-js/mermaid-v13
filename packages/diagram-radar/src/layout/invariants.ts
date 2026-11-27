@@ -93,11 +93,7 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
 
   legendViolations(model, layout, tol, out);
 
-  // The title meets no axis label (D739, #1257): touching edges are clear.
-  if (layout.title)
-    for (const s of spokes)
-      if (rectsOverlap(layout.title, s.label, tol))
-        out.push(`the title meets spoke ${s.index}'s label`);
+  titleViolations(layout, tol, out);
 
   // Everything drawn inside the bounds (D354).
   const inside = (r: Rect, what: string): void => {
@@ -131,6 +127,14 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
   }
   if (layout.title) inside(layout.title, 'the title');
   return out;
+}
+
+/** The title meets no axis label (D739, #1257): touching edges are clear. */
+function titleViolations(layout: RadarLayout, tol: number, out: string[]): void {
+  if (!layout.title) return;
+  for (const s of layout.spokes)
+    if (rectsOverlap(layout.title, s.label, tol))
+      out.push(`the title meets spoke ${s.index}'s label`);
 }
 
 /**
