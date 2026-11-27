@@ -14,7 +14,6 @@ export const flowchartConfigDefaults: FlowchartDiagramConfig = {
   "diagramPadding": 8,
   "nodeSpacing": 50,
   "rankSpacing": 50,
-  "curve": "rounded",
   "padding": 15,
   "wrappingWidth": 120,
   "minNodeWidth": 120,

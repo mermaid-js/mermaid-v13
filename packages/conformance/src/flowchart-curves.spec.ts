@@ -60,3 +60,48 @@ describe('flowchart unknown curve name (#1158, D681)', () => {
     expect(curve[0]!.message).toContain('bogus');
   });
 });
+
+describe('flowchart curve config precedence (D733, #1377)', () => {
+  const fixture = '../../nightly-check/curve-global.mmd';
+  const global = 'config:\n  curve: linear\n';
+  // The fixture with its config block replaced by `config`.
+  const withConfig = (config: string) => (s: string) => {
+    expect(s).toContain(global);
+    return s.replace(global, config);
+  };
+
+  it('draws the global curve when flowchart.curve is unset', async () => {
+    const { paths, warnings } = await render(fixture);
+    const own = await render(fixture, withConfig('config:\n  flowchart:\n    curve: linear\n'));
+    const unset = await render(fixture, withConfig(''));
+    expect(warnings).toEqual([]);
+    expect(paths.length).toBeGreaterThan(0);
+    expect(paths).toEqual(own.paths);
+    expect(paths).not.toEqual(unset.paths);
+  });
+
+  it('draws flowchart.curve over the global curve', async () => {
+    const both = await render(
+      fixture,
+      withConfig('config:\n  curve: linear\n  flowchart:\n    curve: step\n')
+    );
+    const step = await render(fixture, withConfig('config:\n  flowchart:\n    curve: step\n'));
+    expect(both.paths).toEqual(step.paths);
+    expect(both.paths).not.toEqual((await render(fixture)).paths);
+  });
+
+  it('draws rounded when neither key is set', async () => {
+    const unset = await render(fixture, withConfig(''));
+    const rounded = await render(fixture, withConfig('config:\n  curve: rounded\n'));
+    expect(unset.paths).toEqual(rounded.paths);
+    expect(unset.warnings).toEqual([]);
+  });
+
+  it('draws an unknown global name with the default curve and warns CURVE_UNKNOWN once', async () => {
+    const { paths, warnings } = await render(fixture, withConfig('config:\n  curve: bogus\n'));
+    expect(paths).toEqual((await render(fixture, withConfig(''))).paths);
+    const curve = warnings.filter((w) => w.code === 'CURVE_UNKNOWN');
+    expect(curve).toHaveLength(1);
+    expect(curve[0]!.message).toContain('bogus');
+  });
+});
