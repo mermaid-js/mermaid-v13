@@ -218,6 +218,7 @@ e2e/diagrams/sequence/nightly-check/v2-classic-with-different-font-settings.mmd 
 e2e/diagrams/sequence/nightly-check/v2-complex-sequence-with-all-features.mmd 7 1a57732e252c6f88
 e2e/diagrams/sequence/nightly-check/v2-with-wrapped-messages-and-notes.mmd 1 737e6a1bbdaa0359
 e2e/diagrams/sequence/nightly-check/wrap-in-span-narrowed-by-activations.mmd 1 4f492100be2c2984
+e2e/diagrams/sequence/pr-check/label-syntax-compat.mmd 1 219ecbf8948926ce
 e2e/diagrams/sequence/pr-check/label-syntax.mmd 1 1aa46b7ea2976a0b
 e2e/diagrams/sequence/pr-check/math-should-render-tex-in-every-sequence-label.mmd 1 35ee97248131ed25
 e2e/diagrams/sequence/pr-check/should-handle-complex-interactions-between-different-participant-types.mmd 8 0c19288254158b2c

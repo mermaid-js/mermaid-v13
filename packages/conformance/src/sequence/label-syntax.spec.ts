@@ -63,4 +63,14 @@ describe('sequence label syntax', () => {
   it('draws the same with legacyMarkdown: no sequence label read markdown in v12', async () => {
     expect(await svgOf(true)).toBe(await svgOf(false));
   });
+
+  it('draws the compatibility-mode twin fixture as the default one', async () => {
+    const twin = readFileSync(
+      join(REPO_ROOT, 'e2e/diagrams/sequence/pr-check/label-syntax-compat.mmd'),
+      'utf8'
+    );
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    expect((await m.render('s', twin)).svg).toBe(await svgOf(false));
+  });
 });
