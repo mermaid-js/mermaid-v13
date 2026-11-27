@@ -14,7 +14,7 @@ import {
 import { compass } from '@mermaid-js/core/layout/compass';
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
-import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
+import { ARCHITECTURE_CONFIG_IGNORED, ARCHITECTURE_SETTINGS_IGNORED } from '../codes.ts';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
 import { ART_SIZE } from '../render/builtins.ts';
 import { contextFor, gridMeasurer, modelOf, themeNamed } from './fixtures.ts';
@@ -291,6 +291,79 @@ describe('config', () => {
       'architecture.iconSize',
       'architecture.padding',
     ]);
+  });
+});
+
+describe('settings v13 does not read (D763)', () => {
+  const ALL = {
+    useWidth: 99,
+    fontSize: 20,
+    seed: 7,
+    numIter: 5,
+    edgeElasticity: 0.9,
+    idealEdgeLengthMultiplier: 3,
+    nodeSeparation: 300,
+    randomize: true,
+  };
+
+  it('warns once, naming every set key in one fixed order, whatever order they were written in', async () => {
+    const { ctx } = await prepared('service a[A]', { architecture: ALL });
+    expect(ctx.warnings).toHaveLength(1);
+    const [w] = ctx.warnings as { code: string; message: string; path?: string }[];
+    expect(w!.code).toBe(ARCHITECTURE_SETTINGS_IGNORED);
+    expect(w!.path).toBe('architecture.randomize');
+    const named = [
+      'randomize',
+      'nodeSeparation',
+      'idealEdgeLengthMultiplier',
+      'edgeElasticity',
+      'numIter',
+      'seed',
+      'fontSize',
+      'useWidth',
+    ];
+    const at = named.map((k) => w!.message.indexOf(`architecture.${k}`));
+    expect(at.every((i) => i >= 0)).toBe(true);
+    expect([...at].sort((a, b) => a - b)).toEqual(at);
+    expect(w!.message).toContain('`compass`');
+    expect(w!.message).toContain('fcose');
+    expect(w!.message).toContain('themeVariables.fontSize');
+    expect(w!.message).toContain('never read');
+  });
+
+  it('names only what is set, and says only what applies to it', async () => {
+    const { ctx } = await prepared('service a[A]', {
+      architecture: { seed: 7, idealEdgeLengthMultiplier: 3 },
+    });
+    expect(ctx.warnings).toHaveLength(1);
+    const { message, code } = ctx.warnings[0] as { code: string; message: string };
+    expect(code).toBe(ARCHITECTURE_SETTINGS_IGNORED);
+    expect(message).toMatch(/architecture\.idealEdgeLengthMultiplier.*architecture\.seed/);
+    expect(message).not.toContain('randomize');
+    expect(message).not.toContain('themeVariables');
+    expect(message).not.toContain('useWidth');
+  });
+
+  it('warns for a key set to its v12 default, which is still set', async () => {
+    const { ctx } = await prepared('service a[A]', { architecture: { seed: 1, fontSize: 16 } });
+    expect(ctx.warnings.map((w) => w.code)).toEqual([ARCHITECTURE_SETTINGS_IGNORED]);
+  });
+
+  it('says nothing when none is set, nor for the keys it reads', async () => {
+    const plain = await prepared('service a[A]');
+    expect(plain.ctx.warnings).toEqual([]);
+    const read = await prepared('service a[A]', {
+      architecture: { iconSize: 60, padding: 20, useMaxWidth: false },
+    });
+    expect(read.ctx.warnings).toEqual([]);
+  });
+
+  it('lays out the same with every key set (they are read by nothing)', async () => {
+    const src = 'group g[G]\nservice a[A] in g\nservice b[B]\na:R -[x]- L:b';
+    const plain = await prepared(src);
+    const set = await prepared(src, { architecture: ALL });
+    expect(set.graph).toEqual(plain.graph);
+    expect(set.sizes).toEqual(plain.sizes);
   });
 });
 

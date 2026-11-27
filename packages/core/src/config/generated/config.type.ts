@@ -1591,40 +1591,46 @@ padding?: number
  * The width and height of a service's icon, in pixels.
  */
 iconSize?: number
+/**
+ * Ignored in v13 (D507). In v12 (default 16) it sized cytoscape's own label style; v13 draws
+ * every architecture label in the theme's `fontSize`.
+ * 
+ */
 fontSize?: number
 /**
- * Ignored in v13 (D328). In v12 it randomized the fcose layout's starting positions; v13 lays
- * architecture out with `compass`, which is deterministic and has no starting positions.
+ * Ignored in v13 (D328). In v12 (default false) it randomized the fcose layout's starting
+ * positions; v13 lays architecture out with `compass`, which is deterministic and has no
+ * starting positions.
  * 
  */
 randomize?: boolean
 /**
- * Ignored in v13 (D328). In v12 it set fcose's minimum separation between sibling nodes;
- * `compass` places nodes on a grid with a fixed cell gap.
+ * Ignored in v13 (D328). In v12 (default 75) it set fcose's minimum separation between
+ * sibling nodes; `compass` places nodes on a grid with a fixed cell gap.
  * 
  */
 nodeSeparation?: number
 /**
- * Ignored in v13 (D328). In v12 it scaled fcose's ideal edge length within a group;
- * `compass` places nodes on a grid with a fixed cell gap.
+ * Ignored in v13 (D328). In v12 (default 1.5) it scaled fcose's ideal edge length within a
+ * group; `compass` places nodes on a grid with a fixed cell gap.
  * 
  */
 idealEdgeLengthMultiplier?: number
 /**
- * Ignored in v13 (D328). In v12 it set fcose's spring elasticity within a group; `compass`
- * has no springs.
+ * Ignored in v13 (D328). In v12 (default 0.45) it set fcose's spring elasticity within a
+ * group; `compass` has no springs.
  * 
  */
 edgeElasticity?: number
 /**
- * Ignored in v13 (D328). In v12 it capped fcose's iterations; `compass` places nodes in one
- * pass.
+ * Ignored in v13 (D328). In v12 (default 2500) it capped fcose's iterations; `compass`
+ * places nodes in one pass.
  * 
  */
 numIter?: number
 /**
- * Ignored in v13 (D328). In v12 it seeded fcose's random number generator; `compass` is
- * deterministic, so every render of the same diagram has the same layout.
+ * Ignored in v13 (D328). In v12 (default 1) it seeded fcose's random number generator;
+ * `compass` is deterministic, so every render of the same diagram has the same layout.
  * 
  */
 seed?: number

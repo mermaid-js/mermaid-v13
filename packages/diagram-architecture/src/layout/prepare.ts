@@ -14,6 +14,8 @@
  *   label is measured unwrapped, since v12 wrapped it to the drawn edge (D507: the renderer
  *   places it).
  * - Every `align` statement is one `align` hint, in source order.
+ * - A section that sets a key v13 reads nowhere (the six fcose settings, `fontSize`, `useWidth`)
+ *   earns one `ARCHITECTURE_SETTINGS_IGNORED` naming each (D763).
  *
  * The lists are read in the model's order (v12's insertion order), so the graph, and with it
  * the layout, is the same on every run.
@@ -34,7 +36,7 @@ import {
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import { configLengths } from '@mermaid-js/shared/config/readers';
-import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
+import { ARCHITECTURE_CONFIG_IGNORED, ARCHITECTURE_SETTINGS_IGNORED } from '../codes.ts';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
@@ -112,6 +114,45 @@ function sizesOf(ctx: ArchitectureLayoutContext, font: FontKey): ArchitectureSiz
   );
 }
 
+/** v12's fcose settings (D328), in the order a warning names them. */
+const FCOSE_KEYS = [
+  'randomize',
+  'nodeSeparation',
+  'idealEdgeLengthMultiplier',
+  'edgeElasticity',
+  'numIter',
+  'seed',
+] as const;
+
+/** The keys v13 reads nowhere (D328, D507), in the order a warning names them. */
+const IGNORED_KEYS = [...FCOSE_KEYS, 'fontSize', 'useWidth'] as const;
+
+/**
+ * One {@link ARCHITECTURE_SETTINGS_IGNORED} naming every key of {@link IGNORED_KEYS} the section
+ * holds as its own (D763): none has a default, so each is one the author set, at any value.
+ */
+function warnIgnoredSettings(ctx: ArchitectureLayoutContext): void {
+  const section = (ctx.config.architecture ?? {}) as Readonly<Record<string, unknown>>;
+  const set = IGNORED_KEYS.filter((k) => Object.hasOwn(section, k));
+  if (set.length === 0) return;
+  const path = (k: string) => `architecture.${k}`;
+  const fcose = set.filter((k) => (FCOSE_KEYS as readonly string[]).includes(k));
+  const notes = [
+    fcose.length > 0
+      ? `The layout is \`compass\`: ${fcose.join(', ')} ${fcose.length === 1 ? 'tunes' : 'tune'} fcose, which v13 does not have.`
+      : undefined,
+    set.includes('fontSize') ? 'For fontSize, use themeVariables.fontSize.' : undefined,
+    set.includes('useWidth') ? 'useWidth was never read, in v12 either.' : undefined,
+  ];
+  ctx.warn({
+    code: ARCHITECTURE_SETTINGS_IGNORED,
+    message: [`Ignored ${set.map(path).join(', ')}.`, ...notes.filter((n) => n !== undefined)].join(
+      ' '
+    ),
+    path: path(set[0]!),
+  });
+}
+
 /**
  * A group's title band: its icon, then the label `groupLabelGap` past the icon or past the corner
  * (v12 `svgDraw.ts:263`), as high as the taller; absent with neither.
@@ -141,6 +182,7 @@ export function prepareArchitecture(
     weight: ARCHITECTURE_METRICS.fontWeight,
   };
   const sizes = sizesOf(ctx, font);
+  warnIgnoredSettings(ctx);
   const { iconSize, padding, anchorY, labelGap } = sizes;
   // A markdown string is laid out as markdown without its wrapper; any other label is plain
   // (D710, a break with v12, whose `createText` read markdown in every label).
