@@ -11,7 +11,7 @@
   step value 5:12-5:12 "" -> "step"
   stepAfter value 5:12-5:12 "" -> "stepAfter"
   stepBefore value 5:12-5:12 "" -> "stepBefore"
-  rounded value (default) 5:12-5:12 "" -> "rounded"
+  rounded value 5:12-5:12 "" -> "rounded"
 @ 6:5  |
   useWidth property (number) 6:5-6:5 "" -> "useWidth: "
   useMaxWidth property (boolean) 6:5-6:5 "" -> "useMaxWidth: "
@@ -37,6 +37,7 @@
   themeVariables property (object) 9:4-9:4 "" -> "themeVariables"
   layout property (string) 9:4-9:4 "" -> "layout"
   lineHops property (boolean | string) 9:4-9:4 "" -> "lineHops"
+  curve property (string) 9:4-9:4 "" -> "curve"
   ascii property (object) 9:4-9:4 "" -> "ascii"
   darkMode property (boolean) 9:4-9:4 "" -> "darkMode"
   fontFamily property (string) 9:4-9:4 "" -> "fontFamily"

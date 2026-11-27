@@ -73,9 +73,9 @@ function lineEnds(tree: SvgView): { x: number; y: number }[] {
 
 describe('kanban render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with cards, bars, links and 15 columns', () => {
-    // The 30 restored fixtures and the 23 baselines (#459), #837's attribute quotes, and
-    // D647's ticket-row pair.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(57);
+    // The 30 restored fixtures and the 23 baselines (#459), #837's attribute quotes,
+    // D647's ticket-row pair, and D742's acc statements.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(58);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     // Every e2e fixture renders; the cases file holds the rejections.
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
@@ -104,12 +104,18 @@ describe('kanban render properties over the parsed corpus', () => {
       );
   });
 
-  it('writes no element id (kanban has no title or description)', () => {
-    for (const c of cases)
+  it('writes no element id but the <title> and <desc> of accTitle and accDescr (D742)', () => {
+    for (const c of cases) {
+      const { accTitle, accDescr } = c.r.model;
+      const expected = [
+        ...(accTitle.trim() ? ['title'] : []),
+        ...(accDescr.trim() ? ['desc'] : []),
+      ];
       expect(
         c.tree.find((n, t) => t.getAttr(n, 'id') !== undefined).map((n) => c.tree.tag(n)),
         c.id
-      ).toEqual([]);
+      ).toEqual(expected);
+    }
   });
 
   it('keeps everything drawn inside the viewBox (D224)', () => {
@@ -186,7 +192,8 @@ describe('kanban AST round-trip over the parsed corpus (R-PARSE-8)', () => {
         for (const ch of written) if (ch === text[k]) k++;
         expect(k, `${c.id}: ${id} holds ${JSON.stringify(text)}`).toBe(text.length);
       }
-      for (const n of ast.children) expect(seen.get(n.id), `${c.id}: ${n.id}`).toBe(1);
+      for (const n of ast.children)
+        if (n.type === 'Item') expect(seen.get(n.id), `${c.id}: ${n.id}`).toBe(1);
     }
   });
 });

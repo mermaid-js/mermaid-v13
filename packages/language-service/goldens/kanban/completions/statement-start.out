@@ -3,6 +3,8 @@
 @ 4:5  |
   ::icon() operator 4:5-4:5 "" -> "::icon()"
   ::: operator 4:5-4:5 "" -> ":::"
+  accTitle keyword 4:5-4:5 "" -> "accTitle"
+  accDescr keyword 4:5-4:5 "" -> "accDescr"
 @ 6:6  :|
   ::icon() operator 6:5-6:6 ":" -> "::icon()"
   ::: operator 6:5-6:6 ":" -> ":::"

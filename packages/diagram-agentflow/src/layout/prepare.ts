@@ -25,12 +25,7 @@ import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
-import {
-  curveReporter,
-  curveRouting,
-  DEFAULT_CURVE,
-  type CurveKind,
-} from '@mermaid-js/shared/svg/route';
+import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
@@ -43,6 +38,7 @@ import { layoutDir } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { AgentflowLayoutContext } from './context.ts';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
+import { AGENTFLOW_CURVE } from './curve.ts';
 import { FLOWCHART_LENGTH_DEFAULTS, TITLE_MARGIN_DEFAULTS } from './metrics.ts';
 import { shapeSize, shapeSpan, type LayoutShape, type ShapeGeometry } from './shapes.ts';
 import { themePads } from '@mermaid-js/shared/shapes/kit';
@@ -92,7 +88,7 @@ export interface AgentflowEdgeView {
   /** Arrowheads (v12 `destructEdgeType`). */
   start: Arrowhead;
   end: Arrowhead;
-  /** `linkStyle … interpolate`, the default's, or `flowchart.curve` (v12's order). */
+  /** `linkStyle … interpolate`, the default's, or the diagram's curve (D733). */
   curve: CurveKind;
 }
 
@@ -133,10 +129,10 @@ interface Measure {
   readonly cells: boolean;
   readonly font: FontKey;
   readonly geometry: ShapeGeometry;
-  /** The diagram's curve: `linkStyle default interpolate`, else `flowchart.curve`, else the default. */
+  /** The diagram's curve: `linkStyle default interpolate`, `agentflow.curve`, `curve`, else {@link AGENTFLOW_CURVE}. */
   readonly curve: CurveKind;
-  /** `curveKind` for this render: an unknown name warns once (D602). */
-  readonly curveOf: (curve: string | undefined) => CurveKind;
+  /** The first curve name set, else the default; an unknown name warns once per render (D602). */
+  readonly curveOf: (...own: readonly (string | undefined)[]) => CurveKind;
   readonly wrap: number;
   readonly minWidth: number;
   readonly edgeWrap: number;
@@ -177,9 +173,9 @@ export function prepareAgentflow(
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const curveOf = curveReporter((w) => ctx.warn(w));
-  // With neither set, flowchart's default curve, as flowchart, class and requirement draw (D687).
-  const curve = curveOf(model.defaultInterpolate ?? flowchart?.curve ?? DEFAULT_CURVE);
+  const curveOf = curveResolver(ctx.config.curve, AGENTFLOW_CURVE, (w) => ctx.warn(w));
+  // `linkStyle default interpolate`, then `agentflow.curve`, then `curve` (D733): not `flowchart.curve`.
+  const curve = curveOf(model.defaultInterpolate, ctx.config.agentflow?.curve);
   const m: Measure = {
     ctx,
     units,
