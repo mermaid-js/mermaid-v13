@@ -1,13 +1,16 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd: the same gantt labels
-  with legacyMarkdown set. No gantt label kind read markdown in v12, so
-  the picture equals the default one (D735).
+  The markdownAlwaysOn twin of label-syntax.mmd: the same gantt labels
+  with the setting on, so every label is markdown. The plain
+  **bold** _ital_ rows of the title, section names, tasks, milestones
+  and vert markers draw bold and italic, bare backticks and the code
+  span draw inline code; tags, \n and quoted markdown strings draw as in
+  the default picture, which this one differs from.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 gantt
-  title title <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  title title **bold** _ital_ and <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
   dateFormat YYYY-MM-DD
   axisFormat %m-%d
   section section **bold** _ital_
@@ -29,4 +32,4 @@ gantt
     task one\ntwo :a6, after a5, 12d
     milestone one\ntwo :milestone, m6, after a6, 0d
     "`vert **bold** _ital_`" :vert, v1, 2024-01-25, 0d
-    vert <b>bold</b><br>next :vert, v2, 2024-02-20, 0d
+    vert **bold** _ital_ <b>tag</b><br>next :vert, v2, 2024-02-20, 0d

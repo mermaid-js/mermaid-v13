@@ -5,10 +5,10 @@ description: >-
   markdown string, bare backticks, a code span in plain text, the common
   tags and a written \n. Only the quoted markdown string reads markdown;
   the tags draw and \n breaks the line (D735). The title can be written
-  once, so it carries the tags.
+  once, so it carries plain markdown and the tags.
 ---
 gantt
-  title title <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  title title **bold** _ital_ and <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
   dateFormat YYYY-MM-DD
   axisFormat %m-%d
   section section **bold** _ital_
@@ -30,4 +30,4 @@ gantt
     task one\ntwo :a6, after a5, 12d
     milestone one\ntwo :milestone, m6, after a6, 0d
     "`vert **bold** _ital_`" :vert, v1, 2024-01-25, 0d
-    vert <b>bold</b><br>next :vert, v2, 2024-02-20, 0d
+    vert **bold** _ital_ <b>tag</b><br>next :vert, v2, 2024-02-20, 0d

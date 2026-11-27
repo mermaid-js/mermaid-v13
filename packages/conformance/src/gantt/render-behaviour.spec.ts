@@ -363,9 +363,56 @@ describe('gantt labels draw tags and markdown strings (D735)', () => {
     expect(svg).not.toContain('&lt;b&gt;');
   });
 
-  it('draws the same with legacyMarkdown: no gantt label kind read markdown in v12', async () => {
-    const plain = await render(SOURCE);
-    const legacy = await render(SOURCE, { legacyMarkdown: true });
-    expect(legacy.svg).toBe(plain.svg);
+  const ALWAYS = [
+    'title Title **tb** _ti_',
+    'section Section **sb** _si_',
+    'Task **kb** _ki_ :a, 2014-01-01, 3d',
+    'Mile **mb** _mi_ :milestone, m, 2014-01-02, 0d',
+    'Vert **vb** _vi_ :vert, v, 2014-01-03, 0d',
+    'Code a `cc` b :c, 2014-01-01, 3d',
+    'Tags <b>tg</b> one\\ntwo :d, 2014-01-01, 3d',
+    '"`Md **qb**`" :e, 2014-01-01, 3d',
+  ].join('\n');
+  const tspan = (svg: string, attrs: string, text: string): boolean =>
+    new RegExp(`<tspan[^>]*${attrs}[^>]*>\\s*${text}</tspan>`).test(svg);
+
+  for (const [how, config] of [
+    ['globally', { markdownAlwaysOn: true }],
+    ['through the gantt section', { gantt: { markdownAlwaysOn: true } }],
+  ] as const) {
+    it(`draws every label kind as markdown with markdownAlwaysOn set ${how}`, async () => {
+      const { svg } = await render(ALWAYS, config);
+      // Title, section name, task, milestone and vert labels: plain markdown is read.
+      for (const [b, i] of [
+        ['tb', 'ti'],
+        ['sb', 'si'],
+        ['kb', 'ki'],
+        ['mb', 'mi'],
+        ['vb', 'vi'],
+      ])
+        expect([
+          b,
+          tspan(svg, 'font-weight="bold"', b!),
+          tspan(svg, 'font-style="italic"', i!),
+        ]).toEqual([b, true, true]);
+      // A milestone label is italic as a whole (v12), so its `_mi_` shows only as read markers.
+      // The drawn text, not the attributes (a section's `data-id` is its name as written).
+      const drawn = svg.replace(/<[^>]*>/g, '');
+      expect(drawn).not.toContain('**');
+      expect(drawn).not.toMatch(/_[a-z]{2}_/);
+      expect(drawn).not.toContain('`cc`');
+      expect(tspan(svg, 'font-family="[^"]*mono', 'cc')).toBe(true);
+      // Tags, a written \n and a quoted markdown string read as in the default mode.
+      expect(tspan(svg, 'font-weight="bold"', 'tg')).toBe(true);
+      expect(svg).toMatch(/>two<\/tspan>/);
+      expect(tspan(svg, 'font-weight="bold"', 'qb')).toBe(true);
+      expect(svg).not.toContain('`Md');
+    });
+  }
+
+  it('draws plain markdown as written when markdownAlwaysOn is off', async () => {
+    const { svg } = await render(ALWAYS);
+    expect(svg).toContain('Task **kb** _ki_');
+    expect(svg).toContain('Code a `cc` b');
   });
 });

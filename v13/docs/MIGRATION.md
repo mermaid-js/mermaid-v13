@@ -2069,8 +2069,8 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   line; v12 drew all of them as written with `.text()`, except `<br>` in a section name. A quoted
   markdown string (`` "`**bold** _ital_`" ``) is drawn as markdown, without its quotes and
   backticks; v12 showed it as written. Plain `**x**`, `_x_` and backticks, and a tag Mermaid does
-  not know (`List<T>`), are still drawn as written. `legacyMarkdown` changes nothing here: v12
-  read no markdown in gantt labels. A section name still breaks on `</br>` as in v12. A task
+  not know (`List<T>`), are still drawn as written. `markdownAlwaysOn` (global, or
+  `gantt.markdownAlwaysOn`) draws every gantt label as markdown, quoted or not. A section name still breaks on `</br>` as in v12. A task
   label of several lines is centred on its bar, and a title of several lines grows upward from
   where a one-line title sits.
 - **Entity codes are decoded (D563):** `#35;`, `#quot;`, `#lt;` and `#9829;` in the title, a

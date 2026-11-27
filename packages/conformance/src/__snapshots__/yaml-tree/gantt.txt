@@ -76,8 +76,8 @@ e2e/diagrams/gantt/nightly-check/should-warn-about-unknown-ids-in-an-after-state
 e2e/diagrams/gantt/nightly-check/should-warn-about-unknown-ids-in-an-until-statement.mmd 1 1c5aebeb1b7c881d
 e2e/diagrams/gantt/nightly-check/should-warn-when-a-milestone-is-declared-without-a-duration-issue-4121.mmd 1 f443ce8392dd39cb
 e2e/diagrams/gantt/nightly-check/should-work-when-end-date-is-the-31st.mmd 1 b333b2f9680711d9
-e2e/diagrams/gantt/pr-check/label-syntax-compat.mmd 1 d3b366d9ba692463
-e2e/diagrams/gantt/pr-check/label-syntax.mmd 1 0f91618da2954ac6
+e2e/diagrams/gantt/pr-check/label-syntax-compat.mmd 1 2030b3e5db55aa92
+e2e/diagrams/gantt/pr-check/label-syntax.mmd 1 485d3e8befc8a09a
 e2e/diagrams/gantt/pr-check/multiple-dependencies-syntax.mmd 1 8cec229e52f5ab61
 e2e/diagrams/gantt/pr-check/should-render-a-gantt-chart-usemaxwidth-false.mmd 1 6944a1cc37bb4062
 e2e/diagrams/gantt/pr-check/should-render-a-gantt-chart.mmd 1 cc2c3d3dc9e0604f

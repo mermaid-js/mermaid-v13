@@ -96,15 +96,12 @@ const literal = (text: string, boxed: (span: string) => boolean): string =>
     .map((part, i) => (i % 2 === 1 && boxed(part) ? part : escaped(part)))
     .join('');
 
-/**
- * The title, section names and task labels (`vert` markers included) go through core's label
- * handler (D735, amending D263): the common tags draw, `<br>` and a written `\n` break the line,
- * a quoted markdown string (`"`…`"`) is markdown, and all else is plain text. The parser keeps a
- * label's quotes, so the handler finds the markdown string itself. v12 drew every gantt label
- * with `.text()`, so no label kind read markdown there (`v12Markdown: false`). Entity codes
- * decode as in every label, and the parser's `&lt;` for a `#lt;` is text (D563).
- */
-const GANTT_LABEL = { v12Markdown: false } as const;
+// The title, section names and task labels (`vert` markers included) go through core's label
+// handler (D735, amending D263): the common tags draw, `<br>` and a written `\n` break the line,
+// a quoted markdown string (`"`…`"`) is markdown, and all else is plain text; with
+// `markdownAlwaysOn` every label is markdown (the handler reads the setting). The parser keeps a
+// label's quotes, so the handler finds the markdown string itself. Entity codes decode as in
+// every label, and the parser's `&lt;` for a `#lt;` is text (D563).
 
 /**
  * v12 broke a section name on `common.lineBreakRegex`, which takes `</br>` too; core's label
@@ -149,7 +146,7 @@ export function envOf(ctx: GanttLayoutContext): Env {
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
   const measure = (text: string, f: FontKey, style = 0): MeasuredLabel => {
-    const source = labelSource(text, GANTT_LABEL, ctx.config);
+    const source = labelSource(text, {}, ctx.config);
     return layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, style, ...inline });
   };
   return {

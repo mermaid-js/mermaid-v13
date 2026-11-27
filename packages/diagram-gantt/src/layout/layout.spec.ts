@@ -636,7 +636,7 @@ describe('final review fixes', () => {
 
 // D735 (spec #1368 T11): the title, section names and task labels go through core's label
 // handler. Tags draw, a quoted markdown string is markdown, a written `\n` breaks, and all else
-// is plain text. No gantt label kind read markdown in v12, so `legacyMarkdown` changes nothing.
+// is plain text. With `markdownAlwaysOn` every label is markdown, quoted or not.
 describe('gantt labels follow the label handler (D735)', () => {
   const runs = (t: MeasuredLabel): [string, number][][] =>
     t.lines.map((l) => l.map((r) => [r.text, r.style] as [string, number]));
@@ -653,9 +653,9 @@ describe('gantt labels follow the label handler (D735)', () => {
     layout.bars[0]!.label.text,
   ];
 
-  for (const legacyMarkdown of [false, true]) {
-    const config = { legacyMarkdown };
-    describe(`legacyMarkdown: ${legacyMarkdown}`, () => {
+  for (const markdownAlwaysOn of [false, true]) {
+    const config = { markdownAlwaysOn };
+    describe(`markdownAlwaysOn: ${markdownAlwaysOn}`, () => {
       it('draws the common tags in the title, section names and task labels', () => {
         const { layout } = lay(labelled('<b>b</b> <i>i</i><br>H<sub>2</sub>O'), {}, { config });
         for (const [kind, t] of ['title', 'section', 'task'].map(
@@ -691,17 +691,6 @@ describe('gantt labels follow the label handler (D735)', () => {
         }
       });
 
-      it('draws plain markdown, bare backticks and a code span as written', () => {
-        for (const label of ['**b** _i_', '`**b** _i_`', 'a `code` b', 'List<T>']) {
-          const { layout } = lay(labelled(label), {}, { config });
-          for (const t of texts(layout)) {
-            expect(lineTexts(t)).toHaveLength(1);
-            expect(lineTexts(t)[0]).toMatch(new RegExp(`${escapeRe(label)}$`));
-            expect(t.lines.flat().every((r) => r.style === 0)).toBe(true);
-          }
-        }
-      });
-
       it('breaks a written \\n in the title, section names and task labels', () => {
         const { layout } = lay(labelled('one\\ntwo'), {}, { config });
         expect(texts(layout).map(lineTexts)).toEqual([
@@ -712,6 +701,55 @@ describe('gantt labels follow the label handler (D735)', () => {
       });
     });
   }
+
+  it('draws plain markdown, bare backticks and a code span as written by default', () => {
+    for (const label of ['**b** _i_', '`**b** _i_`', 'a `code` b', 'List<T>']) {
+      const { layout } = lay(labelled(label));
+      for (const t of texts(layout)) {
+        expect(lineTexts(t)).toHaveLength(1);
+        expect(lineTexts(t)[0]).toMatch(new RegExp(`${escapeRe(label)}$`));
+        expect(t.lines.flat().every((r) => r.style === 0)).toBe(true);
+      }
+    }
+  });
+
+  describe('with markdownAlwaysOn every label is markdown', () => {
+    const config = { markdownAlwaysOn: true };
+
+    it('draws plain **b** _i_ bold and italic in the title, section names and task labels', () => {
+      const { layout } = lay(labelled('**b** _i_'), {}, { config });
+      for (const t of texts(layout)) {
+        expect(runs(t)[0]!.slice(1)).toEqual([
+          ['b', B],
+          [' ', 0],
+          ['i', I],
+        ]);
+      }
+    });
+
+    it('draws a code span as inline code, and keeps List<T> as text', () => {
+      const { layout } = lay(labelled('a `code` b List<T>'), {}, { config });
+      for (const t of texts(layout)) {
+        expect(lineTexts(t)).toHaveLength(1);
+        const code = t.lines[0]!.find((r) => r.text === 'code');
+        expect(code?.style).toBe(Style.Mono);
+        expect(lineTexts(t)[0]).toMatch(/a code b List<T>$/);
+      }
+    });
+
+    it('places a task label of inline code or a list item sanely in its bar', () => {
+      const plain = lay(fixture().addTask('a code b', 'a,2014-01-01,30d')).layout.bars[0]!;
+      for (const label of ['a `code` b', '- item one']) {
+        const bar = lay(fixture().addTask(label, 'a,2014-01-01,30d'), {}, { config }).layout
+          .bars[0]!;
+        expect(bar.label.text.lines).toHaveLength(1);
+        expect(bar.label.side).toBe('inside');
+        expect(bar.label.y).toBeCloseTo(plain.label.y);
+        expect(bar.label.text.width).toBeGreaterThan(0);
+        expect(bar.label.text.width).toBeLessThan(bar.width);
+      }
+    });
+  });
 
   it('centres a task label of several lines on its bar, and lifts a title of several', () => {
     const single = lay(labelled('one')).layout;
