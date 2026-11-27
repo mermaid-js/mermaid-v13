@@ -558,14 +558,13 @@ export class Rows {
       height: Math.max(m.labelBoxHeight, kind.height) + m.labelBoxExtra,
     };
     // The frame is wide enough for its title right of the tab and for each section label,
-    // with room for its sides in cells.
+    // with room for its sides in cells. The title clears the tab as drawn, which grows past
+    // `labelBoxWidth` for a long keyword (D734, #1361). Cells write the keyword on the border,
+    // not in a tab beside the title, and keep `labelBoxWidth`.
     const slack = m.frameLabelSlack;
+    const beside = m.cells ? m.labelBoxWidth : tab.width;
     const labels = sections.map((sec) => (sec.text ? sec.text.width + slack : 0));
-    const minWidth = Math.max(
-      tab.width,
-      title ? title.width + m.labelBoxWidth + slack : 0,
-      ...labels
-    );
+    const minWidth = Math.max(tab.width, title ? title.width + beside + slack : 0, ...labels);
     const textY = (y: number): number => y + m.boxMargin.y + m.boxTextMargin.y;
     // And tall enough for its tab, title and section labels, which v12 let an empty last
     // section's label hang below.
@@ -587,7 +586,7 @@ export class Rows {
               title,
               this.inFrame(
                 r,
-                r.x + m.half(m.labelBoxWidth) + m.half(r.width) - m.half(title.width),
+                r.x + m.half(beside) + m.half(r.width) - m.half(title.width),
                 title.width
               ),
               this.frameLabelY(title, r.y, textY)
