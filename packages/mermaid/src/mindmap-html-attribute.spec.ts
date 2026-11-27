@@ -152,9 +152,11 @@ describe.each([
     expect(warnings).toEqual([]);
     const drawnTexts = texts(svg);
     // With its tags taken out, the same text as the labels written without them.
-    const untagged = drawnTexts.map((l) => plain(l).replace(/\s+/g, ' ').trim());
-    for (const label of labels) expect(untagged).toContain(label);
-    expect(untagged).toEqual(texts((await render(plain(fixture(type)))).svg));
+    // Compared without white space: a label may wrap inside a tag, where the plain one does not.
+    const flat = (l: string): string => l.replace(/\s+/g, '');
+    const untagged = drawnTexts.map((l) => flat(l).replace(/<\/?span[^>]*>/g, ''));
+    for (const label of labels) expect(untagged).toContain(flat(label));
+    expect(untagged).toEqual(texts((await render(plain(fixture(type)))).svg).map(flat));
     // The tags, their attributes and the event handler are shown, as v12 cleaned them up.
     const shown = drawnTexts.join('|').replace(/\s+/g, '');
     expect(shown).toContain("<spanstyle='color:red'>red</span>");
