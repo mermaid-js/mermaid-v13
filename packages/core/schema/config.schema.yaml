@@ -3519,7 +3519,7 @@ $defs:
         x-mermaid:
           status: honoured
           since: 13.0.0
-          reason: "New in v13 (D733, #1324, #1325): v12 drew state edges with `flowchart.curve`, which v13 does not read. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+          reason: 'New in v13 (D733, #1324, #1325): v12 drew state edges with `flowchart.curve`, which v13 does not read. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681).'
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
