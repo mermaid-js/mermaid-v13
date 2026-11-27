@@ -1,0 +1,16 @@
+---
+description: >-
+  Self messages drawn with `sequence.rightAngles`, one and two lines, next to
+  ordinary messages. Each label ends on or above the top of its square loop
+  instead of being struck through by it (#1337 review, D723).
+config:
+  sequence:
+    rightAngles: true
+---
+sequenceDiagram
+  participant A as Alice
+  participant B as Bob
+  A->>A: Check the queue
+  A->>B: Ask for a slot
+  B->>B: Look up the<br>calendar, quickly
+  B-->>A: Slot at noon
