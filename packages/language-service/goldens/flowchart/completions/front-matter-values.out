@@ -34,4 +34,4 @@
   step value 9:12-9:12 "" -> "step"
   stepAfter value 9:12-9:12 "" -> "stepAfter"
   stepBefore value 9:12-9:12 "" -> "stepBefore"
-  rounded value (default) 9:12-9:12 "" -> "rounded"
+  rounded value 9:12-9:12 "" -> "rounded"

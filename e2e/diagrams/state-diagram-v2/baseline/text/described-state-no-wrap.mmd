@@ -1,0 +1,7 @@
+---
+description: a described state keeps its title and each description row on one line, and breaks only at a written \n (D731, #1214)
+---
+stateDiagram-v2
+  state "Waiting for payment confirmation" as W
+  W : retries every minute until the bank answers
+  [*] --> W

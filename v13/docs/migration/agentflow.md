@@ -57,12 +57,17 @@
   (v12 drew it as given). `useWidth` is ignored, as v12's renderer never read it. Agentflow
   still reads three `flowchart` keys (D466): `flowchart.padding` (node padding),
   `flowchart.inheritDir` (a flow without its own `direction` takes the diagram's) and
-  `flowchart.subGraphTitleMargin` (room around a flow's title); its edges follow
-  `flowchart.curve`. With no curve set (no `flowchart.curve`, no `linkStyle default
-  interpolate`), edges are drawn with flowchart's default curve, `rounded`: stepped routes with
-  rounded corners, so nodes and labels can sit where they did not in v12, which drew `basis`
-  S-curves there (v12's `flowchart.curve` default). Set `flowchart.curve: basis` to keep the
-  S-curves (D687).
+  `flowchart.subGraphTitleMargin` (room around a flow's title). With no curve set (no
+  `agentflow.curve`, no `curve`, no `linkStyle default interpolate`), edges are drawn with the
+  default curve, `rounded`: stepped routes with rounded corners, so nodes and labels can sit
+  where they did not in v12, which drew `basis` S-curves there (v12's `flowchart.curve`
+  default). Set `agentflow.curve: basis` to keep the S-curves (D687).
+- **Edge curve** (D733, #1378): a per-edge `linkStyle <n> interpolate`, then `linkStyle default
+  interpolate`, then the new `agentflow.curve`, then the new top-level `curve`, then `rounded`.
+  v12 drew agentflow edges with `flowchart.curve`; v13 does not read it, so a diagram that set
+  `flowchart.curve` for its agentflow edges sets `agentflow.curve` instead. With none of these
+  set, the output is unchanged. Text output stays stepped and warns `ASCII_DROPPED` for a curve
+  set by `agentflow.curve` or `curve`.
 - **Limits**: the edge limit is v13's (`maxEdges`, 5,000 by default and set only by the
   integrator, R-SEC-5), with the message `Edge limit exceeded…`; v12 threw at 501 edges. A source
   longer than `maxTextSize` is rejected before it is parsed, as for every diagram.
@@ -89,7 +94,7 @@
   a cross (`✕`, `x`), and `-.-` is dotted. It is never cropped: wider than `ascii.maxWidth`
   it turns `LR` into `TB`, then warns `ASCII_TOO_WIDE`.
 - **Text output drops**, one `ASCII_DROPPED` per kind: `style` (`style`, `classDef`, `class`,
-  `linkStyle`, palette colours), `curve` (`interpolate`, `flowchart.curve`), `emphasis`,
+  `linkStyle`, palette colours), `curve` (`interpolate`, `agentflow.curve`, `curve`), `emphasis`,
   `animation`, `link` (`click`, tooltips), `config` and `accessibility`. `config` names the
   options only the SVG reads, set off their default: `agentflow.useMaxWidth`,
   `diagramPadding`, `minNodeWidth` and `titleTopMargin`, and `flowchart.padding` and
@@ -109,7 +114,7 @@ so selectors that use them keep working: `clusters`, `cluster`, `flow-cluster`, 
 | Root `id="<render id>"`, a `<style>` scoped by the id, `aria-roledescription="agentflow"` | No root `id`; `class="mermaid mermaid-agentflow"`, `role="img"`, `aria-roledescription="agentflow"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases declared on the root `style` (only `theme: 'auto'` writes a custom-property sheet) | Inert output (R-SEC-2); hosts re-theme with `--mermaid-*` (R-THEME-3) |
 | `<g class="root">`, `<defs>` with `<marker>`s (point, circle, cross, hierarchy), `marker-end="url(#…)"` | The four groups are the root's children; each arrowhead is a `<path class="marker">` right after its edge's path: a filled triangle for `-->`, two stroked diagonals for `--x`, none for `-.-` | No `<defs>` or ids (D35); the head takes the edge's colour |
 | Element ids: vertices `<render id>-flowchart-<id>-<n>`, edges `<render id>-L_<a>_<b>_<n>`, flows by their id | `data-id` (the vertex, flow or edge id) and `data-ast` (its AST id: `n:<id>`, `s:<id>`, `e:<a>><b>`) on each `g.node`, flow `g.cluster` and edge `path`; labels carry `data-id` only | Ids are global in a page; `data-ast` maps an element back to its source (R-PARSE-8, D468) |
-| Edge: `<path class="… flowchart-link" id>` inside `g.edges.edgePath` | `<path class="flowchart-link edge-thickness-normal edge-pattern-solid\|dotted[ edge-animation-*][ classes]" data-id data-ast>` directly in `g.edgePaths`, or, for an animated edge, in a plain `<g>` there with its arrowheads; a dotted edge is `stroke-dasharray="2"` with butt caps. Its ends are on the outline of the shape drawn (the layout puts them there), and its curve follows `linkStyle … interpolate`, the default's, or `flowchart.curve`, else `rounded` (D687) | One element per edge maps it to its source |
+| Edge: `<path class="… flowchart-link" id>` inside `g.edges.edgePath` | `<path class="flowchart-link edge-thickness-normal edge-pattern-solid\|dotted[ edge-animation-*][ classes]" data-id data-ast>` directly in `g.edgePaths`, or, for an animated edge, in a plain `<g>` there with its arrowheads; a dotted edge is `stroke-dasharray="2"` with butt caps. Its ends are on the outline of the shape drawn (the layout puts them there), and its curve follows `linkStyle … interpolate`, the default's, `agentflow.curve` or `curve`, else `rounded` (D687, D733) | One element per edge maps it to its source |
 | Animated edges (`animate`, `animation`): `stroke-dasharray: 9,5` and the `dash` keyframes | The same dashes, caps and speeds, moved by an `<animate>` in the edge's `<g>`: the keyframes need a `<style>` | R-SEC-2, D606, as the flowchart (#1196) |
 | Edge label: `<g class="edgeLabel">` with HTML on `edgeLabelBackground`, no border | `<g class="edgeLabel" data-id>` with a tag: a `<rect rx="6">` with 8 px of room each side of the text and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set), bordered 1 px solid in the edge's stroke (a `linkStyle` or class stroke, else `lineColor`) (still 1 px and solid on dotted edges), then a `<text>`; one box around a label of several lines, none for an empty one | Edge labels are tags (D626–D629) |
 | Labels: `<foreignObject>` with HTML (`span.nodeLabel`, `div.labelBkg`) | `<text>`/`<tspan>` from core's label layout (markdown strings as markdown, math with the math plugin, D176); a word wider than `wrappingWidth` (`translate_to_swedish`) stays whole and the node grows to hold it, as the HTML did (the text output splits it) | No HTML mode (D5); labels measure deterministically (R-TEXT-4); #649 |

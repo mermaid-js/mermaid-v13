@@ -187,17 +187,34 @@ describe('mindmap config (#390, spec #294 "Config")', () => {
     expect(padded[3]!).toBeGreaterThanOrEqual(h! + 40);
     const long = 'mindmap\n  root[A label long enough to wrap at a narrow width]\n';
     const wide = viewBox((await withInit({}, long)).svg);
-    const narrow = viewBox((await withInit({ mindmap: { maxNodeWidth: 80 } }, long)).svg);
+    const narrow = viewBox((await withInit({ mindmap: { maxNodeWidth: 120 } }, long)).svg);
     expect(narrow[2]!).toBeLessThan(wide[2]!);
     expect(narrow[3]!).toBeGreaterThan(wide[3]!);
   });
 
+  it('clamps maxNodeWidth to 120..1200 and warns once per render (D769)', async () => {
+    const long =
+      'mindmap\n  root[A label long enough to wrap at a narrow width]\n    [B]\n    (C)\n';
+    const at120 = await withInit({ mindmap: { maxNodeWidth: 120 } }, long);
+    const at1200 = await withInit({ mindmap: { maxNodeWidth: 1200 } }, long);
+    expect(at120.warnings).toEqual([]);
+    for (const [value, same] of [
+      [1, at120],
+      [119, at120],
+      [1201, at1200],
+    ] as const) {
+      const r = await withInit({ mindmap: { maxNodeWidth: value } }, long);
+      expect(r.svg, String(value)).toBe(same.svg);
+      expect(r.warnings, String(value)).toEqual(['MINDMAP_CONFIG_IGNORED']);
+    }
+  });
+
   it('reads a whole numeric string as a number, and warns on any other string', async () => {
     const small = 'mindmap\n  root((mindmap))\n    A\n    B\n';
-    const asNumber = await withInit({ mindmap: { padding: 20, maxNodeWidth: 2.5 } }, small);
+    const asNumber = await withInit({ mindmap: { padding: 20, maxNodeWidth: 250 } }, small);
     for (const [padding, maxNodeWidth] of [
-      ['20', '2.5'],
-      [' 20 ', ' 2.5'],
+      ['20', '250'],
+      [' 20 ', ' 250'],
     ]) {
       const r = await withInit({ mindmap: { padding, maxNodeWidth } }, small);
       expect(r.svg).toBe(asNumber.svg);

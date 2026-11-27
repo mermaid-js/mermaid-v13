@@ -3,6 +3,7 @@
   themeVariables property (object) 3:3-3:5 "se" -> "themeVariables:\n    "
   layout property (string) 3:3-3:5 "se" -> "layout: "
   lineHops property (boolean | string) 3:3-3:5 "se" -> "lineHops: "
+  curve property (string) 3:3-3:5 "se" -> "curve: "
   ascii property (object) 3:3-3:5 "se" -> "ascii:\n    "
   darkMode property (boolean) 3:3-3:5 "se" -> "darkMode: "
   fontFamily property (string) 3:3-3:5 "se" -> "fontFamily: "
@@ -49,4 +50,4 @@
   wrap property (boolean) 3:3-3:5 "se" -> "wrap: "
   fontSize property (number) 3:3-3:5 "se" -> "fontSize: "
   markdownAutoWrap property (boolean) 3:3-3:5 "se" -> "markdownAutoWrap: "
-  legacyMarkdown property (boolean) 3:3-3:5 "se" -> "legacyMarkdown: "
+  markdownAlwaysOn property (boolean) 3:3-3:5 "se" -> "markdownAlwaysOn: "

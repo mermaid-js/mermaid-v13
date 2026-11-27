@@ -79,12 +79,26 @@ describe('shape sizes at default config (v12 formulas, padding 10)', () => {
 
 describe('labels', () => {
   it('wrap at mindmap.maxNodeWidth in every shape (D287)', async () => {
-    const config = { mindmap: { maxNodeWidth: 50 } };
-    for (const shape of ['default', 'rect', 'rounded', 'hexagon', 'circle'] as const) {
-      const n = await only('aaaa bbbb cccc', shape, config);
-      expect([n.label.width, n.label.height], shape).toEqual([40, 60]);
+    const config = { mindmap: { maxNodeWidth: 150 } };
+    for (const shape of [
+      'default',
+      'rect',
+      'rounded',
+      'hexagon',
+      'circle',
+      'cloud',
+      'bang',
+    ] as const) {
+      const n = await only('aaaa bbbb cccc dddd eeee', shape, config);
+      expect([n.label.width, n.label.height], shape).toEqual([140, 40]);
     }
-    expect((await only('aaaa bbbb cccc', 'rect')).label.width).toBe(140);
+    // Unset, every shape wraps at 200, never at `flowchart.wrappingWidth` (D769).
+    for (const shape of ['default', 'rect', 'rounded', 'hexagon'] as const) {
+      const n = await only('aaaa bbbb cccc dddd eeee ffff', shape, {
+        flowchart: { wrappingWidth: 120 },
+      });
+      expect(n.label.width, shape).toBe(190);
+    }
   });
 
   it('are markdown: `**x**` is bold, line breaks start lines', async () => {
@@ -175,12 +189,38 @@ describe('the graph', () => {
 describe('config', () => {
   it('takes numeric strings, as v12 and flowchart do', async () => {
     const ctx = contextFor(tree, await themeNamed(), {
-      mindmap: { padding: '5', maxNodeWidth: '50' } as never,
+      mindmap: { padding: '5', maxNodeWidth: '150' } as never,
     });
-    const n = layoutMindmap(fixtureModel([{ label: 'aaaa bbbb', depth: 0 }]), ctx).mindmap
+    const n = layoutMindmap(fixtureModel([{ label: 'aaaa bbbb cccc dddd', depth: 0 }]), ctx).mindmap
       .nodes[0]!;
-    expect(size(n)).toEqual([40 + 20, 40 + 5]);
+    expect(size(n)).toEqual([140 + 20, 40 + 5]);
     expect(ctx.warnings).toEqual([]);
+  });
+
+  it('clamps mindmap.maxNodeWidth to 120..1200 with one warning (D769)', async () => {
+    const label = Array.from({ length: 150 }, () => 'aaaa').join(' ');
+    const wrapped = async (maxNodeWidth: unknown) => {
+      const ctx = contextFor(tree, await themeNamed(), { mindmap: { maxNodeWidth } as never });
+      const n = layoutMindmap(fixtureModel([{ label, depth: 0 }]), ctx).mindmap.nodes[0]!;
+      return { width: n.label.width, warnings: ctx.warnings };
+    };
+    // 10 px a character, 5 characters a word: a width of 120 fits two words (90), 1200 fits 24 (1190).
+    for (const [value, width, clamped] of [
+      [119, 90, true],
+      [1, 90, true],
+      [120, 90, false],
+      [1200, 1190, false],
+      [1201, 1190, true],
+      [1e9, 1190, true],
+      ['50', 90, true],
+    ] as const) {
+      const r = await wrapped(value);
+      expect(r.width, String(value)).toBe(width);
+      expect(
+        r.warnings.map((w) => [w.code, w.path]),
+        String(value)
+      ).toEqual(clamped ? [['MINDMAP_CONFIG_IGNORED', 'mindmap.maxNodeWidth']] : []);
+    }
   });
 
   it('warns and uses the default for a padding or width it cannot take (pitfall 22)', async () => {

@@ -1,7 +1,8 @@
 ---
 description: >-
-  D690: a misspelt rect colour (`redd`) is ignored with STYLE_VALUE_DROPPED and the block is
-  filled with rectBkgColor; the nested rect is spelt right
+  D690, D737: a misspelt rect colour (`redd`) and a malformed colour function (`rgb(redd)`) are
+  ignored with STYLE_VALUE_DROPPED and both blocks are filled with rectBkgColor; the nested rect
+  is spelt right
 ---
 sequenceDiagram
   A->>B: before
@@ -10,4 +11,7 @@ sequenceDiagram
     rect lightgreen
       A->>B: spelt right
     end
+  end
+  rect rgb(redd)
+    A->>B: malformed function
   end

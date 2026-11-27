@@ -3,6 +3,7 @@
   useMaxWidth property (boolean) 5:5-5:7 "cu" -> "useMaxWidth: "
   theme property (string) 5:5-5:7 "cu" -> "theme: "
   layout property (string) 5:5-5:7 "cu" -> "layout: "
+  markdownAlwaysOn property (boolean) 5:5-5:7 "cu" -> "markdownAlwaysOn: "
   titleTopMargin property (integer) 5:5-5:7 "cu" -> "titleTopMargin: "
   subGraphTitleMargin property (object) 5:5-5:7 "cu" -> "subGraphTitleMargin:\n      "
   subGraphTitlePosition property (string) 5:5-5:7 "cu" -> "subGraphTitlePosition: "

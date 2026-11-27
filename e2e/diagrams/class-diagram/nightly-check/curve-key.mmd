@@ -1,0 +1,16 @@
+---
+description: >-
+  `class.curve` (D733, #1378) draws every relationship: straight segments here (`linear`),
+  where the default draws rounded right angles. `flowchart.curve` no longer reaches a class
+  diagram, so the `basis` it sets here changes nothing.
+config:
+  class:
+    curve: linear
+  flowchart:
+    curve: basis
+---
+classDiagram
+  Animal <|-- Duck
+  Animal <|-- Fish
+  Duck --> Pond
+  Fish --> Pond
