@@ -19,17 +19,17 @@ const MAX_PALETTE = 64;
  */
 const RE_SLOT = /^(cScale(?:Inv|Label)?|git(?:Inv|BranchLabel)?)(0|[1-9]\d?)$/;
 
-type PaletteLists = Readonly<Partial<Record<string, readonly string[]>>>;
-
 /** What the palettes of one render are built from (D258). */
 export interface PaletteSource {
   /** The theme's entries: colours or rules. */
-  readonly spec: PaletteLists;
+  readonly spec: Readonly<Partial<Record<string, readonly string[]>>>;
   /** The author's whole lists, checked colours, a table's `palette` variables' among them. */
   readonly user: Readonly<Partial<Record<string, readonly SafeColor[]>>>;
   /** The author's numbered entries (`cScale3`), checked colours. */
   readonly slots: ReadonlyMap<string, SafeColor>;
 }
+
+type PaletteLists = PaletteSource['spec'];
 
 export const NO_PALETTES: PaletteSource = { spec: {}, user: {}, slots: new Map() };
 
@@ -78,6 +78,29 @@ function withBaseScales(lists: PaletteLists, darkMode: boolean): PaletteLists {
   return { ...baseScalesFor(darkMode), ...inverted('cScale'), ...inverted('git'), ...lists };
 }
 
+/** The author's whole palette lists that are safe colours; the rest dropped with a warning. */
+function wholeLists(
+  vars: Readonly<Record<string, unknown>>,
+  tablePalettes: readonly string[],
+  drop: (name: string, raw: unknown) => void
+): Partial<Record<string, readonly SafeColor[]>> {
+  const user: Partial<Record<string, readonly SafeColor[]>> = {};
+  for (const name of [...PALETTE_VARIABLES, ...tablePalettes]) {
+    const raw = Object.hasOwn(vars, name) ? vars[name] : undefined;
+    if (raw === undefined || raw === null) continue;
+    const items = paletteItems(raw);
+    const checked = items?.flatMap((c) => (typeof c === 'string' ? checkCssColor(c) : []) ?? []);
+    if (!checked || checked.length > MAX_PALETTE || checked.length !== items!.length) {
+      drop(name, raw);
+      continue;
+    }
+    // An empty chart palette is unset, as an empty value is: a reader cycles through it (D545).
+    if (checked.length || (name !== 'plotColorArray' && !tablePalettes.includes(name)))
+      user[name] = checked;
+  }
+  return user;
+}
+
 /**
  * The palette overrides of one render, checked: a whole list (`borderColorArray`, `cScale`, …)
  * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>`,
@@ -108,22 +131,9 @@ export function paletteSource(
     },
     darkMode
   );
-  const user: Partial<Record<string, readonly SafeColor[]>> = {};
   const slots = new Map<string, SafeColor>();
-  if (!vars) return { spec: lists, user, slots };
-  for (const name of [...PALETTE_VARIABLES, ...tablePalettes]) {
-    const raw = Object.hasOwn(vars, name) ? vars[name] : undefined;
-    if (raw === undefined || raw === null) continue;
-    const items = paletteItems(raw);
-    const checked = items?.flatMap((c) => (typeof c === 'string' ? checkCssColor(c) : []) ?? []);
-    if (!checked || checked.length > MAX_PALETTE || checked.length !== items!.length) {
-      drop(name, raw);
-      continue;
-    }
-    // An empty chart palette is unset, as an empty value is: a reader cycles through it (D545).
-    if (checked.length || (name !== 'plotColorArray' && !tablePalettes.includes(name)))
-      user[name] = checked;
-  }
+  if (!vars) return { spec: lists, user: {}, slots };
+  const user = wholeLists(vars, tablePalettes, drop);
   for (const [key, c] of numberedOverrides(vars, drop)) {
     // An entry the palette has no slot for is accepted and ignored (R-CONF-5).
     const m = RE_SLOT.exec(key) as RegExpExecArray;
