@@ -109,8 +109,9 @@ export interface VennTextArea {
    */
   readonly inner: Readonly<Circle>;
   /**
-   * The grid: `max(80s, 1.9 · r)` by `max(60s, 1.9 · r)` about the centre, moved down by the
-   * label offset.
+   * The grid. v12's, `max(80s, 1.9 · r)` by `max(60s, 1.9 · r)` about the centre, moved down by
+   * the label offset, where the area has no label and its nodes meet none; else below the labels
+   * and inside the inner circle where the nodes fit (D750).
    */
   readonly grid: Rect;
   /** In source order. */

@@ -45,13 +45,13 @@ e2e/diagrams/venn/nightly-check/layout/config-unusable-values.mmd 1 771bbf93156f
 e2e/diagrams/venn/nightly-check/layout/disjoint-overlap.mmd 1 f7c3abe2c1c3ee5b
 e2e/diagrams/venn/nightly-check/layout/huge-size.mmd 1 1f228227281790e0
 e2e/diagrams/venn/nightly-check/layout/label-collision-subset.mmd 1 7e294dea25023d90
-e2e/diagrams/venn/nightly-check/layout/label-lines-above-text-nodes.mmd 1 51101dc87ed26487
+e2e/diagrams/venn/nightly-check/layout/label-lines-above-text-nodes.mmd 1 d6f94fa2583c958b
 e2e/diagrams/venn/nightly-check/layout/label-three-lines.mmd 1 ad0c1fe6d4226017
 e2e/diagrams/venn/nightly-check/layout/label-written-on-four-lines.mmd 1 26ed81c83d9219c0
 e2e/diagrams/venn/nightly-check/layout/one-set.mmd 1 440908ee4f43b108
 e2e/diagrams/venn/nightly-check/layout/padding-too-large.mmd 1 87bb124049417f90
-e2e/diagrams/venn/nightly-check/layout/text-grid-labelled.mmd 1 db134cec38478b52
-e2e/diagrams/venn/nightly-check/layout/text-grid.mmd 1 f366628d327ee669
+e2e/diagrams/venn/nightly-check/layout/text-grid-labelled.mmd 1 154bbb37425bc18b
+e2e/diagrams/venn/nightly-check/layout/text-grid.mmd 1 93e02b841a692391
 e2e/diagrams/venn/nightly-check/layout/text-in-undrawn-areas.mmd 1 712a72b8bba3bd2a
 e2e/diagrams/venn/nightly-check/layout/tiny-sizes.mmd 1 ea78eb86f58d3e0d
 e2e/diagrams/venn/nightly-check/layout/too-large-size.mmd 1 81a285c5503caeab

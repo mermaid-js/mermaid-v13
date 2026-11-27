@@ -6,7 +6,15 @@ import { vennTestContext, vennTestTheme } from '../test-context.ts';
 import { vennLayoutViolations } from './invariants.ts';
 import { layoutVenn } from './layout.ts';
 import { fixture, gridMeasurer } from './mmd.fixtures.ts';
-import type { VennAreaLayout, VennCircle, VennLayout, VennSetLayout } from './types.ts';
+import { overlaps } from './geometry.ts';
+import type {
+  PlacedLabel,
+  VennAreaLayout,
+  VennCircle,
+  VennLayout,
+  VennSetLayout,
+  VennTextArea,
+} from './types.ts';
 
 let theme: Theme;
 beforeAll(async () => {
@@ -38,6 +46,22 @@ function setArea(area: VennAreaLayout | undefined): VennSetLayout {
 }
 
 const LAYOUT = 'nightly-check/layout';
+
+/** The placed label of the area of `sets`. */
+const labelOf = (layout: VennLayout, sets: readonly string[]): PlacedLabel =>
+  layout.areas.find((a) => a.sets.join('+') === sets.join('+'))!.label!;
+
+/** Every corner of every cell of `t` inside its inner circle. */
+function expectCellsInside(t: VennTextArea): void {
+  const { x, y, radius } = t.inner;
+  for (const { cell } of t.nodes) {
+    for (const cx of [cell.x, cell.x + cell.width]) {
+      for (const cy of [cell.y, cell.y + cell.height]) {
+        expect(Math.hypot(cx - x, cy - y)).toBeLessThanOrEqual(radius + 1e-9);
+      }
+    }
+  }
+}
 
 describe('venn layout: the solve (D411, D412)', () => {
   it('draws three equal sets as an equilateral triangle, d / r ≈ 1.2632, C on top', () => {
@@ -159,50 +183,72 @@ describe('venn layout: labels and text nodes (D414)', () => {
     expect(ab.y).toBeCloseTo(b.y + b.height, 9);
   });
 
-  it("lays text nodes out in v12's grid about the area's centre, wrapped to their box", () => {
+  it("lays text nodes out in a grid under their set's label, wrapped to their box", () => {
     const { layout } = laid(`${LAYOUT}/text-grid`);
     expect(layout.textAreas.map((t) => [t.sets.join('+'), t.nodes.map((n) => n.id)])).toEqual([
       ['A', ['a1', 'a2', 'a3']],
       ['A+B', ['ab']],
     ]);
     const [a, ab] = layout.textAreas;
-    // Three nodes: two columns, two rows, no offset (more than two nodes, no label).
-    expect(a!.grid.width).toBeCloseTo(a!.inner.radius * 1.9, 9);
-    expect(a!.grid.y).toBeCloseTo(a!.inner.y - a!.grid.height / 2, 9);
+    // Three nodes: two columns, two rows, under the set's label "A" (D750).
     expect(a!.nodes[0]!.cell.width).toBeCloseTo(a!.grid.width / 2, 9);
     expect(a!.nodes[2]!.cell.y).toBeCloseTo(a!.grid.y + a!.grid.height / 2, 9);
     const long = a!.nodes[1]!;
     expect(long.box.width).toBeCloseTo(long.cell.width * 0.9, 9);
     expect(long.label.text.lines.length).toBeGreaterThan(1);
     for (const w of long.label.text.widths) expect(w).toBeLessThanOrEqual(long.box.width);
-    // One node: moved down 30s.
+    // The overlap has no label and its node meets none: v12's grid, moved down 30s for one node.
+    expect(ab!.grid.width).toBeCloseTo(ab!.inner.radius * 1.9, 9);
     expect(ab!.grid.y).toBeCloseTo(ab!.inner.y - ab!.grid.height / 2 + 15, 9);
     expect(layout.fonts.text.size).toBe(20);
   });
 
-  it("gives a labelled area's grid the label offset, min(32s, innerRadius / 4)", () => {
+  it('starts the first row 10s below a one-line label, its cells inside the inner circle (D750)', () => {
+    // #1295: "Alpha" over its first row of text nodes.
     const { layout } = laid(`${LAYOUT}/text-grid-labelled`);
     const [t] = layout.textAreas;
-    const offset = Math.min(16, t!.inner.radius / 4);
-    expect(t!.grid.y).toBeCloseTo(t!.inner.y - t!.grid.height / 2 + offset, 9);
+    const label = labelOf(layout, t!.sets);
+    expect(label.text.lines.length).toBe(1);
+    expect(t!.grid.y).toBeCloseTo(label.y + label.height + 5, 9);
+    expectCellsInside(t!);
   });
 
-  it('moves a text grid down by what its label of several lines reaches below one line (D613)', () => {
-    // #770: a `<br>` label (two lines) and a wrapped one (three), one text node each.
+  it('starts the grid below a label of several lines, its cells inside the inner circle (D750)', () => {
+    // #770 and #1295: a `<br>` label (two lines) over one node, a wrapped one (three) over six.
     const { layout } = laid(`${LAYOUT}/label-lines-above-text-nodes`);
-    expect(layout.textAreas.map((t) => t.sets.join('+'))).toEqual(['A', 'B']);
+    expect(layout.textAreas.map((t) => [t.sets.join('+'), t.nodes.length])).toEqual([
+      ['A', 1],
+      ['B', 6],
+    ]);
     expect(layout.areas.map((a) => a.label!.text.lines.length)).toEqual([2, 3]);
     for (const t of layout.textAreas) {
-      const label = layout.areas.find((a) => a.sets.join('+') === t.sets.join('+'))!.label!;
-      const below = label.y + label.height - (Math.floor(t.inner.y) + label.text.lineHeight / 2);
-      expect(below).toBeGreaterThan(0);
-      // v12's offsets (the label's, and 30s for two nodes or fewer), then the label's extra lines.
-      const offset = Math.min(16, t.inner.radius / 4) + 15 + below;
-      expect(t.grid.y).toBeCloseTo(t.inner.y - t.grid.height / 2 + offset, 9);
-      for (const n of t.nodes) {
-        expect(n.label.y).toBeGreaterThanOrEqual(label.y + label.height);
+      const label = labelOf(layout, t.sets);
+      expect(t.grid.y).toBeCloseTo(label.y + label.height + 5, 9);
+      for (const n of t.nodes) expect(n.label.y).toBeGreaterThan(label.y + label.height);
+      expectCellsInside(t);
+    }
+  });
+
+  it("keeps every text node clear of its own and its neighbours' labels (D750)", () => {
+    // #1295: "Vegetables" over "Carrot"; the three-set themes' "Terraform" under "Everything".
+    for (const path of [
+      'nightly-check/10-should-render-a-venn-diagram-with-many-text-nodes',
+      'baseline/themes/redux-color',
+    ]) {
+      const { layout } = laid(path);
+      for (const t of layout.textAreas) {
+        for (const n of t.nodes) {
+          for (const a of layout.areas) {
+            if (a.label)
+              expect(overlaps(n.label, a.label), `${n.id} / ${a.sets.join('+')}`).toBe(false);
+          }
+        }
       }
     }
+    const { layout } = laid('nightly-check/10-should-render-a-venn-diagram-with-many-text-nodes');
+    const vegetables = labelOf(layout, ['Vegetables']);
+    const carrot = layout.textAreas.flatMap((t) => t.nodes).find((n) => n.id === 'Carrot')!;
+    expect(carrot.label.y).toBeGreaterThanOrEqual(vegetables.y + vegetables.height + 5);
   });
 
   it('draws no text node whose area is not drawn', () => {
@@ -269,7 +315,7 @@ describe('venn layout: the drawn areas', () => {
 });
 
 describe('venn layout invariants', () => {
-  it('catch a moved circle, a NaN, overlapping labels, a stray cell and short bounds', () => {
+  it('catch a moved circle, a NaN, overlapping labels, a stray cell, text on a label and short bounds', () => {
     const { model } = fixture(`${LAYOUT}/text-grid-labelled`);
     const { layout: base } = laid(`${LAYOUT}/text-grid-labelled`);
     const broken = (patch: Partial<VennLayout>) =>
@@ -290,6 +336,12 @@ describe('venn layout invariants', () => {
         expect.stringContaining('past its radius'),
         expect.stringContaining('outside the grid'),
       ])
+    );
+    // A text node drawn on its set's label (#1295).
+    const label = base.areas[0]!.label!;
+    const onLabel = { ...n, label: { ...n.label, x: label.x, y: label.y } };
+    expect(broken({ textAreas: [{ ...t!, nodes: [onLabel, ...t!.nodes.slice(1)] }] })).toEqual(
+      expect.arrayContaining([expect.stringContaining('text node a1 meets the label of A')])
     );
     // Two labels on one spot, and a size that does not match the area.
     const { model: two } = fixture('pr-check/1-should-render-a-simple-two-set-venn-diagram');
