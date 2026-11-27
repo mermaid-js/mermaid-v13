@@ -1,0 +1,23 @@
+---
+description: >-
+  Label syntax (#1368): the title written as plain markdown; set, union and text-node labels
+  written as plain markdown, a quoted markdown string, backticks in brackets without quotes, a
+  code span, tags and a written \n, spread over the three sets, their overlaps and two text
+  nodes in each set. Only the markdown strings are bold and italic; the plain markdown, the
+  backticks without quotes and the code span are drawn as written.
+---
+venn-beta
+  title title **bold** _ital_
+  set A["set **bold** _ital_"]
+    text a1["text **bold** _ital_"]
+    text a2["`text **bold** _ital_`"]
+  set B["`set **bold** _ital_`"]
+    text b1[`text **bold** _ital_`]
+    text b2["text a `code` b"]
+  set C[`set **bold** _ital_`]
+    text c1["text <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+    text c2["text one\ntwo"]
+  union A, B["union a `code` b"]
+  union B, C["union <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+  union A, C["union one\ntwo"]
+  union A, B, C["union **bold** _ital_"]

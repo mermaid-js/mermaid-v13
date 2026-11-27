@@ -13,9 +13,13 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   the pie as smaller ones would.
 - **The front-matter `title`** is drawn as the chart title when the text has none (D218), as
   v12 did.
-- **Labels (D225)** go through core's label layout: `<br>` breaks the line, markdown strings and
-  entities render ([Pie SVG structure](#pie-svg-structure)). A markdown string is written as in
-  flowcharts, `` "`**bold** text`" ``, in a section label or the title. A legend row of several
+- **Labels (D225)** go through core's label layout: `<br>` and a written `\n` break the line,
+  markdown strings and entities render ([Pie SVG structure](#pie-svg-structure)). A markdown
+  string is written as in flowcharts, `` "`**bold** text`" `` (or `` '`…`' ``), in a section
+  label or the title; v12 drew it as written. Plain `**x**` and `_x_`, a code span and a title in
+  backticks without quotes are drawn as written, and a render that has such markdown in a plain
+  label gives one `MARKDOWN_NOT_READ` warning. `markdownAlwaysOn` (global, or
+  `pie.markdownAlwaysOn`) draws every pie label as markdown, quoted or not (#1368). A legend row of several
   lines is as tall as its label, and a title of several lines grows up from where v12 drew its
   one line, so neither runs into the pie or the next row; one-line labels sit where v12 put them.
 - **Theme variables.** `pie1`–`pie12`, `pieTitleTextSize`, `pieTitleTextColor`,

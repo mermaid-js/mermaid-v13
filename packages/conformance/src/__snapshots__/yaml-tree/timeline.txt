@@ -29,7 +29,7 @@ e2e/diagrams/timeline/nightly-check/10-should-render-a-simple-timeline-in-forest
 e2e/diagrams/timeline/nightly-check/11-should-render-timeline-with-many-stacked-events-and-proper-timeline-line-length.mmd 1 edaf02266e2f96f8
 e2e/diagrams/timeline/nightly-check/13-should-render-a-simple-vertical-timeline-with-no-specific-sections.mmd 1 d14e691dd491b3f1
 e2e/diagrams/timeline/nightly-check/9-should-render-a-simple-timeline-in-neutral-theme.mmd 1 c299fccee33b947a
-e2e/diagrams/timeline/nightly-check/label-markup.mmd 1 d49e0e010d69f74e
+e2e/diagrams/timeline/nightly-check/label-markup.mmd 1 adaea1bc3a3c2514
 e2e/diagrams/timeline/nightly-check/space-exploration-dark-theme-neo-look.mmd 1 fc9e9edb1d11b977
 e2e/diagrams/timeline/nightly-check/space-exploration-default-theme-neo-look.mmd 1 e462a1b4e06a0e16
 e2e/diagrams/timeline/nightly-check/space-exploration-forest-theme-neo-look.mmd 1 786a211f3d305ae4
@@ -57,3 +57,5 @@ e2e/diagrams/timeline/pr-check/5-should-render-a-simple-timeline-with-directive-
 e2e/diagrams/timeline/pr-check/6-should-render-a-simple-timeline-in-base-theme.mmd 1 f80f9072e2883cf2
 e2e/diagrams/timeline/pr-check/7-should-render-a-simple-timeline-in-default-theme.mmd 1 5f17d5adaf529f94
 e2e/diagrams/timeline/pr-check/8-should-render-a-simple-timeline-in-dark-theme.mmd 1 6506e8c52eefa70b
+e2e/diagrams/timeline/pr-check/label-syntax-compat.mmd 1 bb537d8af01e5267
+e2e/diagrams/timeline/pr-check/label-syntax.mmd 1 ff2a52d0c689a65d

@@ -130,8 +130,8 @@ describe('pie lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () => {
     process.stdout.write(
       `pie lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
-    // Every e2e fixture reaches the pie lexer.
-    expect(e2e).toBe(55);
+    // Every e2e fixture reaches the pie lexer (#1368 added the two label-syntax fixtures).
+    expect(e2e).toBe(57);
     expect(compared).toBeGreaterThan(450);
     expect(diffs).toEqual([]);
   }, 120_000);

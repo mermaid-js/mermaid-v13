@@ -16,12 +16,8 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { formatList } from '@mermaid-js/core/parser-kit';
-import {
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { VENN_ZERO_SET } from '../codes.ts';
 import { vennLayoutConfig } from '../config.ts';
 import { idsKey, pairwiseRule, setIdOf, type VennModel, type VennSubset } from '../model.ts';
@@ -60,6 +56,7 @@ const ignoreWarning = (): void => undefined;
 interface Datum extends Area {
   readonly ast?: VennSubset['ast'];
   readonly label?: string;
+  readonly markdown?: true;
 }
 
 /**
@@ -98,19 +95,29 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
     title: font(m.titleFontSize),
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
-  // A markdown string is laid out as markdown without its wrapper, any other text plain (D710).
-  const measure = (text: string, labelFont: FontKey, maxWidth: number): MeasuredLabel => {
-    const { text: source, markup } = markdownString(text);
-    return layoutLabel(source, labelFont, maxWidth, ctx.measurer, {
+  // Every text through core's label handler (#1368), which also warns about markdown drawn as
+  // written. A text the parser marked as a markdown string holds its backticks, without its
+  // quotes; the text between them is the markdown.
+  const reading: MarkdownWarningContext = {
+    config: ctx.config,
+    warn: ctx.warn ?? ignoreWarning,
+    ...inline,
+  };
+  const measure: Measure = (text, labelFont, maxWidth, markdown = false) => {
+    const written = markdown ? text.slice(1, -1) : text;
+    const source = readLabel(written, { markdown }, reading);
+    return layoutLabel(source.text, labelFont, maxWidth, ctx.measurer, {
       ...inline,
-      markup,
+      ...source,
       keepWords: true,
     });
   };
 
   // Measure first: the title.
   const titleText =
-    model.title === undefined ? undefined : measure(model.title, fonts.title, Infinity);
+    model.title === undefined
+      ? undefined
+      : measure(model.title, fonts.title, Infinity, model.titleMarkdown);
   const titleHeight = titleText ? m.titleHeight * scale : 0;
   const chartHeight = Math.max(0, height - titleHeight);
   // The padding of the one solve (D412); one that leaves no room counts as 0.
@@ -118,8 +125,8 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
 
   const drawn = drawnAreas(model, ctx.warn ?? ignoreWarning);
   const solved = solveVenn(drawn, { width, height: chartHeight, padding });
-  const labels = placeLabels(drawn, solved, (text, maxWidth) =>
-    capped(text, fonts.label, maxWidth, measure)
+  const labels = placeLabels(drawn, solved, (text, maxWidth, markdown) =>
+    capped(text, fonts.label, maxWidth, (t, f, w) => measure(t, f, w, markdown))
   );
   const styles = vennStyles(model);
   const areas = areasOf({
@@ -184,6 +191,7 @@ function drawnAreas(model: VennModel, warn: (w: Warning) => void): Datum[] {
       size: laidOutSize(s.size),
       ast: s.ast,
       ...(s.label !== undefined ? { label: s.label } : {}),
+      ...(s.markdown ? { markdown: s.markdown } : {}),
     }))
   );
   const dropped = new Set<string>();
@@ -218,22 +226,24 @@ function drawnAreas(model: VennModel, warn: (w: Warning) => void): Datum[] {
 function placeLabels(
   drawn: readonly Datum[],
   { circles, centres }: Solved,
-  wrap: (text: string, maxWidth: number) => MeasuredLabel
+  wrap: (text: string, maxWidth: number, markdown?: boolean) => MeasuredLabel
 ): Map<string, PlacedLabel | undefined> {
-  const texts = new Map<string, string>();
-  for (const d of drawn) if (d.label) texts.set(idsKey(d.sets), d.label);
+  const texts = new Map<string, Datum>();
+  for (const d of drawn) if (d.label) texts.set(idsKey(d.sets), d);
   const placed = new Map<string, PlacedLabel | undefined>();
   const taken: PlacedLabel[] = [];
   for (const d of drawn) {
     const key = idsKey(d.sets);
     if (placed.has(key)) continue;
     const at = visible(centres.get(key));
-    const text = texts.get(key) ?? setIdOf(d);
+    // The label, else a set's id; the parser marked either one that is a markdown string.
+    const labelled = texts.get(key);
+    const text = labelled?.label ?? setIdOf(d);
     if (!at || text === undefined || text === '') {
       placed.set(key, undefined);
       continue;
     }
-    const wrapped = wrap(text, circles[d.sets[0]!]!.radius);
+    const wrapped = wrap(text, circles[d.sets[0]!]!.radius, (labelled ?? d).markdown);
     const label = clear(placeCentred(wrapped, Math.floor(at.x), Math.floor(at.y)), taken);
     taken.push(label);
     placed.set(key, label);
@@ -295,7 +305,8 @@ function strokeOf(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
-type Measure = (text: string, font: FontKey, maxWidth: number) => MeasuredLabel;
+/** A text laid out by the label handler; `markdown`: the parser marked it a markdown string. */
+type Measure = (text: string, font: FontKey, maxWidth: number, markdown?: boolean) => MeasuredLabel;
 
 /** A line break as core's label layout reads one. */
 const RE_BREAK = /\\n|\r\n?|\n|<br\s*\/?>/gi;
@@ -425,7 +436,7 @@ function textAreasOf(
       const y = startY + cellHeight * (row + 1 / 2);
       const boxWidth = cellWidth * m.cellFactor;
       const boxHeight = cellHeight * m.cellFactor;
-      const text = parts.measure(node.label ?? node.id, parts.font, boxWidth);
+      const text = parts.measure(node.label ?? node.id, parts.font, boxWidth, node.markdown);
       const style = parts.styles.get(idsKey([node.id]));
       return {
         ast: node.ast,

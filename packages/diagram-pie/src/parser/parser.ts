@@ -33,7 +33,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { PieModel, PieSection } from '../model.ts';
 import type { PieDocument, PieSliceNode, PieStatementNode } from './ast.ts';
-import { labelValue } from './convert.ts';
+import { isMarkdownString, labelValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { PIE_TRIVIA, T } from './tokens.ts';
 
@@ -213,7 +213,9 @@ class PieParser extends RuleParser<PreprocessResult> {
     const v = this.expect(T.Number);
     const labelRange = this.range(s);
     const valueRange = this.range(v);
-    const label = labelValue(this.raw(s));
+    const raw = this.raw(s);
+    const label = labelValue(raw);
+    const mark = isMarkdownString(raw) ? { markdown: true as const } : {};
     const value = Number(this.raw(v));
     const range = { start: labelRange.start, end: valueRange.end };
     const base = `slice:${esc(label)}`;
@@ -255,7 +257,7 @@ class PieParser extends RuleParser<PreprocessResult> {
           range
         );
       } else {
-        const section: PieSection = Object.freeze({ label, value, astId: id });
+        const section: PieSection = Object.freeze({ label, ...mark, value, astId: id });
         this.byLabel.set(label, section);
         this.sections.push(section);
       }

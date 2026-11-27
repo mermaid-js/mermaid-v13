@@ -3,13 +3,8 @@
  * v12's box height, colour slots, grouping by section (D251), arrowheads and bounding boxes.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  fontSizePx,
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import type { TimelineModel, TimelinePeriod } from '../model.ts';
 import { TIMELINE_METRICS, type TimelineMetrics } from './metrics.ts';
 import type { Arrowhead, PlacedLabel, Point, Rect, TimelineLine } from './types.ts';
@@ -22,6 +17,8 @@ export type TimelineLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 
 
 /** A config length the layout can't honour (pitfall 22): it draws with the default instead. */
 const TIMELINE_CONFIG_IGNORED = 'TIMELINE_CONFIG_IGNORED';
+
+const ignoreWarning = (): void => undefined;
 
 const WEIGHT_NORMAL = 400;
 const WEIGHT_BOLD = 700;
@@ -51,9 +48,11 @@ export interface Env {
   readonly titleReferenceFont: FontKey;
   /**
    * `text` laid out to `wrap` px (D225). A word wider than `wrap` stays whole, as v12 kept it
-   * (#649), and the layouts widen its box to hold it (D558). A markdown string (core's
-   * `markdownString`) is laid out as markdown without its wrapper; any other label is plain, so
-   * `<br>`, the drawn tags and character references apply (D710, D711).
+   * (#649), and the layouts widen its box to hold it (D558). Read by core's label handler
+   * (#1368), which also warns about markdown drawn as written: a markdown string (`"`…`"`) is
+   * laid out as markdown without its wrapper; any other label is plain, so `<br>`, a written
+   * `\n`, the drawn tags and character references apply (D710, D711), or markdown under
+   * `markdownAlwaysOn`.
    */
   measure(text: string, wrap: number, font?: FontKey): MeasuredLabel;
   /** v12 `drawNode`'s height: the label, `heightEm` font sizes and the padding once. */
@@ -103,6 +102,11 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   const refSize = m.common.titleReferenceFontSize;
   const titleRefSize = fontSizePx(m.common.titleFontSize, refSize)!;
   const stroke = scaleColors(ctx.theme) ? undefined : ctx.theme.number('strokeWidth');
+  const reading: MarkdownWarningContext = {
+    config: ctx.config,
+    warn: ctx.warn ?? ignoreWarning,
+    ...(ctx.inline ? { inline: ctx.inline } : {}),
+  };
   return {
     m,
     fontSize: formulaSize,
@@ -116,11 +120,11 @@ export function envOf(ctx: TimelineLayoutContext): Env {
     titleFont: { family, size: titleSize, weight: m.common.titleFontWeight },
     titleReferenceFont: { family, size: titleRefSize, weight: m.common.titleFontWeight },
     measure: (text, wrap, f = font) => {
-      const { text: source, markup } = markdownString(text);
-      return layoutLabel(source, f, Math.max(wrap, m.common.minWrap), ctx.measurer, {
+      const source = readLabel(text, {}, reading);
+      return layoutLabel(source.text, f, Math.max(wrap, m.common.minWrap), ctx.measurer, {
+        ...source,
         inline: ctx.inline,
         keepWords: true,
-        markup,
       });
     },
     boxHeight: (label, padding) => label.height + formulaSize * m.common.heightEm + padding,

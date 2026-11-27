@@ -273,16 +273,17 @@ describe('pie layout: labels of several lines and markdown strings (D225)', () =
     expect(one.legend.map((r) => r.swatch.y)).toEqual([40, 62]);
   });
 
-  it('lays out a markdown string as markdown in the legend and the title', () => {
-    const l = lay(
-      model(
-        [
-          ['`**md** x`', 1],
-          ['B', 1],
-        ],
-        { showData: true, title: '"`*T* y`"' }
-      )
+  it('lays out a markdown string as markdown in the legend and the title (#1368)', () => {
+    // The parser marks a slice written as `"`…`"`: its label keeps the backticks.
+    const base = model(
+      [
+        ['`**md** x`', 1],
+        ['B', 1],
+      ],
+      { showData: true, title: '"`*T* y`"' }
     );
+    const marked = { ...base.sections[0]!, markdown: true as const };
+    const l = lay({ ...base, sections: [marked, base.sections[1]!] });
     const runs = (r: { text: { lines: { text: string; style: number }[][] } }) =>
       r.text.lines[0]!.map((x) => [x.text, x.style]);
     const [bold, plain] = runs(l.legend[0]!.label);
@@ -300,8 +301,9 @@ describe('pie layout: labels of several lines and markdown strings (D225)', () =
         .join('')
     ).toBe('T y');
     expect(runs(l.title!)[0]![1]).not.toBe(0);
-    // Not a markdown string: kept as written.
+    // Not a markdown string: kept as written, a slice in backticks the parser did not mark too.
     expect(runs(lay(model([['**md**', 1]])).legend[0]!.label)).toEqual([['**md**', 0]]);
+    expect(runs(lay(model([['`**md**`', 1]])).legend[0]!.label)).toEqual([['`**md**`', 0]]);
   });
 
   it('the invariants catch overlapping labels', () => {

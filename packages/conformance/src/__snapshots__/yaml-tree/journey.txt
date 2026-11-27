@@ -19,7 +19,7 @@ e2e/diagrams/journey/baseline/themes/redux.mmd 1 77182786368bcd86
 e2e/diagrams/journey/nightly-check/default-theme-base-colour-overrides.mmd 1 a71d65f0a44703b1
 e2e/diagrams/journey/nightly-check/left-margin-150px.mmd 1 c012d7b7fb1fd210
 e2e/diagrams/journey/nightly-check/legend-diagram-spacing-long-labels.mmd 1 d7150a74e056d001
-e2e/diagrams/journey/nightly-check/markdown-strings.mmd 1 193e2805cd43d51f
+e2e/diagrams/journey/nightly-check/markdown-strings.mmd 1 b5c3e99cc3c8e152
 e2e/diagrams/journey/nightly-check/single-word-hyphenation.mmd 1 a205e04077e6bebb
 e2e/diagrams/journey/nightly-check/title-styling.mmd 1 e775a4da6b710537
 e2e/diagrams/journey/nightly-check/usemaxwidth-true.mmd 1 f6d4ebeb2d3f72bc
@@ -28,6 +28,8 @@ e2e/diagrams/journey/nightly-check/wrap-long-labels-multiline-margins.mmd 1 603d
 e2e/diagrams/journey/pr-check/dark-theme.mmd 1 69713dd4e9971f2e
 e2e/diagrams/journey/pr-check/default-theme.mmd 1 08bedc6ddf31a262
 e2e/diagrams/journey/pr-check/forest-theme.mmd 1 847c05f1e7249bbc
+e2e/diagrams/journey/pr-check/label-syntax-compat.mmd 1 b3b96789d159a71a
+e2e/diagrams/journey/pr-check/label-syntax.mmd 1 0dba4c025add5c2a
 e2e/diagrams/journey/pr-check/neutral-theme.mmd 1 433a3536a27d9e6d
 e2e/diagrams/journey/pr-check/redux-color-theme.mmd 1 a936d3d820342c53
 e2e/diagrams/journey/pr-check/redux-dark-color-theme.mmd 1 ccceba17832c220d

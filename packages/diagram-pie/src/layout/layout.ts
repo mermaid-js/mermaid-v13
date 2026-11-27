@@ -10,12 +10,8 @@
  */
 import type { PieDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import type { PieModel } from '../model.ts';
 import { pieSum } from '../shares.ts';
 import { centroid, pieAngles } from './arc.ts';
@@ -32,10 +28,34 @@ import { RectUnion } from '@mermaid-js/shared/layout';
 
 /** What the layout reads from the render context. */
 export type PieLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'inline'>>;
+  Partial<Pick<RenderContext, 'inline' | 'warn'>>;
+
+const ignoreWarning = (): void => undefined;
 
 type LegendPosition = 'top' | 'bottom' | 'left' | 'right' | 'center';
 const POSITIONS: ReadonlySet<string> = new Set(['top', 'bottom', 'left', 'right', 'center']);
+
+/** Lays out a label: its text as written, a plain suffix, and the parser's markdown mark. */
+type Measure = (text: string, f: FontKey, suffix?: string, markdown?: boolean) => MeasuredLabel;
+
+/**
+ * Title and legend go through core's label handler and label layout (D225, #1368), unwrapped as
+ * v12 drew them; the handler also warns about markdown drawn as written. A slice the parser
+ * marked as a markdown string holds its backticks, without its quotes. `suffix` is plain text.
+ */
+function labelMeasurer(ctx: PieLayoutContext): Measure {
+  const inline = ctx.inline ? { inline: ctx.inline } : {};
+  const reading: MarkdownWarningContext = {
+    config: ctx.config,
+    warn: ctx.warn ?? ignoreWarning,
+    ...inline,
+  };
+  return (text, f, suffix = '', markdown = false) => {
+    const written = markdown ? text.slice(1, -1) : text;
+    const source = readLabel(written, { markdown }, reading);
+    return layoutLabel(source.text + suffix, f, Infinity, ctx.measurer, { ...inline, ...source });
+  };
+}
 
 /** Lays out a pie chart in px. */
 export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
@@ -46,14 +66,7 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     section: font(ctx.theme.number('pieSectionTextSize')),
     legend: font(ctx.theme.number('pieLegendTextSize')),
   };
-  // Title and legend go through core's label layout (D225), unwrapped as v12 drew them; a
-  // markdown string (core's `markdownString`, D710) is laid out as markdown, without its
-  // backticks. `suffix` is plain text.
-  const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure = (text: string, f: FontKey, suffix = ''): MeasuredLabel => {
-    const { text: source, markup } = markdownString(text);
-    return layoutLabel(source + suffix, f, Infinity, ctx.measurer, { ...inline, markup });
-  };
+  const measure = labelMeasurer(ctx);
 
   const outerStrokeWidth = ctx.theme.number('pieOuterStrokeWidth');
   const strokeWidth = ctx.theme.number('pieStrokeWidth');
@@ -62,7 +75,7 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
   // Measure first: legend rows, then the title.
   const { sections } = model;
   const legendText = sections.map((s) =>
-    measure(s.label, fonts.legend, model.showData ? ` [${s.value}]` : '')
+    measure(s.label, fonts.legend, model.showData ? ` [${s.value}]` : '', s.markdown)
   );
   let longest = 0;
   for (const t of legendText) if (t.width > longest) longest = t.width;

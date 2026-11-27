@@ -9,6 +9,12 @@ import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 export interface PieSection {
   /** The label as v12's DB kept it: quotes removed, `\x` unescaped, not trimmed. */
   readonly label: string;
+  /**
+   * Set when the label was written as a markdown string (`"`…`"`, #1368). `label` then holds the
+   * backticks, as v12's did; the text between them is laid out as markdown. Without its quotes a
+   * label in backticks is plain text, so the parser marks it.
+   */
+  readonly markdown?: true;
   /** The value, never negative (a negative one is a diagnostic and no section, R-PARSE-4). */
   readonly value: number;
   /** `slice:<label>` (DESIGN §4.2); a repeat of the label is `slice:<label>@2` on the dropped one. */

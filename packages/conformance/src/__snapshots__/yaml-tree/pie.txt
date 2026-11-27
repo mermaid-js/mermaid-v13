@@ -42,6 +42,8 @@ e2e/diagrams/pie/nightly-check/should-render-a-pie-diagram-with-legend-at-the-bo
 e2e/diagrams/pie/nightly-check/should-render-a-simple-pie-diagram-with-long-labels.mmd 1 b1ad477ac406bd84
 e2e/diagrams/pie/nightly-check/should-render-pie-slices-only-for-non-zero-values-but-shows-all-legends.mmd 1 cdb75570fd01e982
 e2e/diagrams/pie/nightly-check/should-render-usemaxwidth-false.mmd 1 84218478e26178cf
+e2e/diagrams/pie/pr-check/label-syntax-compat.mmd 1 4f24bfa39ea8a629
+e2e/diagrams/pie/pr-check/label-syntax.mmd 1 b1f267ead1704d57
 e2e/diagrams/pie/pr-check/should-render-a-donut-diagram.mmd 1 f881fcdb01b279ac
 e2e/diagrams/pie/pr-check/should-render-a-pie-diagram-if-donuthole-parameter-is-negative.mmd 1 ca3afbab81e8a3f2
 e2e/diagrams/pie/pr-check/should-render-a-pie-diagram-if-donuthole-parameter-is-too-large.mmd 1 416a678a8b254476

@@ -31,6 +31,13 @@ const KNOWN_MODEL_CHANGES = [
   // Not a model change: ER attribute ids percent-encode a `.` in the entity name
   // (`a:2%2E5.id`), so the name-for-name substitution above cannot map `renamedZq7` back.
   'er-diagram/pr-check/should-render-complex-er-diagram-with-mixed-special-entity-names.mmd 2.5@392: model',
+  // Not a model change either: journey section and actor ast ids percent-encode a `>` in the
+  // name (`s:section <b%3Ebold…`), so the substitution cannot map the fresh name back. #1368's
+  // label-syntax fixtures name a section and an actor with tags.
+  'journey/pr-check/label-syntax-compat.mmd actor <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O@923: model',
+  'journey/pr-check/label-syntax-compat.mmd section <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O@808: model',
+  'journey/pr-check/label-syntax.mmd actor <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O@861: model',
+  'journey/pr-check/label-syntax.mmd section <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O@746: model',
 ];
 
 /**

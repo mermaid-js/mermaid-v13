@@ -1,7 +1,13 @@
 // The rule-lexer family (langium-style diagrams), its own chunk.
 export { idEnd, isBreak, RuleLexer, SKIP, UNSET } from './rule-lexer.ts';
 export type { RuleLexerOptions } from './rule-lexer.ts';
-export { accDescrValue, accTitleValue, stringValue, titleValue } from './common-values.ts';
+export {
+  accDescrValue,
+  accTitleValue,
+  isMarkdownString,
+  stringValue,
+  titleValue,
+} from './common-values.ts';
 export { RuleParser } from './rule-parser.ts';
 export type {
   DocumentNode,

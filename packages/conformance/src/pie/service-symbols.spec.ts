@@ -27,8 +27,11 @@ import { pieV12Snapshot } from './v12.ts';
  * entry, #325).
  */
 
-/** v12 section labels written otherwise than their name in the corpus (skipped above). */
-const ESCAPED = 47;
+/**
+ * v12 section labels written otherwise than their name in the corpus (skipped above); #1368's
+ * two label-syntax fixtures added six.
+ */
+const ESCAPED = 53;
 
 const service = createLanguageService();
 await service.preload({ types: ['pie'] });

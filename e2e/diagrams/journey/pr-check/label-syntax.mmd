@@ -1,0 +1,21 @@
+---
+description: >-
+  Label syntax (#1368): the title written as plain markdown, and each section, task and actor
+  written as plain markdown, a quoted markdown string, bare backticks, a code span, tags and a
+  written \n. Only the markdown strings are bold and italic; the plain markdown, the bare
+  backticks and the code span are drawn as written.
+---
+journey
+  title title **bold** _ital_
+  section section **bold** _ital_
+    task **bold** _ital_: 5: actor **bold** _ital_
+  section "`section **bold** _ital_`"
+    "`task **bold** _ital_`": 4: "`actor **bold** _ital_`"
+  section `section **bold** _ital_`
+    `task **bold** _ital_`: 3: `actor **bold** _ital_`
+  section section a `code` b
+    task a `code` b: 2: actor a `code` b
+  section section <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    task <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O: 1: actor <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  section section one\ntwo
+    task one\ntwo: 5: actor one\ntwo

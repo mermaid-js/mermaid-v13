@@ -3,9 +3,12 @@ description: >-
   Markup, entities and both quote kinds in every text c4-beta draws or
   writes as an attribute or accessible text: title, accTitle, a multi-line
   accDescr, names, a description, a technology, instances and a relation
-  label. The person colour from the c4 section is legacy C4's: c4-beta
-  never reads it, so the person keeps its theme colours and nothing is
-  written from the key or warned of.
+  label. Tags are drawn as written (#1440), so the node's header is wide:
+  the plain container db widens the node, so that the header slides clear
+  of the relation in TB instead of being crossed by it. The person colour
+  from the c4 section is
+  legacy C4's: c4-beta never reads it, so the person keeps its theme
+  colours and nothing is written from the key or warned of.
 config:
   c4:
     person_bg_color: 'red" onload="alert(1)'
@@ -19,6 +22,7 @@ accDescr {
 }
 person user "<svg onload=z()>User</svg>" "Says \"hi\" & 'bye'"
 deploymentNode node "Node <i>one</i>" "Runs it" "<a href='javascript:q()'>Tech</a>" instances "<b>3</b> & \"x\"" {
+  container db "DB"
   container api "API &lt;b&gt;" "Serves </text><text>orders" "Kotlin <br> JVM"
 }
 user --> api : "Calls <script>s()</script> \"now\"" "HTTPS & 'TLS'"

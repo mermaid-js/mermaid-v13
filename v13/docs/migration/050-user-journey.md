@@ -35,6 +35,13 @@
   grows the box, and the activity line and the faces move down by the band's growth plus the
   tallest box's. v12 printed `<br>` as written and clipped names to their box, so nothing grew.
   When every label fits its box, everything stays where v12 put it.
+- **Label markup (D225, #1292, #1368):** the title, section names, task names and actor names
+  draw `<b>`, `<i>`, `<u>`, `<s>`, `<sub>`, `<sup>` and `<br>`, and a written `\n` breaks the
+  line; v12 showed all of them as written. A quoted markdown string (`` "`**bold** _ital_`" ``)
+  is drawn as markdown without its quotes and backticks. Plain `**x**` and `_x_`, a code span and
+  a name in backticks without quotes are drawn as written, as v12 drew them, and a render with
+  such markdown gives one `MARKDOWN_NOT_READ` warning. `markdownAlwaysOn` (global, or
+  `journey.markdownAlwaysOn`) draws every journey label as markdown, quoted or not.
 
 ### Config
 

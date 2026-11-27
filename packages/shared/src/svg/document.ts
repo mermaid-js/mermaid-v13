@@ -222,9 +222,10 @@ export function animateEdge(w: SvgWriter, edge: AnimatedEdge): boolean {
 
 // The front-matter `title` over a drawing, as v12's `insertTitle` placed it (D652): centred
 // over the drawing, its baseline `titleTopMargin` above the drawing's top, and the viewBox grown
-// to hold it with the diagram's padding around it. The title is plain text: an inline tag in it
-// is dropped and reported, as core's `tagsOnly` does for every title (D566), here without that
-// file's chunk on the flowchart path (R-PERF-1). It is not the accessible name (D133).
+// to hold it with the diagram's padding around it. The title has no inline spans, as core's
+// `tagsOnly` gives every title, here without that file's chunk on the flowchart path (R-PERF-1);
+// a tag in it is drawn as written unless it is a drawn tag (#1440). It is not the accessible
+// name (D133).
 
 /** A laid-out title and its centre. */
 export interface PlacedTitle {
