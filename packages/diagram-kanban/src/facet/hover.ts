@@ -100,10 +100,13 @@ export function kanbanHover(at: HoverTarget, doc: DocumentView<KanbanDocument>):
   const { start, end } = t.range;
   const docText = kanbanDocs[t.kind];
   if (docText !== undefined) {
-    // An acc statement is one token: its keyword is what the doc names (D742).
+    // An acc statement is one token: its keyword is what the doc names, and what the hover is
+    // on; its value has none (D742).
     const to = t.kind === T.AccTitle || t.kind === T.AccDescr ? start + ACC_KEYWORD : end;
     const word = doc.text.slice(start, to);
-    return { range: span(start, to), contents: `**${code(word)}**\n\n${docText}` };
+    return at.offset < to
+      ? { range: span(start, to), contents: `**${code(word)}**\n\n${docText}` }
+      : undefined;
   }
   if (t.kind === T.ShapeData) {
     const key = keyAt(doc.text, start, end, at.offset);

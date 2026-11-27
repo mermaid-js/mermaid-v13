@@ -107,16 +107,22 @@ describe('the kanban facet', () => {
   });
 
   it('hovers the keyword of an acc statement with its doc, and records no symbol for it', () => {
-    const text = 'kanban\n  accTitle: My board\n  todo';
+    const text = 'kanban\n  accTitle: My board\n  accDescr {\n    d\n  }\n  todo';
     const result = kanbanLanguage.parse(text, { keepTokens: true });
-    const offset = text.indexOf('board');
-    const t = result.tokens!;
-    let j = 0;
-    while ((t.end[j] ?? 0) <= offset) j++;
-    const token = { kind: t.kind[j] ?? 0, range: { start: t.start[j] ?? 0, end: t.end[j] ?? 0 } };
-    const hover = kanbanLanguage.hover({ offset, token }, { text, result });
+    const hoverAt = (offset: number) => {
+      const t = result.tokens!;
+      let j = 0;
+      while ((t.end[j] ?? 0) <= offset) j++;
+      const token = { kind: t.kind[j] ?? 0, range: { start: t.start[j] ?? 0, end: t.end[j] ?? 0 } };
+      return kanbanLanguage.hover({ offset, token }, { text, result });
+    };
+    const hover = hoverAt(text.indexOf('Title'));
     expect(hover?.contents).toMatch(/^\*\*`accTitle`\*\*\n\n`accTitle: …`: the accessible title/);
     expect(hover?.range).toEqual({ start: 9, end: 17 });
+    expect(hoverAt(text.indexOf('Descr'))?.contents).toMatch(/^\*\*`accDescr`\*\*/);
+    // Not on the value, nor anywhere in the block.
+    expect(hoverAt(text.indexOf('board'))).toBeUndefined();
+    expect(hoverAt(text.indexOf('d\n  }'))).toBeUndefined();
     expect(symbols(text)).toEqual(['node def todo = todo']);
   });
 });

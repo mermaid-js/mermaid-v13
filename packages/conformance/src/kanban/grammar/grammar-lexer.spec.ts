@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { loadJisonLexerOracle } from '../../jison/oracle.ts';
 import { kanbanGateCorpus } from '../corpus.ts';
 import { asJison, grammarTokens } from './kanban-grammar.ts';
-import { cutAtAcc } from '../acc-divergence.ts';
+import { accProblem, accRanges, asPlaceholders, withPlaceholders } from '../acc-divergence.ts';
 
 /**
  * Lexer modes first (parser-method §2): the `@lexer` section of `grammar/kanban.ebnf` emits
  * exactly mermaid\@12's jison token stream (names and images, as `asJison` reads them) on the
- * text v12's lexer received, over the lexer gate's corpus, but for the acc statements v12 read
- * as items (D742, `cutAtAcc`).
+ * text v12's lexer received, over the lexer gate's corpus. v12 read the acc statements as items
+ * (D742): it lexes them as a placeholder item, compared with the grammar's acc token
+ * (`acc-divergence.ts`).
  */
 describe('kanban grammar lexer', () => {
   it('builds the lexer input v12 lexed', async () => {
@@ -32,18 +33,24 @@ describe('kanban grammar lexer', () => {
       const v12 = await oracle.tokens(item.source);
       if (!v12) continue;
       compared++;
-      const cut = cutAtAcc(v12, asJison(grammarTokens(item.source)));
-      if (cut.problem) diffs.push(`${item.id}: ${cut.problem}`);
-      const { ours } = cut;
-      if (JSON.stringify(ours) === JSON.stringify(cut.v12)) continue;
+      const grammar = asJison(grammarTokens(item.source));
+      const ranges = accRanges(item.source);
+      let expected = v12;
+      if (ranges.length > 0) {
+        const problem = accProblem(v12, grammar);
+        if (problem) diffs.push(`${item.id}: ${problem}`);
+        expected = (await oracle.tokens(withPlaceholders(item.source, ranges))) ?? [];
+      }
+      const ours = asPlaceholders(grammar);
+      if (JSON.stringify(ours) === JSON.stringify(expected)) continue;
       let at = 0;
-      while (JSON.stringify(ours[at]) === JSON.stringify(cut.v12[at])) at++;
+      while (JSON.stringify(ours[at]) === JSON.stringify(expected[at])) at++;
       const show = (x: [string, string][]) =>
         x
           .slice(Math.max(0, at - 2), at + 3)
           .map(([n, i]) => `${n}:${JSON.stringify(i)}`)
           .join(' ');
-      diffs.push(`${item.id} @${at}\n  v12  ${show(cut.v12)}\n  ours ${show(ours)}`);
+      diffs.push(`${item.id} @${at}\n  v12  ${show(expected)}\n  ours ${show(ours)}`);
     }
     expect(compared).toBeGreaterThan(1000);
     expect(diffs.slice(0, 10)).toEqual([]);

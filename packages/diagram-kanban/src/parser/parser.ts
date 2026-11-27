@@ -629,7 +629,8 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
       range,
       text,
     });
-    this.st.statement(kind, range);
+    // A board-wide statement: at the top level, not in the column span open around it.
+    if (!this.st.lean) this.st.statements.push({ kind, range });
     if (title) this.accTitle = text;
     else this.accDescr = text;
   }

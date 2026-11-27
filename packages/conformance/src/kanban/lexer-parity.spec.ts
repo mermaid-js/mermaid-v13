@@ -4,7 +4,7 @@ import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { kanbanGateCorpus, VARIANTS } from './corpus.ts';
-import { cutAtAcc } from './acc-divergence.ts';
+import { accProblem, accRanges, asPlaceholders, withPlaceholders } from './acc-divergence.ts';
 
 /**
  * Lexer-parity gate (parser-method §1, #451): the v13 kanban lexer emits the same terminals,
@@ -41,9 +41,10 @@ import { cutAtAcc } from './acc-divergence.ts';
  * reads the run the same way; a run left open at the end took the appended `\n` too, so the
  * oracle has nothing to clip and the v13 text ends in `<br/>` as well.
  *
- * One divergence (D742, `cutAtAcc`): v13's acc statements, which v12 lexed as items. Both
- * streams are compared up to the first of them, where v12's token must be that item's
- * `NODE_ID`.
+ * One divergence (D742, `acc-divergence.ts`): v13's acc statements, which v12 lexed as items.
+ * v12 lexes the source with each of them replaced by a placeholder item, and v13's acc token
+ * counts as that item's `NODE_ID`, so the whole stream is still compared; on the source as
+ * written v12 must have read an item where v13 reads the first of them.
  *
  * Sources v12 never lexed as a kanban (`oracle.tokens` is undefined: the detector
  * `/^\s*kanban/` is case-sensitive) are skipped; the test bounds which.
@@ -87,12 +88,16 @@ describe('kanban lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('v12-')) specs++;
         if (item.id.startsWith('kanban-cases/')) cases++;
       }
-      const cut = cutAtAcc(
-        v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]),
-        v13Tokens(item.source)
-      );
-      if (cut.problem) accDiffs.push(`${item.id}: ${cut.problem}`);
-      const { v12: expected, ours: actual } = cut;
+      const read = (t: JisonToken[]) => t.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
+      const ours = v13Tokens(item.source);
+      const ranges = accRanges(item.source);
+      let expected = read(v12);
+      if (ranges.length > 0) {
+        const problem = accProblem(expected, ours);
+        if (problem) accDiffs.push(`${item.id}: ${problem}`);
+        expected = read((await oracle.tokens(withPlaceholders(item.source, ranges))) ?? []);
+      }
+      const actual = asPlaceholders(ours);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;
       while (JSON.stringify(expected[at]) === JSON.stringify(actual[at])) at++;

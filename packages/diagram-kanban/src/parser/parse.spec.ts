@@ -393,6 +393,26 @@ describe('kanban parser: accTitle and accDescr (D742)', () => {
     ]);
   });
 
+  it('records them as top-level statements, not inside the column they follow', () => {
+    const src = 'kanban\n  accDescr: d\n  a\n    b\n  accTitle: t\n    c\n  e';
+    const r = parseKanban(src);
+    const show = (s: { kind: string; range: { start: number; end: number } }) => [
+      s.kind,
+      src.slice(s.range.start, s.range.end),
+    ];
+    expect(r.statements.map(show)).toEqual([
+      ['header', 'kanban'],
+      ['accDescr', 'accDescr: d'],
+      ['column', 'a\n    b\n  accTitle: t\n    c\n'],
+      ['accTitle', 'accTitle: t'],
+      ['column', 'e'],
+    ]);
+    expect(r.statements[2]?.children?.map(show)).toEqual([
+      ['card', 'b'],
+      ['card', 'c'],
+    ]);
+  });
+
   it('keeps the last of repeated statements, as other types do; empty values set empty', () => {
     const m = model('kanban\n  accTitle: one\n  accTitle: two\n  accDescr: x\n  accDescr:\n  a');
     expect([m.accTitle, m.accDescr]).toEqual(['two', '']);

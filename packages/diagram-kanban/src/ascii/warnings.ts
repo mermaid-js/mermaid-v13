@@ -10,7 +10,7 @@ import type { KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import { kanbanBoardOrder, type KanbanModel } from '../model.ts';
 import { cls } from '@mermaid-js/shared/svg/document';
 import { ticketUrl, type LinkContext } from '../render/links.ts';
-import { asciiDropped, emphasised } from '@mermaid-js/shared/ascii';
+import { droppedFeatures, emphasised } from '@mermaid-js/shared/ascii';
 import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
@@ -28,14 +28,10 @@ const WHAT: Record<AsciiDroppedFeature, string> = {
   accessibility: 'accTitle and accDescr',
 };
 
-/** The ids of the `accTitle` and `accDescr` statements of `ast`, in source order. */
-function accIds(ast: AstNode | undefined): string[] {
-  const ids: string[] = [];
-  for (const n of ast?.children ?? []) {
-    if (n.type === 'AccTitle' || n.type === 'AccDescr') ids.push(n.id);
-  }
-  return ids;
-}
+// The statements behind a kind: those the AST names, when it is given.
+const STATEMENTS: Partial<Record<AsciiDroppedFeature, readonly string[]>> = {
+  accessibility: ['AccTitle', 'AccDescr'],
+};
 
 /** What the layout drew for one item: its labels, and a card's ticket. */
 interface Drawn {
@@ -55,12 +51,10 @@ export function asciiWarnings(
   ctx: Omit<LinkContext, 'warn'>,
   ast?: AstNode
 ): AsciiWarning[] {
-  const found: Record<AsciiDroppedFeature, string[]> = {
-    style: [],
-    emphasis: [],
-    link: [],
-    accessibility: [],
-  };
+  // As the SVG root: a blank value writes no `<title>` or `<desc>`, so drops nothing.
+  const acc = model.accTitle.trim() !== '' || model.accDescr.trim() !== '';
+  const dropped = droppedFeatures(WHAT, acc ? STATEMENTS : {});
+  if (acc) dropped.add('accessibility');
   const drawnAs = new Map<string, Drawn>();
   for (const c of layout.columns) drawnAs.set(c.ast, { labels: [c.title] });
   for (const c of layout.cards)
@@ -74,19 +68,10 @@ export function asciiWarnings(
   for (const item of kanbanBoardOrder(model)) {
     const drawn = drawnAs.get(item.ast);
     if (!drawn) continue;
-    if (cls(item.classes) !== '') found.style.push(item.ast);
-    if (drawn.labels.some((l) => emphasised(l?.text))) found.emphasis.push(item.ast);
+    if (cls(item.classes) !== '') dropped.add('style', item.ast);
+    if (drawn.labels.some((l) => emphasised(l?.text))) dropped.add('emphasis', item.ast);
     // As `drawCard`: a drawn ticket whose URL passes the check is a link.
-    if (drawn.ticket && ticketUrl(item.ticket, linkCtx)) found.link.push(item.ast);
+    if (drawn.ticket && ticketUrl(item.ticket, linkCtx)) dropped.add('link', item.ast);
   }
-  // As the SVG root: a blank value writes no `<title>` or `<desc>`.
-  const acc = model.accTitle.trim() !== '' || model.accDescr.trim() !== '';
-  if (acc) found.accessibility = accIds(ast);
-  const out: AsciiWarning[] = [];
-  for (const feature of Object.keys(found) as AsciiDroppedFeature[]) {
-    const astIds = found[feature];
-    if (astIds.length > 0 || (feature === 'accessibility' && acc))
-      out.push(asciiDropped(feature, astIds, WHAT[feature]));
-  }
-  return out;
+  return dropped.warnings(ast);
 }

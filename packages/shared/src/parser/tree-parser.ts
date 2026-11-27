@@ -555,10 +555,8 @@ export abstract class TreeParser<
       const indent = this.raw(j).length;
       c.tested(this.grammar.afterIndentKinds);
       const n = c.kind;
-      if (this.isNodeStart(n)) this.node(indent);
-      else if (n === k.Icon || n === k.Class) this.decoration();
-      else if (this.isAccessibility(n)) this.accessibility();
-      else if (n === k.SpaceList && this.beside(c.pos, -1, k.ClassEnd) >= 0) {
+      if (this.content(n, indent)) return;
+      if (n === k.SpaceList && this.beside(c.pos, -1, k.ClassEnd) >= 0) {
         // A bare `:::` took the line break: one error, and the next line is still read.
         this.report(lineBreak(), BARE_CLASS_HINT);
         this.lineEnded = true;
@@ -570,15 +568,21 @@ export abstract class TreeParser<
       this.afterBlank = true;
       return;
     }
-    if (this.isNodeStart(kind)) this.node(0);
-    else if (kind === k.Icon || kind === k.Class) this.decoration();
-    else if (this.isAccessibility(kind)) this.accessibility();
-    else this.badStatement();
+    if (!this.content(kind, 0)) this.badStatement();
   }
 
-  /** `kind` is an `accTitle` or `accDescr` statement (only a diagram with them lexes one). */
-  private isAccessibility(kind: number): boolean {
-    return this.k.acc && (kind === this.k.AccTitle || kind === this.k.AccDescr);
+  /**
+   * What a line holds after its indent (`indent` wide), at a token of `kind`: a node, a
+   * decoration, or (only a diagram with them lexes one) an `accTitle` or `accDescr` statement.
+   * Whether it was one of them, and so read.
+   */
+  private content(kind: number, indent: number): boolean {
+    const { k } = this;
+    if (this.isNodeStart(kind)) this.node(indent);
+    else if (kind === k.Icon || kind === k.Class) this.decoration();
+    else if (kind === k.AccTitle || kind === k.AccDescr) this.accessibility();
+    else return false;
+    return true;
   }
 
   /**

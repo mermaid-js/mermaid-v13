@@ -256,6 +256,22 @@ describe('kanban.jison quirks', () => {
       'NL:',
       'EOF:',
     ]);
+    // A line start is after a line break `[\n]` only, as in the grammar file: not after a
+    // U+2028 or U+2029, which no tree-lexer rule reads as one.
+    expect(jison('kanban\n  a[x]\u2028accTitle: y\n  b[x]\u2029accDescr: z').slice(7)).toEqual([
+      'SPACELIST:\u2028',
+      'NODE_ID:accTitle: y',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:b',
+      'NODE_DSTART:[',
+      'NODE_DESCR:x',
+      'NODE_DEND:]',
+      'SPACELIST:\u2029',
+      'NODE_ID:accDescr: z',
+      'NL:',
+      'EOF:',
+    ]);
     // `accDescr` then `{` on the next line is no block.
     expect(jison('kanban\n  accDescr\n  {x}').slice(3, 7)).toEqual([
       'NODE_ID:accDescr',
