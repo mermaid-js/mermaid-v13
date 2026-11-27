@@ -1,0 +1,16 @@
+---
+description: >-
+  Twin of label-syntax.mmd with markdownAlwaysOn (#1368, #1397): every packet label is
+  markdown, so the plain `**bold** _ital_` rows draw bold and italic and the code-span row draws
+  inline code, unlike label-syntax.mmd. A markdown string, tags and a written `\n` draw as in
+  the default mode.
+config:
+  markdownAlwaysOn: true
+---
+packet
+  title "`title **bold** _ital_`"
+  0-31: "field **bold** _ital_"
+  32-63: "`field **bold** _ital_`"
+  64-95: "field a `code` b"
+  96-127: "field <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  128-159: "field one\ntwo"

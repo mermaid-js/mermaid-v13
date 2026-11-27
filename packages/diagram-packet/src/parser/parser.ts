@@ -100,6 +100,8 @@ const EXPECTED_LINE = new ExpectedTable([
 ]);
 
 const ONE_PER_LINE = 'put each field and statement on a line of its own';
+/** A field label written as a markdown string: backticks just inside the quotes, none within. */
+const RE_MARKDOWN_STRING = /^(["'])`[^`]*`\1$/;
 const FIELD_FORM = 'write a field as `0-15: "label"`, `16: "label"` or `+8: "label"`';
 
 /** A field's bits as written: `start-end`, `start` or `+bits`, and where. */
@@ -310,12 +312,20 @@ class PacketParser extends RuleParser<PreprocessResult> {
     this.expect(T.Colon, FIELD_FORM);
     const s = this.expect(T.String);
     const labelRange = this.range(s);
-    const label = labelValue(this.raw(s));
+    const image = this.raw(s);
+    const label = labelValue(image);
     const range = { start: written.range.start, end: labelRange.end };
     const astId = this.id(`field:${start}-${end}`);
+    const field: PacketField = {
+      start,
+      end,
+      bits: end - start + 1,
+      label,
+      astId,
+      ...(RE_MARKDOWN_STRING.test(image) ? { markdown: true } : {}),
+    };
     let dropped = error;
-    if (!dropped && !this.place({ start, end, bits: end - start + 1, label, astId }, range))
-      dropped = { reason: 'rowCap' };
+    if (!dropped && !this.place(field, range)) dropped = { reason: 'rowCap' };
     this.children.push({
       id: astId,
       type: 'Field',

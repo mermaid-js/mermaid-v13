@@ -49,13 +49,14 @@ describe('packet layout invariants on parser-produced fixtures', () => {
           config: { packet: { ...section, ...o } } as unknown as ResolvedConfig,
           measurer: tableMeasurer,
           theme,
+          warn: () => {},
         });
         const v = packetLayoutViolations(model, layout);
         if (v.length > 0)
           failures.push(`${item.id} ${JSON.stringify(o)}: ${v.slice(0, 3).join('; ')}`);
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(28);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(30);
     expect(split).toBeGreaterThan(10);
     expect(truncated).toBeGreaterThan(0);
     expect(pieces).toBeGreaterThan(10_000);

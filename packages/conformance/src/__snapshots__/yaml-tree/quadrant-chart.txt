@@ -23,6 +23,8 @@ e2e/diagrams/quadrant-chart/nightly-check/should-render-if-only-chart-type-is-pr
 e2e/diagrams/quadrant-chart/nightly-check/should-render-without-title.mmd 1 8091104b994053c2
 e2e/diagrams/quadrant-chart/pr-check/it-should-render-data-points-with-styles-classes.mmd 1 00f2d6b95b9bbf29
 e2e/diagrams/quadrant-chart/pr-check/it-should-render-data-points-with-styles.mmd 1 8784e78d1c283614
+e2e/diagrams/quadrant-chart/pr-check/label-syntax-compat.mmd 1 d4254118026123bb
+e2e/diagrams/quadrant-chart/pr-check/label-syntax.mmd 1 8a015886174c3855
 e2e/diagrams/quadrant-chart/pr-check/should-able-to-render-x-axis-on-bottom-and-y-axis-on-right.mmd 1 c24b243a83bad694
 e2e/diagrams/quadrant-chart/pr-check/should-able-to-render-y-axis-on-right-side.mmd 1 eb725c39a5e96c6c
 e2e/diagrams/quadrant-chart/pr-check/should-render-a-complete-quadrant-chart.mmd 1 bbe3ea44aa4bd799

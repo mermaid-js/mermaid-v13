@@ -17,6 +17,11 @@ export interface PacketField {
   readonly bits: number;
   /** The label as v12's DB kept it: quotes removed, `\x` unescaped, not trimmed. */
   readonly label: string;
+  /**
+   * Set when the label was written as a markdown string (`"`…`"` or `'`…`'`). `label` keeps
+   * its backticks, as v12's DB did; the layout reads the text inside them as markdown (#1368).
+   */
+  readonly markdown?: true;
   /** `field:<start>-<end>` from the resolved range (D345). */
   readonly astId: AstId;
 }

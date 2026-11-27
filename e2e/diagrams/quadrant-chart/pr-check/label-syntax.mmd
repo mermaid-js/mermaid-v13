@@ -1,0 +1,22 @@
+---
+description: >-
+  Label syntax (#1368, #1397): each quadrant label kind written as plain markdown markers, a
+  quoted markdown string, bare backticks, a code span in plain text, tags and a written `\n`.
+  Only a quoted markdown string, the title's included, is markdown; tags draw and `\n` breaks
+  everywhere. A tag in unquoted axis, quadrant or point text is a parse error in v12, so tags
+  are written in quotes.
+---
+quadrantChart
+  title "`title **bold** _ital_`"
+  x-axis "`x-start **bold** _ital_`" --> x-end **bold** _ital_
+  y-axis "y-start <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" --> y-end one\ntwo
+  quadrant-1 `quadrant **bold** _ital_`
+  quadrant-2 quadrant a `code` b
+  quadrant-3 "`quadrant **bold** _ital_`"
+  quadrant-4 "quadrant <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  point **bold** _ital_: [0.1, 0.9]
+  "`point **bold** _ital_`": [0.6, 0.85]
+  `point **bold** _ital_`: [0.15, 0.6]
+  point a `code` b: [0.6, 0.55]
+  "point <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O": [0.15, 0.3]
+  point one\ntwo: [0.6, 0.2]
