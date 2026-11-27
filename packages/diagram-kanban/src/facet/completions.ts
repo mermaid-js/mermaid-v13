@@ -4,7 +4,8 @@
  *
  * - `kanban` where the parser expects the header.
  * - At a statement start (nothing but the indent before the cursor on its line), once an item is
- *   written above: `::icon()` and `:::`, the decorations of that item.
+ *   written above: `::icon()` and `:::`, the decorations of that item; and anywhere there
+ *   `accTitle` and `accDescr` (D742).
  * - In `@{ … }` data: the keys v12 reads (`assigned`, `ticket`, `priority`, `label`, `icon`,
  *   `shape`) where a key goes, those the block does not have yet; after `priority:` the four
  *   priorities a card draws (D375); after `assigned:` the assignees of the other cards.
@@ -21,7 +22,7 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { kanbanDocs } from '../generated/docs.ts';
-import type { KanbanDocument } from '../parser/ast.ts';
+import type { KanbanDocument, KanbanItemNode } from '../parser/ast.ts';
 import { BAR_PRIORITIES } from '../priority.ts';
 import { isBlockData, LINE_BREAK } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
@@ -46,6 +47,8 @@ const KINDS: OutlineKinds = {
   nodeId: T.NodeId,
   iconStart: T.IconStart,
   classStart: T.ClassStart,
+  accTitle: T.AccTitle,
+  accDescr: T.AccDescr,
 };
 
 /** The last token of `kind` that starts before `at`, or -1. */
@@ -81,7 +84,9 @@ function dataItems(
   const open = tokens.start[j] ?? 0;
   // Block pairs or a flow mapping, by the parser's rule (`isBlockData`) on the data as it reads
   // it; data still open is taken to the end of the cursor's line, as typed so far.
-  const data = doc.result.ast.children.find((n) => n.data?.range.start === open)?.data;
+  const data = doc.result.ast.children.find(
+    (n): n is KanbanItemNode => n.type === 'Item' && n.data?.range.start === open
+  )?.data;
   const closed = data !== undefined && text.charAt(data.range.end - 1) === '}';
   const blockEnd = closed ? data.range.end : at + lineAfter(text, at, true).length;
   const block = isBlockData(closed ? data.text : text.slice(open + 2, blockEnd));
@@ -152,6 +157,8 @@ export function kanbanCompletions(
   const at = statementStartWord(text, probe, /^[^\s()[\]{}@]*/);
   if (!at) return [];
   // The decorations of the item above: none before the first item (an error).
-  const afterNode = result.ast.children.some((n) => n.range.end <= at.range.start);
+  const afterNode = result.ast.children.some(
+    (n) => n.type === 'Item' && n.range.end <= at.range.start
+  );
   return outlineKeywords(at, new Set(probe.expected), KINDS, kanbanDocs, afterNode);
 }

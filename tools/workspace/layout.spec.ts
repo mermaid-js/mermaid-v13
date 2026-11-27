@@ -74,6 +74,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './svg/testing',
         './text',
         './text/font-tables',
+        './text/markdown-warning',
         './text/tags-only',
         './text/v12-label',
         './theme',

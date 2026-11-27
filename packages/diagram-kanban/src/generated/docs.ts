@@ -10,4 +10,6 @@ export const kanbanDocs: Readonly<Partial<Record<number, string>>> = {
   [T.Kanban]: "`kanban`: starts a kanban board; its columns and cards follow, one per line.",
   [T.IconStart]: "`::icon(…)`: the icon of the last item, on a line of its own.",
   [T.ClassStart]: "`:::class …`: the classes of the last item, on a line of its own; a later one replaces them.",
+  [T.AccTitle]: "`accTitle: …`: the accessible title, on a line of its own; a later one replaces it.",
+  [T.AccDescr]: "`accDescr: …` or `accDescr { … }`: the accessible description; a later one replaces it.",
 };
