@@ -215,7 +215,7 @@ describe('architecture diagrams through the public API (#618)', () => {
     expect(w!.message).toMatch(
       /architecture\.idealEdgeLengthMultiplier.*architecture\.seed.*architecture\.fontSize/
     );
-    expect(w!.message).toContain('`compass`');
+    expect(w!.message).toContain('v13 has no fcose layout');
     expect(w!.message).toContain('themeVariables.fontSize');
   });
 

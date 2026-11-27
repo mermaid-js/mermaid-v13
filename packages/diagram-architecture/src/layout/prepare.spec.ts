@@ -325,7 +325,7 @@ describe('settings v13 does not read (D763)', () => {
     const at = named.map((k) => w!.message.indexOf(`architecture.${k}`));
     expect(at.every((i) => i >= 0)).toBe(true);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
-    expect(w!.message).toContain('`compass`');
+    expect(w!.message).toContain('v13 has no fcose layout');
     expect(w!.message).toContain('fcose');
     expect(w!.message).toContain('themeVariables.fontSize');
     expect(w!.message).toContain('never read');

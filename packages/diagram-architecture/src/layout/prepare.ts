@@ -139,7 +139,7 @@ function warnIgnoredSettings(ctx: ArchitectureLayoutContext): void {
   const fcose = set.filter((k) => (FCOSE_KEYS as readonly string[]).includes(k));
   const notes = [
     fcose.length > 0
-      ? `The layout is \`compass\`: ${fcose.join(', ')} ${fcose.length === 1 ? 'tunes' : 'tune'} fcose, which v13 does not have.`
+      ? `v13 has no fcose layout, so ${fcose.join(', ')} ${fcose.length === 1 ? 'does' : 'do'} nothing.`
       : undefined,
     set.includes('fontSize') ? 'For fontSize, use themeVariables.fontSize.' : undefined,
     set.includes('useWidth') ? 'useWidth was never read, in v12 either.' : undefined,
