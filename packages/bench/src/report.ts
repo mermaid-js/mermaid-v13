@@ -16,9 +16,15 @@ export type StageTimes = Record<Stage, number | null>;
  *   `origin/mermaid-v13`), so a PR is compared with the branch it merges into. Informational.
  * - `v12-frozen`: `mermaid@12.2.0` with `layout: 'dagre'`, the R-PERF-3 baseline.
  * - `v12-current`: the newest `mermaid@12` with its own default layout, reported for information.
- * - `pele`: the newest `pele@1` (Obsidian's Mermaid renderer), reported for information.
+ * - `compare`: the newest `pele@1` (Obsidian's Mermaid renderer), reported for information.
  */
-export type RendererId = 'v13' | 'v13-stages' | 'v13-base' | 'v12-frozen' | 'v12-current' | 'pele';
+export type RendererId =
+  | 'v13'
+  | 'v13-stages'
+  | 'v13-base'
+  | 'v12-frozen'
+  | 'v12-current'
+  | 'compare';
 
 export type ResultStatus = 'ok' | 'error' | 'timeout' | 'missing';
 
@@ -107,7 +113,7 @@ export interface BenchReport {
    * the production build (`source: 'static'`). Absent in reports older than M3.5.
    */
   coreSize?: SizeSummary | null;
-  /** #814: lines by package and category, gzip bytes per diagram chunk, v13 and Pele. */
+  /** #814: lines by package and category, gzip bytes per diagram chunk, v13 and compare. */
   codeSize?: CodeSizeReport;
   /** Browser runs (Chromium through Playwright); every gate reads these. */
   renderers: RendererRun[];

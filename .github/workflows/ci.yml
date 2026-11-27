@@ -269,7 +269,7 @@ jobs:
   bench:
     # R-TEST-7, the PR check (packages/bench/src/pr-check.ts), about two minutes:
     # - Loaded size (R-PERF-1) and corpus renders (R-PERF-4, once each in Node) enforce.
-    # - v13 against this PR's base branch (the merge commit's first parent) and Pele: CPU
+    # - v13 against this PR's base branch (the merge commit's first parent) and compare: CPU
     #   instruction counts in Node, steady to ~1% on a shared runner. Reported only.
     # - A small browser run of v13 and mermaid@12 on 5 diagrams: Ready at (R-PERF-9), indicative speed.
     # Speed over the corpus (R-PERF-3) and stage timings run in the nightly and release bench

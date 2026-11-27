@@ -1,9 +1,9 @@
 name: Nightly bench
 
 # The full browser bench (packages/bench, `pnpm bench`) on mermaid-v13 every night: the corpus
-# through v13, its instrumented build, mermaid@12 (frozen 12.2.0 and the newest 12.x) and Pele
+# through v13, its instrumented build, mermaid@12 (frozen 12.2.0 and the newest 12.x) and compare
 # in Chromium. It measures what the PR check does not: speed over the corpus against mermaid@12
-# (R-PERF-3, reported only on shared runners, D150), per-stage times and Pele by time. The
+# (R-PERF-3, reported only on shared runners, D150), per-stage times and compare by time. The
 # report is the run's artifact and job summary. Also runs on demand.
 on:
   schedule:
@@ -35,7 +35,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mermaid-js/bench exec playwright install --with-deps chromium
       # No v13-base: the nightly measures the branch itself, not a change.
-      - run: pnpm --filter @mermaid-js/bench bench --renderers v13,v13-stages,v12-frozen,v12-current,pele
+      - run: pnpm --filter @mermaid-js/bench bench --renderers v13,v13-stages,v12-frozen,v12-current,compare
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:

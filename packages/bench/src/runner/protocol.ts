@@ -44,5 +44,5 @@ export const RENDERER_ENTRY: Record<RendererId, string> = {
   'v13-base': '/r/v13-base/index.js',
   'v12-frozen': '/r/v12-frozen/mermaid.esm.min.mjs',
   'v12-current': '/r/v12-current/mermaid.esm.min.mjs',
-  pele: '/r/pele/pele.js',
+  compare: '/r/compare/pele.js',
 };

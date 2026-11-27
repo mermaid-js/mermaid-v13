@@ -9,7 +9,7 @@ import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Bundle } from './build.ts';
 import { sizeOf } from './build.ts';
-import { defaultLayouts, diagramChunks, measureLines, peleChunks } from './code-size.ts';
+import { defaultLayouts, diagramChunks, measureLines, compareChunks } from './code-size.ts';
 import { FLOWCHART_ENTRY } from './size-budget.ts';
 
 function checkout(files: Record<string, string>): string {
@@ -154,8 +154,8 @@ describe('defaultLayouts', () => {
   });
 });
 
-describe('peleChunks', () => {
-  it("sizes a Pele build's core and each diagram entry beyond core, file by file", () => {
+describe('compareChunks', () => {
+  it("sizes a compare build's core and each diagram entry beyond core, file by file", () => {
     const dir = checkout({
       'package.json': '{"version":"9.9.9"}',
       'dist/esm/core.js': 'import{a}from"./chunks/A.js";export{a};',
@@ -166,24 +166,24 @@ describe('peleChunks', () => {
       'dist/esm/diagrams/pie.js':
         'import{b}from"../chunks/B.js";import"../chunks/A.js";export{b as default};',
     });
-    const pele = peleChunks(dir);
+    const compare = compareChunks(dir);
     const gz = (p: string) => sizeOf(p, readFileSync(join(dir, 'dist/esm', p))).gzip;
-    expect(pele.version).toBe('9.9.9');
-    expect(pele.core).toBe(gz('core.js') + gz('chunks/A.js'));
+    expect(compare.version).toBe('9.9.9');
+    expect(compare.core).toBe(gz('core.js') + gz('chunks/A.js'));
     // The dynamic import in lazy.js is not followed; A.js is core's.
-    expect(pele.diagrams).toEqual([
+    expect(compare.diagrams).toEqual([
       { diagram: 'pie', closure: gz('diagrams/pie.js') + gz('chunks/B.js') },
     ]);
-    expect(pele.files).toBe(6);
+    expect(compare.files).toBe(6);
   });
 
-  // The bench's own Pele, against the figures spec #813 measured (decimal KB: 19.2 KB gz core,
-  // 313 KB over 122 files). A Pele bump fails here on purpose: re-measure and update the figures.
-  it('measures the pinned Pele 1.13.0 as spec #813 did', () => {
-    const pele = peleChunks();
-    expect(pele.version).toBe('1.13.0');
-    expect(Math.round(pele.core / 100) / 10).toBe(19.2);
-    expect(Math.round(pele.total / 1000)).toBe(313);
-    expect(pele.files).toBe(122);
+  // The bench's own compare package, against the figures spec #813 measured (decimal KB: 19.2 KB gz core,
+  // 313 KB over 122 files). A bump of the compare package fails here on purpose: re-measure and update the figures.
+  it('measures the pinned compare 1.13.0 as spec #813 did', () => {
+    const compare = compareChunks();
+    expect(compare.version).toBe('1.13.0');
+    expect(Math.round(compare.core / 100) / 10).toBe(19.2);
+    expect(Math.round(compare.total / 1000)).toBe(313);
+    expect(compare.files).toBe(122);
   }, 30_000);
 });

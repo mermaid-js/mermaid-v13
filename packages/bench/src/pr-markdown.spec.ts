@@ -9,7 +9,7 @@ import { emptyStages } from './report.ts';
 
 const ok = (id: string, warmMs: number): DiagramResult => ({
   id,
-  set: 'pele',
+  set: 'compare',
   status: 'ok',
   firstMs: warmMs * 3,
   warmMs,
@@ -31,19 +31,19 @@ const counted = (
   base: number,
   v13: number[],
   baseCounts: number[],
-  pele: number
+  compare: number
 ): InstructionDiagram => ({
   id: '',
   label: '',
   measured: 20,
-  counts: { v13, 'v13-base': baseCounts, pele: [pele, pele, pele] },
+  counts: { v13, 'v13-base': baseCounts, compare: [compare, compare, compare] },
 });
 const instructions: InstructionRun = {
   repeats: 3,
   renderers: [
     { renderer: 'v13', version: '13.0.0-alpha.0' },
     { renderer: 'v13-base', version: '13.0.0-alpha.0 (abc123456)' },
-    { renderer: 'pele', version: '1.13.0' },
+    { renderer: 'compare', version: '1.13.0' },
   ],
   diagrams: PR_DIAGRAMS.map((d, i) => {
     const n = (i + 1) * 1e7;
@@ -97,7 +97,7 @@ describe('PR comment', () => {
     expect(lines[0]).toBe(COMMENT_MARKER);
     expect(lines[1]).toBe('### Bench: gates pass · `abcdef1` vs `mermaid-v13` (`abc123456`)');
     expect(comment).toContain(
-      '| Diagram | v13 instructions | vs base | vs Pele | v13 in browser | vs mermaid@12 |'
+      '| Diagram | v13 instructions | vs base | vs compare | v13 in browser | vs mermaid@12 |'
     );
     expect(lines.filter((l) => l.startsWith('| ') && !l.startsWith('| Diagram'))).toHaveLength(6);
     expect(comment).toContain('[this run](https://ci.example/run/1)');

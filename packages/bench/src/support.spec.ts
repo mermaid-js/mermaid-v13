@@ -14,15 +14,15 @@ describe('fixture support', () => {
     expect(isSupported('zenuml')).toBe(false);
   });
 
-  it('runs every corpus diagram and the Pele flowcharts, sequence and class, and sets the rest aside by type', () => {
+  it('runs every corpus diagram and the compare flowcharts, sequence and class, and sets the rest aside by type', () => {
     const { supported, unsupported } = classifyFixtures(loadFixtures());
     expect(supported.filter((f) => f.set === 'corpus')).toHaveLength(158);
-    expect(supported.filter((f) => f.set === 'pele').map((f) => f.id)).toEqual([
-      'pele/flowchart-7',
-      'pele/flowchart-50',
-      'pele/flowchart-500',
-      'pele/sequence',
-      'pele/class',
+    expect(supported.filter((f) => f.set === 'compare').map((f) => f.id)).toEqual([
+      'compare/flowchart-7',
+      'compare/flowchart-50',
+      'compare/flowchart-500',
+      'compare/sequence',
+      'compare/class',
     ]);
     expect(unsupported).toEqual([]);
   });

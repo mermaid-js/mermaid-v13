@@ -1,5 +1,5 @@
 /**
- * Which fixtures v13 can render: those whose detected type has a v13 package. The rest (the Pele
+ * Which fixtures v13 can render: those whose detected type has a v13 package. The rest (the compare
  * sequence and class diagrams until M3) are set aside and reported, not run and counted as errors.
  */
 import { detectType, supportsFormat } from 'mermaid';

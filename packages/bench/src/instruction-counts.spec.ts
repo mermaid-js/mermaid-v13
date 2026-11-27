@@ -13,7 +13,7 @@ describe('instruction count statistics', () => {
   it('takes the median of the repeats that counted', () => {
     expect(medianCount(diagram({ v13: [3, null, 1, 2] }), 'v13')).toBe(2);
     expect(medianCount(diagram({ v13: [null] }), 'v13')).toBeNull();
-    expect(medianCount(diagram({}), 'pele')).toBeNull();
+    expect(medianCount(diagram({}), 'compare')).toBeNull();
   });
 
   it('pairs repeats: the change is the median of per-repeat ratios, with their range', () => {

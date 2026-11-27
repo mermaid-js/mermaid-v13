@@ -41,10 +41,10 @@ function changeCell(d: InstructionDiagram | undefined, against: RendererId): str
   return Math.abs(c.change) >= NOTABLE ? `**${text}**` : text;
 }
 
-/** `1.8× more` / `1.2× fewer` instructions than Pele. */
-function peleCell(d: InstructionDiagram | undefined): string {
+/** `1.8× more` / `1.2× fewer` instructions than compare. */
+function compareCell(d: InstructionDiagram | undefined): string {
   const a = d ? medianCount(d, 'v13') : null;
-  const b = d ? medianCount(d, 'pele') : null;
+  const b = d ? medianCount(d, 'compare') : null;
   if (a === null || b === null) return dash;
   return a >= b ? `${round(a / b, 1)}× more` : `${round(b / a, 1)}× fewer`;
 }
@@ -99,7 +99,7 @@ function problemLines(report: PrReport, outcome: GateOutcome): string[] {
 }
 
 const NOTE =
-  'Instructions: CPU instructions per warm render, the median of 3 fresh `node --single-threaded` processes counted with `perf`. They vary by about 1% between runs, so changes under 2% are noise (2% and over is in bold). Browser: one Chromium session per renderer, indicative only. The full browser bench (corpus speed for R-PERF-3, Pele, stages) runs nightly and at release.';
+  'Instructions: CPU instructions per warm render, the median of 3 fresh `node --single-threaded` processes counted with `perf`. They vary by about 1% between runs, so changes under 2% are noise (2% and over is in bold). Browser: one Chromium session per renderer, indicative only. The full browser bench (corpus speed for R-PERF-3, compare, stages) runs nightly and at release.';
 
 /** The PR comment: verdict, one 5-row table, one status line, problems when there are any. */
 export function formatPrComment(
@@ -114,7 +114,14 @@ export function formatPrComment(
     COMMENT_MARKER,
     title(report, failed, options.baseLabel),
     '',
-    row(['Diagram', 'v13 instructions', 'vs base', 'vs Pele', 'v13 in browser', 'vs mermaid@12']),
+    row([
+      'Diagram',
+      'v13 instructions',
+      'vs base',
+      'vs compare',
+      'v13 in browser',
+      'vs mermaid@12',
+    ]),
     rule(6),
     ...PR_DIAGRAMS.map((d) => {
       const counted = byId.get(d.id);
@@ -123,7 +130,7 @@ export function formatPrComment(
         d.label,
         m === null ? dash : `${round(m / 1e6, 1)} M`,
         changeCell(counted, 'v13-base'),
-        peleCell(counted),
+        compareCell(counted),
         ...browserCells(report, d.id),
       ]);
     }),

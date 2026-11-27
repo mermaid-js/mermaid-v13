@@ -48,7 +48,8 @@ function moduleDir(alias: string): string {
 const MODULE: Partial<Record<RendererId, string>> = {
   'v12-frozen': 'mermaid-v12-frozen',
   'v12-current': 'mermaid-v12',
-  pele: 'pele',
+  // The compare renderer is the published `pele` package.
+  compare: 'pele',
 };
 
 /** Version of an npm or working-tree renderer (`v13-base` carries its own, from the build). */
@@ -61,14 +62,14 @@ export function versionOf(id: Exclude<RendererId, 'v13-base'>): string {
 
 /**
  * The file a renderer is imported from in Node, or undefined when it only runs in a browser
- * (Mermaid 12 needs a DOM). v13 and Pele are DOM-free; v13's bundles are the browser ones.
+ * (Mermaid 12 needs a DOM). v13 and compare are DOM-free; v13's bundles are the browser ones.
  */
 export function nodeEntry(site: Site, id: RendererId): string | undefined {
   const of = (b: Bundle | undefined) => (b === undefined ? undefined : join(b.outdir, b.entryFile));
   if (id === 'v13') return of(site.v13);
   if (id === 'v13-stages') return of(site.stages);
   if (id === 'v13-base') return of(site.base);
-  if (id === 'pele') return join(moduleDir('pele'), 'dist', 'pele.js');
+  if (id === 'compare') return join(moduleDir('pele'), 'dist', 'pele.js');
   return undefined;
 }
 
@@ -144,7 +145,7 @@ export async function buildSite(options: SiteOptions = {}): Promise<Site> {
       ...(base.base && { '/r/v13-base/': join(SITE_DIR, 'v13-base') }),
       '/r/v12-frozen/': join(moduleDir('mermaid-v12-frozen'), 'dist'),
       '/r/v12-current/': join(moduleDir('mermaid-v12'), 'dist'),
-      '/r/pele/': join(moduleDir('pele'), 'dist'),
+      '/r/compare/': join(moduleDir('pele'), 'dist'),
     },
   };
 }

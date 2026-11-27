@@ -4,8 +4,8 @@
  * and applies the gates. Pull requests run the shorter `pr` check (`cli/pr.ts`) instead.
  *
  *   pnpm --filter @mermaid-js/bench bench
- *     [--renderers v13,v13-stages,v13-base,v12-frozen,v12-current,pele] [--base <ref>]
- *     [--set corpus,pele] [--filter text] [--tiers tiny,regular,large,huge] [--reps 10]
+ *     [--renderers v13,v13-stages,v13-base,v12-frozen,v12-current,compare] [--base <ref>]
+ *     [--set corpus,compare] [--filter text] [--tiers tiny,regular,large,huge] [--reps 10]
  *     [--budget 1000] [--timeout 30] [--headed] [--lift-limits false] [--strip false]
  *     [--mode auto|report|enforce] [--report-only speed,...] [--update-baseline] [--identity]
  *
@@ -35,7 +35,7 @@ import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
 import { commitInfo, gate, modeSetting, publish, reportOnlyGates } from './output.ts';
 
-const ALL: RendererId[] = ['v13', 'v13-stages', 'v13-base', 'v12-frozen', 'v12-current', 'pele'];
+const ALL: RendererId[] = ['v13', 'v13-stages', 'v13-base', 'v12-frozen', 'v12-current', 'compare'];
 const args = parseArgs(process.argv.slice(2));
 const log = (line: string) => process.stdout.write(line + '\n');
 const baseRef = args.get('base') ?? process.env.BENCH_BASE_REF ?? DEFAULT_BASE_REF;
