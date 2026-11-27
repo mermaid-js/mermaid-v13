@@ -38,9 +38,10 @@ import { eventModelingConfig } from '../config.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
 import { eventModelStructure, type EventModelRelation } from '../structure.ts';
 import { expandTabs } from '../tabs.ts';
-import { detourRoutes } from './detour.ts';
+import { detourRoutes, type DetourLine } from './detour.ts';
 import {
   departure,
+  departureBeforeLoop,
   EVENTMODELING_METRICS as M,
   FONT_WEIGHT,
   share,
@@ -175,8 +176,8 @@ export function layoutEventModel(
   // A relation between lanes that would meet another box takes a detour (D743).
   const lines = detourRoutes(first, boxes, lanes);
   const relations = first.map((r, k) => {
-    const points = lines[k] as Point[];
-    return { ...r, points, head: headOf(points) };
+    const { points, noDetour } = lines[k] as DetourLine;
+    return { ...r, points, head: headOf(points), ...(noDetour ? { noDetour } : {}) };
   });
   return {
     font,
@@ -367,7 +368,7 @@ function upward(
 /**
  * Where each relation between lanes leaves its source (D743): the relations that leave one side
  * of a box, ordered by where they meet their targets (then in v12's order), spread from v12's ⅔
- * to the right, so no two leave from one point. By relation index.
+ * to the right, so no two leave from one point; under a self loop, left of it. By relation index.
  */
 function departuresOf(
   relations: readonly EventModelRelation[],
@@ -385,12 +386,15 @@ function departuresOf(
     list.push({ k, at: t.x + share(t.width, TARGET_ANCHOR) });
     sides.set(key, list);
   }
+  // A self loop hangs under its box's bottom (D659).
+  const looped = new Set(relations.filter((r) => r.source === r.target).map((r) => 2 * r.source));
   const out = new Map<number, number>();
-  for (const list of sides.values()) {
+  for (const [key, list] of sides.entries()) {
     list.sort((a, b) => a.at - b.at || a.k - b.k);
+    const spread = looped.has(key) ? departureBeforeLoop : departure;
     for (const [i, { k }] of list.entries()) {
       const s = boxes[(relations[k] as EventModelRelation).source] as EventModelBoxLayout;
-      out.set(k, s.x + departure(s.width, i, list.length));
+      out.set(k, s.x + spread(s.width, i, list.length));
     }
   }
   return out;

@@ -185,7 +185,8 @@ function laneViolations(r: EventModelRelationLayout, lane: Rect | undefined, out
 
 /**
  * No relation passes through a box other than its own two (D659 within a lane, D743 between
- * lanes): a box's name and data lie inside it, so none is struck out. Boxes come in x order, so
+ * lanes): a box's name and data lie inside it, so none is struck out. A relation the layout
+ * marks as having no detour that fits keeps v12's segment and is not checked. Boxes come in x order, so
  * each segment meets only the boxes from the first that may reach its left end to the last that
  * starts before its right end.
  */
@@ -193,6 +194,7 @@ function throughViolations({ boxes, relations }: EventModelLayout, out: string[]
   let widest = 0;
   for (const b of boxes) widest = Math.max(widest, b.width);
   for (const r of relations) {
+    if (r.noDetour) continue;
     for (const seg of segments(r))
       for (const k of crossed(seg, boxes, widest))
         if (k !== r.source && k !== r.target) out.push(`relation ${r.id} runs through box ${k}`);

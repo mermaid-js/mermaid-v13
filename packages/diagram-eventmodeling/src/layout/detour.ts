@@ -11,9 +11,9 @@
  *   near the column as it can, and runs across the gap between that box's lane and the next;
  * - so a detour is one vertical segment, or one with a jog at one end, or at both; fewer jogs
  *   first, then the shortest run across;
- * - runs that would share a line of a gap take its middle, then `detourStep` away from the
- *   target, then toward it; columns keep `detourStep` apart, and a moved end keeps `detourStep`
- *   from the other ends on its side of the box.
+ * - runs that would share a line of a gap take its middle, then `detourRunStep` away from the
+ *   target, then toward it, inside the gap; columns keep `detourStep` apart, and a moved end
+ *   keeps `detourStep` from the other ends on its side of the box.
  *
  * Relations that clear every box keep their segment, and so does one no detour fits. Every
  * lookup reads only the boxes, columns and runs near the relation, so the layout stays linear.
@@ -94,12 +94,21 @@ interface Scene {
   readonly taken: Taken;
 }
 
-/** Each relation's line: its first route's, or a detour where that meets another box. */
+/** A relation's line, and whether it meets another box but no detour fits it. */
+export interface DetourLine {
+  readonly points: Point[];
+  readonly noDetour?: true;
+}
+
+/**
+ * Each relation's line: its first route's, or a detour where that meets another box. Where no
+ * detour fits, the first route's, marked.
+ */
 export function detourRoutes(
   routes: readonly FirstRoute[],
   boxes: readonly EventModelBoxLayout[],
   lanes: readonly EventModelLaneLayout[]
-): Point[][] {
+): DetourLine[] {
   const rows: number[][] = lanes.map(() => []);
   const bands: [number, number][] = lanes.map(() => [Infinity, -Infinity]);
   for (const [k, b] of boxes.entries()) {
@@ -115,8 +124,10 @@ export function detourRoutes(
     addEnd(scene, r.target, r.points[r.points.length - 1]);
   }
   return routes.map((r) => {
-    if ((r.route !== 'up' && r.route !== 'down') || !meetsAnother(scene, r)) return [...r.points];
-    return detour(scene, r) ?? [...r.points];
+    if ((r.route !== 'up' && r.route !== 'down') || !meetsAnother(scene, r))
+      return { points: [...r.points] };
+    const points = detour(scene, r);
+    return points ? { points } : { points: [...r.points], noDetour: true };
   });
 }
 
@@ -369,7 +380,7 @@ function place(scene: Scene, r: FirstRoute, c: Candidate): Point[] | undefined {
     const run = freeRun(scene, gap, [Math.min(a, b), Math.max(a, b)], runs);
     if (!run) return undefined;
     runs.push(run);
-    const y = gaps.middle(gap) + gaps.away * run.level * M.detourStep;
+    const y = gaps.middle(gap) + gaps.away * run.level * M.detourRunStep;
     points.push({ x: a, y }, { x: b, y });
   }
   points.push({ x: end, y: to.y });
@@ -404,8 +415,13 @@ function verticalsFree(scene: Scene, points: readonly Point[], kept: readonly nu
   });
 }
 
-/** Off the middle of a gap, in steps: the middle, one away from the target, one toward it. */
-const LEVELS: readonly number[] = [0, 1, -1];
+/**
+ * Off the middle of a gap, in run steps: the middle, one away from the target, one toward it;
+ * only those that keep `detourRunMargin` from the lanes on both sides.
+ */
+const LEVELS: readonly number[] = [0, 1, -1].filter(
+  (level) => Math.abs(level) * M.detourRunStep <= M.laneGap / 2 - M.detourRunMargin
+);
 
 const runKey = (gap: number, level: number): string => `${gap}|${level}`;
 

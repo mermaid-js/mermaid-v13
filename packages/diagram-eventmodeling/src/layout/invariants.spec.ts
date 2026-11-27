@@ -165,6 +165,26 @@ describe('eventModelLayoutViolations', () => {
     );
   });
 
+  it('lets through only a relation the layout marks as having no detour (D743)', () => {
+    // Two wide read models fill the middle lane on both sides of E ->> U: no column fits.
+    const long = 'x'.repeat(50);
+    const blocked = model(
+      frame('rmo', long),
+      frame('evt', 'E'),
+      frame('ui', 'U'),
+      frame('rmo', long, { reset: true })
+    );
+    const l = layoutEventModel(blocked, eventModelTestContext(theme, {}, halfEm));
+    expect(eventModelLayoutViolations(blocked, l)).toEqual([]);
+    const unmarked = {
+      ...l,
+      relations: l.relations.map(({ noDetour: _, ...r }) => r),
+    };
+    expect(eventModelLayoutViolations(blocked, unmarked)).toContain(
+      'relation relation:02->03 runs through box 0'
+    );
+  });
+
   it('catches a relation within a lane leaving it', () => {
     const broken = reroute(routed(), 'relation:01->03', (r) => ({
       points: r.points.map((p, k) => (k === 1 || k === 2 ? { ...p, y: p.y + 100 } : p)),

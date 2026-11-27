@@ -158,6 +158,78 @@ describe('layoutEventModel', () => {
     expect(l.boxes.map((b) => b.y)).toEqual([180, 15]);
   });
 
+  it('leaves a box with a self loop left of the loop, in target order (D743, D659)', () => {
+    // A loops on itself and three relations leave its bottom; the loop's left leg is 30 in
+    // from A's right edge.
+    const l = lay(
+      model(
+        frame('ui', 'A', { sources: ['01'] }),
+        frame('evt', 'B', { sources: ['01'] }),
+        frame('evt', 'C', { sources: ['01'] }),
+        frame('cmd', 'D', { sources: ['01'] })
+      )
+    );
+    const a = l.boxes[0]!;
+    const leg = a.x + a.width - 30;
+    const self = l.relations.find((r) => r.route === 'self');
+    expect(self?.points[0]?.x).toBe(leg);
+    const down = l.relations.filter((r) => r.source === 0 && r.route !== 'self');
+    expect(down).toHaveLength(3);
+    const from = down.map((r) => r.points[0]!.x);
+    for (const x of from) expect(x).toBeLessThan(leg);
+    expect(new Set(from).size).toBe(3);
+    // In the order of their targets, so no two cross.
+    const byTarget = [...down].sort((p, q) => p.points.at(-1)!.x - q.points.at(-1)!.x);
+    const xs = byTarget.map((r) => r.points[0]!.x);
+    expect(xs).toEqual([...xs].sort((p, q) => p - q));
+  });
+
+  it('keeps every detour run inside the gap between its lanes (D743)', () => {
+    // Fan-out (#1234): several detours share the gaps above the events lane.
+    const l = lay(
+      model(
+        frame('cmd', 'Place'),
+        frame('evt', 'P'),
+        frame('rmo', 'Orders', { reset: true, sources: ['02'] }),
+        frame('rmo', 'Stats', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Mailer', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Billing', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Audit', { reset: true, sources: ['02'] }),
+        frame('ui', 'Screen', { reset: true, sources: ['02'] })
+      )
+    );
+    const runs = l.relations.flatMap((r) =>
+      r.points.slice(1).flatMap((q, k) => {
+        const p = r.points[k]!;
+        return p.y === q.y && p.x !== q.x && r.route !== 'self' && r.route !== 'under' ? [q.y] : [];
+      })
+    );
+    expect(runs.length).toBeGreaterThan(0);
+    const gaps = l.lanes.slice(1).map((lane, k): [number, number] => {
+      const above = l.lanes[k]!;
+      return [above.y + above.height, lane.y];
+    });
+    for (const y of runs) expect([y, gaps.some(([lo, hi]) => y > lo && y < hi)]).toEqual([y, true]);
+  });
+
+  it('keeps the segment of a relation no detour fits, and marks it (D743)', () => {
+    // Two 440-wide read models fill the middle lane on both sides of E ->> U, beyond the reach
+    // of any column.
+    const long = 'x'.repeat(50);
+    const l = lay(
+      model(
+        frame('rmo', long),
+        frame('evt', 'E'),
+        frame('ui', 'U'),
+        frame('rmo', long, { reset: true })
+      )
+    );
+    const r = l.relations.find((x) => x.id === 'relation:02->03');
+    expect(r?.points).toHaveLength(2);
+    expect(r?.noDetour).toBe(true);
+    expect(l.relations.filter((x) => x.noDetour)).toHaveLength(1);
+  });
+
   it('routes a relation that skips a box of its lane under the row (D659)', () => {
     const l = lay(
       model(

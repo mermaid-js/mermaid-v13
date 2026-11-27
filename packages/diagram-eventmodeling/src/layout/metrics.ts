@@ -63,10 +63,16 @@ export interface EventModelMetrics {
    */
   readonly detourClearance: number;
   /**
-   * v13 (D743): detours that would share a run go this far apart: across the gap between two
-   * lanes, or side by side through the lanes between.
+   * v13 (D743): detours that would share a column go this far apart side by side through the
+   * lanes between, and runs in one line of a gap keep this far apart end to end.
    */
   readonly detourStep: number;
+  /**
+   * v13 (D743): runs that would share a line of the gap between two lanes go this far apart
+   * across it; a level that would come within `detourRunMargin` of a lane is not used.
+   */
+  readonly detourRunStep: number;
+  readonly detourRunMargin: number;
   /**
    * v13 (D743): a detour's column lies at most this far outside its two boxes; where none fits,
    * the relation keeps its segment.
@@ -100,6 +106,8 @@ export const EVENTMODELING_METRICS: EventModelMetrics = {
   relationGap: 5,
   detourClearance: 10,
   detourStep: 8,
+  detourRunStep: 3,
+  detourRunMargin: 2,
   detourReach: 100,
 };
 
@@ -123,6 +131,19 @@ export const departure = (width: number, k: number, n: number): number =>
   k === 0
     ? share(width, SOURCE_ANCHOR)
     : share(width, SOURCE_ANCHOR) + (share(width, TARGET_ANCHOR) * k) / (n + 1);
+
+/**
+ * Where the `k`-th of `n` relations that leave the bottom of a box with a self loop leaves it
+ * (D743, D659): left of the loop's left leg, so none leaves inside the loop. The last leaves at
+ * v12's ⅔ when that is left of the leg, else `detourStep` left of the leg; the others `⅓ / (n + 1)`
+ * of the width apart to the left of it, so their order stays their targets'. Shares, not lengths.
+ */
+export function departureBeforeLoop(width: number, k: number, n: number): number {
+  const leg = width - EVENTMODELING_METRICS.selfLoopInset - EVENTMODELING_METRICS.selfLoopWidth;
+  const twoThirds = share(width, SOURCE_ANCHOR);
+  const last = twoThirds < leg ? twoThirds : leg - EVENTMODELING_METRICS.detourStep;
+  return last - (share(width, TARGET_ANCHOR) * (n - 1 - k)) / (n + 1);
+}
 
 /**
  * `eventmodeling.padding` must stay finite times this (D366's headroom test): the bounds add it
