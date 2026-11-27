@@ -35,11 +35,18 @@
   column it follows. Repeated ids are allowed for columns and cards alike.
 - **Labels** (D372) are SVG text from core's label layout, measured in the theme's font, instead
   of HTML in `<foreignObject>`: `<br>`, the drawn tags, entities, math and `fa:` icons work in
-  column titles, card titles, tickets and assignees. Column titles wrap at `sectionWidth` and card
-  labels 25 px inside it, as in v12; a single word wider than that stays whole and overflows the
-  column or card, as in v12 (earlier v13 builds split it between characters; the text output
-  still does, to keep it in its box). A raw line break inside a quoted label breaks the line,
-  as in v12, whose markdown labels turned it into a `<br>` (D641).
+  column titles, card titles, tickets and assignees. A raw line break inside a quoted label
+  breaks the line, as in v12, whose markdown labels turned it into a `<br>` (D641).
+- **Text keeps an inset on both sides** (D764). Card titles, tickets and assignees wrap 35 px
+  inside `sectionWidth` (165 px at the default 200), so every line ends 10 px inside the card's
+  right edge, as v12 drew it; v13 had wrapped them at `sectionWidth − 25`, which let a full line
+  run to the card's border. Column titles wrap 20 px inside `sectionWidth` and stay centred,
+  10 px from each side, where v12 wrapped them at `sectionWidth`, edge to edge. Cards with
+  wrapped text can wrap to one more line than before and grow with it.
+- **A word wider than the wrap breaks** (D765). In a column title, card title, ticket or
+  assignee, a word wider than its wrap is split between characters, so no text crosses its
+  column's or card's right edge. v12 let it overflow, and so did v13 until now; the text output
+  already split it.
 - **Markdown only in markdown strings** (D710, D712). v12 read every label as Markdown, so
   `**bold**` and `*italic*` drew bold and italic without backticks. Now only a label wholly in
   backticks (`` ["`**bold** card`"] ``, `` assigned: '`**md**`' ``) is read as Markdown; in any
@@ -79,7 +86,7 @@
   keys and none of the three `mindmap` keys, so the default margin round a board is 2 px
   tighter on each side, and a `mindmap` setting no longer changes a board. `sectionWidth: 0` is 200, as v12's `sectionWidth || 200`. Numeric
   strings (`"300"`, not `"300px"`) are read as numbers, as in v12. A `sectionWidth` above 0 and
-  below 26 is raised to 26, where v12 drew cards of negative width, and a value that is not a
+  below 36 is raised to 36 (D764), where v12 drew cards of negative width, and a value that is not a
   number from 0 to 10,000 lays out with the default; each warns `KANBAN_CONFIG_IGNORED`.
   `useWidth` is ignored (v12 never read it), and `look` is ignored as everywhere (D153), except
   that `look: handDrawn` sketches the board when `@mermaid-js/plugin-hand-drawn` is installed.

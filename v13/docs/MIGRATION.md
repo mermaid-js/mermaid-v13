@@ -2228,11 +2228,18 @@ Class lists are written with single spaces and no trailing blank.
   column it follows. Repeated ids are allowed for columns and cards alike.
 - **Labels** (D372) are SVG text from core's label layout, measured in the theme's font, instead
   of HTML in `<foreignObject>`: `<br>`, the drawn tags, entities, math and `fa:` icons work in
-  column titles, card titles, tickets and assignees. Column titles wrap at `sectionWidth` and card
-  labels 25 px inside it, as in v12; a single word wider than that stays whole and overflows the
-  column or card, as in v12 (earlier v13 builds split it between characters; the text output
-  still does, to keep it in its box). A raw line break inside a quoted label breaks the line,
-  as in v12, whose markdown labels turned it into a `<br>` (D641).
+  column titles, card titles, tickets and assignees. A raw line break inside a quoted label
+  breaks the line, as in v12, whose markdown labels turned it into a `<br>` (D641).
+- **Text keeps an inset on both sides** (D764). Card titles, tickets and assignees wrap 35 px
+  inside `sectionWidth` (165 px at the default 200), so every line ends 10 px inside the card's
+  right edge, as v12 drew it; v13 had wrapped them at `sectionWidth − 25`, which let a full line
+  run to the card's border. Column titles wrap 20 px inside `sectionWidth` and stay centred,
+  10 px from each side, where v12 wrapped them at `sectionWidth`, edge to edge. Cards with
+  wrapped text can wrap to one more line than before and grow with it.
+- **A word wider than the wrap breaks** (D765). In a column title, card title, ticket or
+  assignee, a word wider than its wrap is split between characters, so no text crosses its
+  column's or card's right edge. v12 let it overflow, and so did v13 until now; the text output
+  already split it.
 - **Markdown only in markdown strings** (D710, D712). v12 read every label as Markdown, so
   `**bold**` and `*italic*` drew bold and italic without backticks. Now only a label wholly in
   backticks (`` ["`**bold** card`"] ``, `` assigned: '`**md**`' ``) is read as Markdown; in any
@@ -2272,7 +2279,7 @@ Class lists are written with single spaces and no trailing blank.
   keys and none of the three `mindmap` keys, so the default margin round a board is 2 px
   tighter on each side, and a `mindmap` setting no longer changes a board. `sectionWidth: 0` is 200, as v12's `sectionWidth || 200`. Numeric
   strings (`"300"`, not `"300px"`) are read as numbers, as in v12. A `sectionWidth` above 0 and
-  below 26 is raised to 26, where v12 drew cards of negative width, and a value that is not a
+  below 36 is raised to 36 (D764), where v12 drew cards of negative width, and a value that is not a
   number from 0 to 10,000 lays out with the default; each warns `KANBAN_CONFIG_IGNORED`.
   `useWidth` is ignored (v12 never read it), and `look` is ignored as everywhere (D153), except
   that `look: handDrawn` sketches the board when `@mermaid-js/plugin-hand-drawn` is installed.
@@ -2297,7 +2304,7 @@ order. Every column and card carries `data-id` and `data-ast`, its item's AST id
 | Each column and card had `id="<render id>-<item id>"`, which a repeated id duplicated | No element id at all: kanban has no title or description statement, so not even `<render id>-title`/`-desc` | No colliding ids (R-A11Y-1) |
 | Column: `<g class="cluster <classes> section-<k>" id data-look>` with a `<rect>` (a rough `<path>` under `look: handDrawn`) and a `g.cluster-label` around a `<foreignObject>`; an unclassed column wrote the class `undefined` | `<g class="cluster section-<k>[ <classes>]" data-id data-ast>` with the `<rect>` and `<g class="cluster-label">` holding a `<text>` centred on the column; no `undefined` class, no `data-look` | One element per item maps it to its source (R-PARSE-8) |
 | Card: `<g class="node undefined" id>` (or `node <classes>`) with `<rect class="basic label-container __APA__">`, an unclassed priority `<line>` and three labels in `<foreignObject>`s, the ticket's inside `<a class="kanban-ticket-link">` | `<g class="node[ <classes>]" data-id data-ast>` with `<rect class="basic label-container">`, `<line class="kanban-priority">` when there is a bar, then `<g class="label">` for the title, the ticket (inside the link, when there is one) and the assignee, each holding a `<text>`: the title and ticket left-aligned 10 px in from the card's left edge, the assignee right-aligned (`text-anchor="end"`) 10 px in from its right edge; no `undefined`, no `__APA__` | Same |
-| Labels: markdown HTML in `<foreignObject>`, wrapped by the browser; a raw line break in a quoted label became a `<br>` and broke the line | `<text>`/`<tspan>` from core's label layout, for all four kinds: `<br>`, the drawn tags, entities, math and `fa:` icons work, and Markdown only in a label wholly in backticks (D712); titles wrap at the column width `W` (columns) and `W − 25` (cards, tickets and assignees); a raw line break in a quoted label breaks the line, as in v12 | R-TEXT-1, D372, D641, D712 |
+| Labels: markdown HTML in `<foreignObject>`, wrapped by the browser; a raw line break in a quoted label became a `<br>` and broke the line | `<text>`/`<tspan>` from core's label layout, for all four kinds: `<br>`, the drawn tags, entities, math and `fa:` icons work, and Markdown only in a label wholly in backticks (D712); titles wrap at `W − 20`, centred (columns), and `W − 35` (cards, tickets and assignees), 10 px inside each side, and a word wider than that breaks (D764, D765); a raw line break in a quoted label breaks the line, as in v12 | R-TEXT-1, D372, D641, D712, D764, D765 |
 | Ticket link: `xlink:href` set to `ticketBaseUrl.replace('#TICKET#', ticket)` (so `$&` in a ticket expanded to the match), `target="_blank"`, no check (only DOMPurify removed a `javascript:` URL); underlined by `.kanban-ticket-link` in the `<style>` | `<a class="kanban-ticket-link" href target="_blank" rel="noopener noreferrer" text-decoration="underline">`. The first `#TICKET#` is replaced with the ticket taken literally (`$&` stays `$&`), not percent-encoded, and the URL passes the link check (`securityLevel`, `linkSchemes`). A refused URL draws the ticket as plain text with one `URL_REFUSED` warning. No link without a ticket or a `ticketBaseUrl` | R-SEC-4, R-SEC-6, R-SVG-4, D377 |
 | Priority: a 4 px line in `red`, `orange`, `blue` or `lightblue` for `Very High`, `High`, `Low`, `Very Low` (exact case); `Medium`, any other value and a non-string drew the line with no stroke (invisible) | The same four colours, in every theme; anything else draws no line. One `KANBAN_PRIORITY` warning per render names each card value that is none of the four nor `Medium` (a non-string is never one of them), with the cards' AST ids. A column's priority is not drawn or checked | D375, D376 |
 | A card's ticket (left) and assignee (right) on one row under the title, whatever their widths: long ones were drawn over each other and ran past the card's bottom | The same row when they fit side by side. When their widths fill the row (the card's width less 10 px at each side), the assignee goes on a row of its own under the ticket, still right-aligned, and the card grows by both rows, the title 10 px below its top and the assignee 10 px above its bottom, as the text output does | D647 |

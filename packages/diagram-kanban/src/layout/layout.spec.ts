@@ -3,7 +3,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
-import { tableMeasurer } from '@mermaid-js/core/text';
+import { Style, tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { EDGE_CASES, gridMeasurer, kanban, parsed } from './fixtures.ts';
 import { layoutKanban, type KanbanLayout, type KanbanLayoutInput } from './index.ts';
@@ -283,6 +283,17 @@ describe('kanban layout: tags in a ticket and an assignee (D710, D712)', () => {
     }
     expect(tagged.height).toBe(plain.height);
   });
+
+  it('draws a code span and a leading list marker in a plain card as written (D712)', () => {
+    const cards = lay(board('  Todo', '    a[Use `npm ci` first]', '    b[- 5 degrees]')).cards;
+    const text = (i: number): string[] =>
+      cards[i]!.title!.text.lines.map((line) => line.map((r) => r.text).join(''));
+    expect(text(0)).toEqual(['Use `npm ci` first']);
+    expect(text(1)).toEqual(['- 5 degrees']);
+    expect(cards[0]!.title!.text.lines.flat().some((r) => (r.style & Style.Mono) !== 0)).toBe(
+      false
+    );
+  });
 });
 
 describe('kanban layout: font', () => {
@@ -297,13 +308,13 @@ describe('kanban layout: font', () => {
 });
 
 describe('kanban layout: config', () => {
-  it('takes kanban.sectionWidth as W, wrapping card titles at W − 25', () => {
+  it('takes kanban.sectionWidth as W, wrapping card titles at W − 35 (D764)', () => {
     const title = 'aaaa bbbb cccc dddd eeee ffff gggg hhhh';
     const narrow = lay(board('  a[A]', `    x[${title}]`), { sectionWidth: 100 });
     const wide = lay(board('  a[A]', `    x[${title}]`), { sectionWidth: 300 });
     expect(narrow.cards[0]!.width).toBe(85);
-    // 75 px wrap: 'aaaa bbbb' is 72 wide.
-    expect(narrow.cards[0]!.title!.text.lines.length).toBe(4);
+    // 65 px wrap: 'aaaa bbbb' is 72 wide, so one word a line.
+    expect(narrow.cards[0]!.title!.text.lines.length).toBe(8);
     expect(wide.cards[0]!.title!.text.lines.length).toBe(2);
     expect(wide.columns[0]!.x).toBe(150);
   });
@@ -320,18 +331,18 @@ describe('kanban layout: config', () => {
   });
 
   it('raises a sectionWidth too narrow for its cards to the least width, with a warning', () => {
-    for (const sectionWidth of [1, 10, 25.5]) {
+    for (const sectionWidth of [1, 10, 35.5]) {
       const warnings: Warning[] = [];
       const layout = lay(board('  a[A]', '    x[a b]'), { sectionWidth }, warnings);
-      expect(layout.sectionWidth).toBe(26);
-      // W − 15 wide, its title wrapped at W − 25 = 1: one word a line.
-      expect(layout.cards[0]!.width).toBe(11);
+      expect(layout.sectionWidth).toBe(36);
+      // W − 15 wide, its title wrapped at W − 35 = 1 (D764): one word a line.
+      expect(layout.cards[0]!.width).toBe(21);
       expect(layout.cards[0]!.title!.text.lines.length).toBe(2);
       expect(warnings.map((w) => [w.code, w.path])).toEqual([
         ['KANBAN_CONFIG_IGNORED', 'kanban.sectionWidth'],
       ]);
     }
-    expect(lay(board('  a'), { sectionWidth: 26 }).sectionWidth).toBe(26);
+    expect(lay(board('  a'), { sectionWidth: 36 }).sectionWidth).toBe(36);
   });
 
   it('takes a numeric string as v12 did, and sectionWidth 0 as 200 with no warning', () => {
@@ -342,36 +353,98 @@ describe('kanban layout: config', () => {
   });
 });
 
-// The spec (and v12, `clusters.js:346`) let a word wider than its wrap width overflow, unbroken;
-// Pele's "words broken between characters" is a divergence not to follow. Core's `keepWords`
-// keeps it whole in px; the text output, in cells, still splits it to keep it inside its box.
-describe('kanban layout: a word wider than its wrap width', () => {
-  const word = 'Supercalifragilisticexpialidociousandevenlongerwordhere';
-  const input = board(`  e[${word}]`, `    c[${word}]@{ ticket: ${word}, assigned: ${word} }`);
+// D764: card text wraps at `W − cardInset − 2·labelInset` (165 px at the default W), so every
+// line ends at least `labelInset` (10 px) inside the card's right edge, as v12 drew it (#1294).
+// With `gridMeasurer` (8 px a character) a line of 20 characters (160 px) fits 165; one of 21
+// (168 px) does not. Before D764 the wrap was `W − 25` and a 21-character line ran to the border.
+describe('kanban layout: card text keeps the label inset on both sides (D764)', () => {
+  // Five-character words: 'aaaa bbbb cccc dddd' is 19 characters (152 px); one more word, 24.
+  const words = 'aaaa bbbb cccc dddd eeee ffff gggg hhhh iiii jjjj kkkk llll mmmm nnnn';
+  // 'abcdefghij abcdefghij' is 21 characters: it fit `W − 25` (175) on one line, not 165.
+  const filling = 'abcdefghij abcdefghij abcdefghij abcdefghij';
+  const input = board(
+    '  a[Todo]',
+    `    x[${filling}]@{ ticket: '${filling}', assigned: '${words}' }`
+  );
 
-  it('overflows whole in every label kind, as v12, and the bounds hold it', () => {
+  for (const sectionWidth of [200, 300])
+    it(`ends every line of the title, ticket and assignee 10 px inside the card, W = ${sectionWidth}`, () => {
+      const layout = lay(input, { sectionWidth });
+      const card = layout.cards[0]!;
+      for (const label of [card.title!, card.ticket!, card.assignee!]) {
+        expect(label.x).toBeGreaterThanOrEqual(card.x + 10);
+        for (const w of label.text.widths)
+          expect(label.x + w).toBeLessThanOrEqual(card.x + card.width - 10);
+      }
+      expect(kanbanLayoutViolations(input, layout)).toEqual([]);
+    });
+
+  it('wraps at 165 px at the default width: a 21-character line no longer fits', () => {
+    const card = lay(input).cards[0]!;
+    expect(card.title!.text.lines.length).toBe(4);
+    expect(card.title!.text.widths).toEqual([80, 80, 80, 80]);
+    // 'aaaa … dddd' (152 px) fits; adding ' eeee' (192) does not.
+    expect(card.assignee!.text.widths[0]).toBe(152);
+  });
+
+  it('wraps at 265 px at sectionWidth 300: three 10-character words (256 px) fit on a line', () => {
+    const card = lay(input, { sectionWidth: 300 }).cards[0]!;
+    expect(card.title!.text.widths).toEqual([256, 80]);
+  });
+
+  it('keeps the left inset: text starts 10 px in from the card', () => {
+    const card = lay(input).cards[0]!;
+    expect([card.title!.x - card.x, card.ticket!.x - card.x]).toEqual([10, 10]);
+  });
+});
+
+// D764: a column title wraps at `W − 2·labelInset` (180 px at the default W) and is centred
+// inside that inset, in line with the card text. Before, it wrapped at `W`, edge to edge.
+describe('kanban layout: a column title keeps the label inset (D764)', () => {
+  // 23 characters, 184 px: one line at `W`, two at 180.
+  const title = 'aaaaaaa bbbbbbb ccccccc';
+
+  it('wraps at W − 20 and stays 10 px inside both sides, centred', () => {
+    const input = board(`  a[${title}]`, '    x[Card]');
     const layout = lay(input);
     const column = layout.columns[0]!;
-    const card = layout.cards[0]!;
-    // 55 characters at 8 px.
-    const wide = word.length * 8;
-    for (const label of [column.title!, card.title!, card.ticket!, card.assignee!]) {
-      expect(label.text.lines.map((l) => l.map((r) => r.text).join(''))).toEqual([word]);
-      expect(label.width).toBe(wide);
-    }
-    // The column title is centred, so it sticks out on both sides; the card title and ticket
-    // start 10 px in from the card's left edge, and the assignee ends 10 px in from its right.
-    expect(column.title!.x).toBe(column.x + (column.width - wide) / 2);
-    expect(card.title!.x).toBe(card.x + 10);
-    expect(card.title!.x + wide).toBeGreaterThan(card.x + card.width);
-    expect(card.assignee!.x + wide).toBe(card.x + card.width - 10);
-    const b = layout.bounds;
-    expect(b.x).toBeLessThanOrEqual(card.assignee!.x);
-    expect(b.x + b.width).toBeGreaterThanOrEqual(card.title!.x + wide);
+    const label = column.title!;
+    expect(label.text.lines.length).toBe(2);
+    expect(label.x).toBeGreaterThanOrEqual(column.x + 10);
+    expect(label.x + label.width).toBeLessThanOrEqual(column.x + column.width - 10);
+    expect(label.x + label.width / 2).toBe(column.x + column.width / 2);
     expect(kanbanLayoutViolations(input, layout)).toEqual([]);
   });
 
-  it('is split between characters in cells, so the text output keeps it in its box', () => {
+  it('leaves a title that fits on one line where it was', () => {
+    const [todo] = lay(board('  Todo')).columns;
+    expect(todo!.title!.x).toBe(184);
+  });
+});
+
+// D765 (amends D372): a word wider than the wrap breaks between characters, in px as in cells,
+// so no card or column text crosses its box's right edge. v12 let it overflow (#1304, F-008).
+describe('kanban layout: a word wider than its wrap width (D765)', () => {
+  const word = 'Supercalifragilisticexpialidociousandevenlongerwordhere';
+  const input = board(`  e[${word}]`, `    c[${word}]@{ ticket: ${word}, assigned: ${word} }`);
+  const text = (label: { text: { lines: { text: string }[][] } }): string[] =>
+    label.text.lines.map((l) => l.map((r) => r.text).join(''));
+
+  it('breaks it in every label kind, inside the label inset', () => {
+    const layout = lay(input);
+    const column = layout.columns[0]!;
+    const card = layout.cards[0]!;
+    // 55 characters at 8 px: 20 a line in the 165 px card wrap, 22 in the 180 px title wrap.
+    expect(text(column.title!)).toEqual([word.slice(0, 22), word.slice(22, 44), word.slice(44)]);
+    for (const label of [card.title!, card.ticket!, card.assignee!])
+      expect(text(label)).toEqual([word.slice(0, 20), word.slice(20, 40), word.slice(40)]);
+    expect(column.title!.x).toBe(column.x + 12);
+    expect(card.title!.x + card.title!.width).toBe(card.x + 10 + 160);
+    expect(card.assignee!.x + card.assignee!.width).toBe(card.x + card.width - 10);
+    expect(kanbanLayoutViolations(input, layout)).toEqual([]);
+  });
+
+  it('is split between characters in cells, as before', () => {
     const layout = layoutKanban(input, {
       config: {} as ResolvedConfig,
       measurer: cellMeasurer,
@@ -440,6 +513,31 @@ describe('kanban layout invariants', () => {
     ]);
   });
 
+  it('catches card and column text closer than labelInset to a side (D764)', () => {
+    const input = board('  a[Todo]', "    x[Card one]@{ ticket: 'MC-1', assigned: 'knsv' }");
+    const good = lay(input);
+    const card = good.cards[0]!;
+    const column = good.columns[0]!;
+    expect(kanbanLayoutViolations(input, good)).toEqual([]);
+    const at = (label: 'title' | 'ticket' | 'assignee', x: number): KanbanLayout => ({
+      ...good,
+      cards: [{ ...card, [label]: { ...card[label]!, x } }],
+    });
+    // 9 px in from the left, then 9 px in from the right.
+    expect(kanbanLayoutViolations(input, at('title', card.x + 9))).toEqual([
+      `card ${card.ast}: its title is within 10 of its sides`,
+    ]);
+    const assignee = card.assignee!;
+    expect(
+      kanbanLayoutViolations(input, at('assignee', card.x + card.width - 9 - assignee.width))
+    ).toEqual([`card ${card.ast}: its assignee is within 10 of its sides`]);
+    // A title as wide as its column, centred: on both edges.
+    const wide = { ...column.title!, x: column.x, width: column.width };
+    expect(
+      kanbanLayoutViolations(input, { ...good, columns: [{ ...column, title: wide }] })
+    ).toEqual([`column ${column.ast}: its title is within 10 of its sides`]);
+  });
+
   it('catches a ticket and assignee drawn over each other, or stacked out of the card', () => {
     const input = board('  a[A]', "    x[Card]@{ ticket: 'MC-12345678', assigned: 'Dana Smith' }");
     const good = lay(input);
@@ -494,7 +592,7 @@ describe('kanban layout in cells', () => {
     expect(narrow.sectionWidth).toBe(9);
   });
 
-  // Pitfall 22: the cell least raises widths px allows (26 to 67 px), so it says so, once.
+  // Pitfall 22: the cell least raises widths px allows (36 to 71 px), so it says so, once.
   it('warns once when the cell least widens the column, in place of the px raise', () => {
     const cells = (sectionWidth: number) => {
       const warnings: Warning[] = [];
@@ -513,7 +611,7 @@ describe('kanban layout in cells', () => {
       message:
         'Ignored kanban.sectionWidth: a column narrower than 9 cells (72 px) leaves its cards no width; using 9',
     };
-    // 40 px is fine in px and 5 cells in text; 10 px is raised to 26 px, 3 cells.
+    // 40 px is fine in px and 5 cells in text; 10 px is raised to 36 px, 5 cells.
     expect(cells(40)).toEqual({ width: 9, warnings: [raised] });
     expect(cells(10)).toEqual({ width: 9, warnings: [raised] });
     // 72 px is 9 cells: nothing raised, nothing said.
