@@ -196,6 +196,17 @@ describe('icons (D505, D506)', () => {
     expect(r.svg).not.toContain('foreignObject');
   });
 
+  it('draws an empty text icon as no icon, and a text icon of only spaces as a text icon (v12 tested truthiness)', async () => {
+    const none = await render('architecture-beta\n  service d[Empty]\n', grid);
+    const empty = await render('architecture-beta\n  service d ""[Empty]\n', grid);
+    expect(none.svg).toContain('class="node-bkg"');
+    expect(empty.svg).toBe(none.svg);
+    expect(empty.svg).not.toContain('fill="#087ebf"');
+    const blank = await render('architecture-beta\n  service d " "[Empty]\n', grid);
+    expect(blank.svg).toContain('<rect width="80" height="80" fill="#087ebf" stroke-width="0"/>');
+    expect(blank.svg).not.toContain('class="node-bkg"');
+  });
+
   it('breaks a word wider than the square, and cuts what does not fit', async () => {
     const lines = async (text: string) => {
       const r = await render(`architecture-beta\n  service a "${text}"[A]\n`, grid);
