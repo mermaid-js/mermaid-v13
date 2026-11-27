@@ -3,6 +3,7 @@
   useMaxWidth property (boolean) 4:5-4:5 "" -> "useMaxWidth: "
   theme property (string) 4:5-4:5 "" -> "theme: "
   layout property (string) 4:5-4:5 "" -> "layout: "
+  markdownAlwaysOn property (boolean) 4:5-4:5 "" -> "markdownAlwaysOn: "
   wrappingWidth property (number) 4:5-4:5 "" -> "wrappingWidth: "
   minNodeWidth property (number) 4:5-4:5 "" -> "minNodeWidth: "
   titleTopMargin property (integer) 4:5-4:5 "" -> "titleTopMargin: "
