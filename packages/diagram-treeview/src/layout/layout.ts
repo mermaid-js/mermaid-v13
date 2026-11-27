@@ -19,13 +19,13 @@ import type { RenderContext } from '@mermaid-js/core';
 import { RectUnion } from '@mermaid-js/shared/layout';
 import {
   decodeEntities,
-  labelSource,
   layoutLabel,
   Style,
   type FontKey,
   type MeasuredLabel,
   type StyleBits,
 } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { treeViewOptions, type TreeViewOptions } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
@@ -35,16 +35,27 @@ import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } fr
 
 /**
  * What the layout reads from the render context: `warn` is told of a `treeView` option that
- * falls back (`TREEVIEW_CONFIG_INVALID`).
+ * falls back (`TREEVIEW_CONFIG_INVALID`) and of markdown in a plain name (`MARKDOWN_NOT_READ`,
+ * once per render through `inline`).
  */
 export type TreeViewLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn'>>;
+  Partial<Pick<RenderContext, 'warn' | 'inline'>>;
+
+/** For a layout run without a `warn` sink (unit tests, the invariants). */
+const ignoreWarning = (): void => undefined;
 
 /**
- * What the label rule may read in a plain name (#1368): a tag, a written `\n` (a backslash), a
- * line break. A name without them is drawn as written.
+ * What the label rule may read in a plain name (#1368), besides markdown: a tag, a written `\n`
+ * (a backslash), a line break. A plain name without them is drawn as written.
  */
 const RE_READ = /[<\\\n\r]/;
+
+/**
+ * A name the label rule reads nothing in, in either mode: no tag, backslash or line break, no
+ * emphasis or code mark and no list marker at its start. It is drawn as written without asking
+ * the handler (and gives no warning, which needs an emphasis mark).
+ */
+const RE_NOTHING_READ = /^(?!\s*[-+*]\s)[^<\\\n\r*_`]*$/;
 
 /** v12's virtual root row (`db.ts`: name `/`, a directory). */
 const ROOT = { name: '/', directory: true } as const;
@@ -108,16 +119,18 @@ function frameOf(ctx: TreeViewLayoutContext): Frame {
     };
   };
   const bold: FontKey = { ...font, weight: BOLD_WEIGHT };
+  const read = {
+    config: ctx.config,
+    warn: ctx.warn ?? ignoreWarning,
+    ...(ctx.inline ? { inline: ctx.inline } : {}),
+  };
   const label = (name: string, directory: boolean, markdown: boolean): TreeViewText => {
     const f = directory ? bold : font;
     const style = directory ? Style.Bold : 0;
-    // Nothing the rule reads (no tag, no line break, no markdown string): as written.
-    if (!markdown && !RE_READ.test(name)) return measure(name, f, style);
-    const source = labelSource(
-      markdown ? name.slice(1, -1) : name,
-      { markdown, v12Markdown: false },
-      ctx.config
-    );
+    if (!markdown && RE_NOTHING_READ.test(name)) return measure(name, f, style);
+    const source = readLabel(markdown ? name.slice(1, -1) : name, { markdown }, read);
+    // A plain name with nothing the rule reads: as written, its blank runs kept.
+    if (source.markup === 'plain' && !RE_READ.test(name)) return measure(name, f, style);
     const laid = layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, style });
     const text = decodeEntities(name);
     const run = asWritten(laid, text, style);

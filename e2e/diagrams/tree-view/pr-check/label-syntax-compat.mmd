@@ -1,11 +1,12 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd, with legacyMarkdown set. A
-  tree view has no label kind where v12 read markdown, so it draws exactly as
-  the default one: markdown only in a quoted markdown string, tags draw, a
-  written \n breaks the line; the rest as written (#1368).
+  The markdownAlwaysOn twin of label-syntax.mmd: with the setting on every
+  label is markdown, so the plain **bold** _ital_ names draw bold and italic,
+  the code span and bare backticks draw inline code, and __init__.py draws a
+  bold init; tags and a written \n read as in the default mode, so the picture
+  differs from label-syntax.mmd (#1368).
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 treeView-beta
   plain/

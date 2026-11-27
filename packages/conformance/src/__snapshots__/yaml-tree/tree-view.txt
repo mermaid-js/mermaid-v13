@@ -32,7 +32,7 @@ e2e/diagrams/tree-view/nightly-check/should-render-a-simple-treeview-diagram-wit
 e2e/diagrams/tree-view/nightly-check/should-render-combined-annotations.mmd 1 a28962b69cea87af
 e2e/diagrams/tree-view/nightly-check/should-render-icon-overrides.mmd 1 7d6eb988794cec86
 e2e/diagrams/tree-view/nightly-check/should-resolve-unprefixed-icon-overrides-via-default-icon-pack.mmd 1 f5ab07c90f29f025
-e2e/diagrams/tree-view/pr-check/label-syntax-compat.mmd 1 d06dc016ddef4e8c
+e2e/diagrams/tree-view/pr-check/label-syntax-compat.mmd 1 e6ac19f0a38631f5
 e2e/diagrams/tree-view/pr-check/label-syntax.mmd 1 eb4fad816b986846
 e2e/diagrams/tree-view/pr-check/should-pick-file-icons-from-filename-and-extension-config-maps.mmd 1 14891b26b5aa5cf9
 e2e/diagrams/tree-view/pr-check/should-preserve-consecutive-spaces-and-unicode-in-labels.mmd 1 580052fd57048c1a

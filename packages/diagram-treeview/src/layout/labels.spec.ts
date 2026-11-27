@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { Style } from '@mermaid-js/core/text';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import type { Theme } from '@mermaid-js/core/theme';
 import { treeViewTestTheme } from '../test-context.ts';
 import { context, tree } from './fixtures.ts';
@@ -7,23 +8,37 @@ import { layoutTreeView, type TreeViewLayoutContext } from './index.ts';
 
 // Node labels follow the label rule (#1368, T23): markdown only in a quoted markdown string, tags
 // draw, a written `\n` breaks the line; any other label is drawn as written, its blank runs kept.
+// With `markdownAlwaysOn` every name is markdown; tags and line breaks read the same.
 // The half-em measurer: a character is 8 px wide at 16 px, a line 16 px high, a row 26 px.
 let theme: Theme;
 beforeAll(async () => {
   theme = await treeViewTestTheme();
 });
 
-/** The default mode, and the compatibility mode, which no treeView label kind reads. */
+/** A context in the default mode, or with `markdownAlwaysOn`, that keeps its warnings' codes. */
+function withWarnings(t: Theme, always = false): TreeViewLayoutContext & { codes: string[] } {
+  const c = context(t);
+  const codes: string[] = [];
+  return {
+    ...c,
+    config: always ? { ...c.config, markdownAlwaysOn: true } : c.config,
+    warn: (w) => void codes.push(w.code),
+    codes,
+  };
+}
+
 const MODES: readonly [string, (t: Theme) => TreeViewLayoutContext][] = [
-  ['default', (t) => context(t)],
-  [
-    'legacyMarkdown',
-    (t) => {
-      const c = context(t);
-      return { ...c, config: { ...c.config, legacyMarkdown: true } };
-    },
-  ],
+  ['default', (t) => withWarnings(t)],
+  ['markdownAlwaysOn', (t) => withWarnings(t, true)],
 ];
+
+/** The first node's label as runs (each run's text and style), or as written (a string). */
+function drawn(ctx: TreeViewLayoutContext, line: string): string | [string, number][][] {
+  const label = layoutTreeView(tree(line), ctx).rows[1]!.label;
+  return label.runs
+    ? label.runs.lines.map((l) => l.map((r): [string, number] => [r.text, r.style]))
+    : label.text;
+}
 
 /** The lines of runs of the first node's label: each run's text and style. */
 function runs(ctx: TreeViewLayoutContext, ...lines: string[]): [string, number][][] | undefined {
@@ -37,7 +52,7 @@ function written(ctx: TreeViewLayoutContext, line: string): string | undefined {
   return label.runs === undefined ? label.text : undefined;
 }
 
-describe.each(MODES)('node labels, %s mode', (_mode, make) => {
+describe.each(MODES)('node labels, both modes: %s', (_mode, make) => {
   it('reads a quoted markdown string as markdown, in either quote', () => {
     const ctx = make(theme);
     const md: [string, number][][] = [
@@ -49,28 +64,6 @@ describe.each(MODES)('node labels, %s mode', (_mode, make) => {
     ];
     expect(runs(ctx, '"`**x** _y_`"')).toEqual(md);
     expect(runs(ctx, "'`**x** _y_`'")).toEqual(md);
-  });
-
-  it('draws plain markdown, bare backticks and a code span as written', () => {
-    const ctx = make(theme);
-    expect(written(ctx, '**x** _y_')).toBe('**x** _y_');
-    expect(written(ctx, '`**x** _y_`')).toBe('`**x** _y_`');
-    expect(written(ctx, '"a `code` b"')).toBe('a `code` b');
-  });
-
-  it('leaves file names with underscores, stars and dots untouched', () => {
-    const ctx = make(theme);
-    for (const name of ['my_file_name.spec.ts', '__init__.py', '*.test.ts', '_private_', 'a__b__c'])
-      expect(written(ctx, name)).toBe(name);
-  });
-
-  it('keeps a plain name’s blank runs, as v12 drew it', () => {
-    const l = layoutTreeView(tree('"a   b"'), make(theme));
-    expect([l.rows[1]!.label.text, l.rows[1]!.label.width, l.rows[1]!.label.runs]).toEqual([
-      'a   b',
-      40,
-      undefined,
-    ]);
   });
 
   it('draws the tags', () => {
@@ -120,5 +113,76 @@ describe.each(MODES)('node labels, %s mode', (_mode, make) => {
   it('keeps a one-line label with a tag as high as a plain one', () => {
     const l = layoutTreeView(tree('  <b>a</b>', '  b'), make(theme));
     expect(l.rows.map((r) => r.box.height)).toEqual([26, 26, 26]);
+  });
+});
+
+describe('node labels, default mode only', () => {
+  const make = (t: Theme) => withWarnings(t);
+
+  it('draws plain markdown, bare backticks and a code span as written', () => {
+    const ctx = make(theme);
+    expect(written(ctx, '**x** _y_')).toBe('**x** _y_');
+    expect(written(ctx, '`**x** _y_`')).toBe('`**x** _y_`');
+    expect(written(ctx, '"a `code` b"')).toBe('a `code` b');
+  });
+
+  it('leaves file names with underscores, stars and dots untouched, with no warning', () => {
+    const ctx = withWarnings(theme);
+    for (const name of ['my_file_name.spec.ts', '__init__.py', '*.test.ts', 'a__b__c'])
+      expect(written(ctx, name)).toBe(name);
+    expect(ctx.codes).toEqual([]);
+  });
+
+  it('keeps a plain name’s blank runs, as v12 drew it', () => {
+    const l = layoutTreeView(tree('"a   b"'), make(theme));
+    expect([l.rows[1]!.label.text, l.rows[1]!.label.width, l.rows[1]!.label.runs]).toEqual([
+      'a   b',
+      40,
+      undefined,
+    ]);
+  });
+
+  it('warns of markdown in a plain name, and not in a markdown string', () => {
+    const plain = withWarnings(theme);
+    layoutTreeView(tree('  **x** _y_', '  `__z__`'), plain);
+    expect(plain.codes.every((c) => c === MARKDOWN_NOT_READ.code)).toBe(true);
+    expect(plain.codes.length).toBeGreaterThan(0);
+    const md = withWarnings(theme);
+    layoutTreeView(tree('"`**x** _y_`"'), md);
+    expect(md.codes).toEqual([]);
+  });
+});
+
+describe('node labels, markdownAlwaysOn', () => {
+  it('draws every name as markdown, with no warning', () => {
+    const ctx = withWarnings(theme, true);
+    expect(drawn(ctx, '**x** _y_')).toEqual([
+      [
+        ['x', Style.Bold],
+        [' ', 0],
+        ['y', Style.Italic],
+      ],
+    ]);
+    expect(drawn(ctx, 'a `code` b')).toEqual([
+      [
+        ['a ', 0],
+        ['code', Style.Mono],
+        [' b', 0],
+      ],
+    ]);
+    expect(drawn(ctx, '`x`')).toEqual([[['x', Style.Mono]]]);
+    expect(ctx.codes).toEqual([]);
+  });
+
+  it('reads __init__.py as bold init, and leaves my_file_name.spec.ts as written', () => {
+    const ctx = withWarnings(theme, true);
+    expect(drawn(ctx, '__init__.py')).toEqual([
+      [
+        ['init', Style.Bold],
+        ['.py', 0],
+      ],
+    ]);
+    expect(drawn(ctx, 'my_file_name.spec.ts')).toBe('my_file_name.spec.ts');
+    expect(drawn(ctx, 'src/')).toBe('src');
   });
 });
