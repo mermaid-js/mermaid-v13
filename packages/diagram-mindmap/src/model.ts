@@ -7,8 +7,9 @@
  * - ids and labels as v12's grammar handed them to its DB, entities decoded and line breaks
  *   kept (`root(\n  The root\n)` has the label `"\n  The root\n"`). v12 passed them through
  *   `sanitizeText`; v13 writes text escaped instead, so nothing is removed here. v12 set
- *   `labelType: 'markdown'` for all, so `**x**` is bold without backticks; a markdown string
- *   is marked (`markdown`), since v13 reads bullets and inline code there only (D564);
+ *   `labelType: 'markdown'` for all, so `**x**` was bold without backticks; v13 reads
+ *   markdown in a markdown string only, unless `legacyMarkdown` is set (#1368), so one written
+ *   in a shape is marked (`markdown`), its backticks being gone from `label`;
  * - `level` is v12's: the raw indent width less the first node's (tabs count 1), not the tree
  *   depth. v12's `edge-depth-<d>` class comes from it; `depth` is the depth in the tree.
  *

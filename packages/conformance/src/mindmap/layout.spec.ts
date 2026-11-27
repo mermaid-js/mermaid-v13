@@ -4,6 +4,7 @@ import { layered, pxProfile, validateLayout, type LayoutEngine } from '@mermaid-
 import { tree } from '@mermaid-js/core/layout/tree';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { createTheme, isThemeName, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
 import {
   layoutMindmap,
@@ -64,7 +65,10 @@ async function laidOut(f: Fixture, engine: LayoutEngine) {
     units: pxProfile,
     theme: createTheme(await loadTheme(f.theme), { diagram: mindmap.theme }),
     layout: (graph) => engine(graph, { config: f.config }),
-    warn: (w) => warnings.push(w.code),
+    // Markdown in a plain label is the label's warning (#1368), checked in `labels.spec.ts`.
+    warn: (w) => {
+      if (w.code !== MARKDOWN_NOT_READ.code) warnings.push(w.code);
+    },
   });
   return { layout, warnings };
 }

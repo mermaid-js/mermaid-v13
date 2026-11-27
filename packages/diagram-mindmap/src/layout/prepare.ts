@@ -6,12 +6,12 @@
  */
 import type { LayoutEdge, LayoutGraph, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx } from '@mermaid-js/core/layout';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { labelSource, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { warnMarkdownOutside } from '@mermaid-js/core/text/markdown-warning';
 import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type { MindmapModel, MindmapShape } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
 import { MINDMAP_METRICS, type ShapeMetrics } from './metrics.ts';
-import { v12Label } from '@mermaid-js/core/text/v12-label';
 import { bangOutline } from './outline.ts';
 import {
   cloudOutline,
@@ -226,12 +226,15 @@ function iconText(b: Build, raw: string): IconText {
 
 function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView {
   const node = model.nodes[index]!;
-  // v12's HTML labels kept a long word whole and widened the node (#649).
-  // Bullets and inline code are read in a markdown string only (D564).
-  const [shown, mode] =
-    node.markdown === true ? [node.label, { markup: 'markdown' as const }] : v12Label(node.label);
-  const label = layoutLabel(shown, b.font, b.wrap, b.ctx.measurer, {
-    ...mode,
+  // Markdown is read in a markdown string only (#1368): the parser marks one written in a
+  // shape, and core's handler finds one written as a whole node line. v12 read markdown in
+  // every node, so the kind is `v12Markdown`. v12's HTML labels kept a long word whole and
+  // widened the node (#649).
+  const kind = { markdown: node.markdown === true, v12Markdown: true } as const;
+  const source = labelSource(node.label, kind, b.ctx.config);
+  warnMarkdownOutside(node.label, kind, b.ctx);
+  const label = layoutLabel(source.text, b.font, b.wrap, b.ctx.measurer, {
+    ...source,
     inline: b.ctx.inline,
     keepWords: b.ctx.units.id !== 'cell',
   });
