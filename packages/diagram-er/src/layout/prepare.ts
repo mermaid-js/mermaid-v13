@@ -180,7 +180,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     pad: cellPad(units, length),
     // This is the only place the builder looks at which profile it has.
     rule: units.id === 'cell' ? 1 : 0,
-    nameWrap: nameWrap(units),
+    nameWrap: nameWrap(units, length),
     // v12 passes every ER label through `createText` with Markdown on (D565).
     label: (text, f, max, bits = 0, keepWords = false) =>
       layoutLabel(text, f, max, measurer, {

@@ -186,6 +186,22 @@ describe('entity tables in px', () => {
     expect(whole.label.width).toBeGreaterThan(120);
   });
 
+  it('wraps at er.wrappingWidth, and in cells at the profile width unless set (D751)', () => {
+    const name = 'This is a fairly long entity name with many words in it';
+    const src = `erDiagram\n  "${name}"\n`;
+    const wide = lay(src, pxProfile, { er: { wrappingWidth: 250 } }).layout.er!.entities[0]!;
+    expect(wide.label.lines.length).toBe(2);
+    expect(Math.max(...wide.label.widths)).toBeGreaterThan(120);
+    expect(Math.max(...wide.label.widths)).toBeLessThanOrEqual(250);
+    // Cells: 25 columns by default (also for the written default), 160 px / 8 = 20 when set.
+    const widest = (init?: MermaidConfig) =>
+      Math.max(...lay(src, cellProfile(), init).layout.er!.entities[0]!.label.widths);
+    expect(widest()).toBeLessThanOrEqual(25);
+    expect(widest()).toBeGreaterThan(20);
+    expect(widest({ er: { wrappingWidth: 120 } })).toBe(widest());
+    expect(widest({ er: { wrappingWidth: 160 } })).toBeLessThanOrEqual(20);
+  });
+
   it('keeps the name of an entity with attributes on one line (#1226)', () => {
     const name = 'This is a fairly long entity name with many words in it';
     const view = lay(`erDiagram\n  "${name}" {\n    string id\n  }\n`, pxProfile).layout.er!

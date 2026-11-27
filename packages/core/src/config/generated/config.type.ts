@@ -1301,6 +1301,13 @@ minEntityHeight?: number
  * 
  */
 entityPadding?: number
+/**
+ * Width, in pixels, at which the name of an entity with no attributes wraps. It breaks
+ * between words and after a hyphen; a word wider than this stays whole. An entity with
+ * attributes keeps its name on one line.
+ * 
+ */
+wrappingWidth?: number
 nodeSpacing?: number
 rankSpacing?: number
 /**
