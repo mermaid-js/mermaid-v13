@@ -48,6 +48,13 @@ export const T = {
   ShapeDataEnd: F + 21,
   /** jison's `<<EOF>>` `EOF`: zero-width, at the end of the text, in INITIAL only. */
   Eof: F + 22,
+  /**
+   * `accTitle: …` at a line start, to the line end (D742). v12 has no such token: it read the
+   * line as a `NODE_ID`, an item.
+   */
+  AccTitle: F + 23,
+  /** `accDescr: …` to the line end, or `accDescr { … }` to its `}` (D742; v12: items). */
+  AccDescr: F + 24,
 } as const;
 
 /**
@@ -64,4 +71,7 @@ export const JISON_NAMES: Readonly<Record<number, string>> = {
   [T.ShapeDataQuote]: 'SHAPE_DATA',
   [T.ShapeDataStr]: 'SHAPE_DATA',
   [T.Eof]: 'EOF',
+  // No jison terminal: the names the grammar file gives them (D742).
+  [T.AccTitle]: 'ACC_TITLE',
+  [T.AccDescr]: 'ACC_DESCR',
 };

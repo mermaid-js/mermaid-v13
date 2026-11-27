@@ -2,9 +2,10 @@
 // D106), then the drawing pass #140 settled on: each region frame is stretched along its
 // composite's flow to the composite's inner extent, and a divider runs down the middle of each
 // gap between neighbouring regions (`research/state-regions.md`). No layout change: only the
-// region frames move, and they hold nothing but their own members.
+// region frames move, and they hold nothing but their own members; and each composite's title
+// is seated near the top of its title strip (D732).
 import type { LayoutModel, LayoutModelGroup } from '@mermaid-js/core/layout';
-import { layered } from '@mermaid-js/core/layout';
+import { layered, pxProfile } from '@mermaid-js/core/layout';
 import type { StateModel } from '../parser/index.ts';
 import type { StateRenderContext } from './context.ts';
 import { prepareState, type StatePrepared } from './prepare.ts';
@@ -41,6 +42,8 @@ export function layoutState(model: StateModel, ctx: StateRenderContext): Complet
   const prepared = prepareState(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
   const groups = new Map(laid.groups);
+  const units = ctx.units ?? pxProfile;
+  if (units.grid === undefined) seatTitles(prepared, groups, units.builder.titlePad);
   const dividers = stretchRegions(prepared, groups);
   return { ...laid, groups, dividers, state: prepared };
 }
@@ -61,6 +64,25 @@ export function completeLayout(
   const groups = new Map(layout.groups);
   const dividers = stretchRegions(state, groups);
   return { ...layout, groups, dividers, state };
+}
+
+/**
+ * Seats each composite's title `titlePad / 2` below its frame's top. The engine centres the
+ * title in the room above the content, which also holds the gap below the title strip (D732,
+ * `groupPadding`), so it would sit low in its strip. On the grid the title stays on the border
+ * row.
+ */
+function seatTitles(
+  prepared: StatePrepared,
+  groups: Map<string, LayoutModelGroup>,
+  titlePad: number
+): void {
+  for (const g of prepared.graph.groups) {
+    const box = groups.get(g.id);
+    if (!g.title || !box) continue;
+    const y = box.y - box.height / 2 + titlePad / 2 + g.title.height / 2;
+    groups.set(g.id, { ...box, title: { ...box.title, y } });
+  }
 }
 
 interface Span {

@@ -10,6 +10,7 @@ import { cellProfile } from '@mermaid-js/core/layout';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { FlowModel } from './parser/index.ts';
 import type { FlowRenderContext } from './render/context.ts';
+import { configCurve } from './render/curve.ts';
 import { layoutFlowchart, type FlowLayout } from './render/render.ts';
 import { drawFlowchart } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
@@ -53,7 +54,9 @@ export function ascii(model: FlowModel, layout: FlowLayout, ctx: FlowAsciiContex
   const flow = laid.flow!;
   const glyphs = glyphsFor(ctx);
   const { routes, unresolved } = repairRoutes(flow.graph, laid);
-  const curve = ctx.config.flowchart?.curve;
+  // The curve config sets (D733, D761): a swimlane-beta's `swimlane.curve`, then
+  // `flowchart.curve`, else `curve`.
+  const curve = configCurve(model, ctx.config) ?? ctx.config.curve;
   for (const w of asciiWarnings(model, flow, glyphs, ctx.ast, curve)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which edges cross or share.
   const ast = new Map(flow.edges.map((e) => [e.id, e.edge.ast]));
