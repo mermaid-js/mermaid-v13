@@ -1,0 +1,14 @@
+---
+config:
+  theme: default
+description: >-
+  The docs' "critical"/"option" example in the "default" theme, where the
+  "critical" keyword needs a tab wider than 50 px: the frame grows so its long
+  title starts right of the tab instead of overlapping it (#1361, D734).
+---
+sequenceDiagram
+  critical Establish a connection to the DB
+    Service->>DB: connect
+  option Network timeout
+    Service->>Service: Log error
+  end
