@@ -885,6 +885,15 @@ export const configSchema: ConfigSchema = {
         "reason": "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Off by default (D689, #1191): D672 turned it on, which made flowchart rendering 13.7% slower, so a crossing hops only where the author sets `lineHops` (or a layout engine's own key does). Drawn by a part of core (D672), so `render` and `renderSync` need nothing loaded for it."
       }
     },
+    "curve": {
+      "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
+      "description": "How edges are drawn between their route points, for every diagram type\nthat draws edges and has a `curve` key of its own (D733). Unset by\ndefault: each type then draws its own default curve.\n\nPrecedence, per type: a per-edge curve where the type has one, then\nthe type's own key (`flowchart.curve`, `swimlane.curve`) when set,\nthen this key when set, then the type's default (`rounded` for\nflowchart and swimlane).\n",
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "New in v13 (D733, #1338): one key for the curve of every diagram type that draws edges. v12 had only `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+      }
+    },
     "maxTextSize": {
       "description": "The maximum allowed size of the users text diagram",
       "type": "number",
@@ -6053,6 +6062,15 @@ export const configSchema: ConfigSchema = {
             "since": "13.0.0"
           }
         },
+        "curve": {
+          "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
+          "description": "How swimlane edges are drawn between their route points (D733).\n\nDefaults to `rounded`, as flowchart's. Precedence: a per-edge curve\n(`curve:` on an edge, `linkStyle … interpolate`), then this key when\nset, then `flowchart.curve` when set, then the top-level `curve`\nwhen set, then `rounded`. Within one config source this key wins\nover `flowchart.curve`, as every key both sections have (D534).\n",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D733, #1377): v12's swimlane read only `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+          }
+        },
         "ignoreCrossLaneEdges": {
           "description": "Ignores edges that cross swimlane boundaries during swimlane layer\nassignment. This can improve rank quality for diagrams with many\ncross-lane links.\n",
           "type": "boolean",
@@ -6340,7 +6358,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "curve": {
-          "description": "Defines how mermaid renders curves for flowcharts.\n",
+          "description": "How flowchart edges are drawn between their route points (D733).\n\nDefaults to `rounded`: right angles whose corners are small arcs.\nPrecedence: a per-edge curve (`curve:` on an edge, `linkStyle …\ninterpolate`), then this key when set, then the top-level `curve`\nwhen set, then `rounded`. A swimlane diagram reads `swimlane.curve`\nfirst. The top-level `curve` and every `<type>.curve` take these names.\n",
           "type": "string",
           "enum": [
             "basis",
@@ -6357,11 +6375,10 @@ export const configSchema: ConfigSchema = {
             "stepBefore",
             "rounded"
           ],
-          "default": "rounded",
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). A name outside this list is drawn with the default, `rounded`, and warns `CURVE_UNKNOWN` once per render (D602, D681); v12 drew it as `basis`."
+            "reason": "The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). A name outside this list is drawn with the default, `rounded`, and warns `CURVE_UNKNOWN` once per render (D602, D681); v12 drew it as `basis`. The default lives in code, not in the schema (D733), so the resolved config shows no `flowchart.curve` unless it is set, and the top-level `curve` applies where it is not."
           }
         },
         "padding": {

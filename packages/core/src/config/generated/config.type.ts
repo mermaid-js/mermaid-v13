@@ -103,6 +103,18 @@ layout?: string
  */
 lineHops?: (false | true | "arc" | "gap")
 /**
+ * How edges are drawn between their route points, for every diagram type
+ * that draws edges and has a `curve` key of its own (D733). Unset by
+ * default: each type then draws its own default curve.
+ * 
+ * Precedence, per type: a per-edge curve where the type has one, then
+ * the type's own key (`flowchart.curve`, `swimlane.curve`) when set,
+ * then this key when set, then the type's default (`rounded` for
+ * flowchart and swimlane).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * The maximum allowed size of the users text diagram
  */
 maxTextSize?: number
@@ -341,7 +353,13 @@ nodeSpacing?: number
  */
 rankSpacing?: number
 /**
- * Defines how mermaid renders curves for flowcharts.
+ * How flowchart edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`: right angles whose corners are small arcs.
+ * Precedence: a per-edge curve (`curve:` on an edge, `linkStyle …
+ * interpolate`), then this key when set, then the top-level `curve`
+ * when set, then `rounded`. A swimlane diagram reads `swimlane.curve`
+ * first. The top-level `curve` and every `<type>.curve` take these names.
  * 
  */
 curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
@@ -460,6 +478,17 @@ layout?: string
  * 
  */
 lineHops?: (boolean | ("arc" | "gap"))
+/**
+ * How swimlane edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`, as flowchart's. Precedence: a per-edge curve
+ * (`curve:` on an edge, `linkStyle … interpolate`), then this key when
+ * set, then `flowchart.curve` when set, then the top-level `curve`
+ * when set, then `rounded`. Within one config source this key wins
+ * over `flowchart.curve`, as every key both sections have (D534).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
 /**
  * Ignores edges that cross swimlane boundaries during swimlane layer
  * assignment. This can improve rank quality for diagrams with many

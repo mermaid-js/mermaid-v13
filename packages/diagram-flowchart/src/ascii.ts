@@ -53,7 +53,8 @@ export function ascii(model: FlowModel, layout: FlowLayout, ctx: FlowAsciiContex
   const flow = laid.flow!;
   const glyphs = glyphsFor(ctx);
   const { routes, unresolved } = repairRoutes(flow.graph, laid);
-  const curve = ctx.config.flowchart?.curve;
+  // The curve config sets (D733): `flowchart.curve` (with `swimlane.curve`, D534), else `curve`.
+  const curve = ctx.config.flowchart?.curve ?? ctx.config.curve;
   for (const w of asciiWarnings(model, flow, glyphs, ctx.ast, curve)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which edges cross or share.
   const ast = new Map(flow.edges.map((e) => [e.id, e.edge.ast]));

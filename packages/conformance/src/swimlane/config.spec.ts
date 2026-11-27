@@ -95,6 +95,44 @@ describe('swimlane.* keys on their fixtures (D534)', () => {
   });
 });
 
+describe('swimlane edge curves (D733, #1377)', () => {
+  // `line-hops-off` sets `flowchart.curve: linear` and no hops, so only the curve moves paths.
+  const text = fixture('line-hops-off');
+  const section = '  flowchart:\n    curve: linear\n';
+  /** `text` with its `flowchart.curve` replaced by the config lines `lines` (top level). */
+  const configured = (lines: string): string => {
+    expect(text).toContain(section);
+    return text.replace(section, lines);
+  };
+  const paths = async (source: string) => {
+    const { tree, warnings } = await draw(source);
+    expect(warnings).toEqual([]);
+    return edgePaths(tree);
+  };
+
+  // On the swimlane engine's square routes, `step` draws as `linear`; `rounded` adds arcs.
+  it('draws swimlane.curve over flowchart.curve', async () => {
+    const swimlaneRounded = flip(text, 'lineHops: false', 'lineHops: false\n    curve: rounded');
+    const drawn = await paths(swimlaneRounded);
+    expect(drawn).toEqual(await paths(flip(text, 'curve: linear', 'curve: rounded')));
+    expect(drawn).not.toEqual(await paths(text));
+  });
+
+  it('draws the global curve when neither section sets one, and rounded when nothing does', async () => {
+    expect(await paths(configured('  curve: linear\n'))).toEqual(await paths(text));
+    const rounded = await paths(flip(text, 'curve: linear', 'curve: rounded'));
+    expect(await paths(configured(''))).toEqual(rounded);
+    expect(rounded).not.toEqual(await paths(text));
+  });
+
+  it('draws flowchart.curve over the global curve', async () => {
+    const rounded = '  flowchart:\n    curve: rounded\n';
+    const drawn = await paths(configured(`  curve: linear\n${rounded}`));
+    expect(drawn).toEqual(await paths(configured(rounded)));
+    expect(drawn).not.toEqual(await paths(text));
+  });
+});
+
 describe('layout: swimlane on another graph type (D535)', () => {
   it('lays a class diagram out with its namespaces as lanes', async () => {
     const text = read('class-diagram/pr-check/layout-swimlane-namespaces.mmd');
