@@ -85,6 +85,10 @@
   (`` connector c["`**x**`"] ``) is read as markdown, as every other label is, where v12 dropped
   the string's quotes and backticks and drew `**x**` as text. `markdownAlwaysOn: true` (or
   `agentflow.markdownAlwaysOn`) draws every label as markdown, quoted or not.
+- **Shape-data labels** (#1368, #1432): v12 read a label written in shape data with no
+  `labelType` (`a@{ label: "**x**" }`) as markdown. Now it follows the rule above: it is plain
+  text unless the value is a markdown string (`` a@{ label: "`**x**`" } ``), read as markdown
+  without its backticks. A written `labelType` is read as before.
 - **Text output** is new (v12 had none, D320, D469): `format: 'ascii'` draws agentflow as text
   from the lazily loaded `@mermaid-js/diagram-agentflow/ascii` entry, in the `unicode` or
   `ascii` charset ([ASCII output](./ascii.md#agentflow-diagrams)). It is the same graph laid out

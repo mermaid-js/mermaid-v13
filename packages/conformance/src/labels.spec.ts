@@ -49,6 +49,11 @@ const RE_HTML = /<\/?(?!br\b)[a-zA-Z][^<>]*>/i;
 // A tag v13 does not draw: v12's HTML label rendered or sanitised it, v13 shows it as written
 // (#1440, MIGRATION "Labels and text"), so such a label is not compared.
 const RE_UNDRAWN = /<\/?(?!(?:br|b|strong|i|em|u|ins|s|strike|del|sub|sup)[\s/>])[a-zA-Z][^<>]*>/i;
+// A backtick in a label v12 read as markdown: only a shape-data label keeps one (v12 took the
+// backticks off a markdown string). v12's markdownToLines dropped a code span and its text; v13
+// draws it as inline code, and reads a shape-data value in backticks as a markdown string
+// without them (#1368, #1432), so such a label is not compared.
+const BACKTICK = '`';
 
 const labels: CorpusLabel[] = [];
 let v12: V12Text;
@@ -121,6 +126,7 @@ describe('label layout over the e2e flowchart labels', () => {
     const changed: string[] = [];
     for (const label of labels) {
       if (!label.markdown || RE_BULLET_LINE.test(label.text) || RE_HTML.test(label.text)) continue;
+      if (label.text.includes(BACKTICK)) continue;
       // v12's createText turns the first <br> into <br/> before splitting markdown.
       const expected = v12
         .markdownToLines(label.text.replace('<br>', '<br/>'))

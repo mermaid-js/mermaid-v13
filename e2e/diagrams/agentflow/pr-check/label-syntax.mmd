@@ -1,7 +1,9 @@
 ---
 description: >-
-  Spec #1368, #1396. Every agentflow label kind (flow title, node, edge between pipes,
-  inline edge, connector, node in a global block) written six ways, one flow per way. Markdown
+  Spec #1368, #1396, #1432. Every agentflow label kind (flow title, node, edge between pipes,
+  inline edge, shape-data label, connector, node in a global block) written six ways, one flow
+  per way (no shape-data node in F3: YAML takes no unquoted backtick, and a quoted one is the
+  markdown string of F2; F6 single-quotes it so YAML keeps the backslash-n). Markdown
   is read only in a quoted markdown string; plain markers, bare backticks and a code span are
   drawn as written; the tags draw; a written backslash-n breaks the line in every label.
 ---
@@ -10,11 +12,13 @@ agentflow-beta TB
     direction LR
     A1["node **bold** _ital_"] -->|"edge **bold** _ital_"| B1[unquoted node **bold** _ital_]
     B1 -- inline edge **bold** _ital_ --> C1
+    C1@{ label: "shape data **bold** _ital_" }
   end
   flow F2["`flow **bold** _ital_`"]
     direction LR
     A2["`node **bold** _ital_`"] -->|"`edge **bold** _ital_`"| B2["`unquoted node **bold** _ital_`"]
     B2 -- "`inline edge **bold** _ital_`" --> C2
+    C2@{ label: "`shape data **bold** _ital_`" }
   end
   flow F3[`flow **bold** _ital_`]
     direction LR
@@ -25,16 +29,19 @@ agentflow-beta TB
     direction LR
     A4["node a `code` b"] -->|"edge a `code` b"| B4[unquoted node a `code` b]
     B4 -- inline edge a `code` b --> C4
+    C4@{ label: "shape data a `code` b" }
   end
   flow F5["flow <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
     direction LR
     A5["node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] -->|"edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"| B5[unquoted node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
     B5 -- inline edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O --> C5
+    C5@{ label: "shape data <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" }
   end
   flow F6["flow one\ntwo"]
     direction LR
     A6["node one\ntwo"] -->|"edge one\ntwo"| B6[unquoted node one\ntwo]
     B6 -- inline edge one\ntwo --> C6
+    C6@{ label: 'shape data one\ntwo' }
   end
   connector K1["connector **bold** _ital_"]
   connector K2["`connector **bold** _ital_`"]

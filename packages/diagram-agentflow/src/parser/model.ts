@@ -26,6 +26,7 @@ import {
   countChar,
   FlowBuilderBase,
   flowLabelType,
+  shapeDataLabel,
   unquoteLabel,
 } from '@mermaid-js/shared/parser/flow';
 import type {
@@ -391,7 +392,8 @@ export class AgentflowBuilder extends FlowBuilderBase<
    * `label` and `labelType` from `@{ … }`, as v12 read them: a label that is not text becomes
    * its JavaScript text (`5`, `1,2`, `[object Object]`, as v12's sanitiser made it), a
    * `labelType` other than `text`, `string` or `markdown` becomes `markdown`. Each such value is
-   * kept and reported (`NODE_DATA_COERCED`), as an edge's are (pitfall 10).
+   * kept and reported (`NODE_DATA_COERCED`), as an edge's are (pitfall 10). With no `labelType`
+   * the label is text unless it is a markdown string (#1368, #1432; v12 read it as markdown).
    */
   private dataLabel(vertex: AgentflowVertex, doc: YamlMap, at: Range): void {
     const { label, labelType: type } = doc;
@@ -401,9 +403,10 @@ export class AgentflowBuilder extends FlowBuilderBase<
         `Node ${JSON.stringify(vertex.id)}: ${key} ${JSON.stringify(value)} is read as ${read} (as in v12); write it as ${key === 'label' ? 'a quoted string' : '`text`, `string` or `markdown`'}.`,
         at
       );
-    vertex.text = v12Text(label);
+    const read = shapeDataLabel(v12Text(label), type);
+    vertex.text = read.text;
     if (typeof label !== 'string') warn('label', label, JSON.stringify(vertex.text));
-    vertex.labelType = flowLabelType(type);
+    vertex.labelType = read.labelType;
     if (type !== undefined && type !== vertex.labelType) warn('labelType', type, '`markdown`');
   }
 

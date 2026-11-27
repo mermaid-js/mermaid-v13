@@ -118,7 +118,47 @@ describe('agentflow labels through the label handler (#1396)', () => {
   it('draws the compatibility fixture with every plain label as markdown', async () => {
     const compat = await svgOf(diagramFixture('agentflow/pr-check/label-syntax-compat.mmd'));
     const plain = await svgOf(diagramFixture('agentflow/pr-check/label-syntax.mmd'));
-    // The plain row's seven labels (flow, two nodes, two edges, connector, global) draw bold too.
-    expect(styled(compat, BOLD).length - styled(plain, BOLD).length).toBe(7);
+    // The plain row's eight labels (flow, two nodes, two edges, shape data, connector, global)
+    // draw bold too.
+    expect(styled(compat, BOLD).length - styled(plain, BOLD).length).toBe(8);
+  });
+});
+
+// #1432: a shape-data label is plain unless its value is a markdown string; v12 read it as
+// markdown.
+describe('agentflow shape-data labels (#1432)', () => {
+  const plain = `${HEAD}  a@{ label: "**data** _d_" }\n  b@{ label: "more __b__" }\n  a --> b`;
+
+  it('draws a plain label as written, with one warning', async () => {
+    const { svg, codes } = await render(plain);
+    expect(svg).not.toMatch(BOLD);
+    expect(texts(svg)).toContain('**data** _d_');
+    expect(codes.filter((c) => c === MARKDOWN_NOT_READ.code)).toHaveLength(1);
+  });
+
+  it.each(['"`**data** _d_`"', "'`**data** _d_`'"])(
+    'reads the markdown-string value %s as markdown, with no warning',
+    async (value) => {
+      const { svg, codes } = await render(`${HEAD}  a@{ label: ${value} }`);
+      expect(styled(svg, BOLD)).toEqual(['data']);
+      expect(codes).not.toContain(MARKDOWN_NOT_READ.code);
+    }
+  );
+
+  it('draws a code span as written, the tags, and a written \\n as a break', async () => {
+    const source = `${HEAD}  a@{ label: "a \`code\` b" }\n  b@{ label: "<b>tag</b>" }\n  c@{ label: 'one\\ntwo' }`;
+    const svg = await svgOf(source);
+    expect(texts(svg)).toEqual(expect.arrayContaining(['a `code` b', 'onetwo']));
+    expect(styled(svg, BOLD)).toEqual(['tag']);
+    expect(svg).not.toContain('\\n');
+  });
+
+  it.each([
+    ['globally', ALWAYS_ON],
+    ['in the agentflow section', IN_SECTION],
+  ])('reads a plain label as markdown with markdownAlwaysOn %s', async (_, config) => {
+    const { svg, codes } = await render(plain, config);
+    expect(styled(svg, BOLD)).toEqual(['data', 'b']);
+    expect(codes).not.toContain(MARKDOWN_NOT_READ.code);
   });
 });

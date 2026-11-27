@@ -1371,6 +1371,7 @@ them keep working.
 | Icon shape frames (`form` `square`, `rounded`, `circle`): the glyph plus `flowchart.padding` (63 px around a 48 px icon), rounded corners 5; a circle as wide as the glyph's diagonal plus 40, about 108 px | The glyph plus half of `flowchart.padding` (55.5 px), rounded corners 5; a circle as wide as the glyph's diagonal plus half of `flowchart.padding`, about 75 px. The label sits 8 px from the frame, as in v12 | Tighter frames (D685, #1150) |
 | `flowchart.curve` was the only curve key, and the resolved config (`getConfig()`) showed its default | A top-level `curve` sets the curve of every diagram type that draws edges, and `swimlane.curve` that of a swimlane diagram. A flowchart takes a per-edge curve, then `flowchart.curve`, then `curve`, then `rounded`; a swimlane diagram takes `swimlane.curve`, set in any source, before `flowchart.curve`, and a flowchart with `layout: swimlane` ignores `swimlane.curve` (D761). `rounded` is now a default in code, so `getConfig()`, the config reference and the editor hover show no default for `flowchart.curve`. Drawing with nothing set is unchanged | One `curve` for every type, and a key without a default is unset only when the author did not set it (D733, #1377) |
 | A markdown string (`` "`…`" ``) in a node, edge or subgraph label drew a `\n` written as two characters as text | It breaks the line there, as `<br>` does and as a written `\n` does in every other flowchart label. Markdown is still read only in a markdown string: `**x**`, `_x_` and a label wholly in backticks without quotes (`` `**x**` ``) are drawn as written, as in v12, and give one `MARKDOWN_NOT_READ` warning. `markdownAlwaysOn: true` draws every label as markdown | #1368, #1395 |
+| A label written in shape data (`a@{ label: "…" }`) with no `labelType` was read as markdown: `a@{ label: "**x**" }` drew bold, and `` a@{ label: "a `code` b" } `` drew a code span | It follows the label rule. The value is plain text unless it is a markdown string (`` a@{ label: "`**x**`" } ``, single quotes too), read as markdown without its backticks; `**x**`, `_x_` and a code span are drawn as written and give one `MARKDOWN_NOT_READ` warning, the tags draw, and a `\n` written as two characters (`'one\ntwo'`; inside double quotes YAML already makes it a line break) breaks the line. A written `labelType` is read as before (`markdown` reads the value as markdown). `markdownAlwaysOn: true` draws it as markdown. The same holds in swimlane diagrams | #1368, #1432 |
 
 ## Sequence SVG structure
 
@@ -2830,6 +2831,10 @@ no per-call options (D319, D302).
   (`` connector c["`**x**`"] ``) is read as markdown, as every other label is, where v12 dropped
   the string's quotes and backticks and drew `**x**` as text. `markdownAlwaysOn: true` (or
   `agentflow.markdownAlwaysOn`) draws every label as markdown, quoted or not.
+- **Shape-data labels** (#1368, #1432): v12 read a label written in shape data with no
+  `labelType` (`a@{ label: "**x**" }`) as markdown. Now it follows the rule above: it is plain
+  text unless the value is a markdown string (`` a@{ label: "`**x**`" } ``), read as markdown
+  without its backticks. A written `labelType` is read as before.
 - **Text output** is new (v12 had none, D320, D469): `format: 'ascii'` draws agentflow as text
   from the lazily loaded `@mermaid-js/diagram-agentflow/ascii` entry, in the `unicode` or
   `ascii` charset ([ASCII output](./ascii.md#agentflow-diagrams)). It is the same graph laid out
@@ -3209,6 +3214,12 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   keep the old look. `<br>`, the drawn tags (`<b>`, `<i>`, `<u>`, `<s>`, `<sub>`, `<sup>` and
   their synonyms) and entity codes work in every lane title. A subgraph nested in a lane, and a
   flowchart subgraph, keep flowchart's reading, where only `` "`…`" `` is a markdown string.
+- **Shape-data labels are plain text** (#1368, #1432), as in flowchart. v12 read a node label
+  written in shape data with no `labelType` as Markdown, so `a@{ label: "**Bold**" }` drew
+  `Bold` bold. Now the value is read as Markdown only when it is a markdown string
+  (`` a@{ label: "`**Bold**`" } ``), without its backticks; otherwise `**`, `_` and a code span
+  are drawn as written, with one `MARKDOWN_NOT_READ` warning. A written `labelType` is read as
+  before, and `markdownAlwaysOn: true` draws every label as Markdown.
 - **Long lane titles.** v12 let a lane title wider than its lane run past it; v13 widens the
   lane across the flow to the title plus 20px each side.
 - **Warnings** (D226, D536), raised at layout and only when the `swimlane` engine lays the

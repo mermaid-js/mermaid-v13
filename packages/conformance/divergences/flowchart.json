@@ -118,5 +118,1701 @@
     "reason": "v12 fixed edge ids after mermaid@12.2.0 (`a5060b1d8`, `72f073244`, in 12.3.0): blanks after shape data may lead to an edge id, where 12.2.0 expects `&` and rejects (D621, D316).",
     "owner": "D621",
     "since": "2026-11-18"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/icons/default.mmd",
+    "inputHash": "sha256:f68a3770b2af64e2",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/icons/neo-dark.mmd",
+    "inputHash": "sha256:c015663c08da1a7c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/icons/neo.mmd",
+    "inputHash": "sha256:b352b3d91d905f6d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/icons/redux.mmd",
+    "inputHash": "sha256:4eabde81bb0030cc",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/bang.mmd",
+    "inputHash": "sha256:8b5df468612891e9",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/bolt.mmd",
+    "inputHash": "sha256:5848dfcd2d287816",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/bow-rect.mmd",
+    "inputHash": "sha256:8956cdad72959347",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/brace-r.mmd",
+    "inputHash": "sha256:da509b61dfb0c593",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/brace.mmd",
+    "inputHash": "sha256:e4d7da372d402a7f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/braces.mmd",
+    "inputHash": "sha256:2e6b1df958cd58d1",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/browser.mmd",
+    "inputHash": "sha256:ee58ab527b3c259b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/bucket.mmd",
+    "inputHash": "sha256:d777520ee597c8a3",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/circle.mmd",
+    "inputHash": "sha256:6d0874a4642d0447",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/cloud.mmd",
+    "inputHash": "sha256:8d65febb6bdd4999",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/console.mmd",
+    "inputHash": "sha256:b15e5ed93270d18b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/cross-circ.mmd",
+    "inputHash": "sha256:77d105fda83a29d4",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/curv-trap.mmd",
+    "inputHash": "sha256:fe445468155c4988",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/cyl.mmd",
+    "inputHash": "sha256:0938d7333d47733b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/datastore.mmd",
+    "inputHash": "sha256:856977dc7a4c4322",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/dbl-circ.mmd",
+    "inputHash": "sha256:595e7ecbe78c5e62",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/delay.mmd",
+    "inputHash": "sha256:5b204cdb2bef7916",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/diam.mmd",
+    "inputHash": "sha256:df9bbc0a25975833",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/div-rect.mmd",
+    "inputHash": "sha256:648326bb180be3a8",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/doc.mmd",
+    "inputHash": "sha256:5b9c8472217ef970",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/docs.mmd",
+    "inputHash": "sha256:4d5dd67002d46017",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/f-circ.mmd",
+    "inputHash": "sha256:08bfd5ceeb32629e",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/flag.mmd",
+    "inputHash": "sha256:eba493ab5516b8e2",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/flip-tri.mmd",
+    "inputHash": "sha256:aec4629ba8841729",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/folder.mmd",
+    "inputHash": "sha256:3856e5b74cf2740c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/fork.mmd",
+    "inputHash": "sha256:7db7610c07148133",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/fr-circ.mmd",
+    "inputHash": "sha256:000ce564f00f4ab5",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/fr-rect.mmd",
+    "inputHash": "sha256:15cd0ee3e7d5823d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/h-cyl.mmd",
+    "inputHash": "sha256:2672c6bf8dec132d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/hex.mmd",
+    "inputHash": "sha256:0adb3c79c0bf2b4c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/hourglass.mmd",
+    "inputHash": "sha256:24d5f5e223c4324d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/lean-l.mmd",
+    "inputHash": "sha256:ab203ea4f7bbb959",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/lean-r.mmd",
+    "inputHash": "sha256:a4c4fb17d6f4f91a",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/lin-cyl.mmd",
+    "inputHash": "sha256:c759d98eaaf26df2",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/lin-doc.mmd",
+    "inputHash": "sha256:daac1420d62b87b6",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/lin-rect.mmd",
+    "inputHash": "sha256:8df54e48232e3ad5",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/notch-pent.mmd",
+    "inputHash": "sha256:1768bb45f7549f6f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/notch-rect.mmd",
+    "inputHash": "sha256:76547022410f92e3",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/odd.mmd",
+    "inputHash": "sha256:810855546b701127",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/person.mmd",
+    "inputHash": "sha256:3a85694f38638094",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/rect.mmd",
+    "inputHash": "sha256:fcedf877da98fba1",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/rounded.mmd",
+    "inputHash": "sha256:dd65adb635d219df",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/sl-rect.mmd",
+    "inputHash": "sha256:08ff78800a056bc3",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/sm-circ.mmd",
+    "inputHash": "sha256:15b21e4d449c5e6c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/st-rect.mmd",
+    "inputHash": "sha256:9ad1ca2a91755e21",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/stadium.mmd",
+    "inputHash": "sha256:53b2660f4299a723",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/tag-doc.mmd",
+    "inputHash": "sha256:dc78dc613b781c04",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/tag-rect.mmd",
+    "inputHash": "sha256:529a12e779ebd41d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/text.mmd",
+    "inputHash": "sha256:2239a380d409e20a",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/trap-b.mmd",
+    "inputHash": "sha256:a5f8383f99cf1113",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/trap-t.mmd",
+    "inputHash": "sha256:c0a36a68c97ad81f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/tri.mmd",
+    "inputHash": "sha256:1aa7267773b3e9cf",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/shapes/win-pane.mmd",
+    "inputHash": "sha256:01555451777e2c07",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/html-dropped-links.mmd",
+    "inputHash": "sha256:7eb9f9fa1e676170",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/01-all-process-rect-proc-rectangle-should-render-same-shape.mmd",
+    "inputHash": "sha256:8c7eb8e1f00c0363",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/02-all-event-rounded-should-render-same-shape.mmd",
+    "inputHash": "sha256:a140c4fc10a50038",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/03-all-stadium-pill-terminal-should-render-same-shape.mmd",
+    "inputHash": "sha256:5e52a9a22ef65b16",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/04-all-fr-rect-subproc-subprocess-framed-rectangle-subroutine-should-render-same-shape.mmd",
+    "inputHash": "sha256:d8152da1ba748eb7",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/05-all-db-database-cylinder-cyl-should-render-same-shape.mmd",
+    "inputHash": "sha256:6871dfec47253ed4",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/06-all-diam-decision-diamond-should-render-same-shape.mmd",
+    "inputHash": "sha256:d73873cc38a21175",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/07-all-hex-hexagon-prepare-should-render-same-shape.mmd",
+    "inputHash": "sha256:da72601a7335d2e3",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/08-all-lean-l-lean-left-out-in-should-render-same-shape.mmd",
+    "inputHash": "sha256:d2fc29f2a0dd0d31",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/09-all-lean-r-lean-right-in-out-should-render-same-shape.mmd",
+    "inputHash": "sha256:9593d0c9d2ac9642",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/10-all-trap-b-trapezoid-bottom-priority-should-render-same-shape.mmd",
+    "inputHash": "sha256:e1bd0381245d693f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/11-all-trap-t-trapezoid-top-manual-should-render-same-shape.mmd",
+    "inputHash": "sha256:ad6b72b819859b7d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/12-all-dbl-circ-double-circle-should-render-same-shape.mmd",
+    "inputHash": "sha256:66474010cc7bb7ea",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/13-all-notched-rectangle-card-notch-rect-should-render-same-shape.mmd",
+    "inputHash": "sha256:02edeeb3d9c17777",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/14-all-sm-circ-small-circle-start-should-render-same-shape.mmd",
+    "inputHash": "sha256:d6e1d4f699697538",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/15-all-lin-rect-lined-rectangle-lin-proc-lined-process-shaded-process-should-render-same-shape.mmd",
+    "inputHash": "sha256:58a715b473ef21cf",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/16-all-fr-circ-framed-circle-stop-should-render-same-shape.mmd",
+    "inputHash": "sha256:35eeee7f05aed76f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/17-all-comment-brace-l-should-render-same-shape.mmd",
+    "inputHash": "sha256:c75b40176b6c3ca4",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/18-all-fork-join-should-render-same-shape.mmd",
+    "inputHash": "sha256:677b29a437c2c1c0",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/19-all-bolt-com-link-lightning-bolt-should-render-same-shape.mmd",
+    "inputHash": "sha256:b290150472af22b1",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/20-all-doc-document-should-render-same-shape.mmd",
+    "inputHash": "sha256:2b4ff73592f64ff9",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/21-all-delay-half-rounded-rectangle-should-render-same-shape.mmd",
+    "inputHash": "sha256:3a797c37a4a4450f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/22-all-h-cyl-das-horizontal-cylinder-should-render-same-shape.mmd",
+    "inputHash": "sha256:37ad485c62041af4",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/23-all-lin-cyl-disk-lined-cylinder-should-render-same-shape.mmd",
+    "inputHash": "sha256:8ca4728e044738c8",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/24-all-curv-trap-display-curved-trapezoid-should-render-same-shape.mmd",
+    "inputHash": "sha256:526deb18dbce4020",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/25-all-div-rect-div-proc-divided-rectangle-divided-process-should-render-same-shape.mmd",
+    "inputHash": "sha256:103e7fc7a6ef560d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/26-all-extract-tri-triangle-should-render-same-shape.mmd",
+    "inputHash": "sha256:af83d33152ee9d3d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/27-all-win-pane-internal-storage-window-pane-should-render-same-shape.mmd",
+    "inputHash": "sha256:2895b0f44973a933",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/28-all-f-circ-junction-filled-circle-should-render-same-shape.mmd",
+    "inputHash": "sha256:c1d369561c953f05",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/29-all-lin-doc-lined-document-should-render-same-shape.mmd",
+    "inputHash": "sha256:a257e691f4f9ee57",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/30-all-notch-pent-loop-limit-notched-pentagon-should-render-same-shape.mmd",
+    "inputHash": "sha256:e499f36a4443f37c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/31-all-flip-tri-manual-file-flipped-triangle-should-render-same-shape.mmd",
+    "inputHash": "sha256:27e74143fa21c420",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/32-all-sl-rect-manual-input-sloped-rectangle-should-render-same-shape.mmd",
+    "inputHash": "sha256:a92eeb2833811c37",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/33-all-docs-documents-st-doc-stacked-document-should-render-same-shape.mmd",
+    "inputHash": "sha256:98ad5e18675bcded",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/34-all-procs-processes-st-rect-stacked-rectangle-should-render-same-shape.mmd",
+    "inputHash": "sha256:b1b89300eaa49b5d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/35-all-flag-paper-tape-should-render-same-shape.mmd",
+    "inputHash": "sha256:294c9a21beddede8",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/36-all-bow-rect-stored-data-bow-tie-rectangle-should-render-same-shape.mmd",
+    "inputHash": "sha256:e2a56640c51990d4",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/37-all-cross-circ-summary-crossed-circle-should-render-same-shape.mmd",
+    "inputHash": "sha256:00b1182fe5ae941f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/38-all-tag-doc-tagged-document-should-render-same-shape.mmd",
+    "inputHash": "sha256:714cd71fece8ce50",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/39-all-tag-rect-tag-proc-tagged-rectangle-tagged-process-should-render-same-shape.mmd",
+    "inputHash": "sha256:31a1c22e45139c4e",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/40-all-collate-hourglass-should-render-same-shape.mmd",
+    "inputHash": "sha256:d098c969b87196b6",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/41-all-datastore-data-store-should-render-same-shape.mmd",
+    "inputHash": "sha256:a5c474465130a5ec",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-alias/42-all-folder-directory-should-render-same-shape.mmd",
+    "inputHash": "sha256:8d4b5112b1eebddc",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/01-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:f7ed40695577f23e",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/02-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:a8efdc88002a4010",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/03-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:9d0f7f775073657a",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/04-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:29cfdec9770aecf2",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/05-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:2f3f62cb5d0ee8a7",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/06-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:a98f6aea2075b3d0",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/07-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:986c0a4c9e2a645c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/08-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:950ea28e82b0a4be",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/09-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:cf947d1fc29b0861",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/10-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:7e82c0497f0995dd",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/11-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:ff38da669bd4915b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/12-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:40274af77bf8ade3",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/13-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:1d26cf80f4388d70",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/14-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:ecaa3f283b02b4a5",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/15-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:ea2c8ddda5a0d536",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/16-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:3c448f8d861f0641",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/17-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:ab78c3a4324186e6",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/18-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:fbad136f1356bdc7",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/19-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:de8499ee7f81b585",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/20-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:cdf1ebec31a30191",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/21-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:d5b762315057eaef",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/22-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:d30be92958165276",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/23-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:0a258779a215c24b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/24-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:d994574f03000590",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/25-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:3a2d9d862d55b86c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/26-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:da07bfbadfdd1cd7",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/27-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:840b968640c7e2d6",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/28-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:a007974d8fc22d5c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/29-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:1b0bf34860b4e466",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/30-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:8b620423486b6140",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/31-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:29e2563d7fcc9613",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/32-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:f3fe3e89b62a929c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/33-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:2a0c66bc74bb03b0",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/34-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:36fa99de88ab832a",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/35-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:151cb4217518cc7f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/36-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:5b9c82a204a0c875",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/37-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:f4786bac45548ec6",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/38-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:6162f9e52c169c42",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/39-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:d7391be1f56db0a8",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/nightly-check/shape-themes/40-connect-all-shapes-with-each-other.mmd",
+    "inputHash": "sha256:989599b86a73509a",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/pr-check/5-icon-shape-bundled.mmd",
+    "inputHash": "sha256:2eaa37a56afcb468",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/pr-check/label-syntax-compat.mmd",
+    "inputHash": "sha256:50b39f52755d8d42",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/pr-check/label-syntax.mmd",
+    "inputHash": "sha256:e9f6956a39bff0ef",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/pr-check/person-short-label.mmd",
+    "inputHash": "sha256:84fd399472c83b74",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/visual-check/document-shape-label-clearance.mmd",
+    "inputHash": "sha256:c0508ad6c620baa1",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/visual-check/selected-shape-wrapping.mmd",
+    "inputHash": "sha256:2d02b2ef04cefdff",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/visual-check/should-be-possible-to-use-syntax-to-add-labels-on-multi-nodes.mmd",
+    "inputHash": "sha256:bb90acf09c59ea40",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/visual-check/should-be-possible-to-use-syntax-to-add-labels-with-trail-spaces-and-edge-link.mmd",
+    "inputHash": "sha256:e806b0e1ab474ec8",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/visual-check/should-be-possible-to-use-syntax-to-add-labels-with-trail-spaces-and.mmd",
+    "inputHash": "sha256:0ff975c52d5ef9f2",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/visual-check/should-be-possible-to-use-syntax-to-add-labels-with-trail-spaces.mmd",
+    "inputHash": "sha256:7dcdd9e95c3dbabd",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/visual-check/should-render-aws-icons-with-labels-and-rect-elements.mmd",
+    "inputHash": "sha256:3d5cc6e9ec4f588a",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/visual-check/triangle-and-stack-edges.mmd",
+    "inputHash": "sha256:ef2be65140894fba",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#13",
+    "inputHash": "sha256:963e18fc2cb8be9b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#16",
+    "inputHash": "sha256:9fa6e6fe62ab61c8",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#20",
+    "inputHash": "sha256:79b64b95df828092",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#21",
+    "inputHash": "sha256:640655ecdbf4777b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#22",
+    "inputHash": "sha256:feacb2808cd321b7",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#23",
+    "inputHash": "sha256:8354fc702065ea13",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#24",
+    "inputHash": "sha256:9a4cc0528127b74a",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#25",
+    "inputHash": "sha256:999b67304ef3b24d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#26",
+    "inputHash": "sha256:38a1a80b2e1c486b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#27",
+    "inputHash": "sha256:b56ecfb936bd1ab3",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#38",
+    "inputHash": "sha256:eb77639ad47c61bc",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#22",
+    "inputHash": "sha256:8f6bee2432ba9b4b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#23",
+    "inputHash": "sha256:cfb3b33ba4ec000c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#24",
+    "inputHash": "sha256:520a982ac547b084",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#25",
+    "inputHash": "sha256:26d721957df8d7a3",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#26",
+    "inputHash": "sha256:4a2ae373f0d2498d",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#27",
+    "inputHash": "sha256:c63dbcd17538c2ad",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#28",
+    "inputHash": "sha256:7b261343fbfaf308",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#29",
+    "inputHash": "sha256:a4bed0a9c19df28f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#30",
+    "inputHash": "sha256:753ca710b1ac1dee",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#31",
+    "inputHash": "sha256:6f8583b8b0e2f07e",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#32",
+    "inputHash": "sha256:b920fc09d3e79f52",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#33",
+    "inputHash": "sha256:89a471241f408285",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#34",
+    "inputHash": "sha256:d47a9e81b902e765",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#35",
+    "inputHash": "sha256:b153dad4f8ca0655",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#36",
+    "inputHash": "sha256:de84549bf410270e",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#37",
+    "inputHash": "sha256:a60f1b1f561afa1f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#38",
+    "inputHash": "sha256:82e0f657dc5d85d7",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#39",
+    "inputHash": "sha256:85b0a8dd09d11b3b",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#40",
+    "inputHash": "sha256:50674ff2e8365bec",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#41",
+    "inputHash": "sha256:eefd96427a777eb2",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#42",
+    "inputHash": "sha256:839363fa35f716c9",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#43",
+    "inputHash": "sha256:62c7e909d6f6d2c0",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#44",
+    "inputHash": "sha256:2406ad02ae7265c8",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#45",
+    "inputHash": "sha256:bf6938b0951c8f37",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#46",
+    "inputHash": "sha256:1f8f0a5158f1bd14",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#47",
+    "inputHash": "sha256:77b6694cfcf57783",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#48",
+    "inputHash": "sha256:7634b95b0a83f5a7",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#49",
+    "inputHash": "sha256:a2ce1eed42a80214",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#50",
+    "inputHash": "sha256:3a814849f81b02e1",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#51",
+    "inputHash": "sha256:ca8d8066bf48b5a3",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#52",
+    "inputHash": "sha256:4638fffcd951ca61",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#53",
+    "inputHash": "sha256:07f75620ccb9e4d1",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#54",
+    "inputHash": "sha256:06e5dd63714486cd",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#55",
+    "inputHash": "sha256:9fde480c3c89b388",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#56",
+    "inputHash": "sha256:9256ec4395374c55",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#57",
+    "inputHash": "sha256:f67ac6d593083853",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#58",
+    "inputHash": "sha256:59f0daf6279490b4",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#59",
+    "inputHash": "sha256:8106d06596bb16c0",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#60",
+    "inputHash": "sha256:df37b14d183fcdc5",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#61",
+    "inputHash": "sha256:b595757319467b19",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#62",
+    "inputHash": "sha256:12a1109775b51abe",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#63",
+    "inputHash": "sha256:4a6522e28377d094",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#64",
+    "inputHash": "sha256:12232e66b8e521b2",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#65",
+    "inputHash": "sha256:022e2327ceeaa8cf",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#66",
+    "inputHash": "sha256:4dc7b8e96f70cc6c",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#67",
+    "inputHash": "sha256:d42a5304c164faa6",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#68",
+    "inputHash": "sha256:d6fe112460599283",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#69",
+    "inputHash": "sha256:302d8d0973b8d245",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "v12-docs/flowchart.md#70",
+    "inputHash": "sha256:9a39031c41fcb0e6",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
   }
 ]

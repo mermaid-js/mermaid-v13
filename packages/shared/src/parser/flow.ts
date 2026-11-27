@@ -22,7 +22,13 @@ export type {
   FlowShapeData,
   FlowVertexParts,
 } from './flow-parser-base.ts';
-export { countChar, FlowBuilderBase, flowLabelType, unquoteLabel } from './flow-model.ts';
+export {
+  countChar,
+  FlowBuilderBase,
+  flowLabelType,
+  shapeDataLabel,
+  unquoteLabel,
+} from './flow-model.ts';
 export type {
   FlowBuilderOptions,
   FlowCallbackRecord,

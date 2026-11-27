@@ -1,0 +1,19 @@
+---
+description: >-
+  Spec #1368, #1432. Swimlane shape-data labels (a@{ label: … }) written five ways, one node
+  each, across two lanes: plain, a quoted markdown string, a code span, tags, and a written
+  backslash-n (single-quoted, so YAML keeps it). Markdown is read only in the markdown string;
+  plain markers and the code span are drawn as written; the tags draw; the backslash-n breaks
+  the line. Bare backticks are left out: YAML takes no unquoted backtick.
+---
+swimlane-beta LR
+  subgraph L1 [written]
+    A@{ label: "plain **bold** _ital_" }
+    B@{ label: "`markdown string **bold** _ital_`" }
+    C@{ label: "code span a `code` b" }
+  end
+  subgraph L2 [formatting]
+    D@{ label: "tags <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" }
+    E@{ label: 'written one\ntwo' }
+  end
+  A --> B --> C --> D --> E

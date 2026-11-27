@@ -24,7 +24,10 @@ import { agentflowAdapter } from './v13.ts';
  *   U+2029 as line breaks inside a block over several lines; js-yaml reads them as text, which
  *   makes the block fail or a scalar of it hold them. GAPS #546 gives it to core;
  * - core's YAML reader rejects anchors and aliases, which js-yaml resolved (listed for the
- *   source in `divergences/agentflow.json`, spec #523).
+ *   source in `divergences/agentflow.json`, spec #523);
+ * - #1432: a shape-data label written as a markdown string (`@{ label: "`…`" }`) loses its
+ *   backticks in v13, which reads it as markdown as every label (#1368); v12 kept them (the
+ *   label-syntax fixtures, listed in `divergences/agentflow.json`).
  */
 const VARIANT = new RegExp(` \\((${AGENTFLOW_VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
@@ -62,7 +65,12 @@ const SEPARATED_YAML = new Set([
 
 const ANCHORS = 'agentflow-cases/model-yaml-anchors';
 
-type Kind = 'D463' | 'D691' | 'D462' | 'separated YAML' | 'YAML anchors';
+const SHAPE_DATA_MARKDOWN = new Set([
+  'e2e/pr-check/label-syntax.mmd',
+  'e2e/pr-check/label-syntax-compat.mmd',
+]);
+
+type Kind = 'D463' | 'D691' | 'D462' | 'separated YAML' | 'YAML anchors' | '#1432';
 
 /** Why a gate variant diverges, or undefined when it is not one of the kinds above. */
 function classify(d: ObservedDivergence, source: string): Kind | undefined {
@@ -79,6 +87,12 @@ function classify(d: ObservedDivergence, source: string): Kind | undefined {
     d.detail.split(', ').every((p) => /^(?:diagnostics\b|vertices\[\d+\]\.shape$)/.test(p))
   )
     return 'D462';
+  if (
+    d.kind === 'model' &&
+    SHAPE_DATA_MARKDOWN.has(base) &&
+    d.detail.split(', ').every((p) => /^vertices\[\d+\]\.label$/.test(p))
+  )
+    return '#1432';
   if (
     (variant === 'line separators' || variant === 'paragraph separators') &&
     SEPARATED_YAML.has(base) &&
@@ -122,6 +136,7 @@ describe('agentflow oracle parity with mermaid@12 over the gate corpus', () => {
       D462: 46,
       'separated YAML': 26,
       'YAML anchors': 6,
+      '#1432': 18,
     });
   }, 600_000);
 });

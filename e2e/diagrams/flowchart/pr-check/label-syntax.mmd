@@ -1,8 +1,10 @@
 ---
 description: >-
-  Spec #1368. Every flowchart label kind (quoted node, unquoted node, edge between
-  pipes, inline edge, subgraph title) written six ways. Each way's nodes and edges sit in a box
-  W1 to W6; the six subgraph titles follow below, S1 to S6, in the same order, each frame
+  Spec #1368, #1432. Every flowchart label kind (quoted node, unquoted node, edge between
+  pipes, inline edge, shape-data label, subgraph title) written six ways. Each way's nodes and
+  edges sit in a box W1 to W6 (no shape-data node in W3: YAML takes no unquoted backtick, and a
+  quoted one is the markdown string of W2; W6 single-quotes it so YAML keeps the backslash-n);
+  the six subgraph titles follow below, S1 to S6, in the same order, each frame
   naming its way (text output draws a title on its frame, so the titles come after the edge
   labels, and they write bold as __bold__, since an ASCII * on a frame reads as a diamond
   mark to the text-output checker). Markdown is read only
@@ -14,11 +16,13 @@ flowchart TB
     direction LR
     A1["node **bold** _ital_"] -->|"edge **bold** _ital_"| B1(unquoted node **bold** _ital_)
     B1 -- inline edge **bold** _ital_ --> C1
+    C1@{ label: "shape data **bold** _ital_" }
   end
   subgraph W2
     direction LR
     A2["`node **bold** _ital_`"] -->|"`edge **bold** _ital_`"| B2("`unquoted node **bold** _ital_`")
     B2 -- "`inline edge **bold** _ital_`" --> C2
+    C2@{ label: "`shape data **bold** _ital_`" }
   end
   subgraph W3
     direction LR
@@ -29,16 +33,19 @@ flowchart TB
     direction LR
     A4["node a `code` b"] -->|"edge a `code` b"| B4(unquoted node a `code` b)
     B4 -- inline edge a `code` b --> C4
+    C4@{ label: "shape data a `code` b" }
   end
   subgraph W5
     direction LR
     A5["node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] -->|"edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"| B5(unquoted node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O)
     B5 -- inline edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O --> C5
+    C5@{ label: "shape data <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" }
   end
   subgraph W6
     direction LR
     A6["node one\ntwo"] -->|"edge one\ntwo"| B6(unquoted node one\ntwo)
     B6 -- inline edge one\ntwo --> C6
+    C6@{ label: 'shape data one\ntwo' }
   end
   subgraph S1["subgraph __bold__ _ital_"]
     direction LR

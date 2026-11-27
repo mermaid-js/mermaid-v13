@@ -1,0 +1,20 @@
+---
+description: >-
+  Spec #1368, #1432. The markdownAlwaysOn twin of label-syntax-shape-data.mmd: the same source
+  with the setting on, so every label is markdown. The plain node draws bold and italic and the
+  code-span node draws inline code; the markdown string, the tags and the written backslash-n
+  draw as in label-syntax-shape-data.mmd. The picture differs from that fixture.
+config:
+  markdownAlwaysOn: true
+---
+swimlane-beta LR
+  subgraph L1 [written]
+    A@{ label: "plain **bold** _ital_" }
+    B@{ label: "`markdown string **bold** _ital_`" }
+    C@{ label: "code span a `code` b" }
+  end
+  subgraph L2 [formatting]
+    D@{ label: "tags <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" }
+    E@{ label: 'written one\ntwo' }
+  end
+  A --> B --> C --> D --> E

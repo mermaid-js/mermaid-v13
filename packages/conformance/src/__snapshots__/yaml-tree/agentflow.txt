@@ -45,8 +45,8 @@ e2e/diagrams/agentflow/pr-check/3-should-render-a-decision-with-labeled-branches
 e2e/diagrams/agentflow/pr-check/4-should-render-collapsed-view.mmd 2 3fbb5f86dfa0b88c
 e2e/diagrams/agentflow/pr-check/5-should-render-the-v08-node-shapes.mmd 7 17b71fba938162a9
 e2e/diagrams/agentflow/pr-check/6-should-render-the-coffee-website-builder-diagram.mmd 11 9044c7233fd38146
-e2e/diagrams/agentflow/pr-check/label-syntax-compat.mmd 1 6b57d6c239b9d640
-e2e/diagrams/agentflow/pr-check/label-syntax.mmd 1 0f3bcb214e6aedb7
+e2e/diagrams/agentflow/pr-check/label-syntax-compat.mmd 6 17988268e9bada9e
+e2e/diagrams/agentflow/pr-check/label-syntax.mmd 6 91c50fa56dc42353
 e2e/diagrams/agentflow/pr-check/long-word-stays-whole.mmd 1 cd1651d00eddaa51
 e2e/diagrams/agentflow/pr-check/should-render-every-container-kind.mmd 7 49c89a3d8d7df19c
 e2e/diagrams/agentflow/pr-check/should-render-several-collapsed-containers.mmd 5 d7895eb6227a557e

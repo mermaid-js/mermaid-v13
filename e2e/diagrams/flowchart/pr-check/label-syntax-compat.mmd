@@ -1,6 +1,6 @@
 ---
 description: >-
-  Spec #1368. The markdownAlwaysOn twin of label-syntax.mmd: the same source with the
+  Spec #1368, #1432. The markdownAlwaysOn twin of label-syntax.mmd: the same source with the
   setting on, so every label is markdown. The plain rows draw bold and italic, the code-span
   row draws inline code, and the bare-backtick row is a code span; markdown strings, tags and a
   written backslash-n draw as in label-syntax.mmd. The picture differs from that fixture.
@@ -12,11 +12,13 @@ flowchart TB
     direction LR
     A1["node **bold** _ital_"] -->|"edge **bold** _ital_"| B1(unquoted node **bold** _ital_)
     B1 -- inline edge **bold** _ital_ --> C1
+    C1@{ label: "shape data **bold** _ital_" }
   end
   subgraph W2
     direction LR
     A2["`node **bold** _ital_`"] -->|"`edge **bold** _ital_`"| B2("`unquoted node **bold** _ital_`")
     B2 -- "`inline edge **bold** _ital_`" --> C2
+    C2@{ label: "`shape data **bold** _ital_`" }
   end
   subgraph W3
     direction LR
@@ -27,16 +29,19 @@ flowchart TB
     direction LR
     A4["node a `code` b"] -->|"edge a `code` b"| B4(unquoted node a `code` b)
     B4 -- inline edge a `code` b --> C4
+    C4@{ label: "shape data a `code` b" }
   end
   subgraph W5
     direction LR
     A5["node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] -->|"edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"| B5(unquoted node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O)
     B5 -- inline edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O --> C5
+    C5@{ label: "shape data <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" }
   end
   subgraph W6
     direction LR
     A6["node one\ntwo"] -->|"edge one\ntwo"| B6(unquoted node one\ntwo)
     B6 -- inline edge one\ntwo --> C6
+    C6@{ label: 'shape data one\ntwo' }
   end
   subgraph S1["subgraph __bold__ _ital_"]
     direction LR

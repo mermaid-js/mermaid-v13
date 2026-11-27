@@ -142,5 +142,21 @@
     "reason": "A comment before the header is a comment whatever it holds; mermaid@12.2.0 tried its `direction` and `LINK_ID` rules before `COMMENT`, so it read `LINK_ID` there and rejected the diagram (D691).",
     "owner": "D691",
     "since": "2026-11-24"
+  },
+  {
+    "id": "e2e/diagrams/agentflow/pr-check/label-syntax-compat.mmd",
+    "inputHash": "sha256:58a0f03adafccd76",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/agentflow/pr-check/label-syntax.mmd",
+    "inputHash": "sha256:b239d5c710ca6c2f",
+    "kind": "model",
+    "reason": "#1368, #1432: v12 read a shape-data label (`@{ label: … }`) with no `labelType` as markdown; v13 reads it as text, as every label, unless its value is a markdown string (`\"`…`\"`), which it reads as markdown without the backticks (MIGRATION.md).",
+    "owner": "#1368, #1432",
+    "since": "2026-11-27"
   }
 ]
