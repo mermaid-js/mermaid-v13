@@ -4551,6 +4551,15 @@ export const configSchema: ConfigSchema = {
             "since": "13.0.0"
           }
         },
+        "curve": {
+          "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
+          "description": "How transitions and note connectors are drawn between their route\npoints (D733).\n\nDefaults to `curved`, today's state look. Precedence: this key when\nset, then the top-level `curve` when set, then `curved`. State does\nnot read `flowchart.curve`. A self-transition stays `rounded`, and\ntext output stays stepped on the grid (D78).\n",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D733, #1324, #1325): v12 drew state edges with `flowchart.curve`, which v13 does not read. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+          }
+        },
         "titleTopMargin": {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,

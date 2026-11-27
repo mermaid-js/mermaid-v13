@@ -20,6 +20,7 @@ import {
   type StateRenderContext,
 } from '../index.ts';
 import { state as diagramPlugin } from '../plugin.ts';
+import { STATE_CURVE } from './curve.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
 const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
@@ -307,5 +308,53 @@ describe('state graph builder', () => {
       config: { state: { nodeSpacing: 80, rankSpacing: 90 } },
     });
     expect(graph.spacing).toMatchObject({ node: 80, rank: 90 });
+  });
+});
+
+describe('state graph builder: edge routing follows the curve (D733, #1324, #1325)', () => {
+  const src = 'stateDiagram-v2\n  [*] --> A\n  A --> B\n  A --> C\n  B --> D\n  C --> D\n';
+  const routing = (config?: ConfigInput, units?: UnitProfile) =>
+    run(src, { config, units }).graph.routing;
+
+  it('keeps the curved default when no curve is set', () => {
+    expect(routing()).toBe('curved');
+    expect(STATE_CURVE).toBe('curved');
+  });
+
+  it.each([
+    ['linear', 'straight'],
+    ['step', 'stepped'],
+    ['stepBefore', 'stepped'],
+    ['stepAfter', 'stepped'],
+    ['rounded', 'stepped'],
+    ['basis', 'curved'],
+    ['cardinal', 'curved'],
+  ] as const)('routes state.curve %s as %s', (curve, expected) => {
+    expect(routing({ state: { curve } })).toBe(expected);
+  });
+
+  it('takes the global curve when state.curve is unset', () => {
+    expect(routing({ curve: 'linear' })).toBe('straight');
+  });
+
+  it('takes state.curve over the global curve', () => {
+    expect(routing({ curve: 'linear', state: { curve: 'step' } })).toBe('stepped');
+    expect(routing({ curve: 'step', state: { curve: 'basis' } })).toBe('curved');
+  });
+
+  it('does not read flowchart.curve', () => {
+    expect(routing({ flowchart: { curve: 'linear' } })).toBe('curved');
+    expect(routing({ curve: 'step', flowchart: { curve: 'linear' } })).toBe('stepped');
+  });
+
+  it('puts the resolved kind on the prepared state for the renderer', () => {
+    expect(run(src).layout.state.curve).toBe('curved');
+    expect(run(src, { config: { state: { curve: 'step' } } }).layout.state.curve).toBe('step');
+    expect(run(src, { config: { curve: 'linear' } }).layout.state.curve).toBe('linear');
+  });
+
+  it('stays stepped on the grid, whatever the curve', () => {
+    expect(routing({ state: { curve: 'linear' } }, cellProfile())).toBe('stepped');
+    expect(routing({ curve: 'basis' }, cellProfile())).toBe('stepped');
   });
 });
