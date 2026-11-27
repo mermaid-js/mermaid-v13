@@ -11,6 +11,7 @@ import { REPO_ROOT } from '../corpus.ts';
 import { loadDivergences } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
 import { DIVERGENCES_DIR } from '../registry.ts';
+import { beforeFenceResults, BEFORE_FENCE_COMMENTED } from '../before-fence.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { architectureGateCorpus } from './corpus.ts';
@@ -164,10 +165,11 @@ async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
   yield* items;
 }
 
+/** Leaves out {@link BEFORE_FENCE_COMMENTED} (D704), checked on its own below. */
 const run = async () =>
   runParity({
     adapters: [architectureAdapter],
-    corpus: each(await architectureGateCorpus()),
+    corpus: each((await architectureGateCorpus()).filter((i) => i.id !== BEFORE_FENCE_COMMENTED)),
     divergences: loadDivergences(fileURLToPath(DIVERGENCES_DIR)),
   });
 
@@ -214,6 +216,15 @@ describe('architecture oracle parity with mermaid@12', () => {
       expect(d.detail, d.id).toMatch(listed?.detail ?? /^$/);
     }
   }, 300_000);
+
+  it('still rejects the YAML of the commented copy below a `%%` line (D704)', async () => {
+    const corpus = await architectureGateCorpus();
+    const { items, results } = await beforeFenceResults(architectureAdapter, corpus);
+    expect(items.length).toBe(1);
+    expect(results.map((r) => [r.divergence?.kind, r.divergence?.detail])).toEqual([
+      ['reject', expect.stringMatching(/^YAML_SYNTAX/)],
+    ]);
+  }, 60_000);
 
   it("reports every message v12's DB threw, word for word, as an error", async () => {
     const oracle = await loadOracle();

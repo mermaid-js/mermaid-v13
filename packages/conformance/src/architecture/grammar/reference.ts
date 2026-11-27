@@ -24,6 +24,9 @@ import { grammarTokens, parserTokens, architectureGrammar } from './architecture
 export const EXCLUDED = [
   'architecture-cases/unclosed-directive',
   'architecture-cases/directive-unclosed-in-line',
+  // `commented()` finds front matter with v12's regex, misses the one below a `%%` line and puts
+  // comment lines inside its YAML; core reads that front matter (D704) and rejects the YAML.
+  'e2e/nightly-check/comment-before-frontmatter.mmd (commented)',
 ];
 
 /** A comparable AST: type, source range (blanks trimmed off both ends) and children. */

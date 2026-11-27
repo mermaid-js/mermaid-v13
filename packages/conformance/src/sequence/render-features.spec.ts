@@ -104,6 +104,87 @@ describe('messages', () => {
   });
 });
 
+describe('message label above its line (#1237, D723)', () => {
+  // mermaid 12.2.0 (the oracle's dist) in Chromium, `default` theme at 16 px, measured the
+  // same way: every message's last alphabetic baseline sits 10.81 px above its line.
+  const V12_GAP = 10.81;
+  const num = (s: string, re: RegExp): number => Number(re.exec(s)?.[1]);
+  /** Each message's line y less its last baseline, in document order. */
+  const gaps = (svg: string): number[] =>
+    svg
+      .split('<g class="message"')
+      .slice(1)
+      .map((g) => {
+        const text = /<text class="messageText".*?<\/text>/.exec(g)?.[0] ?? '';
+        const baseline = Number([...text.matchAll(/ y="([\d.]+)"/g)].at(-1)?.[1]);
+        const line = g.includes('<line class="messageLine')
+          ? num(g, /<line class="messageLine\d"[^>]* y1="([\d.]+)"/)
+          : num(g, /<path class="messageLine\d"[^>]* d="M[\d.]+,([\d.]+)/);
+        return line - baseline;
+      });
+  let classic: Mermaid;
+  beforeAll(async () => {
+    classic = sequenceApi('default');
+    await classic.render('warm', 'sequenceDiagram\n  A->>B: x');
+  });
+  const baselineSvg = async (name: string): Promise<string> =>
+    (
+      await classic.render(
+        's',
+        readFileSync(join(REPO_ROOT, 'e2e/diagrams/sequence/baseline', name), 'utf8')
+      )
+    ).svg;
+
+  for (const name of [
+    'messages/arrows.mmd',
+    'messages/self-and-central.mmd',
+    'text/line-breaks-and-unicode.mmd',
+  ])
+    it(`${name}: v12's gap under every label, within 1 px`, async () => {
+      const found = gaps(await baselineSvg(name));
+      expect(found.length).toBeGreaterThan(1);
+      for (const gap of found) expect(Math.abs(gap - V12_GAP)).toBeLessThanOrEqual(1);
+    });
+});
+
+describe('frame title and section label below their line (#1238, D723)', () => {
+  // mermaid 12.2.0 (the oracle's dist) in Chromium, `default` and `redux`: the first alphabetic
+  // baseline of every frame title and section label sits 18 px below the frame's top line or
+  // the section's dashed line (`boxMargin + boxTextMargin + boxTextMargin / 2`, rounded).
+  const V12_DROP = 18;
+  const firstY = (text: string): number => Number(/ y="([\d.]+)"/.exec(text)?.[1]);
+  const lineY = (g: string): number =>
+    Number(/<line class="loopLine"[^>]* y1="([\d.]+)"/.exec(g)?.[1]);
+  /** Each title's and section label's first baseline less the line it hangs from. */
+  const drops = (svg: string): number[] =>
+    svg
+      .split('<g class="fragment ')
+      .slice(1)
+      .flatMap((frame) => {
+        const [head = '', ...sections] = frame.split('<g class="loopSection"');
+        const title = /<text class="loopText".*?<\/text>/.exec(head)?.[0];
+        return [
+          ...(title ? [firstY(title) - lineY(head)] : []),
+          ...sections.flatMap((s) => {
+            const label = /<text class="sectionTitle".*?<\/text>/.exec(s)?.[0];
+            return label ? [firstY(label) - lineY(s)] : [];
+          }),
+        ];
+      });
+
+  for (const theme of ['default', 'redux'] as const)
+    for (const name of ['blocks/fragments.mmd', 'blocks/nested.mmd'])
+      it(`${name}, ${theme}: v12's drop under every line, within 1 px`, async () => {
+        const source = readFileSync(
+          join(REPO_ROOT, 'e2e/diagrams/sequence/baseline', name),
+          'utf8'
+        );
+        const found = drops((await sequenceApi(theme).render('s', source)).svg);
+        expect(found.length).toBeGreaterThanOrEqual(4);
+        for (const drop of found) expect(Math.abs(drop - V12_DROP)).toBeLessThanOrEqual(1);
+      });
+});
+
 describe('notes, frames, activations, rects and boxes', () => {
   it('uses v12 class names', async () => {
     const svg = await render(

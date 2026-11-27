@@ -1,0 +1,15 @@
+%% intent: a %% comment before front matter
+---
+title: Comment Before Front Matter
+description: >-
+  A %% comment line above the front matter (#1216, D704). The diagram renders
+  (it was an error before) and the front matter is read. Architecture draws
+  no title and its service colours do not follow the theme, so the image is
+  the same as without the comment line; the pie copies show title and theme.
+config:
+  theme: forest
+---
+architecture-beta
+    service a(server)[A]
+    service b(server)[B]
+    a:R -- L:b

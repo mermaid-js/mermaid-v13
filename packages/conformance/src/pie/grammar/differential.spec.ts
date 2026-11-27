@@ -9,15 +9,22 @@ import { handWrittenVerdict, referenceVerdict, v12Syntax } from './reference.ts'
  * `grammar/pie.ebnf` and the hand-written parser agree on accept/reject and on the AST shape
  * (statement types and source ranges), and the grammar agrees with mermaid\@12 on
  * accept/reject, over the lexer gate's corpus. Unclosed directives are left out, as in the
- * parity suite: core rejects them (`UNCLOSED_DIRECTIVE`) before the grammar applies.
+ * parity suite: core rejects them (`UNCLOSED_DIRECTIVE`) before the grammar applies. So is the
+ * commented copy of the fixture with a `%%` line above its front matter: `commented()` finds
+ * front matter with v12's regex, misses that one and puts comment lines inside its YAML, which
+ * core reads (D704) and rejects.
  */
+const EXCLUDED = [
+  'pie-cases/unclosed directive ',
+  'e2e/nightly-check/comment-before-frontmatter.mmd (commented)',
+];
 describe('pie grammar differential', () => {
   it('agrees with the hand-written parser and mermaid@12 over the corpus', async () => {
     const oracle = await loadOracle();
     const diffs: string[] = [];
     let compared = 0;
     for (const item of await pieGateCorpus()) {
-      if (item.id.startsWith('pie-cases/unclosed directive ') || !detectPie(item.source)) continue;
+      if (EXCLUDED.some((p) => item.id.startsWith(p)) || !detectPie(item.source)) continue;
       compared++;
       const ref = referenceVerdict(item.source);
       const hand = handWrittenVerdict(item.source);
