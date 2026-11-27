@@ -6,8 +6,8 @@
  * are not in; a boundary outside its parent's; sibling boundaries that overlap; a header
  * outside its frame; a relation whose ends are not on its shapes' outlines, or that ends on a
  * person's head beside its body (D679); in a careful layout,
- * a label box not marked `crowded` over its own arrowheads, any element (#542) or another
- * relation's line (#522 final review); anything drawn outside the bounds, or the bounds outside
+ * a label box not marked `crowded` over its own arrowheads, any element (#542), another
+ * relation's line (#522 final review), a boundary's header or across its frame (D746); anything drawn outside the bounds, or the bounds outside
  * the canvas. `c4LayoutViolations` is exported from `@mermaid-js/diagram-c4/testing`.
  * `c4RelationCrossings` lists the relations that cross an element other than their own ends,
  * which the package's layout spec pins (the spec allows listed exceptions).
@@ -241,7 +241,7 @@ const lineOfLayout = (r: C4RelationLayout): number[] =>
 /**
  * In a careful layout, no label box covers its own arrowheads, any element (a person's head or
  * body: the corners of its box beside the head are empty), another relation's line or another
- * relation's label, unless the layout marks it `crowded` (no spot cleared them).
+ * relation's label, a boundary's header or a frame's border (D746), unless the layout marks it `crowded` (no spot cleared them).
  */
 function checkLabels(layout: C4Layout, out: string[]): void {
   const square = (p: Point): Rect => ({
@@ -268,8 +268,25 @@ function checkLabels(layout: C4Layout, out: string[]): void {
     for (const e of blockers)
       if (e.parts.some((part) => overlap(box, part)))
         out.push(`${name}: its label covers element ${e.alias}`);
-    for (const fault of others(r, box)) out.push(`${name}: ${fault}`);
+    for (const fault of [...others(r, box), ...boundaryFaults(layout, box)])
+      out.push(`${name}: ${fault}`);
   }
+}
+
+/**
+ * What of the boundaries a label box covers (D746): a header line, or a frame's border, which
+ * the box crosses when it overlaps the frame without lying inside it or holding it whole.
+ */
+function boundaryFaults(layout: C4Layout, box: Rect): string[] {
+  const out: string[] = [];
+  for (const b of layout.boundaries) {
+    if (!overlap(box, b.box)) continue;
+    if ([b.label, b.type, b.descr].some((s) => s && overlap(box, s)))
+      out.push(`its label covers the header of boundary ${b.alias}`);
+    if (!rectInside(box, b.box) && !rectInside(b.box, box))
+      out.push(`its label is across the frame of boundary ${b.alias}`);
+  }
+  return out;
 }
 
 /**

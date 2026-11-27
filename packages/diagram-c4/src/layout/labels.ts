@@ -13,6 +13,7 @@ import type { LabelRoom } from './room.ts';
 import type { Place, Stagger } from './pairs.ts';
 import { crosses, lineOf, type Route, type Work } from './route.ts';
 import { hitRect } from './shapes.ts';
+import type { Rect } from './types.ts';
 
 /** A relation's drawn label: C4Dynamic numbers its relations in model order, from 1 (v12). */
 export function relationLabelText(
@@ -69,6 +70,18 @@ export class Taken {
   /** A square of half side `r` about (x, y). */
   around(x: number, y: number, r: number): void {
     this.add(x - r, y - r, x + r, y + r);
+  }
+
+  /**
+   * A boundary frame's border (D746): its four sides, each a strip `half` either side of the
+   * dashed line, so that a label keeps off the border but may sit inside the frame or outside it.
+   */
+  border({ x, y, width, height }: Rect, half: number): void {
+    const [x1, y1] = [x + width, y + height];
+    this.add(x - half, y - half, x1 + half, y + half);
+    this.add(x - half, y1 - half, x1 + half, y1 + half);
+    this.add(x - half, y + half, x + half, y1 - half);
+    this.add(x1 - half, y + half, x1 + half, y1 - half);
   }
 
   /** The area of the box x0, y0, x1, y1 that is taken. */
@@ -141,6 +154,11 @@ export interface Keep {
   readonly taken: Taken;
   /** What it must not cover at all: whole shapes and boundary headers. */
   readonly blocked: Taken;
+  /**
+   * The boundary frames' borders (D746), which it must not cover either, unless no spot clears
+   * them: then a spot clear of all else is taken, marked crowded. None on that second search.
+   */
+  readonly borders?: Taken;
   /** Its own arrowheads' tips, as x, y pairs: it must not cover their squares either. */
   readonly heads: readonly number[];
   /** Every relation's line; the label should keep off all but its own (`own`, by index in `Lines`). */
@@ -171,7 +189,7 @@ function keepOff(keep: Keep | undefined, { x0, y0, x1, y1 }: Box): void {
 
 /** How much of a label box it must not cover: `blocked`, and its own heads. */
 function forbidden(keep: Keep, { x0, y0, x1, y1 }: Box): number {
-  let area = keep.blocked.covered(x0, y0, x1, y1);
+  let area = keep.blocked.covered(x0, y0, x1, y1) + (keep.borders?.covered(x0, y0, x1, y1) ?? 0);
   const h = keep.heads;
   keep.work.charge(h.length / 2);
   for (let i = 0; i < h.length; i += 2) {
@@ -269,8 +287,38 @@ function spotOf({ rel, r, lw, lh, keep, place, tags }: SpotInput): Clearest {
   if (!keep) return { at: M.slide[0]!, dx: given[0], dy: given[1], crowded: false };
   const spot =
     staggeredSpot(r, lw, lh, keep, staggerEnd(rel, place)) ??
-    clearest({ r, lw, lh, given, online, keep });
+    acrossBorders({ r, lw, lh, given, online, keep });
   return crowdedAt(rel, place, r, boxOf(r, spot, lw, lh), tags) ? { ...spot, crowded: true } : spot;
+}
+
+/**
+ * The clearest spot ({@link clearest}), off the frames' borders (D746), so that a tag slides off
+ * a border even where the author's offsets put it. A label does not float far off to clear a
+ * border (a line through a gap between two frames narrower than the label, or a short line from
+ * a frame's side): when the spot off the borders is crowded, or lies farther from the line, by
+ * more than half the label's smaller side, than the spot found with the borders left out, that
+ * spot is taken instead, when it clears the rest, and is crowded, for it lies across a border.
+ */
+function acrossBorders(input: ClearestInput): Clearest {
+  const spot = clearest(input);
+  const reach = Math.min(input.lw, input.lh) / 2;
+  const off = awayFromLine(input, spot);
+  // A clear spot this near its line is kept: no spot can lie nearer by more than `reach`.
+  if (!input.keep.borders || (!spot.crowded && off <= reach)) return spot;
+  const { borders: _, ...keep } = input.keep;
+  const across = clearest({ ...input, keep });
+  if (across.crowded || sameSpot(spot, across)) return spot;
+  const farther = off > awayFromLine(input, across) + reach;
+  return spot.crowded || farther ? { ...across, crowded: true } : spot;
+}
+
+const sameSpot = (p: Clearest, q: Clearest): boolean =>
+  p.at === q.at && p.dx === q.dx && p.dy === q.dy;
+
+/** How far the middle of the label at `spot` lies from its own line. */
+function awayFromLine({ r, lw, lh }: ClearestInput, spot: Clearest): number {
+  const box = boxOf(r, spot, lw, lh);
+  return distanceToLine(r, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2);
 }
 
 /** The end a staggered tag keeps to; none when not staggered or moved by the author's offsets. */
