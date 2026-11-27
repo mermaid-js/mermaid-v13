@@ -148,6 +148,49 @@ describe('labels (D395, both label styles)', () => {
   });
 });
 
+describe('labels by the label rule (#1368)', () => {
+  const SYNTAX = fixture('pr-check/label-syntax');
+  /** Each label's contents, by its node's data-id. */
+  const drawn = (svg: string): Map<string, string> =>
+    new Map(
+      [...svg.matchAll(/<text\b[^>]*data-id="([^"]*)"[^>]*>(.*?)<\/text>/g)].map((m) => [
+        unescape(m[1]!),
+        m[2]!,
+      ])
+    );
+  const TAGS = 'node:node src <b%3Ebold</b%3E <i%3Eital</i%3E<br%3Enext H<sub%3E2</sub%3EO';
+
+  for (const legacyMarkdown of [false, true])
+    it(`draws markdown only in a quoted markdown string (legacyMarkdown: ${legacyMarkdown})`, async () => {
+      const { svg } = await renderSankeyForTest(SYNTAX, { config: { legacyMarkdown } });
+      const labels = drawn(svg);
+      // Plain markers, bare backticks and a code span: one text, as written, at v12's anchor.
+      expect(labels.get('node:node src **bold** _ital_')).toBe('node src **bold** _ital_ 10');
+      expect(labels.get('node:`node src bare **bold** _ital_`')).toBe(
+        '`node src bare **bold** _ital_` 10'
+      );
+      expect(labels.get('node:node src a `code` b')).toBe('node src a `code` b 10');
+      // The quoted markdown string: bold and italic runs, the value plain after them.
+      const md = labels.get('node:`node dst md **bold** _ital_`')!;
+      expect(md).toContain('<tspan font-weight="bold">bold</tspan>');
+      expect(md).toContain('<tspan font-style="italic">ital</tspan>');
+      expect(md).toMatch(/<tspan> 10<\/tspan>$/);
+      // Tags draw; <br> and a written \n break the line.
+      const tags = labels.get(TAGS)!;
+      expect(tags.match(/<tspan x=/g)).toHaveLength(2);
+      expect(tags).toContain('<tspan font-weight="bold">bold</tspan>');
+      expect(labels.get('node:node dst one\\ntwo')).toMatch(
+        /^<tspan x="[\d.]+" y="[\d.]+">node dst one<\/tspan><tspan x="[\d.]+" y="[\d.]+">two 10<\/tspan>$/
+      );
+    });
+
+  it('draws the same in both modes: no sankey label kind read markdown in v12', async () => {
+    const a = await renderSankeyForTest(SYNTAX);
+    const b = await renderSankeyForTest(SYNTAX, { config: { legacyMarkdown: true } });
+    expect(b.svg).toBe(a.svg);
+  });
+});
+
 describe('links (linkColor, D391, D392)', () => {
   const scope = styleScope('mermaid-0');
 

@@ -106,8 +106,20 @@ function drawLabels({ w, layout, paint }: Scene): void {
   w.close();
 }
 
-/** One line of plain text (D395) at the label's anchor, `dy` below the node's centre. */
+/**
+ * A label (D395, #1368). One line of one unstyled run is v12's `text` at the label's anchor,
+ * `dy` below the node's centre. Any other label (tags, a markdown string, line breaks) is the
+ * writer's block of lines and runs, aligned left inside the label's box.
+ */
 function drawLabel(w: SvgWriter, ast: string, label: SankeyLabel, attrs: Attrs): void {
+  if (label.line === undefined) {
+    const { box, text } = label;
+    w.label({ ...text, left: true }, box.x + box.width / 2, box.y + text.height / 2, {
+      ...attrs,
+      'data-id': ast,
+    });
+    return;
+  }
   w.open('text', {
     ...attrs,
     'data-id': ast,
@@ -116,7 +128,7 @@ function drawLabel(w: SvgWriter, ast: string, label: SankeyLabel, attrs: Attrs):
     dy: label.dy,
     'text-anchor': label.anchor,
   });
-  w.text(label.text);
+  w.text(label.line);
   w.close();
 }
 

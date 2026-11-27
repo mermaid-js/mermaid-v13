@@ -13,7 +13,13 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import type { SafeColor } from '@mermaid-js/core/svg';
-import type { FontKey } from '@mermaid-js/core/text';
+import {
+  labelSource,
+  layoutLabel,
+  type FontKey,
+  type MeasuredLabel,
+  type Run,
+} from '@mermaid-js/core/text';
 import { sankeyLayoutConfig, type SankeyLayoutConfig } from '../config.ts';
 import type { SankeyModel } from '../model.ts';
 import { d3Sankey, type D3LinkInput, type D3Node } from './d3-sankey.ts';
@@ -35,10 +41,41 @@ export type SankeyLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 't
 
 const ROUND = 100;
 
-/** v12's `getText` (`:174-179`), on one line (D395). */
-function labelText(id: string, value: number, config: SankeyLayoutConfig): string {
-  if (!config.showValues) return id;
-  return `${id} ${config.prefix}${Math.round(value * ROUND) / ROUND}${config.suffix}`;
+/** v12's `getText` (`:174-179`) after the name, on its last line (D395): plain text. */
+function valueText(value: number, config: SankeyLayoutConfig): string {
+  if (!config.showValues) return '';
+  return ` ${config.prefix}${Math.round(value * ROUND) / ROUND}${config.suffix}`;
+}
+
+// What a label's source may read as more than text, in any mode: written as character
+// references, the value stays plain text after a label in any mode.
+const RE_MARKUP_CHAR = /[&<*_`\\~]/g;
+const asText = (text: string): string =>
+  text.replace(RE_MARKUP_CHAR, (c) => `&#${c.charCodeAt(0)};`);
+
+/**
+ * A node's label by the label rule (#1368): the name read by core's handler (a quoted markdown
+ * string is markdown, any other name plain, with tags and a written `\n` drawn), then the value
+ * as plain text, laid out on unbounded lines as v12 drew them.
+ */
+function nodeLabel(
+  node: SankeyModel['nodes'][number],
+  value: string,
+  font: FontKey,
+  ctx: SankeyLayoutContext
+): MeasuredLabel {
+  const written = node.markdown ? node.id.slice(1, -1) : node.id;
+  const source = labelSource(written, { markdown: node.markdown, v12Markdown: false }, ctx.config);
+  return layoutLabel(source.text + asText(value), font, Infinity, ctx.measurer, source);
+}
+
+/** The text of a label that is one line of one unstyled run, which is drawn as v12 drew it. */
+function oneLine(label: MeasuredLabel): string | undefined {
+  const line = label.lines.length === 1 ? label.lines[0]! : undefined;
+  const run: Run | undefined = line?.length === 1 ? line[0] : undefined;
+  if (!run || run.kind || run.bold || run.italic || run.underline || run.strike || run.attrs)
+    return undefined;
+  return run.text;
 }
 
 /** The layer of the first node with the strictly largest value, else 0 (`:44-57`). */
@@ -99,9 +136,8 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
 
   // Measure every label first (pitfall 16): positions do not depend on it, the bounds do.
   const texts = graph.nodes.map((node, i) =>
-    labelText(model.nodes[i]!.id, node.value / graph.scale, config)
+    nodeLabel(model.nodes[i]!, valueText(node.value / graph.scale, config), font, ctx)
   );
-  const widths = texts.map((t) => ctx.measurer.width(t, font, 0));
   const { ascent, descent } = ctx.measurer.metrics(font);
 
   const central = centralLayer(graph.nodes);
@@ -116,14 +152,22 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
       config.labelStyle === 'outlined' ? node.layer < central : !(node.x0 < config.width / 2);
     const x = left ? node.x0 - m.labelGap : node.x1 + m.labelGap;
     const y = (node.y1 + node.y0) / 2;
-    const width = widths[i]!;
+    const text = texts[i]!;
+    const { width } = text;
+    // One line keeps v12's baseline, `dy` below the centre; more lines are centred as a block.
+    const box =
+      text.lines.length > 1
+        ? { y: y - text.height / 2, height: text.height }
+        : { y: y + dy - ascent, height: ascent + descent };
+    const line = oneLine(text);
     const label: SankeyLabel = {
-      text: texts[i]!,
+      text,
+      ...(line === undefined ? {} : { line }),
       x,
       y,
       dy,
       anchor: left ? 'end' : 'start',
-      box: { x: left ? x - width : x, y: y + dy - ascent, width, height: ascent + descent },
+      box: { x: left ? x - width : x, width, ...box },
     };
     return {
       index: i,

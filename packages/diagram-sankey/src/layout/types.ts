@@ -7,7 +7,7 @@
 import type { SankeyLabelStyle, SankeyNodeAlignment } from '@mermaid-js/core/config';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { SafeColor } from '@mermaid-js/core/svg';
-import type { FontKey } from '@mermaid-js/core/text';
+import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
 import type { Rect } from '@mermaid-js/shared/layout';
 
 /**
@@ -29,10 +29,19 @@ export interface Point {
 
 export type { Rect };
 
-/** A node's label (D395): one line of plain text, measured. */
+/**
+ * A node's label (D395): the name read by the label rule (#1368), then ` prefix<value>suffix`
+ * under `showValues` (the value rounded to 2 decimals) as plain text on its last line.
+ */
 export interface SankeyLabel {
-  /** The name, or `name prefix<value>suffix` under `showValues` (value rounded to 2 decimals). */
-  readonly text: string;
+  /** The label as core's label layout laid it out, unwrapped. */
+  readonly text: MeasuredLabel;
+  /**
+   * The label's text when it is one line of one unstyled run, as every label was in v12: it is
+   * drawn as one `text` at the anchor, `dy` below the node's centre. Any other label is drawn
+   * by the writer as a block of lines aligned left inside {@link box}.
+   */
+  readonly line?: string;
   /** The anchor: `labelGap` right of `x1` (`start`) or left of `x0` (`end`). */
   readonly x: number;
   /** The node's vertical centre. */
@@ -41,8 +50,9 @@ export interface SankeyLabel {
   readonly dy: number;
   readonly anchor: 'start' | 'end';
   /**
-   * The measured text's box: its advance width, from ascent to descent about the baseline. Not
-   * drawn: the layout's bounds hold it.
+   * The measured text's box: its widest line's advance width, from the first line's ascent to
+   * the last line's descent. One line keeps v12's baseline, `dy` below `y`; more lines are
+   * centred on `y` as a block. The bounds hold it.
    */
   readonly box: Rect;
 }

@@ -1,0 +1,22 @@
+---
+description: >-
+  Node labels written the six ways of the label rule (#1368), on both sides: plain markdown
+  markers, a quoted markdown string (CSV quotes around backticks), bare backticks, a code span
+  in plain text, tags, and a written \n. A name is its node's identity, so the markdown string
+  and the bare form say md and bare to stay two nodes. Only the quoted markdown string reads
+  markdown; tags draw and \n breaks the line. The value after each label stays plain.
+---
+sankey-beta
+
+node src **bold** _ital_,hub,10
+"`node src md **bold** _ital_`",hub,10
+`node src bare **bold** _ital_`,hub,10
+node src a `code` b,hub,10
+node src <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O,hub,10
+node src one\ntwo,hub,10
+hub,node dst **bold** _ital_,10
+hub,"`node dst md **bold** _ital_`",10
+hub,`node dst bare **bold** _ital_`,10
+hub,node dst a `code` b,10
+hub,node dst <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O,10
+hub,node dst one\ntwo,10

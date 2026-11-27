@@ -117,6 +117,12 @@ const ENTITY_HINT = 'sankey text takes printable ASCII characters only, and no `
 const ENTITY = /^#\w+;/;
 /** The keywords of other diagrams' title statements, as a field's first word. */
 const TITLE_WORD = /^(?:title|acctitle|accdescr)\b/i;
+/**
+ * A quoted field's name that makes it a quoted markdown string (#1368): one pair of backticks
+ * around text with no backtick, as core's label handler reads `"`…`"`.
+ */
+const RE_BACKTICKED = /^`[^`]*`$/;
+
 /** The sankey header keyword, as a field. */
 const KEYWORD = /^sankey(?:-beta)?$/i;
 
@@ -482,7 +488,12 @@ class SankeyParser {
     if (known !== undefined) return known;
     const ast = nodeAstId(name);
     this.byName.set(name, this.nodes.length);
-    this.nodes.push({ id: name, ast, range: field.range });
+    this.nodes.push({
+      id: name,
+      ast,
+      range: field.range,
+      ...(field.quoted && RE_BACKTICKED.test(name) ? { markdown: true as const } : {}),
+    });
     checkLimit(
       this.st.diagnostics,
       'maxNodes',

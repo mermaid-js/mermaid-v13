@@ -23,6 +23,13 @@ export interface SankeyNode {
   readonly ast: AstId;
   /** The name's first occurrence: the trimmed field, or the quoted field with its quotes. */
   readonly range: Range;
+  /**
+   * Set when that occurrence is a quoted markdown string (#1368): a quoted field whose name is
+   * one pair of backticks with no other backtick, `"`…`"`. The name keeps its backticks (it is
+   * the node's identity); the label is the text between them, read as markdown. Left out
+   * otherwise, so a field in backticks without quotes is plain text.
+   */
+  readonly markdown?: true;
 }
 
 export interface SankeyLink {

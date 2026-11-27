@@ -78,6 +78,25 @@ describe('sankey parse: v12 model', () => {
     ]);
   });
 
+  it('marks a name written as a quoted markdown string, keeping the name as read (#1368)', () => {
+    const src = [
+      'sankey',
+      '"`**a**`",`b`,1',
+      '" `c ""d""` ",e,1',
+      '"`f` `g`",`b`,1',
+      '`**a**`,h,1',
+    ].join('\n');
+    const { model } = parseSankey(src);
+    expect(model.nodes.map((n) => [n.id, n.markdown ?? false])).toEqual([
+      ['`**a**`', true],
+      ['`b`', false],
+      ['`c "d"`', true],
+      ['e', false],
+      ['`f` `g`', false],
+      ['h', false],
+    ]);
+  });
+
   it('keeps the front-matter title (D396)', () => {
     expect(parseSankey('---\ntitle: Flows\n---\nsankey\na,b,1').model.title).toBe('Flows');
     expect(parseSankey('sankey\na,b,1').model.title).toBeUndefined();

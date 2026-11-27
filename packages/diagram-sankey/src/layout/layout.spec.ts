@@ -173,8 +173,8 @@ describe('sankey layout: colours, labels and bounds, worked from v12 sankeyRende
 
   it('writes one line, the value rounded to 2 decimals between prefix and suffix (D395)', () => {
     const l = lay('sankey\na,b,0.125\na,c,0.2', { prefix: '$', suffix: 'B' });
-    expect(l.nodes.map((n) => n.label.text)).toEqual(['a $0.33B', 'b $0.13B', 'c $0.2B']);
-    expect(lay(FORK, { showValues: false }).nodes.map((n) => n.label.text)).toEqual([
+    expect(l.nodes.map((n) => n.label.line)).toEqual(['a $0.33B', 'b $0.13B', 'c $0.2B']);
+    expect(lay(FORK, { showValues: false }).nodes.map((n) => n.label.line)).toEqual([
       'a',
       'b',
       'c',
@@ -256,5 +256,61 @@ describe('sankey layout: colours, labels and bounds, worked from v12 sankeyRende
     expect(lay(FORK, { width: 'wide', nodeWidth: -1 }).nodes[1]!.x1).toBe(600);
     expect(lay(FORK, { width: '300' }).nodes[1]!.x1).toBe(300);
     expect(lay(FORK, { nodeAlignment: 'middle', labelStyle: 'bold' }).labelStyle).toBe('legacy');
+  });
+});
+
+/** Each line of a label as `text` with `*` for a bold run and `_` for an italic one. */
+const shown = (l: SankeyLayout, id: string): string[] =>
+  node(l, id).label.text.lines.map((line) =>
+    line
+      .map((r) => {
+        const mark = (r.bold ? '*' : '') + (r.italic ? '_' : '');
+        return mark + r.text + [...mark].reverse().join('');
+      })
+      .join('')
+  );
+
+describe('sankey layout: labels by the label rule (#1368)', () => {
+  const ways = (legacyMarkdown: boolean) => {
+    const src = [
+      'sankey',
+      'a **b** _c_,hub,1',
+      '"`d **e** _f_`",hub,1',
+      '`g **h**`,hub,1',
+      'i `j` k,hub,1',
+      'l <b>m</b><br>n,hub,1',
+      'o\\np,hub,1',
+    ].join('\n');
+    const { model } = parseSankey(src);
+    const ctx = sankeyTestContext(theme, { showValues: false }, tenPx());
+    return layoutSankey(model, { ...ctx, config: { ...ctx.config, legacyMarkdown } });
+  };
+
+  for (const legacyMarkdown of [false, true])
+    it(`reads markdown only in a quoted markdown string (legacyMarkdown: ${legacyMarkdown})`, () => {
+      const l = ways(legacyMarkdown);
+      expect(shown(l, 'a **b** _c_')).toEqual(['a **b** _c_']);
+      expect(shown(l, '`d **e** _f_`')).toEqual(['d *e* _f_']);
+      expect(shown(l, '`g **h**`')).toEqual(['`g **h**`']);
+      expect(shown(l, 'i `j` k')).toEqual(['i `j` k']);
+      expect(shown(l, 'l <b>m</b><br>n')).toEqual(['l *m*', 'n']);
+      expect(shown(l, 'o\\np')).toEqual(['o', 'p']);
+    });
+
+  it('appends the value as plain text, after the last line', () => {
+    const src = 'sankey\n"`**a**\\nb`",c,1\nc,d <i>e</i>,1';
+    const l = lay(src, { prefix: '**', suffix: '<b>_</b>' });
+    expect(shown(l, '`**a**\\nb`')).toEqual(['*a*', 'b **1<b>_</b>']);
+    expect(shown(l, 'd <i>e</i>')).toEqual(['d _e_ **1<b>_</b>']);
+  });
+
+  it('keeps a one-line plain label on v12 baseline, centres a block of lines on the node', () => {
+    const l = lay('sankey\na,b\\nc,10');
+    const a = node(l, 'a');
+    expect(a.label.text.lines).toHaveLength(1);
+    expect(a.label.box).toMatchObject({ x: 16, y: a.label.y - 11.2, width: 40 });
+    // 'b', then 'c 10': 40 px wide, two 14 px lines centred on the node, ending at the anchor.
+    const b = node(l, 'b\\nc');
+    expect(b.label.box).toMatchObject({ x: 584 - 40, y: b.label.y - 14, width: 40, height: 28 });
   });
 });
