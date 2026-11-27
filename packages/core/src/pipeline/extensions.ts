@@ -39,6 +39,7 @@ import type {
   InlineProvider,
   InlineRequest,
   InlineSpans,
+  LabelBoxer,
   LabelRequest,
 } from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
@@ -502,7 +503,18 @@ function setLabelBoxer<P extends { id: string; label?: LabelProvider }>(
 ): void {
   const labellers = list.filter((p) => p.label);
   if (!labellers[0] || !spans) return;
-  spans.boxer = (raw, request) => {
+  // From a factory, not a function literal assigned here: V8 allocates a function literal
+  // assigned straight to a property in old space, where it keeps this render alive until the
+  // next full GC.
+  spans.boxer = labelBoxer(labellers, context);
+}
+
+/** The first box of `labellers`, checked, with a failure reported as its extension's. */
+function labelBoxer<P extends { id: string; label?: LabelProvider }>(
+  labellers: readonly P[],
+  context: (plugin: P) => HookContext
+): LabelBoxer {
+  return (raw, request) => {
     for (const p of labellers) {
       try {
         const box = p.label!.box(raw, request, context(p));
