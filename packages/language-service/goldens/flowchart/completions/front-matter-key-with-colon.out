@@ -3,6 +3,7 @@
   themeVariables property (object) 3:3-3:8 "theme" -> "themeVariables"
   layout property (string) 3:3-3:8 "theme" -> "layout"
   lineHops property (boolean | string) 3:3-3:8 "theme" -> "lineHops"
+  curve property (string) 3:3-3:8 "theme" -> "curve"
   ascii property (object) 3:3-3:8 "theme" -> "ascii"
   darkMode property (boolean) 3:3-3:8 "theme" -> "darkMode"
   fontFamily property (string) 3:3-3:8 "theme" -> "fontFamily"

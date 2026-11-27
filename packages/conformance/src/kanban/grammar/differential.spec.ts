@@ -3,12 +3,14 @@ import { detectKanban } from '@mermaid-js/diagram-kanban';
 import { loadOracle } from '../../oracle.ts';
 import { kanbanGateCorpus } from '../corpus.ts';
 import { handWrittenVerdict, referenceVerdict, v12Syntax } from './reference.ts';
+import { withPlaceholders } from '../acc-divergence.ts';
 
 /**
  * Grammar differential (R-PARSE-9, DESIGN §13): the reference parser generated from
  * `grammar/kanban.ebnf` and the hand-written parser agree on accept/reject and on the AST
  * shape (statement types and source ranges), and the grammar agrees with mermaid\@12 on
- * accept/reject, over the lexer gate's corpus and the parser cases.
+ * accept/reject, over the lexer gate's corpus and the parser cases. v12, which read an acc
+ * statement as an item (D742), parses each source with them as placeholder items.
  */
 describe('kanban grammar differential', () => {
   it('agrees with the hand-written parser and mermaid@12 over the corpus', async () => {
@@ -20,7 +22,8 @@ describe('kanban grammar differential', () => {
       compared++;
       const ref = referenceVerdict(item.source);
       const hand = handWrittenVerdict(item.source);
-      const v12 = await oracle.parse(item.source);
+      // D742: v12 reads each acc statement as a placeholder item (`acc-divergence.ts`).
+      const v12 = await oracle.parse(withPlaceholders(item.source));
       if (v12Syntax(v12) === !ref.accepted) {
         diffs.push(
           `${item.id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${ref.accepted ? 'rejects' : 'accepts'}`

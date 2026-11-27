@@ -105,7 +105,7 @@ function features(model: AgentflowModel, prepared: AgentflowPrepared, config: Re
     if (e.edge.animate === true || e.edge.animation !== undefined) add('animation', e.edge.ast);
   }
   // A curve set in config (site, front matter or directive) draws every edge with it in SVG.
-  if (config.flowchart?.curve !== undefined) add('curve');
+  if ((config.agentflow?.curve ?? config.curve) !== undefined) add('curve');
   const astOf = new Map(prepared.nodes.map((v) => [v.id, v.ast]));
   for (const v of model.vertices) if (v.link) add('link', astOf.get(v.id) ?? v.ast);
   for (const [id] of model.tooltips) add('link', astOf.get(id));

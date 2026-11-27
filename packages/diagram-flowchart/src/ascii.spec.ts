@@ -280,6 +280,18 @@ describe('warnings', () => {
     const route = warnings.filter((w) => w.code === 'ASCII_ROUTE');
     expect(route.map((w) => w.astIds)).toEqual([['e:A>B']]);
   });
+
+  it('drops a curve set in config, by flowchart.curve or the global curve (D733)', async () => {
+    const curveWarnings = async (config: string) => {
+      const { warnings } = await draw(`---\nconfig:\n${config}\n---\nflowchart LR\nA --> B`);
+      return warnings.filter((w) => w.code === 'ASCII_DROPPED').map((w) => w.feature);
+    };
+    expect(await curveWarnings('  flowchart:\n    curve: linear')).toEqual(['curve']);
+    expect(await curveWarnings('  curve: linear')).toEqual(['curve']);
+    // The default, `rounded`, is what the text draws: nothing is dropped.
+    expect(await curveWarnings('  curve: rounded')).toEqual([]);
+    expect(await curveWarnings('  flowchart:\n    curve: rounded\n  curve: linear')).toEqual([]);
+  });
 });
 
 describe('text', () => {
