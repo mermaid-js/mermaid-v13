@@ -11,7 +11,7 @@
  * line. Comparisons allow a float tolerance.
  *
  * Not an invariant, because v12 does it too: a ticket or assignee over 40 px high on a shared
- * row sticks out of the card's bottom. The inset holds for every line but one of a single
+ * row sticks out of the card's bottom. The inset holds for every line but a line of a single
  * character wider than the room between the insets, which a narrow `kanban.sectionWidth` can
  * leave: no break keeps that one inside.
  */
@@ -44,15 +44,16 @@ function ticketRowViolations(card: CardLayout, where: string, out: string[]): vo
 
 /**
  * Whether `label` sits closer than `inset` to a side of `outer` (D764). A line of one character
- * wider than the room between the insets is let through: it cannot break (D765).
+ * wider than the room between the insets cannot break (D765), so it is left out: the label's
+ * other lines must still fit that room.
  */
-function crowds(outer: Rect, label: PlacedLabel, inset: number): boolean {
+function textCrowdsInset(outer: Rect, label: PlacedLabel, inset: number): boolean {
   const room = outer.width - 2 * inset;
   const { lines, widths } = label.text;
-  const unbreakable = lines.some(
-    (line, i) => (widths[i] ?? 0) > room + EPS && [...line.map((r) => r.text).join('')].length < 2
-  );
-  if (unbreakable) return false;
+  const unbreakable = (i: number): boolean =>
+    (widths[i] ?? 0) > room + EPS && [...(lines[i] ?? []).map((r) => r.text).join('')].length < 2;
+  if (lines.some((_, i) => unbreakable(i)))
+    return widths.some((w, i) => !unbreakable(i) && w > room + EPS);
   return !(
     within(label.x, outer.x + inset, outer.x + outer.width - inset) &&
     within(label.x + label.width, outer.x + inset, outer.x + outer.width - inset)
@@ -63,12 +64,12 @@ function crowds(outer: Rect, label: PlacedLabel, inset: number): boolean {
 function insetViolations(layout: KanbanLayout, out: string[]): void {
   const inset = (layout.units === 'cell' ? KANBAN_CELL_METRICS : KANBAN_METRICS).labelInset;
   for (const column of layout.columns)
-    if (column.title && crowds(column, column.title, inset))
+    if (column.title && textCrowdsInset(column, column.title, inset))
       out.push(`column ${column.ast}: its title is within ${inset} of its sides`);
   for (const card of layout.cards)
     for (const kind of ['title', 'ticket', 'assignee'] as const) {
       const label = card[kind];
-      if (label && crowds(card, label, inset))
+      if (label && textCrowdsInset(card, label, inset))
         out.push(`card ${card.ast}: its ${kind} is within ${inset} of its sides`);
     }
 }

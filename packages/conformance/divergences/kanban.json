@@ -198,5 +198,13 @@
     "reason": "A layout difference, not a parse one: a word wider than its wrap (a column title, card title, ticket or assignee) is split between characters, so no text crosses its column's or card's right edge, where v12 kept it whole and let it overflow (D765, amends D372). Source: `e2e/diagrams/kanban/nightly-check/long-words.mmd`, whose hash this is; its models agree, so the parity runner never observes this entry. `packages/diagram-kanban/src/layout/layout.spec.ts` and the layout invariants (`kanbanLayoutViolations`, swept by `packages/conformance/src/kanban/layout-corpus.spec.ts`) check it (MIGRATION 220-kanban, #1304).",
     "owner": "D765",
     "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-layout/text-insets",
+    "inputHash": "sha256:991b016a0cc8ed59",
+    "kind": "model",
+    "reason": "A layout difference, not a parse one: card text (title, ticket, assignee) wraps at `W − cardInset − 2·labelInset` (165 px at the default width), where v12 measured it at `W − 25`, so every line ends `labelInset` inside the card's right edge; column titles wrap at `W − 2·labelInset`, where v12 wrapped them at `W`; and the least `kanban.sectionWidth` is 36 px, where v13 had 26 (D764, amends D372). Source: `e2e/diagrams/kanban/pr-check/3-should-render-a-kanban-with-a-single-wrapping-node.mmd`, whose hash this is; its models agree, so the parity runner never observes this entry. `packages/diagram-kanban/src/layout/layout.spec.ts` and the layout invariants (`kanbanLayoutViolations`, swept by `packages/conformance/src/kanban/layout-corpus.spec.ts`) check it (MIGRATION 220-kanban, #1294).",
+    "owner": "D764",
+    "since": "2026-11-27"
   }
 ]

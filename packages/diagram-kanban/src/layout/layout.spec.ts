@@ -3,7 +3,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
-import { tableMeasurer } from '@mermaid-js/core/text';
+import { Style, tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { EDGE_CASES, gridMeasurer, kanban, parsed } from './fixtures.ts';
 import { layoutKanban, type KanbanLayout, type KanbanLayoutInput } from './index.ts';
@@ -282,6 +282,17 @@ describe('kanban layout: tags in a ticket and an assignee (D710, D712)', () => {
       expect(tagged.assignee![k]).toBe(plain.assignee![k]);
     }
     expect(tagged.height).toBe(plain.height);
+  });
+
+  it('draws a code span and a leading list marker in a plain card as written (D712)', () => {
+    const cards = lay(board('  Todo', '    a[Use `npm ci` first]', '    b[- 5 degrees]')).cards;
+    const text = (i: number): string[] =>
+      cards[i]!.title!.text.lines.map((line) => line.map((r) => r.text).join(''));
+    expect(text(0)).toEqual(['Use `npm ci` first']);
+    expect(text(1)).toEqual(['- 5 degrees']);
+    expect(cards[0]!.title!.text.lines.flat().some((r) => (r.style & Style.Mono) !== 0)).toBe(
+      false
+    );
   });
 });
 

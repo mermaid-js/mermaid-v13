@@ -12,8 +12,9 @@
  * `kanban.padding` (D378), `W` has a least value (`MIN_SECTION_WIDTH`), the bounds are what is
  * drawn (D224), a ticket and assignee that do not fit side by side are stacked, the card
  * growing to hold both (`STACKED_META_ROW`, D647), card and column text wraps `labelInset` in
- * from both sides of its box (D764), and a word wider than the wrap breaks (D765). In cells (the text output, #466) the lengths
- * are `KANBAN_CELL_METRICS` and the ticket row is a row of its own (`CELL_META_ROW`).
+ * from both sides of its box (D764), and a word wider than the wrap breaks (D765). In cells
+ * (the text output, #466) the lengths are `KANBAN_CELL_METRICS` and the ticket row is a row of
+ * its own (`CELL_META_ROW`).
  */
 import type { Warning } from '@mermaid-js/core';
 import { KANBAN_CONFIG_IGNORED } from '../codes.ts';
