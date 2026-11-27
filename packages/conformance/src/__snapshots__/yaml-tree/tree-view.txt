@@ -2,7 +2,7 @@ e2e/diagrams/tree-view/baseline/accessibility/acc-title-and-descr.mmd 1 a10436d5
 e2e/diagrams/tree-view/baseline/config/fixed-width.mmd 1 f589e45fc51a6e64
 e2e/diagrams/tree-view/baseline/config/icon-maps.mmd 1 591f1ce0aa1a607e
 e2e/diagrams/tree-view/baseline/config/lengths.mmd 1 6624dc46c92f6e2f
-e2e/diagrams/tree-view/baseline/text/blanks-and-markup.mmd 1 901a9a5a0be9951d
+e2e/diagrams/tree-view/baseline/text/blanks-and-markup.mmd 1 b87c5cf5967fb03d
 e2e/diagrams/tree-view/baseline/text/entity-codes-box.mmd 1 b803b11eaf01de5c
 e2e/diagrams/tree-view/baseline/text/entity-codes.mmd 1 103069aef7a776d1
 e2e/diagrams/tree-view/baseline/theme-variables/flat-over-nested-redux.mmd 1 ad55907f486eeabc
@@ -32,6 +32,7 @@ e2e/diagrams/tree-view/nightly-check/should-render-a-simple-treeview-diagram-wit
 e2e/diagrams/tree-view/nightly-check/should-render-combined-annotations.mmd 1 a28962b69cea87af
 e2e/diagrams/tree-view/nightly-check/should-render-icon-overrides.mmd 1 7d6eb988794cec86
 e2e/diagrams/tree-view/nightly-check/should-resolve-unprefixed-icon-overrides-via-default-icon-pack.mmd 1 f5ab07c90f29f025
+e2e/diagrams/tree-view/pr-check/label-syntax.mmd 1 eb4fad816b986846
 e2e/diagrams/tree-view/pr-check/should-pick-file-icons-from-filename-and-extension-config-maps.mmd 1 14891b26b5aa5cf9
 e2e/diagrams/tree-view/pr-check/should-preserve-consecutive-spaces-and-unicode-in-labels.mmd 1 580052fd57048c1a
 e2e/diagrams/tree-view/pr-check/should-render-a-complex-treeview-diagram-with-quoted-labels.mmd 1 9dba66e38429e437

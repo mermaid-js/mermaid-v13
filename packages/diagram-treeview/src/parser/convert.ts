@@ -54,6 +54,14 @@ export function nodeName(converted: string): { name: string; directory: boolean 
   return { name: directory ? converted.slice(0, -1) : converted, directory };
 }
 
+/**
+ * Whether a quoted name (as `nodeName` stored it) is a markdown string (#1368): wholly in
+ * backticks, with no backtick inside, as core's handler reads `"`…`"`.
+ */
+export function markdownName(name: string): boolean {
+  return name.length >= 2 && /^`[^`]*`$/.test(name);
+}
+
 /** A node's name as written bare: a directory's with its trailing `/` (`nodeName` undone). */
 export function writtenName(name: string, directory: boolean): string {
   return directory ? `${name}/` : name;

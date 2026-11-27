@@ -17,7 +17,15 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import { RectUnion } from '@mermaid-js/shared/layout';
-import { decodeEntities, Style, type FontKey, type StyleBits } from '@mermaid-js/core/text';
+import {
+  decodeEntities,
+  labelSource,
+  layoutLabel,
+  Style,
+  type FontKey,
+  type MeasuredLabel,
+  type StyleBits,
+} from '@mermaid-js/core/text';
 import { treeViewOptions, type TreeViewOptions } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
@@ -32,6 +40,12 @@ import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } fr
 export type TreeViewLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
   Partial<Pick<RenderContext, 'warn'>>;
 
+/**
+ * What the label rule may read in a plain name (#1368): a tag, a written `\n` (a backslash), a
+ * line break. A name without them is drawn as written.
+ */
+const RE_READ = /[<\\\n\r]/;
+
 /** v12's virtual root row (`db.ts`: name `/`, a directory). */
 const ROOT = { name: '/', directory: true } as const;
 
@@ -40,6 +54,8 @@ interface Frame {
   readonly config: TreeViewOptions;
   /** One line of `text` in `font` and `style`, at (0, 0) until placed. */
   readonly measure: (text: string, font: FontKey, style: StyleBits) => TreeViewText;
+  /** A node's label, by the label rule (#1368), at (0, 0) until placed. */
+  readonly label: (name: string, directory: boolean, markdown: boolean) => TreeViewText;
   /** The label font (normal weight) and the directory font (bold). */
   readonly font: FontKey;
   readonly bold: FontKey;
@@ -91,11 +107,75 @@ function frameOf(ctx: TreeViewLayoutContext): Frame {
       height: text === '' ? 0 : lineHeight,
     };
   };
+  const bold: FontKey = { ...font, weight: BOLD_WEIGHT };
+  const label = (name: string, directory: boolean, markdown: boolean): TreeViewText => {
+    const f = directory ? bold : font;
+    const style = directory ? Style.Bold : 0;
+    // Nothing the rule reads (no tag, no line break, no markdown string): as written.
+    if (!markdown && !RE_READ.test(name)) return measure(name, f, style);
+    const source = labelSource(
+      markdown ? name.slice(1, -1) : name,
+      { markdown, v12Markdown: false },
+      ctx.config
+    );
+    const laid = layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, style });
+    const text = decodeEntities(name);
+    const run = asWritten(laid, text, style);
+    if (run === undefined) return runsText(laid, f, style, lineHeight);
+    // As v12 drew it: its blank runs kept, measured once.
+    return run.text === text && text !== ''
+      ? { text, font: f, style, x: 0, y: 0, width: run.width, height: lineHeight }
+      : measure(name, f, style);
+  };
   return {
     config: treeViewOptions(ctx.config.treeView, ctx.warn),
     measure,
+    label,
     font,
-    bold: { ...font, weight: BOLD_WEIGHT },
+    bold,
+  };
+}
+
+/**
+ * The one run of `laid` when the label rule read nothing in `text` (the name, its entities
+ * decoded): one line of one run in the base style whose text is `text` with its blank runs as
+ * one blank and none at its ends, as the label layout keeps it. Else undefined: a tag, a
+ * markdown string or a line break changed what is drawn.
+ */
+function asWritten(
+  laid: MeasuredLabel,
+  text: string,
+  style: StyleBits
+): { text: string; width: number } | undefined {
+  if (laid.lines.length > 1) return undefined;
+  const line = laid.lines[0] ?? [];
+  if (line.length > 1) return undefined;
+  const run = line[0] ?? { text: '', width: 0, style };
+  if (run.style !== style || run.kind === 'box') return undefined;
+  return run.text === text.replace(/[ \t]+/g, ' ').trim() ? run : undefined;
+}
+
+/**
+ * A label drawn as lines of runs. Its first line is as high as a plain label (`line`, the
+ * font's ascent and descent), and each line after it adds the label layout's line height, so
+ * the row grows by a line per line and a one-line label's row keeps a plain row's height.
+ */
+function runsText(
+  laid: MeasuredLabel,
+  font: FontKey,
+  style: StyleBits,
+  line: number
+): TreeViewText {
+  const lines = laid.lines.length;
+  return {
+    text: laid.lines.map((l) => l.map((r) => r.text).join('')).join('\n'),
+    font,
+    style,
+    x: 0,
+    y: 0,
+    width: laid.width,
+    height: lines === 0 ? 0 : line + (lines - 1) * laid.lineHeight,
+    runs: laid,
   };
 }
 
@@ -120,9 +200,7 @@ function placeRows(model: TreeViewModel, frame: Frame): Placed {
     // v12 resolved the root row's icon too: a folder under showIcons.
     const icon = resolveIcon(node ?? ROOT, config);
     const slot = icon === undefined ? 0 : M.icon + M.iconGap;
-    const label = directory
-      ? frame.measure(name, frame.bold, Style.Bold)
-      : frame.measure(name, frame.font, 0);
+    const label = frame.label(name, directory, node?.markdown === true);
     const height = label.height + 2 * paddingY;
     const index = rows.length;
     rows.push({

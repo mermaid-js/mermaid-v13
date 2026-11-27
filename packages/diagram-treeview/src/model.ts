@@ -15,6 +15,13 @@ export interface TreeViewNode {
   readonly name: string;
   /** Whether the name ended with `/` (v12's `nodeType: 'directory'`, else `'file'`). */
   readonly directory: boolean;
+  /**
+   * Set when the name was written as a quoted markdown string (#1368): in double or single
+   * quotes, wholly in backticks with none inside, a directory's `/` aside. `name` keeps the
+   * backticks (v12's name); the label is laid out as markdown without them. Absent for any
+   * other name, whose label is plain: a name in bare backticks is drawn as written.
+   */
+  readonly markdown?: true;
   /** 0 for a node at the top; v12 hangs those under its virtual root `/`. */
   readonly depth: number;
   /**
