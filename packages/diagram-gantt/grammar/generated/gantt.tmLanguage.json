@@ -146,9 +146,9 @@
         }
       }
     },
-    "switch-18": {
-      "begin": "(?i)\\(",
-      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)\\))",
+    "switch-callbackname-18": {
+      "begin": "(?!(?i)\\(\\s*\\))(?:\\G|(?!(?i)\\)))(?i)\\(",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)\\))",
       "patterns": [
         {
           "include": "#mode-callbackargs"
@@ -158,28 +158,28 @@
         "0": {
           "name": "keyword.operator.mermaid-gantt"
         }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "keyword.operator.mermaid-gantt"
-        }
       }
     },
     "rule-16": {
       "begin": "(?i)call\\s+",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)((?i)\\))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-callbackname"
         },
         {
-          "include": "#switch-18"
+          "include": "#switch-callbackname-18"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-gantt"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.operator.mermaid-gantt"
         }
       }
     },

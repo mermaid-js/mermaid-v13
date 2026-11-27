@@ -1,14 +1,8 @@
 /**
  * C4 highlighting (#543, language.md step 3): the four-way agreement of the kind → category
  * table with the generated TextMate, Monarch and Lezer grammars over the c4 corpus, as
- * `kanban-agreement.spec.ts` checks kanban.
- *
- * Known gap (GAPS #543, for gen-grammar): TextMate goes wrong after a `$name="value"`. The
- * name, the `="` and the value each take the place of the one before on the mode stack (a
- * pop-then-push chain); TextMate's chain scope tries its links again where the chain returns
- * before it ends, and the name's `[^=]*` matches there, so the rest of the line, and the lines
- * after it, stay in the name. TextMate is checked over the sources with no named argument;
- * Monarch and Lezer (the editor adapters' highlighters) over all of them.
+ * `kanban-agreement.spec.ts` checks kanban. A `$name="value"` puts three modes in each other's
+ * place (a pop-then-push chain), which TextMate's chain scope follows to its end (#1356).
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -50,14 +44,8 @@ describe('four-way highlighting agreement (c4)', () => {
     const sources = [...FIXTURES, ...corpus(detectC4)];
     expect(sources.length).toBeGreaterThan(40);
     const type = { kinds: T, categories: c4Categories, tokens: c4Tokens };
-    const all = await highlighters('c4');
-    const editors = all.filter(([name]) => name !== 'TextMate');
-    const result = agreement(type, editors, sources, BLANK_KINDS);
+    const result = agreement(type, await highlighters('c4'), sources, BLANK_KINDS);
     expect(result.disagreements).toEqual({});
     expect(result.missing, 'kinds with no sample').toEqual([]);
-    const plain = sources.filter(([, src]) => !src.includes('$'));
-    expect(plain.length).toBeGreaterThan(20);
-    const textMate = all.filter(([name]) => name === 'TextMate');
-    expect(agreement(type, textMate, plain, BLANK_KINDS).disagreements).toEqual({});
   }, 120_000);
 });

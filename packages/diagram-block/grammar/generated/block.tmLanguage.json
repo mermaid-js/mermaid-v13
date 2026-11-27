@@ -114,9 +114,9 @@
         }
       ]
     },
-    "switch-18": {
+    "switch-CLASSDEF-18": {
       "begin": "DEFAULT\\s+",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)([^\\n]*)",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=[^\\n]*)",
       "patterns": [
         {
           "include": "#mode-CLASSDEFID"
@@ -125,17 +125,12 @@
       "beginCaptures": {
         "0": {
           "name": "variable.other.mermaid-block"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "string.quoted.mermaid-block"
         }
       }
     },
-    "switch-19": {
+    "switch-CLASSDEF-19": {
       "begin": "\\w+\\s+",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)([^\\n]*)",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=[^\\n]*)",
       "patterns": [
         {
           "include": "#mode-CLASSDEFID"
@@ -144,32 +139,32 @@
       "beginCaptures": {
         "0": {
           "name": "variable.other.mermaid-block"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "string.quoted.mermaid-block"
         }
       }
     },
     "rule-17": {
       "begin": "classDef\\s+",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)([^\\n]*)|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-CLASSDEF"
         },
         {
-          "include": "#switch-18"
+          "include": "#switch-CLASSDEF-18"
         },
         {
-          "include": "#switch-19"
+          "include": "#switch-CLASSDEF-19"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
         }
       }
     },
@@ -182,9 +177,9 @@
         }
       ]
     },
-    "switch-22": {
+    "switch-CLASS-22": {
       "begin": "\\w+(?:,\\s*\\w+)*",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)([^\\n]*)",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=[^\\n]*)",
       "patterns": [
         {
           "include": "#mode-CLASS_STYLE"
@@ -194,28 +189,28 @@
         "0": {
           "name": "variable.other.mermaid-block"
         }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "variable.other.mermaid-block"
-        }
       }
     },
     "rule-21": {
       "begin": "class\\s+",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)([^\\n]*)|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-CLASS"
         },
         {
-          "include": "#switch-22"
+          "include": "#switch-CLASS-22"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "variable.other.mermaid-block"
         }
       }
     },
@@ -228,9 +223,9 @@
         }
       ]
     },
-    "switch-25": {
+    "switch-STYLE_STMNT-25": {
       "begin": "\\w+(?:,\\s*\\w+)*",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)([^\\n]*)",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=[^\\n]*)",
       "patterns": [
         {
           "include": "#mode-STYLE_DEFINITION"
@@ -240,28 +235,28 @@
         "0": {
           "name": "variable.other.mermaid-block"
         }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "string.quoted.mermaid-block"
-        }
       }
     },
     "rule-24": {
       "begin": "style\\s+",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)([^\\n]*)|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-STYLE_STMNT"
         },
         {
-          "include": "#switch-25"
+          "include": "#switch-STYLE_STMNT-25"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-block"
         }
       }
     },
@@ -1474,9 +1469,9 @@
         }
       ]
     },
-    "switch-76": {
-      "begin": "\\]>\\s*\\(",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,?\\s*right\\s*|,?\\s*left\\s*|,?\\s*x\\s*|,?\\s*y\\s*|,?\\s*up\\s*|,?\\s*down\\s*)(\\)\\s*)",
+    "switch-BLOCK_ARROW-76": {
+      "begin": "(?:\\G|(?!\\)\\s*))\\]>\\s*\\(",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,?\\s*right\\s*|,?\\s*left\\s*|,?\\s*x\\s*|,?\\s*y\\s*|,?\\s*up\\s*|,?\\s*down\\s*)(?=\\)\\s*)",
       "patterns": [
         {
           "include": "#mode-ARROW_DIR"
@@ -1486,27 +1481,27 @@
         "0": {
           "name": "punctuation.definition.mermaid-block"
         }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "punctuation.definition.mermaid-block"
-        }
       }
     },
     "rule-69": {
       "begin": "<\\[",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\)\\s*)|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-BLOCK_ARROW"
         },
         {
-          "include": "#switch-76"
+          "include": "#switch-BLOCK_ARROW-76"
         }
       ],
       "beginCaptures": {
         "0": {
+          "name": "punctuation.definition.mermaid-block"
+        }
+      },
+      "endCaptures": {
+        "1": {
           "name": "punctuation.definition.mermaid-block"
         }
       }
