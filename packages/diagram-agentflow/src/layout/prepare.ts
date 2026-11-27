@@ -27,7 +27,8 @@ import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import { labelSource, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import type {
   AgentflowFlowModel,
   AgentflowModel,
@@ -189,10 +190,11 @@ export function prepareAgentflow(
     wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
     minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
     edgeWrap: units.builder.edgeWrap,
-    // Read by core's label handler (D734, #1368); no agentflow label kind has a v12 markdown
-    // profile. v12's HTML labels kept a long word whole (#649); in cells it is split to fit.
+    // Read by core's label handler (#1368, #1396), which gives the render its one warning for
+    // markdown outside a markdown string. v12's HTML labels kept a long word whole (#649); in
+    // cells it is split to fit.
     label: (text, markdown, f, max, bits = 0) => {
-      const source = labelSource(text, { markdown, v12Markdown: false }, ctx.config);
+      const source = readLabel(text, { markdown }, ctx);
       return layoutLabel(source.text, f, max, measurer, {
         ...source,
         style: bits,

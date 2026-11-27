@@ -1,24 +1,28 @@
-// How agentflow reads its labels (spec #1368 T8, #1396): flow titles, vertex and connector texts
-// and edge texts all go through core's label handler, with no v12 markdown profile. Markdown is
-// read only in a quoted markdown string; bare backticks, plain `**x**` and a code span are drawn
-// as written; tags draw; a written `\n` breaks the line in every label.
+// How agentflow reads its labels (spec #1368, #1396): flow titles, vertex and connector texts
+// and edge texts all go through core's label handler. By default markdown is read only in a
+// quoted markdown string; bare backticks, plain `**x**` and a code span are drawn as written;
+// tags draw; a written `\n` breaks the line in every label. With `markdownAlwaysOn` every label
+// is markdown; tags and `\n` read as in the default mode.
 import { describe, expect, it } from 'vitest';
 import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import { renderAgentflowForTest } from '../render/harness.ts';
 import type { AgentflowPrepared } from './prepare.ts';
 
-async function prepared(src: string, legacyMarkdown = false): Promise<AgentflowPrepared> {
-  const config = legacyMarkdown ? { legacyMarkdown } : {};
+async function prepared(
+  src: string,
+  config: Readonly<Record<string, unknown>> = {}
+): Promise<AgentflowPrepared> {
   return (await renderAgentflowForTest(src, { config })).layout.agentflow;
 }
 
-/** A label's lines as text, a bold run as `[b:…]` and an italic one as `[i:…]`. */
+/** A label's lines as text: a bold run as `[b:…]`, an italic one `[i:…]`, code `[c:…]`. */
 const shown = (label: MeasuredLabel): string[] =>
   label.lines.map((line) =>
     line
       .map((r) => {
         if (r.style & Style.Bold) return `[b:${r.text}]`;
-        return r.style & Style.Italic ? `[i:${r.text}]` : r.text;
+        if (r.style & Style.Italic) return `[i:${r.text}]`;
+        return r.style & Style.Mono ? `[c:${r.text}]` : r.text;
       })
       .join('')
   );
@@ -36,13 +40,17 @@ const edge: Read = (p) => shown(p.edges[0]!.label);
 
 const HEAD = 'agentflow-beta LR\n';
 const inFlow = (title: string, body = 'a') => `${HEAD}  flow f[${title}]\n    ${body}\n  end`;
+const inGlobal = (statement: string) => `${HEAD}  global\n    ${statement}\n  end`;
 
-/** Every label kind, each written one of the six ways, and the line rules. */
-const CASES: readonly (readonly [string, string, Read, string[]])[] = [
-  ['plain node', `${HEAD}  a[node **b** _i_]`, node('a'), ['node **b** _i_']],
+/**
+ * Every label kind, written several of the six ways, and the line rules: the lines by default,
+ * and with `markdownAlwaysOn` when they differ.
+ */
+const CASES: readonly (readonly [string, string, Read, string[], string[]?])[] = [
+  ['plain node', `${HEAD}  a[node **b** _i_]`, node('a'), ['node **b** _i_'], ['node [b:b] [i:i]']],
   ['md string node', `${HEAD}  a["\`node **b** _i_\`"]`, node('a'), ['node [b:b] [i:i]']],
-  ['bare backticks node', `${HEAD}  a[\`**b**\`]`, node('a'), ['`**b**`']],
-  ['code span node', `${HEAD}  a[a \`code\` b]`, node('a'), ['a `code` b']],
+  ['bare backticks node', `${HEAD}  a[\`**b**\`]`, node('a'), ['`**b**`'], ['[c:**b**]']],
+  ['code span node', `${HEAD}  a[a \`code\` b]`, node('a'), ['a `code` b'], ['a [c:code] b']],
   [
     'tags node',
     `${HEAD}  a[<b>b</b> <i>i</i><br>H<sub>2</sub>O]`,
@@ -57,36 +65,64 @@ const CASES: readonly (readonly [string, string, Read, string[]])[] = [
     ['[b:one]', 'two'],
   ],
   ['trailing <br> node', `${HEAD}  a[one<br>]`, node('a'), ['one']],
-  ['plain edge', `${HEAD}  a -->|e **b**| b`, edge, ['e **b**']],
+  ['plain edge', `${HEAD}  a -->|e **b** _i_| b`, edge, ['e **b** _i_'], ['e [b:b] [i:i]']],
+  [
+    'plain inline edge',
+    `${HEAD}  a -- e **b** _i_ --> b`,
+    edge,
+    ['e **b** _i_'],
+    ['e [b:b] [i:i]'],
+  ],
   ['md string edge', `${HEAD}  a -->|"\`**e**\`"| b`, edge, ['[b:e]']],
   ['inline md string edge', `${HEAD}  a -- "\`**e**\`" --> b`, edge, ['[b:e]']],
-  ['bare backticks edge', `${HEAD}  a -->|\`**e**\`| b`, edge, ['`**e**`']],
+  ['bare backticks edge', `${HEAD}  a -->|\`**e**\`| b`, edge, ['`**e**`'], ['[c:**e**]']],
   ['written \\n in a md string edge', `${HEAD}  a -->|"\`one\\ntwo\`"| b`, edge, ['one', 'two']],
-  ['plain flow title', inFlow('flow **b**'), flow('f'), ['flow **b**']],
-  ['md string flow title', inFlow('"`**t**`"'), flow('f'), ['[b:t]']],
-  ['bare backticks flow title', inFlow('`**t**`'), flow('f'), ['`**t**`']],
-  ['written \\n flow title', inFlow('one\\ntwo'), flow('f'), ['one', 'two']],
-  ['plain connector', `${HEAD}  connector c[c **b**]`, node('c'), ['c **b**']],
-  ['md string connector', `${HEAD}  connector c["\`**c**\`"]`, node('c'), ['[b:c]']],
-  ['bare backticks connector', `${HEAD}  connector c[\`**c**\`]`, node('c'), ['`**c**`']],
-  ['written \\n connector', `${HEAD}  connector c[one\\ntwo]`, node('c'), ['one', 'two']],
-  ['md string global node', `${HEAD}  global\n    g["\`**g**\`"]\n  end`, node('g'), ['[b:g]']],
   [
-    'bare backticks global node',
-    `${HEAD}  global\n    g[\`**g**\`]\n  end`,
-    node('g'),
-    ['`**g**`'],
+    'plain flow title',
+    inFlow('flow **b** _i_'),
+    flow('f'),
+    ['flow **b** _i_'],
+    ['flow [b:b] [i:i]'],
   ],
+  ['md string flow title', inFlow('"`**t**`"'), flow('f'), ['[b:t]']],
+  ['bare backticks flow title', inFlow('`**t**`'), flow('f'), ['`**t**`'], ['[c:**t**]']],
+  ['written \\n flow title', inFlow('one\\ntwo'), flow('f'), ['one', 'two']],
+  [
+    'plain connector',
+    `${HEAD}  connector c[c **b** _i_]`,
+    node('c'),
+    ['c **b** _i_'],
+    ['c [b:b] [i:i]'],
+  ],
+  ['md string connector', `${HEAD}  connector c["\`**c**\`"]`, node('c'), ['[b:c]']],
+  [
+    'bare backticks connector',
+    `${HEAD}  connector c[\`**c**\`]`,
+    node('c'),
+    ['`**c**`'],
+    ['[c:**c**]'],
+  ],
+  ['written \\n connector', `${HEAD}  connector c[one\\ntwo]`, node('c'), ['one', 'two']],
+  ['plain global node', inGlobal('g[g **b** _i_]'), node('g'), ['g **b** _i_'], ['g [b:b] [i:i]']],
+  ['md string global node', inGlobal('g["`**g**`"]'), node('g'), ['[b:g]']],
+  ['bare backticks global node', inGlobal('g[`**g**`]'), node('g'), ['`**g**`'], ['[c:**g**]']],
 ];
 
-describe('agentflow labels through the core label handler (#1368 T8)', () => {
-  it.each(CASES)('%s', async (_, src, read, lines) => {
+/** Each case with its `markdownAlwaysOn` lines filled in. */
+const FULL = CASES.map(
+  ([name, src, read, lines, on = lines]) => [name, src, read, lines, on] as const
+);
+
+describe('agentflow labels through the core label handler (#1368, #1396)', () => {
+  it.each(FULL)('%s', async (_, src, read, lines) => {
     expect(read(await prepared(src))).toEqual(lines);
   });
 
-  // No agentflow label kind has a v12 markdown profile: v12 read markdown only in a markdown
-  // string, so `legacyMarkdown` changes nothing.
-  it.each(CASES)('%s, with legacyMarkdown', async (_, src, read, lines) => {
-    expect(read(await prepared(src, true))).toEqual(lines);
+  it.each(FULL)('%s, with markdownAlwaysOn', async (_, src, read, _lines, on) => {
+    expect(read(await prepared(src, { markdownAlwaysOn: true }))).toEqual(on);
+  });
+
+  it.each(FULL)('%s, with agentflow.markdownAlwaysOn', async (_, src, read, _lines, on) => {
+    expect(read(await prepared(src, { agentflow: { markdownAlwaysOn: true } }))).toEqual(on);
   });
 });
