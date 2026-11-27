@@ -194,13 +194,42 @@ describe('the front-matter title (D472)', () => {
 });
 
 describe('labels', () => {
-  it('shows a plain label’s markup as text, as v12 escaped it (`escapePlainLabel`)', async () => {
+  it('drops a tag it does not draw from a plain label, and writes no element for it (D471, D735)', async () => {
     const { svg } = await render('pr-check/small-representative-visual-snapshot');
-    // The decoded `Hostile("<img …>")` of D471: the tag's text, escaped (wrapped over two lines),
-    // and no element.
-    const label = texts(inside(svg, 'node', 'Hostile')).find((t) => t.cls === 'usecase-label')!;
-    expect(decode(label.text).replace(/\s+/g, '')).toBe('<imgsrc=xonerror=alert(1)>');
+    // The decoded `Hostile("<img …>")`: an HTML tag core drops, so the use case draws no text.
+    expect(texts(inside(svg, 'node', 'Hostile')).map((t) => t.text.trim())).toEqual(['']);
     expect(svg).not.toMatch(/<img\b/);
+  });
+
+  it('draws tags and a written \\n in every label kind, and markdown only in a markdown string (D735)', async () => {
+    const { svg, layout } = await render('pr-check/label-syntax');
+    // Each line as laid out (a long label also wraps), and the runs as drawn.
+    const label = (id: string) => {
+      const v = [...layout.usecase!.nodes.values()].find(
+        (n) => n.kind === 'usecase' && n.useCase.id === id
+      );
+      if (v?.kind !== 'usecase') throw new Error(id);
+      return v.label.lines.map((runs) => runs.map((r) => r.text).join(''));
+    };
+    expect(label('U1').join(' ')).toBe('usecase **bold** _ital_');
+    // Plain markers, bare backticks and a code span in plain text are drawn as written.
+    expect(label('U3').join(' ')).toBe('`usecase **bold** _ital_`');
+    expect(label('U4').join(' ')).toBe('usecase a `code` b');
+    // A markdown string: bold and italic runs, no markers.
+    expect(label('U2').join(' ')).toBe('usecase bold ital');
+    expect(inside(svg, 'node', 'U2')).toMatch(/font-weight="bold"[^>]*>bold</);
+    // Tags draw, `<br>` and a written `\n` break the line.
+    expect(label('U5').at(-1)).toBe('next H2O');
+    expect(inside(svg, 'node', 'U5')).toMatch(/font-weight="bold"[^>]*>bold</);
+    expect(inside(svg, 'node', 'S5')).toMatch(/font-style="italic"[^>]*>ital</);
+    expect(label('U6')).toEqual(['usecase one', 'two']);
+    expect(svg).not.toMatch(/&lt;b&gt;|\\n/);
+  });
+
+  it('draws the same with legacyMarkdown: no usecase label kind read v12 markdown (D734)', async () => {
+    const { svg } = await render('pr-check/label-syntax');
+    const legacy = await render('pr-check/label-syntax', { config: { legacyMarkdown: true } });
+    expect(legacy.svg).toBe(svg);
   });
 
   it('draws a stereotype as a first line «s» above the label, for actors and use cases', async () => {
@@ -384,6 +413,18 @@ describe('accessible names (v12 usecaseRenderer.spec.ts)', () => {
       (e) => e['data-ast'] !== undefined && !hasClass(e, 'relationship')
     ))
       expect(g.role).toBe('img');
+  });
+
+  it('names a label by the words it draws: no tags, markers or written breaks (D735)', async () => {
+    const { svg } = await render('pr-check/label-syntax');
+    const name = (id: string) => elements(svg, 'g').find((e) => e['data-id'] === id)!['aria-label'];
+    expect(name('A5')).toBe('actor actor bold ital\nnext H2O');
+    expect(name('U5')).toBe('use case usecase bold ital\nnext H2O');
+    expect(name('B5')).toBe('rect system boundary boundary bold ital\nnext H2O');
+    expect(name('note-4')).toBe('Note for usecase bold ital\nnext H2O: note bold ital\nnext H2O');
+    expect(name('note-5')).toBe('Note for usecase one\ntwo: note one\ntwo');
+    expect(name('U2')).toBe('use case usecase bold ital');
+    expect(name('U1')).toBe('use case usecase **bold** _ital_');
   });
 });
 

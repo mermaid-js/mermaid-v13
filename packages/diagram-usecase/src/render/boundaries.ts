@@ -20,7 +20,7 @@ export function drawBoundaries(scene: Scene): void {
 }
 
 function drawBoundary(
-  { w, layout, paint, fontOf }: Scene,
+  { w, layout, paint, fontOf, speak }: Scene,
   view: BoundaryView,
   order: number
 ): void {
@@ -35,7 +35,7 @@ function drawBoundary(
     'data-ast': b.astId,
     'data-color-id': slot?.id,
     role: 'img',
-    'aria-label': boundaryName(view),
+    'aria-label': boundaryName(speak, view),
   });
   const shape: Attrs = {
     fill: slot?.fill ?? role.fill,

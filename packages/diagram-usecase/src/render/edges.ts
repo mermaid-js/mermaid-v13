@@ -58,7 +58,7 @@ function lineAttrs(scene: Scene, e: UsecaseEdgeView): Attrs {
     // v12's `.relationship.edge-animation-*` rounded the caps; other lines keep butt caps.
     'stroke-linecap': r.animate || r.animation ? 'round' : undefined,
     role: 'img',
-    'aria-label': relationName(e, source, target),
+    'aria-label': relationName(scene.speak, e, source, target),
   };
 }
 

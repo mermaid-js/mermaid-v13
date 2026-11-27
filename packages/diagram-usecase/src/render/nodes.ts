@@ -121,7 +121,7 @@ function drawActor(scene: Scene, view: ActorView, slot: PaletteTint | undefined)
     classes: actorClasses(a),
     id: a.id,
     ast: a.astId,
-    name: actorName(view),
+    name: actorName(scene.speak, view),
     slot,
   });
   if (!box) return false;
@@ -221,7 +221,7 @@ function drawUseCase(scene: Scene, view: UseCaseView, slot: PaletteTint | undefi
     classes: useCaseClasses(view),
     id: u.id,
     ast: u.astId,
-    name: useCaseName(view),
+    name: useCaseName(scene.speak, view),
     slot,
   });
   if (!box) return;
@@ -288,7 +288,7 @@ function drawNote(scene: Scene, view: NoteView): void {
     classes: 'node default usecase-note',
     id: n.id,
     ast: n.astId,
-    name: noteName(view, target),
+    name: noteName(scene.speak, view, target),
   });
   if (!box) return;
   const note = need(paint.note, 'note');

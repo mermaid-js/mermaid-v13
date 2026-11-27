@@ -9,6 +9,7 @@ import type { UsecaseLayout } from '../layout/layout.ts';
 import type { UsecasePrepared } from '../layout/prepare.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseRenderContext } from './context.ts';
+import type { Speak } from './accessible-names.ts';
 import type { Paints } from './paint.ts';
 
 export interface Scene {
@@ -22,6 +23,8 @@ export interface Scene {
   readonly fontOf: (font: FontKey) => Attrs;
   /** The spoken label of each model element, by model id (for note and relation names). */
   readonly spokenOf: ReadonlyMap<string, string>;
+  /** Reads a label for its accessible name. */
+  readonly speak: Speak;
 }
 
 export { cls } from '@mermaid-js/shared/svg/document';

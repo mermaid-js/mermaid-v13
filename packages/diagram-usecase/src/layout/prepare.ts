@@ -9,11 +9,14 @@ import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-
 import { labelledEdge } from '@mermaid-js/shared/layout';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
 import {
   fontSizePx,
+  labelSource,
   layoutLabel,
   Style,
   type FontKey,
+  type LabelSource,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import { USECASE_STYLE_IGNORED } from '../codes.ts';
@@ -242,7 +245,10 @@ const sideways = (d: UsecaseModel['direction']): boolean => d === 'LR' || d === 
 interface Measure {
   /** The font a label is drawn in: `font` with the style's size, weight. */
   font(font: FontKey, style: CheckedStyle): FontKey;
-  /** Measures `text` in `font` (already styled, see `font`), wrapped at `max`. */
+  /**
+   * Measures `text` in `font` (already styled, see `font`), wrapped at `max`: a label of `type`
+   * as {@link readLabel} reads it, or, with no `type`, a text drawn as written.
+   */
   label(
     text: string,
     font: FontKey,
@@ -282,12 +288,24 @@ const styleBits = (style: CheckedStyle): number =>
   style.text['font-style'] === 'italic' ? Style.Italic : 0;
 
 /**
- * A plain label as text: v12 escaped `&`, `<` and `>` in every plain label, stereotype, JSON cell
- * and edge label (`usecaseRenderer.ts` `escapePlainLabel`), so its markup showed as written.
- * Core's label layout decodes the entities back to those characters, as text, so `<b>` and
- * `<img …>` stay text and only Markdown labels read the HTML subset.
+ * How an actor, use case, note, boundary or association label is read (D735): core's label
+ * handler, with the parser's mark for a markdown string. Markdown is read only there; in every
+ * label the tags draw, entities decode and a written `\n` breaks the line. v12 read no markdown
+ * in a plain usecase label, so no kind has a v12 profile (`v12Markdown`).
  */
-const escapePlain = (text: string): string =>
+export const readLabel = (
+  text: string,
+  type: UsecaseLabelType,
+  config: ResolvedConfig
+): LabelSource => labelSource(text, { markdown: type === 'markdown', v12Markdown: false }, config);
+
+/**
+ * A text drawn as written: a stereotype, an include or extend label, a JSON table's id or cell,
+ * the title. v12 escaped `&`, `<` and `>` in each (`usecaseRenderer.ts` `escapePlainLabel`), and
+ * they stay so: core's label layout decodes the entities back to those characters, as text, so
+ * the `<<` of the `ascii` charset's `<<s>>` is never a tag.
+ */
+const asWritten = (text: string): string =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Builds the measure: styled fonts (one warning per size it cannot use), labels, styles. */
@@ -311,14 +329,16 @@ function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
       }
       return { ...font, weight };
     },
-    label: (text, font, max, style, type = 'text') =>
-      layoutLabel(type === 'markdown' ? text : escapePlain(text), font, max, ctx.measurer, {
-        markdown: type === 'markdown',
+    label(text, font, max, style, type) {
+      const source = type ? readLabel(text, type, ctx.config) : { text: asWritten(text) };
+      return layoutLabel(source.text, font, max, ctx.measurer, {
+        ...source,
         style: styleBits(style),
         inline: ctx.inline,
         // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
         keepWords: ctx.units?.id !== 'cell',
-      }),
+      });
+    },
     styleOf: styleCache(new Map(model.classDefs.map((c) => [c.id, c.styles])), (w) => ctx.warn(w), [
       'default',
     ]),
@@ -600,8 +620,8 @@ function blank(label: MeasuredLabel): boolean {
 }
 
 /**
- * A relationship's edge. Include and extend labels are plain text whatever the model says (v12
- * forced `labelType: 'text'` on them, `usecaseDb.ts:267-268`).
+ * A relationship's edge. Include and extend labels are drawn as written whatever the model says
+ * (v12 forced `labelType: 'text'` on them, `usecaseDb.ts:267-268`).
  */
 function relationView(
   r: UsecaseRelationship,
@@ -613,7 +633,7 @@ function relationView(
   const text = relationText(r, sizing.quotes);
   const style = measure.styleOf(r.classes, r.styles);
   const font = measure.font(parts.fonts.edge, style);
-  const type = r.type === 'association' ? r.labelType : 'text';
+  const type = r.type === 'association' ? (r.labelType ?? 'text') : undefined;
   const label =
     text === undefined ? undefined : measure.label(text, font, sizing.edgeWrap, style, type);
   return {
