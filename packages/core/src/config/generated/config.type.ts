@@ -108,9 +108,11 @@ lineHops?: (false | true | "arc" | "gap")
  * default: each type then draws its own default curve.
  * 
  * Precedence, per type: a per-edge curve where the type has one, then
- * the type's own key (`flowchart.curve`, `swimlane.curve`) when set,
- * then this key when set, then the type's default (`rounded` for
- * flowchart and swimlane).
+ * the type's own key (`flowchart.curve`, `swimlane.curve`,
+ * `class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,
+ * `usecase.curve`) when set, then this key when set, then the type's
+ * default (`rounded` for flowchart, swimlane, class, requirement and
+ * agentflow; S-curves for state and usecase).
  * 
  */
 curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
