@@ -23,8 +23,10 @@ import type {
   Warn,
 } from '@mermaid-js/core/svg';
 import {
+  labelSource,
   layoutLabel,
   type InlineSpans,
+  type LabelConfig,
   type MeasuredLabel,
   type Measurer,
 } from '@mermaid-js/core/text';
@@ -222,9 +224,10 @@ export function animateEdge(w: SvgWriter, edge: AnimatedEdge): boolean {
 
 // The front-matter `title` over a drawing, as v12's `insertTitle` placed it (D652): centred
 // over the drawing, its baseline `titleTopMargin` above the drawing's top, and the viewBox grown
-// to hold it with the diagram's padding around it. The title is plain text: an inline tag in it
-// is dropped and reported, as core's `tagsOnly` does for every title (D566), here without that
-// file's chunk on the flowchart path (R-PERF-1). It is not the accessible name (D133).
+// to hold it with the diagram's padding around it. The title is read by the label rule, as any
+// label is (#1368): a quoted markdown string in the string YAML gives is markdown, anything else
+// is plain, tags draw and a written `\n` breaks. Inline boxes are not drawn in it. It is not the
+// accessible name (D133).
 
 /** A laid-out title and its centre. */
 export interface PlacedTitle {
@@ -238,10 +241,12 @@ export interface TitleContext {
   readonly theme: { value(name: 'fontFamily'): string };
   readonly measurer: Measurer;
   readonly inline?: InlineSpans | undefined;
+  /** The render's resolved config (`ctx.config`), for the label rule. */
+  readonly config?: LabelConfig;
 }
 
 /**
- * `text` laid out in the theme's font family at `size` px, centred over
+ * `text` read by the label rule and laid out in the theme's font family at `size` px, centred over
  * a drawing `width` wide whose top is at 0, its baseline `topMargin` above it. Undefined for a
  * missing or blank title.
  */
@@ -255,7 +260,9 @@ export function placeTitle(
   const t = text?.trim();
   if (!t) return undefined;
   const font = { family: ctx.theme.value('fontFamily'), size, weight: 400 };
-  const label = layoutLabel(t, font, Infinity, ctx.measurer, {
+  const source = labelSource(t, { v12Markdown: false }, ctx.config);
+  const label = layoutLabel(source.text, font, Infinity, ctx.measurer, {
+    ...source,
     inline: ctx.inline && { ...ctx.inline, extract: () => undefined },
   });
   return titleAt(label, width, topMargin);

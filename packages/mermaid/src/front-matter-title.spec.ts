@@ -3,9 +3,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createMermaid } from './index.ts';
-import { corpusLabels } from './testing/labels.ts';
+import { corpusLabels, drawnRuns } from './testing/labels.ts';
 
-const { fixture } = corpusLabels(readFileSync);
+const { fixture, textOf } = corpusLabels(readFileSync);
 
 const CASES = [
   {
@@ -102,6 +102,60 @@ describe('the front-matter title in sequence (#753, D218, D652)', () => {
     );
     expect(svg).toContain('class="sequenceTitle"');
     expect(svg).toBe((await createMermaidWith(stated)).svg);
+  });
+});
+
+// The title follows the label rule (#1368, #1406). YAML has removed one level of quotes, so the
+// rule reads the string YAML gives: `'"`…`"'` is a markdown string, `"`…`"` is bare backticks.
+const WAYS = [
+  { way: 'plain', yaml: `'T **bold** _ital_'`, runs: 'T **bold** _ital_' },
+  { way: 'markdown string', yaml: `'"\`T **bold** _ital_\`"'`, runs: 'T <b>bold</b> <i>ital</i>' },
+  { way: 'bare backticks', yaml: `"\`T **bold** _ital_\`"`, runs: '`T **bold** _ital_`' },
+  { way: 'code span', yaml: `'T a \`code\` b'`, runs: 'T a `code` b' },
+  {
+    way: 'tags',
+    yaml: `'T <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O'`,
+    runs: 'T <b>bold</b> <i>ital</i> / next H2O',
+  },
+  { way: 'written \\n', yaml: `'T one\\ntwo'`, runs: 'T one / two' },
+  { way: 'block scalar', yaml: '|-\n  T one\n  two', runs: 'T one / two' },
+  {
+    way: 'markdown string with \\n and a tag',
+    yaml: `'"\`T **bold**\\nnext <i>ital</i>\`"'`,
+    runs: 'T <b>bold</b> / next <i>ital</i>',
+  },
+] as const;
+
+const BODIES = [
+  { type: 'flowchart', body: 'flowchart LR\n  A --> B\n', cls: 'flowchartTitleText' },
+  { type: 'ER', body: 'erDiagram\n  A ||--o{ B : has\n', cls: 'erDiagramTitleText' },
+] as const;
+
+/** The drawn runs of the one `<text>` with class `cls`, its lines joined by ` / `. */
+function titleRuns(svg: string, cls: string): string {
+  const texts = [...svg.matchAll(new RegExp(`<text class="${cls}".*?</text>`, 'gs'))];
+  expect(texts).toHaveLength(1);
+  // Tag-drawn <sub>/<sup> runs carry a shift, not a style: read them as text.
+  return drawnRuns(texts[0]![0]).join('');
+}
+
+describe('the front-matter title follows the label rule (#1368, #1406)', () => {
+  const cases = BODIES.flatMap((b) => WAYS.map((w) => ({ ...b, ...w })));
+  it.each(cases)('$type: $way', async (c) => {
+    for (const legacyMarkdown of [false, true]) {
+      const m = createMermaid();
+      m.initialize({ deterministic: true, legacyMarkdown });
+      const { svg, warnings } = await m.render('t', `---\ntitle: ${c.yaml}\n---\n${c.body}`);
+      expect(warnings).toEqual([]);
+      expect(titleRuns(svg, c.cls), `legacyMarkdown: ${legacyMarkdown}`).toBe(c.runs);
+    }
+  });
+
+  it('prints the drawn words in text output, a line for each drawn line', async () => {
+    const { text, warnings } = await textOf('conf-and-directives/pr-check/label-syntax-title.mmd');
+    expect(warnings).toEqual([]);
+    const lines = text.split('\n').map((l) => l.trim());
+    expect(lines.slice(0, 2)).toEqual(['Title bold ital', 'next tag H2O']);
   });
 });
 
