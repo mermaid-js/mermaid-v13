@@ -153,9 +153,9 @@
         }
       }
     },
-    "switch-66": {
-      "begin": "\\([ ]*,",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,,|,|[ \\t]*\"\"|[ \\t]*\"|[ ]*\\$)((?=\\n))",
+    "switch-macro-66": {
+      "begin": "(?:\\G|(?!\\)|(?=\\n)))\\([ ]*,",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,,|,|[ \\t]*\"\"|[ \\t]*\"|[ ]*\\$)(?=(?=\\n))",
       "patterns": [
         {
           "include": "#mode-attribute"
@@ -163,18 +163,13 @@
       ],
       "beginCaptures": {
         "0": {
-          "name": "punctuation.definition.mermaid-c4"
-        }
-      },
-      "endCaptures": {
-        "1": {
           "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
-    "switch-67": {
-      "begin": "\\(",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,,|,|[ \\t]*\"\"|[ \\t]*\"|[ ]*\\$)((?=\\n))",
+    "switch-macro-67": {
+      "begin": "(?:\\G|(?!\\)|(?=\\n)))\\(",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,,|,|[ \\t]*\"\"|[ \\t]*\"|[ ]*\\$)(?=(?=\\n))",
       "patterns": [
         {
           "include": "#mode-attribute"
@@ -182,915 +177,1125 @@
       ],
       "beginCaptures": {
         "0": {
-          "name": "punctuation.definition.mermaid-c4"
-        }
-      },
-      "endCaptures": {
-        "1": {
           "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-22": {
       "begin": "Person_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-23": {
       "begin": "Person\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-24": {
       "begin": "SystemQueue_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-25": {
       "begin": "SystemDb_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-26": {
       "begin": "System_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-27": {
       "begin": "SystemQueue\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-28": {
       "begin": "SystemDb\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-29": {
       "begin": "System\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-30": {
       "begin": "Boundary\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-31": {
       "begin": "Enterprise_Boundary\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-32": {
       "begin": "System_Boundary\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-33": {
       "begin": "ContainerQueue_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-34": {
       "begin": "ContainerDb_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-35": {
       "begin": "Container_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-36": {
       "begin": "ContainerQueue\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-37": {
       "begin": "ContainerDb\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-38": {
       "begin": "Container\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-39": {
       "begin": "Container_Boundary\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-40": {
       "begin": "ComponentQueue_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-41": {
       "begin": "ComponentDb_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-42": {
       "begin": "Component_Ext\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-43": {
       "begin": "ComponentQueue\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-44": {
       "begin": "ComponentDb\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-45": {
       "begin": "Component\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-46": {
       "begin": "Deployment_Node\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-47": {
       "begin": "Node\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-48": {
       "begin": "Node_L\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-49": {
       "begin": "Node_R\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-50": {
       "begin": "Rel\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-51": {
       "begin": "BiRel\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-52": {
       "begin": "Rel_Up\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-53": {
       "begin": "Rel_U\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-54": {
       "begin": "Rel_Down\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-55": {
       "begin": "Rel_D\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-56": {
       "begin": "Rel_Left\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-57": {
       "begin": "Rel_L\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-58": {
       "begin": "Rel_Right\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-59": {
       "begin": "Rel_R\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-60": {
       "begin": "Rel_Back\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-61": {
       "begin": "RelIndex\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-62": {
       "begin": "UpdateElementStyle\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-63": {
       "begin": "UpdateRelStyle\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
     "rule-64": {
       "begin": "UpdateLayoutConfig\\b",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)((?=\\n))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-macro"
         },
         {
-          "include": "#switch-66"
+          "include": "#switch-macro-66"
         },
         {
-          "include": "#switch-67"
+          "include": "#switch-macro-67"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-c4"
         }
       }
     },
@@ -1351,16 +1556,16 @@
         }
       ]
     },
-    "switch-77": {
-      "begin": "[^=]*",
-      "end": "(?!\\G)",
+    "switch-string_kv-77": {
+      "begin": "(?:\\G|(?!(?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\()|\"))[^=]*",
+      "end": "(?!\\G)(?=(?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\())|(?!\\G)(?=\")",
       "applyEndPatternLast": 1,
       "patterns": [
         {
-          "include": "#phase-string_kv_key"
+          "include": "#phase-string_kv_key-ahead"
         },
         {
-          "include": "#switch-78"
+          "include": "#switch-string_kv_key-78"
         }
       ],
       "beginCaptures": {
@@ -1369,7 +1574,7 @@
         }
       }
     },
-    "phase-string_kv_key": {
+    "phase-string_kv_key-ahead": {
       "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?==[ ]*\"))",
       "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?==[ ]*\")",
       "patterns": [
@@ -1378,9 +1583,9 @@
         }
       ]
     },
-    "switch-78": {
-      "begin": "=[ ]*\"",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)((?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\())|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[^\"]+)(\")",
+    "switch-string_kv_key-78": {
+      "begin": "(?:\\G|(?!(?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\()|\"))=[ ]*\"",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=(?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\())|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[^\"]+)(?=\")",
       "patterns": [
         {
           "include": "#mode-string_kv_value"
@@ -1390,28 +1595,28 @@
         "0": {
           "name": "string.quoted.mermaid-c4"
         }
-      },
-      "endCaptures": {
-        "2": {
-          "name": "string.quoted.mermaid-c4"
-        }
       }
     },
     "rule-76": {
       "begin": "[ ]*\\$",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)((?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\())|(?!\\G)(\")|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-string_kv"
         },
         {
-          "include": "#switch-77"
+          "include": "#switch-string_kv-77"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "variable.other.mermaid-c4"
+        }
+      },
+      "endCaptures": {
+        "2": {
+          "name": "string.quoted.mermaid-c4"
         }
       }
     },
