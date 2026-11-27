@@ -3456,13 +3456,13 @@ export const configSchema: ConfigSchema = {
           }
         },
         "maxNodeWidth": {
-          "description": "The width in px at which node labels wrap.\n",
+          "description": "The width in px at which node labels wrap, in every node shape. Values below 120 or\nabove 1200 are clamped to that range.\n",
           "type": "number",
           "default": 200,
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Labels wrap at it in every shape (D287); v12 wrapped square, rounded and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default). Numeric strings are read as numbers; anything else, or a value of 0 or less, lays out with 200 and warns `MINDMAP_CONFIG_IGNORED`."
+            "reason": "Labels wrap at it in every shape (D287, D769). v12 wrapped square, rounded and hexagon nodes at `flowchart.wrappingWidth` instead (120 by default); v13 never reads it. A value below 120 or above 1200 is clamped to the nearest limit and warns `MINDMAP_CONFIG_IGNORED` once. Numeric strings are read as numbers; anything else, or a value of 0 or less, lays out with 200 and warns `MINDMAP_CONFIG_IGNORED`."
           }
         },
         "layoutAlgorithm": {
