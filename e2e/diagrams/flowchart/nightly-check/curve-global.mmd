@@ -1,0 +1,12 @@
+---
+description: >-
+  The global `curve` key (D733, #1377) draws every flowchart edge when `flowchart.curve` is
+  unset: straight segments here (`linear`), where the default draws rounded right angles.
+config:
+  curve: linear
+---
+flowchart TD
+  A --> B
+  A --> C
+  B --> D
+  C --> D

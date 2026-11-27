@@ -456,7 +456,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). |
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose` turns on click callbacks (D554) and acts as `default` for link URLs, with no warning (D634); `antiscript` and `sandbox` act as `default` with a warning. |
-| `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). A name outside this list is drawn with the default, `rounded`, and warns `CURVE_UNKNOWN` once per render (D602, D681); v12 drew it as `basis`. |
+| `flowchart.curve` |  | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). A name outside this list is drawn with the default, `rounded`, and warns `CURVE_UNKNOWN` once per render (D602, D681); v12 drew it as `basis`. The default lives in code, not in the schema (D733), so the resolved config shows no `flowchart.curve` unless it is set, and the top-level `curve` applies where it is not. |
 | `sequence.actorFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
 | `sequence.noteFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
@@ -592,6 +592,7 @@ Sequence diagrams (`sequence` section, #145):
 | — | `theme: 'auto'`: the default theme, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
 | Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`, and contrast text and `invert()` use relative colour syntax (`color(from …)`), so they follow a host override of the colour they derive from. A page can re-theme rendered SVGs with CSS. Limit: contrast text picks between the theme's two ink values; overriding the ink variables themselves (`--mermaid-textColor`) does not change contrast-derived text such as `nodeTextColor` (set `--mermaid-nodeTextColor` directly) `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
 | `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one, a misspelt colour included (`mainBkg: redd`), is dropped with `THEME_VARIABLE_DROPPED` and the theme's value kept. Names v13 does not use are ignored | R-SEC-3, D690 |
+| A malformed colour function (`rgb(redd)`, `hsl(1 2)`, `color(srgb redd)`, `color-mix(in srgb, redd, blue)`, `light-dark(redd, blue)`): a theme variable such as `primaryColor: "rgb(redd)"` threw `Unsupported color format`; a sequence `rect`, journey or legacy C4 colour went into an attribute such as `fill="rgb(redd)"`, which browsers drew black | A colour function's arguments are checked wherever an author gives a colour: the channels of `rgb()`, `hsl()`, `oklch()` and the like, the colour space and channels of `color()`, and the two colours of `color-mix()` and `light-dark()`. A malformed one is dropped with the path's warning (`THEME_VARIABLE_DROPPED`, `STYLE_VALUE_DROPPED`, …), and the theme or default colour is drawn. Valid CSS the check does not read is refused the same way: relative colours (`rgb(from red r g b)`), `var()` or `calc()` inside a channel function, and exponents (`1e2`). Write the colour out instead | D690, D737 |
 | Nested `themeVariables` sections (`themeVariables.packet.startByteColor`), read by v12 packet, radar, cynefin, wardley and xychart | Each nested key maps onto one flat theme variable of the diagram (`packetStartByteColor`), listed beside it in the [theme variable inventory](theme-variables.md); the flat name is the CSS variable's. When both are set, the flat name wins, with no warning. An unknown nested key is ignored | D335, D540 |
 | A plugin's config fragment declaring a theme variable | Unchanged (colour-only, global), but when a diagram's own theme table defines the same name, the diagram's table wins in that diagram's renders | D336, D337 |
 | `themeCSS` | Removed, with a warning; see [Config behaviour](#config-behaviour) | R-SEC-2 |
@@ -922,7 +923,7 @@ the passes (D174). Parity is with v12's ELK options, not its pixels.
 | --- | --- | --- |
 | Class diagrams default to ELK | Laid out with `layered`, the engine built into core; `layout: elk` is accepted and drawn with `layered` until the ELK plugin (M3.5) is registered | D106 |
 | Class `nodeSpacing` and `rankSpacing` were read from the `state` section (falling back to 50), and `class.diagramPadding` was ignored (8 px) | `class.nodeSpacing`, `class.rankSpacing` and `class.diagramPadding` are honoured, with v12's effective defaults (50, 50, 8) | spec #126 |
-| Class edges followed `flowchart.curve` (a d3 curve factory) | Still follow `flowchart.curve`, read as for flowcharts: `rounded` (the default) and `step`/`stepBefore`/`stepAfter` are right-angle routes, `linear` straight segments, every other value S-curves | spec #126 |
+| Class edges followed `flowchart.curve` (a d3 curve factory) | Follow `class.curve`, then the top-level `curve`, then `rounded`; `flowchart.curve` is not read. The names are read as for flowcharts: `rounded` (the default) and `step`/`stepBefore`/`stepAfter` are right-angle routes, `linear` straight segments, every other value S-curves | spec #126; D733, #1378 |
 | A lollipop interface was a top-level node, outside its class's namespace | It sits in the namespace of its class | spec #126 |
 | `lineHops` on crossing relations | Core's shared edge-path step draws them, under `layered` and `layout: elk` alike: where a straight run crosses another relation, the run that gives way draws a 6px hop (`gap`: a break). The relations leaving one side of a class are about 5px apart (3px under ELK), so a run that crosses two of them crosses at points too close to carry a hop each, and neither hops, by the same rule as for every diagram (`hopPaths`). The shared key defaults to `false` (D689), so crossings hop only where a document turns hops on | D537, D689, #655 |
 
@@ -1368,6 +1369,7 @@ them keep working.
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
 | `nodeSpacing`/`rankSpacing` below the arrowhead: a subgraph level used its parent's `nodesep` and `ranksep + 25`, so frames were never drawn as tight as asked | Spacing is literal, except a rank gap is never smaller than an arrowhead plus its 6 px lead (13 px classic, 19.5 px neo), so the edge between two subgraphs stays visible | D601, #399 |
 | Icon shape frames (`form` `square`, `rounded`, `circle`): the glyph plus `flowchart.padding` (63 px around a 48 px icon), rounded corners 5; a circle as wide as the glyph's diagonal plus 40, about 108 px | The glyph plus half of `flowchart.padding` (55.5 px), rounded corners 5; a circle as wide as the glyph's diagonal plus half of `flowchart.padding`, about 75 px. The label sits 8 px from the frame, as in v12 | Tighter frames (D685, #1150) |
+| `flowchart.curve` was the only curve key, and the resolved config (`getConfig()`) showed its default | A top-level `curve` sets the curve of every diagram type that draws edges, and `swimlane.curve` that of a swimlane diagram. A flowchart takes a per-edge curve, then `flowchart.curve`, then `curve`, then `rounded`; a swimlane diagram takes `swimlane.curve`, set in any source, before `flowchart.curve`, and a flowchart with `layout: swimlane` ignores `swimlane.curve` (D761). `rounded` is now a default in code, so `getConfig()`, the config reference and the editor hover show no default for `flowchart.curve`. Drawing with nothing set is unchanged | One `curve` for every type, and a key without a default is unset only when the author did not set it (D733, #1377) |
 
 ## Sequence SVG structure
 
@@ -1446,6 +1448,7 @@ rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edge
 | `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
 | Front-matter `title` drawn above the diagram (`classDiagramTitleText`) | The same: centred over the drawing in the root's font and `textColor` (v12's `.classTitleText` rule never matched it), its baseline `class.titleTopMargin` (25) above it, the viewBox grown to hold it with 8 px around | One helper for every type (D652) |
 | Names, annotations, members, notes and relation labels read as Markdown without backticks; multiplicities and namespace titles drawn as plain text | The same: bold and italic are read in box rows, notes and relation labels; a text that starts with `- `, `* ` or `+ ` is drawn as written, and so is a code span (backticks and what they hold), with bold and italic outside it still read; multiplicities, namespace titles and lollipop interface names are plain. An unknown `#name;` is drawn as written, where v12 drew `&name;` | D564, D610, D561, #763, #836 |
+| Relationships drawn with `flowchart.curve` (`rounded` by default here) | The same curves, through the new `class.curve`, then the new top-level `curve`, then `rounded`. `flowchart.curve` is not read: a class diagram that set it sets `class.curve` instead. Nothing set draws as before; a self-loop is always `rounded`. Text output stays stepped | One key per type (D733, #1378) |
 
 ## ER SVG structure
 
@@ -2796,12 +2799,17 @@ no per-call options (D319, D302).
   (v12 drew it as given). `useWidth` is ignored, as v12's renderer never read it. Agentflow
   still reads three `flowchart` keys (D466): `flowchart.padding` (node padding),
   `flowchart.inheritDir` (a flow without its own `direction` takes the diagram's) and
-  `flowchart.subGraphTitleMargin` (room around a flow's title); its edges follow
-  `flowchart.curve`. With no curve set (no `flowchart.curve`, no `linkStyle default
-  interpolate`), edges are drawn with flowchart's default curve, `rounded`: stepped routes with
-  rounded corners, so nodes and labels can sit where they did not in v12, which drew `basis`
-  S-curves there (v12's `flowchart.curve` default). Set `flowchart.curve: basis` to keep the
-  S-curves (D687).
+  `flowchart.subGraphTitleMargin` (room around a flow's title). With no curve set (no
+  `agentflow.curve`, no `curve`, no `linkStyle default interpolate`), edges are drawn with the
+  default curve, `rounded`: stepped routes with rounded corners, so nodes and labels can sit
+  where they did not in v12, which drew `basis` S-curves there (v12's `flowchart.curve`
+  default). Set `agentflow.curve: basis` to keep the S-curves (D687).
+- **Edge curve** (D733, #1378): a per-edge `linkStyle <n> interpolate`, then `linkStyle default
+  interpolate`, then the new `agentflow.curve`, then the new top-level `curve`, then `rounded`.
+  v12 drew agentflow edges with `flowchart.curve`; v13 does not read it, so a diagram that set
+  `flowchart.curve` for its agentflow edges sets `agentflow.curve` instead. With none of these
+  set, the output is unchanged. Text output stays stepped and warns `ASCII_DROPPED` for a curve
+  set by `agentflow.curve` or `curve`.
 - **Limits**: the edge limit is v13's (`maxEdges`, 5,000 by default and set only by the
   integrator, R-SEC-5), with the message `Edge limit exceeded…`; v12 threw at 501 edges. A source
   longer than `maxTextSize` is rejected before it is parsed, as for every diagram.
@@ -2821,7 +2829,7 @@ no per-call options (D319, D302).
   a cross (`✕`, `x`), and `-.-` is dotted. It is never cropped: wider than `ascii.maxWidth`
   it turns `LR` into `TB`, then warns `ASCII_TOO_WIDE`.
 - **Text output drops**, one `ASCII_DROPPED` per kind: `style` (`style`, `classDef`, `class`,
-  `linkStyle`, palette colours), `curve` (`interpolate`, `flowchart.curve`), `emphasis`,
+  `linkStyle`, palette colours), `curve` (`interpolate`, `agentflow.curve`, `curve`), `emphasis`,
   `animation`, `link` (`click`, tooltips), `config` and `accessibility`. `config` names the
   options only the SVG reads, set off their default: `agentflow.useMaxWidth`,
   `diagramPadding`, `minNodeWidth` and `titleTopMargin`, and `flowchart.padding` and
@@ -2841,7 +2849,7 @@ so selectors that use them keep working: `clusters`, `cluster`, `flow-cluster`, 
 | Root `id="<render id>"`, a `<style>` scoped by the id, `aria-roledescription="agentflow"` | No root `id`; `class="mermaid mermaid-agentflow"`, `role="img"`, `aria-roledescription="agentflow"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases declared on the root `style` (only `theme: 'auto'` writes a custom-property sheet) | Inert output (R-SEC-2); hosts re-theme with `--mermaid-*` (R-THEME-3) |
 | `<g class="root">`, `<defs>` with `<marker>`s (point, circle, cross, hierarchy), `marker-end="url(#…)"` | The four groups are the root's children; each arrowhead is a `<path class="marker">` right after its edge's path: a filled triangle for `-->`, two stroked diagonals for `--x`, none for `-.-` | No `<defs>` or ids (D35); the head takes the edge's colour |
 | Element ids: vertices `<render id>-flowchart-<id>-<n>`, edges `<render id>-L_<a>_<b>_<n>`, flows by their id | `data-id` (the vertex, flow or edge id) and `data-ast` (its AST id: `n:<id>`, `s:<id>`, `e:<a>><b>`) on each `g.node`, flow `g.cluster` and edge `path`; labels carry `data-id` only | Ids are global in a page; `data-ast` maps an element back to its source (R-PARSE-8, D468) |
-| Edge: `<path class="… flowchart-link" id>` inside `g.edges.edgePath` | `<path class="flowchart-link edge-thickness-normal edge-pattern-solid\|dotted[ edge-animation-*][ classes]" data-id data-ast>` directly in `g.edgePaths`, or, for an animated edge, in a plain `<g>` there with its arrowheads; a dotted edge is `stroke-dasharray="2"` with butt caps. Its ends are on the outline of the shape drawn (the layout puts them there), and its curve follows `linkStyle … interpolate`, the default's, or `flowchart.curve`, else `rounded` (D687) | One element per edge maps it to its source |
+| Edge: `<path class="… flowchart-link" id>` inside `g.edges.edgePath` | `<path class="flowchart-link edge-thickness-normal edge-pattern-solid\|dotted[ edge-animation-*][ classes]" data-id data-ast>` directly in `g.edgePaths`, or, for an animated edge, in a plain `<g>` there with its arrowheads; a dotted edge is `stroke-dasharray="2"` with butt caps. Its ends are on the outline of the shape drawn (the layout puts them there), and its curve follows `linkStyle … interpolate`, the default's, `agentflow.curve` or `curve`, else `rounded` (D687, D733) | One element per edge maps it to its source |
 | Animated edges (`animate`, `animation`): `stroke-dasharray: 9,5` and the `dash` keyframes | The same dashes, caps and speeds, moved by an `<animate>` in the edge's `<g>`: the keyframes need a `<style>` | R-SEC-2, D606, as the flowchart (#1196) |
 | Edge label: `<g class="edgeLabel">` with HTML on `edgeLabelBackground`, no border | `<g class="edgeLabel" data-id>` with a tag: a `<rect rx="6">` with 8 px of room each side of the text and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set), bordered 1 px solid in the edge's stroke (a `linkStyle` or class stroke, else `lineColor`) (still 1 px and solid on dotted edges), then a `<text>`; one box around a label of several lines, none for an empty one | Edge labels are tags (D626–D629) |
 | Labels: `<foreignObject>` with HTML (`span.nodeLabel`, `div.labelBkg`) | `<text>`/`<tspan>` from core's label layout (markdown strings as markdown, math with the math plugin, D176); a word wider than `wrappingWidth` (`translate_to_swedish`) stays whole and the node grows to hold it, as the HTML did (the text output splits it) | No HTML mode (D5); labels measure deterministically (R-TEXT-4); #649 |
@@ -3129,6 +3137,7 @@ relations) are kept.
 | Lane labels as HTML-less `<text>` at (30, `y + 30`) in the page's colour | `<text>` start-anchored at the same point, bold, filled `emTextColor` | D527 |
 | Text at v12's 16 px | Text in `emTextColor` at the theme's `fontSize` | D527 |
 | A self relation drew a straight line through its box | A 4-point path under the box's bottom right corner, as is a relation under its row (one that skips boxes of its lane); every other relation is `M…L…`, as v12, ending at its head's tip | D521, D659 |
+| Relations were always straight lines, or right-angled routes under a row; no curve key | Unset, the same lines and heads, byte for byte. The new `eventmodeling.curve`, then the new top-level `curve`, draw every relation between frames with `flowchart.curve`'s names (`linear`, `step`, `rounded`, `basis`, …): the line stops at the head's base and the head follows the end of the drawn line. A relation from a frame to itself keeps its loop whatever the curve. An unknown name draws `rounded` with one `CURVE_UNKNOWN` warning. Event modeling has no text output | D733, D760 |
 | No source mapping | `data-id` on every element; `data-ast` on each `g.em-box` (`frame:<id>`) and each `path.em-relation` drawn for a `->>` (`relation:<source>-><target>`, the first `->>` of that source). A source repeated in one frame (`->> 01 ->> 01`) draws one path; the AST nodes of its repeats (`relation:01->02@2`, …) are not drawn. Lanes (`lane:<index>`) and inferred relations carry `data-id` only | R-PARSE-8, D528 |
 | `rgb(250,250,250)`, `rgb(240,240,240)` and `white` paints | The same colours as hex | |
 | `look: neo` and the redux themes: the same model as the classic themes | The same: event modeling differs between families by colour only | D227 |
@@ -3152,18 +3161,23 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   `swimlane.*` (in each source; a later source, front matter or a directive, still outranks
   `initialize()`). So `flowchart.layout: elk` or `flowchart.theme` moves a swimlane diagram
   unless `swimlane.layout` / `swimlane.theme` is set too, and a key both sections have
-  (`theme`, `layout`, `useMaxWidth`, `useWidth`) resolves the same way in both. An
-  `%%{init: {"config": …}}%%` key goes to `swimlane` when it is one of swimlane's own keys
-  (`theme`, `layout`, `useMaxWidth`, `lineHops` and the three below), else to `flowchart` (v12
-  sent all of it to `swimlane`). `flowchart.*` keys (spacing, curve, labels, padding) apply as
+  (`theme`, `layout`, `useMaxWidth`, `useWidth`, but not `curve`, D761) resolves the same way
+  in both. An `%%{init: {"config": …}}%%` key goes to `swimlane` when it is one of swimlane's
+  own keys (`theme`, `layout`, `useMaxWidth`, `lineHops`, `curve` and the three below), else
+  to `flowchart` (v12 sent all of it to `swimlane`). `flowchart.*` keys (spacing, curve, labels, padding) apply as
   in v12. `swimlane.look` is ignored, as `look` is everywhere (D153).
 - **Engine keys**, all honoured as in v12: `swimlane.ignoreCrossLaneEdges` (default `true`:
   each lane is ranked on its own edges), `optimizeRanksByCrossings` (default `true`; as in v12
   it acts only when `ignoreCrossLaneEdges` is `false`) and `automaticLaneOrdering` (default
   `false`: lanes keep their source order; `true` reorders them so busy lanes sit together).
 - **Curve.** Edges draw `rounded` unless the author sets a curve. v12's engine forced `rounded`
-  when the curve was unset or `basis`; in v13 an author's `flowchart.curve` (`basis` included)
-  or `linkStyle default interpolate` wins.
+  when the curve was unset or `basis`; in v13 an author's curve (`basis` included) wins: a
+  per-edge curve or `linkStyle default interpolate`, then the new `swimlane.curve`, then
+  `flowchart.curve`, then the new top-level `curve` (D733). `swimlane.curve` wins whenever it
+  is set, from any source: an `initialize()` `swimlane.curve` beats a front-matter
+  `flowchart.curve`. Config does not copy `curve` between the two sections, as it does the
+  keys both have. A flowchart drawn with `layout: swimlane` ignores `swimlane.curve`: it is the
+  diagram's key, not the layout's (D761).
 - **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
   (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
   then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned
@@ -3406,8 +3420,9 @@ v12's, apart from the two layout fixes of D514.
   `rect_border_color`, `rect_min_width`, `rect_min_height`, `fontSize`, `rect_padding` and
   `line_height` are accepted and ignored, as v12.2.0's renderer never read them (see the
   ignored-keys table); `look` as everywhere (D153).
-- **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
-  layout keeps room for each marker so it no longer overlaps the next box.
+- **Edges** follow `requirement.curve`, then the top-level `curve`, then `rounded` (D733, #1378),
+  a self-loop always `rounded`; `flowchart.curve` no longer reaches a requirement diagram, as v12
+  drew its edges with it. The layout keeps room for each marker so it no longer overlaps the next box.
 - **Several self-loops on one box** (D618, #768) each get their own route: the second is drawn
   on the opposite side of the box and later ones nest outward, alternating sides, so every line
   and label shows, as v12 drew them side by side. Before, they were drawn over one another. A
@@ -3442,7 +3457,7 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 | Marker room: none (dagre); markers could overlap the next box | The layout keeps each marker's drawn extent clear, from the theme's marker geometry (21 × 21 classic, 20 × 20 redux and neo, more for a wider `strokeWidth`; marker strokes stop at 8px, the chevron scale at 2) | Spec #520 (marker room from the family tokens) |
 | Edge label `<g class="edgeLabel">` with `<foreignObject>` (`div.labelBkg`, `span.edgeLabel`) | `<g class="edgeLabel" data-id>` with a `<rect>` and a `<text>` | Text labels; labels carry no `data-ast` (D437) |
 | Relation label on a square chip with no border (`relationLabelBackground`, white or `#16141f` in the redux themes) | A tag, the shared edge label: a rounded box (`rx` 6, no `labelBkg` class) with 8 px of room each side and 4 px above and below, filled opaque with `relationLabelBackground` (the theme background unless set, in every theme) and bordered 1 px solid in `relationColor`, solid on the dashed lines. The layout reserves the same box (`labelPatch`). Under `look: handDrawn` the border is sketched | D626, D627, D628, D629, D630 |
-| Edges drawn with `flowchart.curve` (`rounded` by default) | The same curves, through `flowchart.curve` (class's precedent) | |
+| Edges drawn with `flowchart.curve` (`rounded` by default) | The same curves, through the new `requirement.curve`, then the new top-level `curve`, then `rounded`. `flowchart.curve` is not read: a requirement diagram that set it sets `requirement.curve` instead. Nothing set draws as before. Text output stays stepped and warns `ASCII_DROPPED` for a curve set by either key | One key per type (D733, #1378) |
 | A self-loop drawn with `flowchart.curve` | A self-loop is always `rounded`, whatever the curve | Class's precedent: its legs are too short for the other curves |
 | A `style` / `classDef` `fill` left the text in the theme's ink (`styles2String` sends only `color` and `font-*` to the labels) | A `fill` with no `color` gives the text `theme.ink(fill)`, an ink that reads on it | R-THEME-12, ER's precedent |
 | Palette colours by CSS `[data-color-id].node path` rules | `data-color-id` kept; the colours are attributes on the outline and divider; an author `style` still wins | D152 |
@@ -3461,6 +3476,22 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
   and bold and italic outside it are still read. The title and rows of a state with several
   description lines are plain text, as v12 drew them: `**x**` stays as written there and a
   written `\n` breaks the line.
+- **A described state is not wrapped** (D731, #1214): the title and the description rows of a
+  state with several description lines break only at a written `\n`, never at
+  `state.wrappingWidth`, and the box grows to the longest line. This holds in cells too. v12 built
+  these labels with an infinite width. A state with one description wraps as before.
+- **Room below a composite's title** (D732, #1301, #1307): the first state or start dot in a
+  titled composite sits 20 px below the line under the title, the same room as on the other
+  three sides, at every nesting level. v12 left about 8 to 12 px there. The concurrency regions
+  of a composite start at that line, so their dividers run from it to the bottom border. Titled
+  composites are 16 px taller than before; the title keeps its place in the strip.
+- **Transition curves** (D733, #1324, #1325): `state.curve` sets how transitions and note
+  connectors are drawn, then the top-level `curve`, then `curved`, today's look, so a diagram
+  that sets neither draws as before. `flowchart.curve` no longer changes state diagrams: v12's
+  shared edge renderer fell back to it, v13 does not, so a v12 author who set it for state
+  edges sets `state.curve` or `curve` instead. A self-transition stays `rounded`, and text
+  output stays stepped. A name outside the list is drawn `rounded` and warns `CURVE_UNKNOWN`
+  once per render.
 - **A transition written inside a composite that names the composite** (D555):
   `state Boot { Running; Boot --> Running }`, the reverse, and `Outer --> Inner` written inside
   `Inner`. v12 filed the composite under itself (or under a state inside it) and then never
@@ -3560,6 +3591,7 @@ changes (spec #517):
 | A `usecase` length, font or `colorScheme` of the wrong type reached the renderer as it was (`wrappingWidth: "wide"`, `actorFontSize: -1`) | A length is a number or a numeric string, from the schema's minimum up to 10000; a weight one of the schema's; a family one the style check allows; `colorScheme` `role` or `rotate`. Anything else draws with the default and one `USECASE_CONFIG_IGNORED` warning per key | Pitfall 22 |
 | A styled `font-size` (`classDef`, `style`) in `vw`, `vh`, `0` or 10000px and up was drawn as given | Measured and drawn at the element's default size, with one `USECASE_STYLE_IGNORED` warning per value: the layout measures every label before drawing it | Pitfalls 16, 22 |
 | `usecase.theme` (default `redux-color`) chose the theme when no other layer set one | The same: honoured with v12's default; a `theme` from `initialize()` or the text wins over it, and `usecase.theme` over the top-level `theme` within a layer | P2 |
+| Relationship and note lines were always drawn as one fixed curve; no curve key | Unset, the same S-curves. The new `usecase.curve`, then the new top-level `curve`, set them with `flowchart.curve`'s names (`linear`, `step`, `rounded`, …), and the layout routes the lines to match; a line from a node to itself stays rounded, and text output keeps its right angles and warns `ASCII_DROPPED` (curve) once when a curve is set (D760). An unknown name draws `rounded` with one `CURVE_UNKNOWN` warning | D733, D760 |
 | No text output | `format: 'ascii'` draws the diagram as text ([ASCII output](ascii.md#usecase-diagrams)): actors as a figure, use cases as `( label )`, boundaries as frames | D320, D478 |
 
 ## Usecase SVG structure

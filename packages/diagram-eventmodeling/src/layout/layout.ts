@@ -484,8 +484,15 @@ function headOf(points: readonly Point[]): [Point, Point, Point] {
   const dx = tip.x - from.x;
   const dy = tip.y - from.y;
   const length = Math.hypot(dx, dy);
-  const ux = length > 0 ? dx / length : 0;
-  const uy = length > 0 ? dy / length : 1;
+  return headAt(tip, length > 0 ? dx / length : 0, length > 0 ? dy / length : 1);
+}
+
+/**
+ * The arrowhead with its tip at `tip`, pointing along the unit vector (`ux`, `uy`): base corner,
+ * tip, base corner. The renderer takes the direction from the drawn path when a curve is set
+ * (D760).
+ */
+export function headAt(tip: Point, ux: number, uy: number): [Point, Point, Point] {
   const bx = tip.x - ux * M.headLength;
   const by = tip.y - uy * M.headLength;
   const half = M.headWidth / 2;
