@@ -39,6 +39,12 @@ export interface StateNode {
   kind: StateKind;
   /** The label lines as written (`state "…" as X`, `X : …`); empty: the label is the id. */
   descriptions: string[];
+  /**
+   * The indexes in `descriptions` of the lines written as a markdown string in
+   * `state "`…`" as X`: the parser took the string's quotes off, so the line holds its
+   * backticks only, which the layout would draw as written (#1368). Absent when there is none.
+   */
+  markdown?: number[];
   /** The composite or region it is drawn in; undefined at the top level. */
   parent?: string;
   /** Classes from `class` and `:::` (top-level statements only, as in v12). */
@@ -125,6 +131,8 @@ export interface StateItem {
   id: string;
   type: ItemType;
   description?: string | string[];
+  /** Its (first) description was written as a markdown string, `state "`…`" as X`. */
+  markdown?: boolean;
   doc?: Item[];
   note?: { position: string; text: string; ast: AstId };
   classes?: string[];
@@ -174,6 +182,8 @@ interface GraphNode {
   range: Range;
   shape: string | undefined;
   description: string | string[];
+  /** The indexes of the descriptions written as a markdown string ({@link StateNode.markdown}). */
+  markdown?: number[];
   isGroup: boolean;
   region: boolean;
   dir?: StateDirection;
@@ -228,6 +238,19 @@ function unquote(s: string): string {
   while (from < to && s[from] === '"') from++;
   while (to > from && s[to - 1] === '"') to--;
   return s.slice(from, to);
+}
+
+/**
+ * Before a mention adds its description to `rec`: when that description was written as a
+ * markdown string, the index its first line takes among `rec`'s descriptions, as
+ * `describe` merges them (a description equal to the id is replaced).
+ */
+function mark(rec: GraphNode, markdown: boolean | undefined): void {
+  if (!markdown) return;
+  const d = rec.description;
+  let at = d.length > 0 && d !== rec.id ? 1 : 0;
+  if (Array.isArray(d)) at = d.length;
+  (rec.markdown ??= []).push(at);
 }
 
 /** Builds the {@link StateModel} from the top-level statements. One per parse. */
@@ -292,6 +315,7 @@ export class StateBuilder {
       };
       if (n.parent !== undefined) state.parent = n.parent;
       if (n.isGroup && n.dir !== undefined) state.dir = n.dir;
+      if (n.markdown) state.markdown = [...n.markdown];
       if (n.embed?.title !== undefined) state.title = n.embed.title;
       if (n.embed?.folded) state.folded = true;
       states.push(state);
@@ -506,7 +530,7 @@ export class StateBuilder {
       if (drawn) this.nodes.push(rec);
     }
     if (item.embed || rec.embed) this.blockMention(rec, item);
-    this.describe(rec, item.description);
+    this.describe(rec, item.description, item.markdown);
     if (!rec.isGroup && item.doc) this.group(rec, item, parent);
     // One check per state the model draws (D608); a region is not a state.
     if (drawn && !rec.region) this.countState(item.range);
@@ -570,9 +594,10 @@ export class StateBuilder {
   }
 
   /** The description of one mention, as `dataFetcher` adds it to the node. */
-  private describe(rec: GraphNode, d: string | string[] | undefined): void {
+  private describe(rec: GraphNode, d: string | string[] | undefined, markdown?: boolean): void {
     const { id } = rec;
     if (d) {
+      mark(rec, markdown);
       if (Array.isArray(rec.description)) {
         rec.shape = WITH_DESC;
         rec.description.push(...[d].flat());

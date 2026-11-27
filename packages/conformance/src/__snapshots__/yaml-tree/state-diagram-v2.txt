@@ -28,9 +28,9 @@ e2e/diagrams/state-diagram-v2/baseline/states/described.mmd 1 9c4e01edb73cffe4
 e2e/diagrams/state-diagram-v2/baseline/states/fork-join.mmd 1 81e95f98f265f44a
 e2e/diagrams/state-diagram-v2/baseline/states/simple.mmd 1 79daeaf724db3d2b
 e2e/diagrams/state-diagram-v2/baseline/states/stateDiagram-v1-keyword.mmd 1 a52fb312cba523cd
-e2e/diagrams/state-diagram-v2/baseline/text/emphasis-beside-code-span.mmd 1 42c1d65bbcdd273a
+e2e/diagrams/state-diagram-v2/baseline/text/emphasis-beside-code-span.mmd 1 c89d0002e824aef0
 e2e/diagrams/state-diagram-v2/baseline/text/entity-names.mmd 1 96adbf0b3d627732
-e2e/diagrams/state-diagram-v2/baseline/text/list-markers-and-backticks.mmd 1 469e30f42bec7ba4
+e2e/diagrams/state-diagram-v2/baseline/text/list-markers-and-backticks.mmd 1 06ca352be36b548b
 e2e/diagrams/state-diagram-v2/baseline/text/unicode.mmd 1 82187d0483e313dd
 e2e/diagrams/state-diagram-v2/baseline/text/wrapping.mmd 1 f851e5fd416e5768
 e2e/diagrams/state-diagram-v2/baseline/themes/base.mmd 1 dc33c2f0747676f5
@@ -150,6 +150,8 @@ e2e/diagrams/state-diagram-v2/nightly-check/v2-usemaxwidth-true.mmd 1 81e3c76883
 e2e/diagrams/state-diagram-v2/nightly-check/v2-width-of-compound-state-should-grow-with-title-if-title-is-wider.mmd 1 290b3450f2917a6f
 e2e/diagrams/state-diagram-v2/pr-check/can-have-styles-applied.mmd 1 f91d597dd4cedc4b
 e2e/diagrams/state-diagram-v2/pr-check/composite-with-a-loop-starts-on-its-start-state.mmd 1 b77bf4c4eef13ae7
+e2e/diagrams/state-diagram-v2/pr-check/label-syntax-compat.mmd 1 665f5f2296145013
+e2e/diagrams/state-diagram-v2/pr-check/label-syntax.mmd 1 f7d0fc8dfa45a78a
 e2e/diagrams/state-diagram-v2/pr-check/math-should-render-tex-in-every-state-label.mmd 1 78325c21668010a4
 e2e/diagrams/state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd 1 67bc6ec084622229
 e2e/diagrams/state-diagram-v2/pr-check/v2-a-compound-state-should-be-able-to-link-to-itself.mmd 1 5a56da1e01b3c412
