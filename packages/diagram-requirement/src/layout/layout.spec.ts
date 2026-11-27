@@ -124,10 +124,11 @@ describe('the requirement box (requirementBox.ts)', () => {
     expect(b!.height).toBeCloseTo(2 * line + 20, 6);
   });
 
-  it('never wraps (D436) and reads markdown on every line', () => {
+  it('never wraps (D436) and, with legacyMarkdown, reads markdown on every line', () => {
     const long = 'word '.repeat(80).trim();
     const { layout } = lay(
-      `requirementDiagram\nrequirement "__bold name__" {\n  text: "${long} **b**"\n}\n`
+      `requirementDiagram\nrequirement "__bold name__" {\n  text: "${long} **b**"\n}\n`,
+      { legacyMarkdown: true }
     );
     const box = layout.requirement!.boxes[0]!;
     const body = box.lines[2]!;
@@ -294,5 +295,126 @@ describe('the style-copy cap (D433)', () => {
     expect([measured, laid]).toEqual([0, 0]);
     expect(lay(model, undefined, counting).layout.nodes.size).toBe(2);
     expect(measured).toBeGreaterThan(0);
+  });
+});
+
+describe('label syntax (D731, #1368)', () => {
+  /** Each line of the label `part` of box `n`, as `[text, style]` runs. */
+  const runs = (src: string, part: string, init?: MermaidConfig, n = 0) =>
+    lay(src, init)
+      .layout.requirement!.boxes[n]!.lines.find((l) => l.part === part)!
+      .label.lines.map((ln) => ln.map((r) => [r.text, r.style]));
+  const B = Style.Bold;
+  const I = Style.Italic;
+  const req = (name: string, value: string) =>
+    `requirementDiagram\nrequirement ${name} {\n  id: ${value}\n  text: ${value}\n}\n`;
+  const el = (name: string, value: string) =>
+    `requirementDiagram\nelement ${name} {\n  type: ${value}\n  docref: ${value}\n}\n`;
+  const LEGACY = { legacyMarkdown: true };
+
+  it('draws plain markdown markers as written in every label kind', () => {
+    const src = req('"**strong** _name_"', '"**b** _i_"');
+    expect(runs(src, 'name')).toEqual([[['**strong** _name_', B]]]);
+    expect(runs(src, 'id')).toEqual([[['ID: **b** _i_', 0]]]);
+    expect(runs(src, 'text')).toEqual([[['Text: **b** _i_', 0]]]);
+    const e = el('"**e**"', '"**b** _i_"');
+    expect(runs(e, 'name')).toEqual([[['**e**', B]]]);
+    expect(runs(e, 'type')).toEqual([[['Type: **b** _i_', 0]]]);
+    expect(runs(e, 'docRef')).toEqual([[['Doc Ref: **b** _i_', 0]]]);
+  });
+
+  it('reads a markdown string as markdown in every label kind, in both modes', () => {
+    for (const init of [undefined, LEGACY]) {
+      const src = req('"`**strong** _name_`"', '"`x **b** _i_`"');
+      expect(runs(src, 'name', init)).toEqual([
+        [
+          ['strong ', B],
+          ['name', B | I],
+        ],
+      ]);
+      expect(runs(src, 'text', init)).toEqual([
+        [
+          ['Text: x ', 0],
+          ['b', B],
+          [' ', 0],
+          ['i', I],
+        ],
+      ]);
+      expect(runs(src, 'id', init)).toEqual([
+        [
+          ['ID: x ', 0],
+          ['b', B],
+          [' ', 0],
+          ['i', I],
+        ],
+      ]);
+      const e = el('"`**e**`"', '"`x **b**`"');
+      expect(runs(e, 'name', init)).toEqual([[['e', B]]]);
+      expect(runs(e, 'type', init)).toEqual([
+        [
+          ['Type: x ', 0],
+          ['b', B],
+        ],
+      ]);
+      expect(runs(e, 'docRef', init)).toEqual([
+        [
+          ['Doc Ref: x ', 0],
+          ['b', B],
+        ],
+      ]);
+    }
+  });
+
+  it('marks only a whole markdown string: a code span in a text is drawn as written', () => {
+    const { model } = parseRequirement(req('"`**a**`"', '"a `code` b"'));
+    expect(model.requirements[0]!.markdown).toEqual(['name']);
+    expect(model.requirements[0]!.name).toBe('`**a**`');
+    expect(model.requirements[0]!.text).toBe('a `code` b');
+    expect(runs(req('a', 'a `code` b'), 'text')).toEqual([[['Text: a `code` b', 0]]]);
+    expect(runs(req('a', 'a `code` b'), 'text', LEGACY)).toEqual([[['Text: a `code` b', 0]]]);
+  });
+
+  it('breaks the line at a written \\n and draws the tags, in both modes', () => {
+    for (const init of [undefined, LEGACY]) {
+      expect(runs(req('a', 'one\\ntwo'), 'text', init)).toEqual([[['Text: one', 0]], [['two', 0]]]);
+      expect(runs(req('"a\\nb"', 'x'), 'name', init)).toEqual([[['a', B]], [['b', B]]]);
+      expect(runs(req('a', '"`**x**\\ny`"'), 'text', init)).toEqual([
+        [
+          ['Text: ', 0],
+          ['x', B],
+        ],
+        [['y', 0]],
+      ]);
+      expect(runs(req('a', '"<b>b</b> H<sub>2</sub>O"'), 'text', init)[0]![1]).toEqual(['b', B]);
+    }
+  });
+
+  it('with legacyMarkdown, draws plain markdown as v12 did', () => {
+    const src = req('"**strong** _name_"', '"**b** _i_"');
+    expect(runs(src, 'name', LEGACY)).toEqual([
+      [
+        ['strong ', B],
+        ['name', B | I],
+      ],
+    ]);
+    expect(runs(src, 'text', LEGACY)).toEqual([
+      [
+        ['Text: ', 0],
+        ['b', B],
+        [' ', 0],
+        ['i', I],
+      ],
+    ]);
+    expect(runs(el('e', '"**b**"'), 'type', LEGACY)).toEqual([
+      [
+        ['Type: ', 0],
+        ['b', B],
+      ],
+    ]);
+  });
+
+  it('keeps the relation keyword plain', () => {
+    const src = 'requirementDiagram\nrequirement a {\n}\nelement b {\n}\nb - satisfies -> a\n';
+    expect(text(lay(src).layout.requirement!.relations[0]!)).toBe('<<satisfies>>');
   });
 });

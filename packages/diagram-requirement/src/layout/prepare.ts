@@ -17,11 +17,17 @@ import {
   type CurveKind,
 } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  labelSource,
+  layoutLabel,
+  Style,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
+import { warnMarkdownOutside } from '@mermaid-js/core/text/markdown-warning';
 import { tagsOnly } from '@mermaid-js/core/text/tags-only';
-import type { BoxOf, Relation, RequirementModel } from '../model.ts';
+import type { BoxOf, MarkdownField, Relation, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
-import { v12Label } from '@mermaid-js/core/text/v12-label';
 import {
   markerGeometry,
   markerRoom,
@@ -121,20 +127,35 @@ export interface RequirementPrepared {
 
 export const requirementCurve = curveKind;
 
-type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
+/**
+ * Measures one label. `text` is a box's name or body line when `written` is set (`false`, or
+ * `true` for a markdown string, its backticks dropped), and then read by the label handler as a
+ * label kind v12 read markdown in (#1368); without it, a keyword the layout wrote (`<<kind>>`).
+ */
+type Measure = (text: string, font: FontKey, bits: number, written?: boolean) => MeasuredLabel;
+
+/** A box's name or body line as the label handler takes it: its text and whether it is markdown. */
+export type BoxText = readonly [text: string, markdown: boolean];
 
 /** `<<text>>`, as v12 wrote it (entities, decoded by the label layout). */
 export const angled = (text: string): string => `&lt;&lt;${text}&gt;&gt;`;
 
-/** v12's head and body lines, in order: an empty field draws nothing. */
-export function linesOf(of: BoxOf): { kind: string; body: [LinePart, string][] } {
-  const [kind, fields]: [string, [LinePart, string, string][]] =
+/**
+ * v12's head and body lines, in order: an empty field draws nothing. A markdown string
+ * (`RequirementBox.markdown`) is given without its backticks, marked.
+ */
+export function linesOf(of: BoxOf): {
+  kind: string;
+  name: BoxText;
+  body: [LinePart, ...BoxText][];
+} {
+  const [kind, fields]: [string, [LinePart, string, string, MarkdownField?][]] =
     of.is === 'requirement'
       ? [
           of.box.kind,
           [
-            ['id', 'ID', of.box.requirementId],
-            ['text', 'Text', of.box.text],
+            ['id', 'ID', of.box.requirementId, 'requirementId'],
+            ['text', 'Text', of.box.text, 'text'],
             ['risk', 'Risk', of.box.risk],
             ['verification', 'Verification', of.box.verifyMethod],
           ],
@@ -142,14 +163,20 @@ export function linesOf(of: BoxOf): { kind: string; body: [LinePart, string][] }
       : [
           'Element',
           [
-            ['type', 'Type', of.box.type],
-            ['docRef', 'Doc Ref', of.box.docRef],
+            ['type', 'Type', of.box.type, 'type'],
+            ['docRef', 'Doc Ref', of.box.docRef, 'docRef'],
           ],
         ];
+  const marked = of.box.markdown ?? [];
+  const written = (text: string, field: MarkdownField | undefined): BoxText =>
+    field !== undefined && marked.includes(field) ? [text.slice(1, -1), true] : [text, false];
   const body = fields
     .filter(([, , v]) => v !== '')
-    .map(([part, key, v]): [LinePart, string] => [part, `${key}: ${v}`]);
-  return { kind: angled(kind), body };
+    .map(([part, key, v, field]): [LinePart, ...BoxText] => {
+      const [text, markdown] = written(v, field);
+      return [part, `${key}: ${text}`, markdown];
+    });
+  return { kind: angled(kind), name: written(of.box.name, 'name'), body };
 }
 
 /** What every box view is measured with. */
@@ -175,11 +202,11 @@ function boxView(of: BoxOf, { font, measure, styleOf }: BoxEnv): BoxView {
   const content = linesOf(of);
   const head: [LinePart, MeasuredLabel][] = [
     ['kind', measure(content.kind, f, bits)],
-    ['name', measure(box.name, f, bits | Style.Bold)],
+    ['name', measure(content.name[0], f, bits | Style.Bold, content.name[1])],
   ];
-  const body = content.body.map(([part, text]): [LinePart, MeasuredLabel] => [
+  const body = content.body.map(([part, text, markdown]): [LinePart, MeasuredLabel] => [
     part,
-    measure(text, f, bits),
+    measure(text, f, bits, markdown),
   ]);
   let widest = 0;
   for (const [, l] of [...head, ...body]) widest = Math.max(widest, l.width);
@@ -223,10 +250,10 @@ function cellBoxView(of: BoxOf, { font, measure, styleOf }: BoxEnv, units: UnitP
   const content = linesOf(of);
   const head: [LinePart, MeasuredLabel][] = [
     ['kind', measure(content.kind, font, 0)],
-    ['name', measure(box.name, font, 0)],
+    ['name', measure(content.name[0], font, 0, content.name[1])],
   ];
-  const body = content.body.map(([part, text]): [LinePart, MeasuredLabel, number[]] => {
-    const label = measure(text, font, 0);
+  const body = content.body.map(([part, text, markdown]): [LinePart, MeasuredLabel, number[]] => {
+    const label = measure(text, font, 0, markdown);
     const key = text.indexOf(': ') + ': '.length;
     return [part, label, label.lines.map((_, i) => (i === 0 ? key : 0) + C.value)];
   });
@@ -374,9 +401,17 @@ export function prepareRequirement(
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const measure: Measure = (text, f, bits) => {
-    const [shown, mode] = v12Label(text);
-    return layoutLabel(shown, f, Infinity, measurer, { ...mode, style: bits, inline: ctx.inline });
+  const measure: Measure = (text, f, bits, written) => {
+    // Names and body lines are a label kind v12 read markdown in (D731, #1368); a keyword the
+    // layout wrote is plain text.
+    const kind = { markdown: written === true, v12Markdown: written !== undefined };
+    const source = labelSource(text, kind, ctx.config);
+    warnMarkdownOutside(text, kind, ctx);
+    return layoutLabel(source.text, f, Infinity, measurer, {
+      ...source,
+      style: bits,
+      inline: ctx.inline,
+    });
   };
   const styles = new Map<string, CheckedStyle>();
   const styleOf = (decls: readonly string[]): CheckedStyle => {

@@ -7,11 +7,11 @@ import type { RequirementModel } from './model.ts';
  */
 export function requirementLabels(model: RequirementModel): readonly string[] {
   const out: string[] = [];
-  const box = (lines: ReturnType<typeof linesOf>, name: string): void => {
-    out.push(lines.kind, name, ...lines.body.map(([, text]) => text));
+  const box = (lines: ReturnType<typeof linesOf>): void => {
+    out.push(lines.kind, lines.name[0], ...lines.body.map(([, text]) => text));
   };
-  for (const r of model.requirements) box(linesOf({ is: 'requirement', box: r }), r.name);
-  for (const e of model.elements) box(linesOf({ is: 'element', box: e }), e.name);
+  for (const r of model.requirements) box(linesOf({ is: 'requirement', box: r }));
+  for (const e of model.elements) box(linesOf({ is: 'element', box: e }));
   for (const r of model.relations)
     if (r.from !== undefined && r.to !== undefined) out.push(angled(r.kind));
   if (model.title?.trim()) out.push(model.title.trim());

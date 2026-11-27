@@ -59,7 +59,16 @@ export interface RequirementBox {
   readonly styles: string[];
   /** Palette slot (v12's `colorIndex`): requirements count from 0, then elements. */
   readonly slot: number;
+  /**
+   * The texts written as a markdown string (`"`…`"`, #1368), in field order: the parser drops
+   * the quotes, so such a text keeps its backticks, as v12 stored it, and only this mark says
+   * it is markdown. Unset when there is none.
+   */
+  readonly markdown?: readonly MarkdownField[];
 }
+
+/** A drawn text of a box that may be a markdown string: its name or a written field. */
+export type MarkdownField = 'name' | 'requirementId' | 'text' | 'type' | 'docRef';
 
 export interface Requirement extends RequirementBox {
   readonly kind: RequirementKind;
