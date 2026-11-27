@@ -103,6 +103,14 @@ describe('radarLayoutViolations catches', () => {
     expect(v).toContain("legend row 1 meets spoke 0's label");
   });
 
+  it('a title on an axis label (#1257, D739)', () => {
+    const v = broken((l) => {
+      const { y } = l.spokes[0]!.label;
+      return { ...l, title: { ...l.title!, y: y - 1 } };
+    });
+    expect(v).toContain("the title meets spoke 0's label");
+  });
+
   it('a skipped curve drawn, and contents outside the bounds', () => {
     const v = broken((l) => ({
       ...l,
