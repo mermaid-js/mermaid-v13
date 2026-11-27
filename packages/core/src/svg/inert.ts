@@ -33,7 +33,14 @@ import {
   styleSheetProblem,
 } from './style.ts';
 import type { EmbeddedSvg } from './types.ts';
-import { isImageDataUrl, type SecurityLevel } from './url.ts';
+import {
+  DEFAULT_SCHEMES,
+  RE_NETWORK_PATH,
+  RE_SCHEME,
+  decodePercent,
+  isImageDataUrl,
+  type SecurityLevel,
+} from './url.ts';
 
 export interface InertOptions {
   readonly securityLevel?: SecurityLevel;
@@ -210,8 +217,6 @@ const TRANSFORMS: ReadonlySet<string> = new Set([
   'e',
 ]);
 const RE_WORD = /[a-zA-Z]+/g;
-const RE_SCHEME = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
-const RE_NETWORK_PATH = /^[\\/]{2}/;
 const RE_ENTITY = /^&(?:amp|lt|gt|quot|apos|#\d{1,8}|#x[0-9a-fA-F]{1,8});/;
 const FILL_RULES: ReadonlySet<string> = new Set(['nonzero', 'evenodd']);
 const CURSORS: ReadonlySet<string> = new Set(['pointer']);
@@ -260,14 +265,6 @@ function badAmp(text: string): boolean {
   return false;
 }
 
-function decodePercent(uri: string): string {
-  try {
-    return decodeURIComponent(uri);
-  } catch {
-    return uri;
-  }
-}
-
 // What a browser makes of an href: tabs and line breaks dropped, then leading spaces and controls.
 // eslint-disable-next-line no-control-regex -- C0 controls are what browsers strip
 const RE_LEADING_CTRL = /^[\u0000-\u0020]+/;
@@ -281,7 +278,7 @@ function hrefProblem(tag: string, value: string, options: InertOptions): string 
   const seen = browserView(value);
   // An image source follows checkImageUrl: raster data URLs, and no mail or link schemes.
   if (image && isImageDataUrl(seen) && isImageDataUrl(decodePercent(seen))) return undefined;
-  let schemes: readonly string[] = options.linkSchemes ?? ['http', 'https', 'mailto'];
+  let schemes: readonly string[] = options.linkSchemes ?? DEFAULT_SCHEMES;
   if (strict) schemes = [];
   else if (image) schemes = ['http', 'https'];
   for (const form of [seen, browserView(decodePercent(seen))]) {

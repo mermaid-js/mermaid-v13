@@ -7,6 +7,7 @@ import {
   isAllowedAttr,
   isAllowedTag,
   PLAIN_ATTRS,
+  TEXT_HOLDERS,
 } from './allowlist.ts';
 import { checkTag, formatValue } from './encode.ts';
 import { inertProblem } from './inert.ts';
@@ -362,7 +363,20 @@ describe('name checks resolved once give the same answers', () => {
     }
   };
 
-  const TAGS = [...ALLOWED_TAGS, 'script', 'foreignObject', 'style', 'SVG', '', '__proto__'];
+  // With names an object's prototype has: the checks look tags up in records without one.
+  const TAGS = [
+    ...ALLOWED_TAGS,
+    'script',
+    'foreignObject',
+    'style',
+    'SVG',
+    '',
+    '__proto__',
+    'constructor',
+    'toString',
+    'hasOwnProperty',
+    'valueOf',
+  ];
   const NAMES = [
     ...ALLOWED_ATTRS,
     'onclick',
@@ -422,6 +436,35 @@ describe('name checks resolved once give the same answers', () => {
     }
     // Every name the writers know without checks, on each element that takes them all.
     expect(accepted).toBeGreaterThan(PLAIN_ATTRS.size * 10);
+  });
+
+  it('for a tag that is not a string, on both backings', () => {
+    // Each converts to an allowed tag's name as a property key; the check refuses it all the same.
+    const g = { toString: () => 'g' };
+    for (const tag of [['g'], g, Object('g'), 1, null, undefined]) {
+      const label = Object.prototype.toString.call(tag);
+      expect(
+        error(() => checkTag(tag as string)),
+        label
+      ).toMatch(/is not an allowed SVG element$/);
+      expect(() => streamWriter().leaf(tag as 'g'), label).toThrow(TypeError);
+      expect(() => streamWriter().open(tag as 'g'), label).toThrow(TypeError);
+      expect(() => treeWriter().leaf(tag as 'g'), label).toThrow(TypeError);
+    }
+    expect(() => checkTag(Symbol('g') as unknown as string)).toThrow(TypeError);
+  });
+
+  it('for text in each element, on both backings', () => {
+    for (const tag of TAGS.filter(isAllowedTag)) {
+      for (const make of [streamWriter, treeWriter]) {
+        const w = make();
+        w.open('svg');
+        w.open(tag);
+        const err = error(() => w.text('x'));
+        expect(err, tag).toBe(TEXT_HOLDERS.has(tag) ? undefined : `<${tag}> cannot hold text`);
+      }
+    }
+    expect(error(() => streamWriter().text('x'))).toBe('<document> cannot hold text');
   });
 
   it('for names inherited from the prototype', () => {
