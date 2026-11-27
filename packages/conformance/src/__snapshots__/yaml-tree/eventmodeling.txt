@@ -10,6 +10,7 @@ e2e/diagrams/eventmodeling/baseline/themes/neo.mmd 1 411b52f5b2a1716b
 e2e/diagrams/eventmodeling/baseline/themes/redux-dark-color.mmd 1 a8ec37345d9e860a
 e2e/diagrams/eventmodeling/baseline/themes/redux-dark.mmd 1 00da95001ac06e72
 e2e/diagrams/eventmodeling/baseline/themes/redux.mmd 1 9ea5329bed65920f
+e2e/diagrams/eventmodeling/nightly-check/curve-key.mmd 1 cd4afe8bffe82871
 e2e/diagrams/eventmodeling/nightly-check/default-theme-base-colour-overrides.mmd 1 90b95680e88265d2
 e2e/diagrams/eventmodeling/nightly-check/layout-line-hops.mmd 1 48d9f573e1f87351
 e2e/diagrams/eventmodeling/nightly-check/parser-front-matter-title.mmd 1 af81ff844b23b8c7

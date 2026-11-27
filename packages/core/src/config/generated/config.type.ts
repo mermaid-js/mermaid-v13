@@ -2538,6 +2538,19 @@ useMaxWidth?: boolean
  */
 padding?: number
 /**
+ * How the relations between frames are drawn between their route
+ * points (D733, D748).
+ * 
+ * Unset keeps today's look: straight lines between lanes and along a
+ * lane, and right-angled routes under a row, each ending in an
+ * arrowhead. Precedence: this key when set, then the top-level `curve`
+ * when set, then today's look. With a curve set, the relations are
+ * drawn with that curve and each arrowhead follows the end of its
+ * line. A relation from a frame to itself stays as it is.
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * The height of each row in the Event Modeling diagram.
  */
 rowHeight?: number

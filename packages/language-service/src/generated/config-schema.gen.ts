@@ -6968,6 +6968,15 @@ export const configSchema: ConfigSchema = {
             "reason": "A negative value, one that is not a number, or one so large the drawing would not stay finite falls back to 30 with one `EVENTMODELING_CONFIG_INVALID` warning (D226); a numeric string counts as its number."
           }
         },
+        "curve": {
+          "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
+          "description": "How the relations between frames are drawn between their route\npoints (D733, D748).\n\nUnset keeps today's look: straight lines between lanes and along a\nlane, and right-angled routes under a row, each ending in an\narrowhead. Precedence: this key when set, then the top-level `curve`\nwhen set, then today's look. With a curve set, the relations are\ndrawn with that curve and each arrowhead follows the end of its\nline. A relation from a frame to itself stays as it is.\n",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D733, D748, #1380): v12's event modeling drew fixed straight lines and read no curve key. Unset, the output is unchanged. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+          }
+        },
         "rowHeight": {
           "description": "The height of each row in the Event Modeling diagram.",
           "type": "number",

@@ -13,7 +13,8 @@
 // `->>`'s id) and `data-id`; an inferred relation's path, the lanes (`lane:<index>`), the heads,
 // rects and texts carry `data-id` only (pitfall 12).
 import type { RenderContext } from '@mermaid-js/core';
-import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
+import type { Attrs, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import type { CurveKind } from '@mermaid-js/shared/svg/route';
 import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { eventModelingUseMaxWidth } from '../config.ts';
 import type {
@@ -23,7 +24,9 @@ import type {
   EventModelRelationLayout,
   PlacedLabel,
 } from '../layout/index.ts';
+import { headAt } from '../layout/index.ts';
 import type { EventModel } from '../model.ts';
+import { curvedRelation, keepsItsRoute, relationCurve } from './curve.ts';
 import { paints, type Paints } from './paint.ts';
 
 /** What the renderer reads from the render context. */
@@ -44,7 +47,9 @@ export function renderEventModel(
   const font: Attrs = { 'font-size': layout.font.size };
   for (const lane of layout.lanes) drawLane(lane, layout.radius, paint, font, w);
   for (const box of layout.boxes) drawBox(box, layout.radius, paint, font, w);
-  for (const relation of layout.relations) drawRelation(relation, paint, w);
+  // Once per render: `undefined` is today's look (no curve key set), not a curve kind.
+  const curve = relationCurve(ctx.config, ctx.warn);
+  for (const relation of layout.relations) drawRelation(relation, paint, w, curve);
   w.close();
 }
 
@@ -119,30 +124,44 @@ function drawBox(
 
 /**
  * A relation (`renderD3Relation`): the line, fill `none`, stroke `emRelationStroke` 1 wide, and
- * v12's marker as an inline polygon in `emArrowhead`.
+ * v12's marker as an inline polygon in `emArrowhead`. With a curve set (D748) the line is drawn
+ * by the shared `routePath` and the head follows the end of that path; a self relation, and
+ * every relation with no curve set, is drawn from the layout's points and head.
  */
-function drawRelation(r: EventModelRelationLayout, paint: Paints, w: SvgWriter): void {
-  const d = w.path();
-  for (const [i, p] of r.points.entries()) {
-    if (i === 0) d.moveTo(p.x, p.y);
-    else d.lineTo(p.x, p.y);
-  }
+function drawRelation(
+  r: EventModelRelationLayout,
+  paint: Paints,
+  w: SvgWriter,
+  curve: CurveKind | undefined
+): void {
+  const routed = curve !== undefined && !keepsItsRoute(r) ? curvedRelation(w, r, curve) : undefined;
   // The shared edge-path step (D302, D537): sketched under `look: handDrawn`, and where line
   // hops find the relation when `lineHops` is on. The head stays a plain polygon.
   w.outline('edge', 'path', {
     class: 'em-relation',
     'data-id': r.id,
     'data-ast': r.astId,
-    d: d.done(),
+    d: routed?.d ?? polyline(r, w),
     fill: 'none',
     stroke: paint.relation,
     'stroke-width': 1,
   });
+  const head = routed ? headAt({ x: routed.ex, y: routed.ey }, routed.edx, routed.edy) : r.head;
   w.leaf('polygon', {
     'data-id': r.id,
-    points: r.head.flatMap((p) => [p.x, p.y]),
+    points: head.flatMap((p) => [p.x, p.y]),
     fill: paint.arrowhead,
   });
+}
+
+/** The layout's points as one `M…L…` path, as v12 drew them. */
+function polyline(r: EventModelRelationLayout, w: SvgWriter): PathData {
+  const d = w.path();
+  for (const [i, p] of r.points.entries()) {
+    if (i === 0) d.moveTo(p.x, p.y);
+    else d.lineTo(p.x, p.y);
+  }
+  return d.done();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1, D133: `accTitle` only). */
