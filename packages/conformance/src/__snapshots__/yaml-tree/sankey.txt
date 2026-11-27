@@ -22,6 +22,7 @@ e2e/diagrams/sankey/nightly-check/links-same-color-as-source-node.mmd 1 5c8b15c7
 e2e/diagrams/sankey/nightly-check/links-same-color-as-target-node.mmd 1 dd3bc2a2ae293bce
 e2e/diagrams/sankey/nightly-check/links-use-hex-color.mmd 1 edf8325c299392da
 e2e/diagrams/sankey/nightly-check/outlined-labels.mmd 1 b453f1bcbb5b2e06
+e2e/diagrams/sankey/pr-check/label-syntax-compat.mmd 1 1cad78cb8476b287
 e2e/diagrams/sankey/pr-check/label-syntax.mmd 1 7c947edeb06faa42
 e2e/diagrams/sankey/pr-check/should-render-a-simple-example.mmd 1 1c05f86d2e648ddf
 e2e/diagrams/sankey/pr-check/should-render-complete-financial-flow-with-custom-colors.mmd 1 ca8746c51991ba04

@@ -188,6 +188,9 @@ describe('labels by the label rule (#1368)', () => {
     const a = await renderSankeyForTest(SYNTAX);
     const b = await renderSankeyForTest(SYNTAX, { config: { legacyMarkdown: true } });
     expect(b.svg).toBe(a.svg);
+    // The compatibility-mode twin fixture sets the key in its front matter.
+    const twin = await renderSankeyForTest(fixture('pr-check/label-syntax-compat'));
+    expect(twin.svg).toBe(a.svg);
   });
 });
 

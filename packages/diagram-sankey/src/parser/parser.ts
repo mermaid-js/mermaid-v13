@@ -121,7 +121,7 @@ const TITLE_WORD = /^(?:title|acctitle|accdescr)\b/i;
  * A quoted field's name that makes it a quoted markdown string (#1368): one pair of backticks
  * around text with no backtick, as core's label handler reads `"`…`"`.
  */
-const RE_BACKTICKED = /^`[^`]*`$/;
+const RE_IN_BACKTICKS = /^`[^`]*`$/;
 
 /** The sankey header keyword, as a field. */
 const KEYWORD = /^sankey(?:-beta)?$/i;
@@ -492,7 +492,7 @@ class SankeyParser {
       id: name,
       ast,
       range: field.range,
-      ...(field.quoted && RE_BACKTICKED.test(name) ? { markdown: true as const } : {}),
+      ...(field.quoted && RE_IN_BACKTICKS.test(name) ? { markdown: true as const } : {}),
     });
     checkLimit(
       this.st.diagnostics,

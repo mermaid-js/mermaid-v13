@@ -1,0 +1,22 @@
+---
+description: >-
+  The compatibility-mode twin of label-syntax.mmd: the same node labels with legacyMarkdown
+  set. Sankey has no label kind where v12 read markdown, so the picture is expected to equal
+  the default one.
+config:
+  legacyMarkdown: true
+---
+sankey-beta
+
+node src **bold** _ital_,hub,10
+"`node src md **bold** _ital_`",hub,10
+`node src bare **bold** _ital_`,hub,10
+node src a `code` b,hub,10
+node src <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O,hub,10
+node src one\ntwo,hub,10
+hub,node dst **bold** _ital_,10
+hub,"`node dst md **bold** _ital_`",10
+hub,`node dst bare **bold** _ital_`,10
+hub,node dst a `code` b,10
+hub,node dst <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O,10
+hub,node dst one\ntwo,10
