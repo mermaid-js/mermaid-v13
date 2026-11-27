@@ -308,7 +308,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `journey.rightAngles` | ignored | v12's journey renderer never read it. |  |
 | `journey.activationWidth` | ignored | v12's journey renderer never read it. |  |
 | `journey.textPlacement` | ignored | Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode. |  |
-| `journey.sectionFills` | ignored | Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme. |  |
+| `journey.sectionFills` | removed | v12's theme rules hid it. | `fillType<n>`, n 0 to 7 |
 | `timeline.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the timeline renderer never did. |  |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `timeline.diagramMarginX` | ignored | v12's timeline never read it. |  |
@@ -328,7 +328,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `timeline.activationWidth` | ignored | v12's timeline never read it. |  |
 | `timeline.textPlacement` | ignored | v12's timeline never read it. |  |
 | `timeline.actorColours` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
-| `timeline.sectionFills` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionFills` | removed | v12 never read it. | `cScale<n>`, `mainBkg` or `borderColorArray` by theme |
 | `timeline.sectionColours` | ignored | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -596,6 +596,7 @@ Sequence diagrams (`sequence` section, #145):
 | A plugin's config fragment declaring a theme variable | Unchanged (colour-only, global), but when a diagram's own theme table defines the same name, the diagram's table wins in that diagram's renders | D336, D337 |
 | `themeCSS` | Removed, with a warning; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable (below WCAG AA), the text switches to black or white, whichever reads better. This holds for node labels and for subgraph titles. A `color` the author sets wins. Under `look: handDrawn` the text is still judged against the fill colour, although the hachure lets some background show through | R-THEME-12, D21, D688 |
+| A comma inside a `style`, `classDef` or `linkStyle` value: the statement was split at every comma and the pieces joined with `;`, so `fill:rgb(255, 200, 200)` lost its colour and `font-family:Georgia, serif` kept only `Georgia`, without a warning | The pieces of a value with an open parenthesis (`rgb(`, `hsl(`, `var(`) or of a `font-family` list are joined back, so the whole value is kept, in every type. Syntax is unchanged: flowchart's `style` still takes no parentheses, as in v12 | D706, #1312 |
 | `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes, `neo` and `neo-dark` carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
 | `look: handDrawn` | Drawn by the optional `@mermaid-js/plugin-hand-drawn`, whose config fragment takes `look: handDrawn` as an alias of its `handDrawn` key. Without the plugin it is ignored like any other `look`, with one `LOOK_REMOVED` warning that names the plugin. See [Hand-drawn look](#hand-drawn-look) | D7, D153, D300, D303, R-PLUG-8 |
 | Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Public theme variables. `neo` and `neo-dark` turn the gradient on (`#0042eb` to `#eb0042`, left to right); every other theme has it off, and any theme can turn it on in `themeVariables`. The SVG then carries one `<defs>` with a `<linearGradient id="<idPrefix>-gradient">`, and the outlines v12 neo strokes with the gradient take `url(#<idPrefix>-gradient)`, so two diagrams on a page never share it. The stops read `--mermaid-gradientStart` / `--mermaid-gradientStop`. See [Neo gradient](#neo-gradient) | D182, R-THEME-7 |
@@ -1360,6 +1361,7 @@ them keep working.
 | Edge label: `<g class="edgeLabel"><g class="label">…foreignObject…`, its background `edgeLabelBackground` (80% alpha in `default`) with no border | `<g class="edgeLabel" data-id>` with a tag: a `<rect rx="6">` with 8 px of room each side of the text and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set), bordered 1 px solid in the edge's stroke (a `linkStyle`, class or `style` stroke, else `lineColor`) (still 1 px and solid on thick, dotted and dashed edges), then a `<text>`; one box around a label of several lines, none for an empty one. Edges reserve the matching room (`labelPatch` 16 × 8) | Text labels; edge labels are tags (D626–D629) |
 | Collapsed subgraph: a node drawn by the cluster code | `<g class="node cluster collapsed" data-ast="s:<id>">` | It is drawn as a node with its subgraph's AST id |
 | `style`/`classDef`/`linkStyle` as a `style` attribute | Presentation attributes (`fill`, `stroke`, …) after the allow-list (R-SEC-3) | Unknown properties and unsafe values are dropped with a warning |
+| A font list in `style`/`classDef` (`font-family:Georgia, Times New Roman, serif`) split at each comma into `font-family:Georgia;Times New Roman;serif`, so only `Georgia` was kept | The whole list is kept. The statement still takes no parentheses, as in v12, so `rgb(…)` is a parse error there | D706, #1312 |
 | `click A "url"` wraps the node in `<a xlink:href>`; tooltips are an HTML hover div | `<a href>` inside the node group (only URLs that pass `securityLevel`); tooltips are an SVG `<title>`; `click … callback` draws nothing (interactions plugin) | No script in output (R-SVG-4, R-SVG-5) |
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
 | `nodeSpacing`/`rankSpacing` below the arrowhead: a subgraph level used its parent's `nodesep` and `ranksep + 25`, so frames were never drawn as tight as asked | Spacing is literal, except a rank gap is never smaller than an arrowhead plus its 6 px lead (13 px classic, 19.5 px neo), so the edge between two subgraphs stays visible | D601, #399 |
@@ -1435,6 +1437,7 @@ rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edge
 | Namespace: `<g class="cluster" id>` with `<rect>` and an HTML label | `<g class="cluster namespace" data-id="<qualified id>" data-ast="s:<id>">` with `<rect>` and `<text class="cluster-label">`. A namespace made only as the ancestor of a dotted one (`X` of `namespace X.Y`) has no `namespace` statement of its own, so it has no `data-ast` | Text labels; one `data-ast` per AST node (R-PARSE-8) |
 | Per-class colour through `[data-look][data-color-id].node .outer-path` rules in the `<style>` | `data-color-id` is kept; the colours are presentation attributes on the box and its dividers; an author `style` / `classDef` still wins | No style sheet |
 | A `classDef`'s styles were copied into the `style` of each class that already had that CSS class when the `classDef` line was read, and drawn inline on its box. A class given the CSS class after the `classDef` (`class Cat:::pet`, `cssClass "Cat" pet`) got the class name but no styles, and v12 wrote no `.pet` rule, so it was drawn unstyled | The `classDef` styles of every CSS class of the class, then its own `style`, as presentation attributes after the allow-list, whatever the order of the lines: a class given the CSS class after the `classDef` is styled too | Unknown properties and unsafe values are dropped with a warning (R-SEC-3) |
+| A comma inside a `style` / `classDef` value split it: `fill:rgb(255, 200, 200)` lost the colour and `font-family:Georgia, serif` kept only `Georgia`, without a warning | The whole value is kept: `rgb()`, `hsl()` and font lists work | D706, #1312 |
 | Under `look: neo` (the redux family, `neo`, `neo-dark`), the `[data-look=neo]` rules beat a `style` / `classDef` fill and stroke on a class box | `style` and `classDef` fill and stroke on a class box take effect in every theme | D187, D152 |
 | Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)). A generic written with `~` is always drawn as written, as in v12, also when its type is named like a tag: `B~U~` draws `B<U>` and `+List~Data~ items` draws `+List<Data> items`, with no `HTML_DROPPED` | R-SEC-1; the flowchart's rule; D619 |
 | `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
@@ -1485,8 +1488,8 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 - **Section fills (D241):** sections cycle over all eight `fillType0`–`fillType7`, so an
   eighth section takes `fillType7` and a ninth `fillType0`. v12 cycled over seven (the length
   of `sectionFills`, read once at module load), so `fillType7` never showed although the redux
-  themes tune eight. `sectionFills` is ignored: v12's `fillType<n>` style rules hid it in
-  every theme anyway.
+  themes tune eight. `sectionFills` is removed and warns `CONFIG_REMOVED_KEY` (D708): v12's
+  `fillType<n>` style rules hid it in every theme anyway. Set `fillType0`–`fillType7` instead.
 - **The empty actor (D244):** a trailing comma (`Task: 5: Me,`) still adds the actor `''` to
   the model, but it is not drawn: no legend row, no dot, no colour. v12 drew a nameless row
   and dot, and as `''` sorts first it took the first colour and shifted every other actor's.
@@ -1516,7 +1519,9 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 - **Ignored**, accepted without a warning: `noteMargin`, `messageMargin`, `messageAlign`,
   `bottomMarginAdj`, `rightAngles`, `activationWidth` and `useWidth` (v12's journey renderer
   never read them), `boxMargin` (read only in a loop over an empty list), `textPlacement`
-  (every label is SVG text, D225) and `sectionFills` (D241).
+  (every label is SVG text, D225).
+- **Removed**, with a `CONFIG_REMOVED_KEY` warning: `sectionFills` (D241, D708). The theme's
+  `fillType0`–`fillType7` fill the sections.
 - **`actorColours` replaces the defaults:** an author's list is the whole palette, cycling
   from the first actor. v12 appended the author's colours after its six defaults (`#8FBC8F`,
   `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`), so they reached only the seventh
@@ -1590,8 +1595,11 @@ Legend entries carry `data-id="a:<name>"` only.
   `diagramMarginX`, `diagramMarginY`, `width`, `height`, `boxMargin`, `boxTextMargin`,
   `noteMargin`, `messageMargin`, `messageAlign`, `bottomMarginAdj`, `rightAngles`,
   `taskFontSize`, `taskFontFamily`, `taskMargin`, `activationWidth`, `textPlacement`,
-  `actorColours`, `sectionFills`, `sectionColours` and `useWidth`. Box colours come from the
-  `cScale`, `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+  `actorColours`, `sectionColours` and `useWidth`. Box colours come from the `cScale`,
+  `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+- **Removed**, with a `CONFIG_REMOVED_KEY` warning: `sectionFills` (D708). v12's timeline never
+  read it either. Box fills come from the `cScale<n>` theme variables in the classic themes,
+  otherwise from `mainBkg` or the `borderColorArray` palette (D227, D257).
 - **`cScale<n>`, `cScaleLabel<n>` and `cScaleInv<n>` overrides** recolour a timeline only in the
   classic themes (`default`, `base`, `dark`, `forest`, `neutral`). They change nothing in the
   redux themes, the default `redux-color` included, or under `theme: 'auto'` (which is
@@ -1781,14 +1789,14 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   a base colour as v12's do (D656): `default` keeps all twelve slots, as v12 computed them before
   the override; `forest` and `base` recompute all twelve, hue turns included; `dark` and
   `neutral` keep their `cScale` values. In the redux and neo themes, slots v12 derives by
-  lightness alone follow the theme's base colours and hue-turned and `cScale` slots are fixed
-  values, so in `redux-color` and `redux-dark-color` a `cScale<n>` override no longer recolours
-  `pie<n+1>` (set `pie<n+1>`).
-  `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
-  `THEME_VARIABLE_DROPPED`.
+  lightness alone follow the theme's base colours and hue-turned slots are fixed values; a
+  `cScale<n>` override recolours the slot that reads it, as in v12 (D334).
+  `pieOpacity` is a number from 0 to 1 (D221) or a percentage from `0%` to `100%`, read as
+  N/100 as CSS reads it (D707); any other value is dropped with `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
   `cScale`*n*, so the first slice is `cScale1`). v12 `dark` left `pie12` unset, so a twelfth
-  slice drew black; it is now `cScale0`, as in `neutral`.
+  slice drew black; it is now `cScale0`, as in `neutral`, so under `dark` a `primaryColor`
+  override (which sets `cScale0`) also recolours the twelfth slice.
 - **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
   which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
   by v12's own formula (`default` writes the result as a fixed value, which v12 keeps under an
@@ -3374,6 +3382,10 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 
 ## State diagram
 
+- **A comma inside a `style` or `classDef` value** (D706, #1312): `fill:rgb(255, 200, 200)`,
+  `stroke:hsl(210, 60%, 40%)` and `font-family:Georgia, "Times New Roman", serif` keep the
+  whole value. v12 split the statement at every comma, so the colour was lost and the font list
+  kept only its first name, without a warning.
 - **Label text** (D564, D610, #763, #836): state text, composite titles, transition text and
   notes read bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` is drawn
   as written: no bullet. A code span is drawn as written, backticks included and no monospace,

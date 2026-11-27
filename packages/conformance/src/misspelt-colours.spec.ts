@@ -112,6 +112,19 @@ const AUTHOR_FIXTURES = {
   'journey config': ['journey/baseline/config/colours.mmd', 'STYLE_VALUE_DROPPED'],
   'sankey config': ['sankey/baseline/config/values-hidden-colours.mmd', 'SANKEY_COLOR_INVALID'],
   'railroad config': ['railroad/nightly-check/ir-railroad-config.mmd', 'RAILROAD_CONFIG_INVALID'],
+  'mindmap cScale and cScaleLabel': [
+    'mindmap/baseline/config/palette.mmd',
+    'THEME_VARIABLE_DROPPED',
+  ],
+  'timeline cScale and cScaleLabel': [
+    'timeline/baseline/config/palette.mmd',
+    'THEME_VARIABLE_DROPPED',
+  ],
+  'gitGraph git0 (theme base)': [
+    'git/baseline/config/palette-override.mmd',
+    'THEME_VARIABLE_DROPPED',
+  ],
+  'info textColor': ['info/baseline/config/theme-variables.mmd', 'THEME_VARIABLE_DROPPED'],
   themeVariables: ['swimlanes/pr-check/custom-theme-variables.mmd', 'THEME_VARIABLE_DROPPED'],
 } as const;
 
@@ -148,3 +161,16 @@ describe.each(Object.entries(AUTHOR_FIXTURES))(
     });
   }
 );
+
+describe('#1232, D690: a misspelt colour after a sequence `box`', () => {
+  it('stays in the title and the box is transparent, without a warning', async () => {
+    const source = readFileSync(
+      join(DIAGRAMS, 'sequence/nightly-check/misspelt-box-colour.mmd'),
+      'utf8'
+    );
+    const { svg, warnings } = await render(source);
+    expect(svg).toContain('redd Team');
+    expect(svg).not.toMatch(/(?:fill|stroke)="redd"/);
+    expect(warnings).toEqual([]);
+  });
+});
