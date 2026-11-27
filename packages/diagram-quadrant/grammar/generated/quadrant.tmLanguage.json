@@ -496,9 +496,9 @@
         }
       ]
     },
-    "switch-32": {
-      "begin": "(?i)\\s*,\\s*",
-      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)1|0(?:.\\d+)?)",
+    "switch-point_x-32": {
+      "begin": "(?:\\G|(?!(?i)1|0(?:.\\d+)?))(?i)\\s*,\\s*",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)1|0(?:.\\d+)?)",
       "patterns": [
         {
           "include": "#mode-point_y"
@@ -508,27 +508,27 @@
         "0": {
           "name": "punctuation.definition.mermaid-quadrant"
         }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "constant.numeric.mermaid-quadrant"
-        }
       }
     },
     "rule-30": {
       "begin": "(?i)1|0(?:.\\d+)?",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)((?i)1|0(?:.\\d+)?)|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-point_x"
         },
         {
-          "include": "#switch-32"
+          "include": "#switch-point_x-32"
         }
       ],
       "beginCaptures": {
         "0": {
+          "name": "constant.numeric.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
           "name": "constant.numeric.mermaid-quadrant"
         }
       }

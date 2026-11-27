@@ -131,9 +131,9 @@
         }
       ]
     },
-    "switch-20": {
-      "begin": "\\(",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(\\))",
+    "switch-callback_name-20": {
+      "begin": "(?!\\(\\s*\\))(?:\\G|(?!\\)))\\(",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(?=\\))",
       "patterns": [
         {
           "include": "#mode-callback_args"
@@ -142,14 +142,14 @@
     },
     "rule-18": {
       "begin": "call\\s+",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)(\\))|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-callback_name"
         },
         {
-          "include": "#switch-20"
+          "include": "#switch-callback_name-20"
         }
       ],
       "beginCaptures": {

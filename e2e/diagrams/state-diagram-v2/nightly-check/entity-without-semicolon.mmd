@@ -1,9 +1,10 @@
 ---
 description: >-
-  Regression fixture for issue #1313: a note holds `&lt` with no semicolon (in
-  the issue a `;` ended the note right after it). As in HTML text (D709) the
-  legacy name decodes and the note reads "raw < x".
+  Regression fixture for issue #1313, as reported: the `;` ends the note, so its
+  text is `raw &lt` with no semicolon. As in HTML text (D709) the legacy name
+  decodes and the note reads "raw <". The `;` and the `x` after it are read as
+  two state ids, as v12 reads them (#1356).
 ---
 stateDiagram-v2
   A --> B
-  note right of A : raw &lt x
+  note right of A : raw &lt; x

@@ -1404,6 +1404,7 @@ v12 element classes (`actor`, `actor-top`, `actor-bottom`, `actor-man`, `actor-b
 | A message's text as separate `<text>` elements with `dominant-baseline="middle"` and `dy="1em"`, its last baseline about 11 px above the line at 16 px | One `<text>` on alphabetic baselines, placed so the last baseline sits `messageFontSize + boxMargin − 10 − wrapPadding / 2` above the line (11 px at the defaults). A label that would cut the message's `autonumber` circle (a self message's) moves up to 2 px above it; v12 drew it over the circle. A label that would reach below its line (a large `wrapPadding`, a small message font, a `rightAngles` self message) moves up until it ends on the line; v12 drew the line through it. Lines stay where they were, and so do rows and the diagram height, except where a label lifted over its number would rise above its row (a message font under about 12 px with `rightAngles`): that row grows by the difference. Earlier v13 alphas drew the text about 11 px higher | D723, #1237 |
 | A frame's title and section labels (`else`, `and`, `option`) with their first baseline `boxMargin + boxTextMargin + boxTextMargin / 2` below the frame's top line or the section's dashed line (18 px at the defaults) | The same, 17.5 px at the defaults. Frames, tabs, section lines and the diagram height are unchanged. Earlier v13 alphas drew the text about 12 px lower | D723, #1238 |
 | A wrapped message wrapped at `max(span + 2·wrapPadding, width)`, so its longest lines ran past both lifelines (by up to 47 px in Chromium, more than v12 measured, because v12 measured the text in Times) | A wrapped message between neighbouring participants wraps at `span − 2·wrapPadding` and stays between their lifelines with every `messageAlign`; a long label gets more lines and its row grows. A word wider than that room is not broken: it keeps a line of its own and may reach past it. A self message and a message across several columns keep v12's rule. A deliberate divergence from v12 | D724, #1239 |
+| A frame's label tab fixed at `labelBoxWidth` (50 px); a keyword wider than that (`critical` at 16 px in the classic themes) ran out of the tab | The tab grows to hold its keyword, and the frame and its title follow it: the frame is at least the title's width plus the tab's, and the title is centred right of the tab, so it never overlaps the tab. A frame is wider than v12's only by what its tab is wider than 50 px (at most about 10.6 px, for `critical` at 16 px, whose tab is 60.6 px wide; none at the redux themes' 14 px). Earlier v13 alphas sized the frame for a 50 px tab, so a long `critical` title overlapped the tab by about 10 px. Text output is unchanged | D734, #1361 |
 
 The `data-ast` ids are built from the names as written (R-PARSE-8): `p:<id>` for a participant
 (its later mentions `p:<id>@2`, `@3`, …), `m:<from>><to>` for the first message between two
@@ -2198,8 +2199,8 @@ Class lists are written with single spaces and no trailing blank.
   of its own when they do not fit side by side. The priority is the card's left edge: heavy
   for `Very High` and `High`, dashed for `Low` and `Very Low`; in the `ascii` charset a tag on
   the card's top border (`[!!]`, `[!]`, `[-]`, `[--]`) tells the four apart. `:::` classes, bold and
-  italic text and ticket links are dropped with one `ASCII_DROPPED` warning each (`style`,
-  `emphasis`, `link`); a board wider than `ascii.maxWidth` is not folded and adds
+  italic text, ticket links and `accTitle`/`accDescr` are dropped with one `ASCII_DROPPED`
+  warning each (`style`, `emphasis`, `link`, `accessibility`); a board wider than `ascii.maxWidth` is not folded and adds
   `ASCII_TOO_WIDE` ([ASCII output](./ascii.md#kanban-boards)).
 - **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
   spec and docs examples, and the grammar is in [syntax/kanban.md](./syntax/kanban.md). Every
@@ -2209,6 +2210,13 @@ Class lists are written with single spaces and no trailing blank.
   the word `kanban` in any case. Errors v12 raised as a `TypeError` or not at all are now
   diagnostics with a range: an `::icon()` or `:::` line before any item, shape data that is
   empty or `null` (`@{ }`), and a `shape` that is not a lower-case string (`shape: 5`).
+- **`accTitle` and `accDescr`** (D742): `accTitle: …`, `accDescr: …` and `accDescr { … }`, on a
+  line of their own at any indent, before or between columns, set the SVG's `<title>` and
+  `<desc>` (with `aria-labelledby` and `aria-describedby`), as in the other types, and draw
+  nothing. v12's kanban had no such statements: it drew each line as a column or card, and
+  rejected the `{` of the block form. A later statement replaces an earlier one. `accTitle[x]`,
+  or `accTitle` without a `:`, is still an item. The text output drops them with an
+  `ASCII_DROPPED` warning (`accessibility`).
 - **Columns that share an id** (D373): v12 listed the cards of every column with that id under
   each of them, so two `docs` columns both drew both columns' cards. A card now belongs to the
   column it follows. Repeated ids are allowed for columns and cards alike.
@@ -2242,10 +2250,14 @@ Class lists are written with single spaces and no trailing blank.
   ([Kanban SVG structure](#kanban-svg-structure)). The ticket and assignee follow the label
   rule, so a tag the ticket draws as formatting is left out of its link: `<b>T-1</b>` draws a
   bold `T-1` and links to `…T-1`, where v12 put the tags in the URL (D712).
-- **Column colours** (D374) come from the `cScale` palette in every theme, lightened by 10 or
-  darkened under a dark theme, and cycle through the twelve slots, so v12's black columns past
-  the tenth are gone and `neo-dark` darkens where v12 left it light
+- **Column colours** (D374, D741) come from the `cScale` palette in every theme, lightened by
+  10, or darkened under `themeVariables.darkMode` and in `neo-dark`, `redux-dark` and
+  `redux-dark-color`. They cycle through the twelve slots, so v12's black columns past the tenth
+  are gone, and those three dark themes darken where v12 left them light
   ([Kanban SVG structure](#kanban-svg-structure)).
+- **`theme: dark` with `themeVariables.darkMode: true`** (D741): the columns lighten, as under
+  `theme: dark` alone, where v12 darkened them. The dark theme's columns follow v12's `dark`,
+  which never set `darkMode`; an author's `darkMode` darkens only a light theme.
 - **Config** (D378). The `kanban` section is honoured with v12's defaults: `sectionWidth` (200),
   `padding` (8), `ticketBaseUrl` (empty, so no links) and `useMaxWidth` (true); `kanban.theme`
   wins over the top-level `theme` for kanban boards. v12's kanban read three `mindmap` keys:

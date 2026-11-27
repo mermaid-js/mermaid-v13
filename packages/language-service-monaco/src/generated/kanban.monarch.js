@@ -44,6 +44,20 @@ export default {
         }
       ],
       [
+        "(?<=^|\\n)[\\t ]+(?=accTitle[\\t ]*:|accDescr[\\t ]*[:{])",
+        {
+          "token": "",
+          "next": "@acc"
+        }
+      ],
+      [
+        "(?<=^|\\n)(?=accTitle[\\t ]*:|accDescr[\\t ]*[:{])",
+        {
+          "token": "",
+          "next": "@acc"
+        }
+      ],
+      [
         "\\s*%%.*",
         {
           "token": "comment"
@@ -147,6 +161,70 @@ export default {
         "[^\\(\\[\\n\\)\\{\\}@]+",
         {
           "token": "variable"
+        }
+      ]
+    ],
+    "acc": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "accTitle[\\t ]*:[^\\n\\u2028\\u2029]*",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "accDescr[\\t ]*:[^\\n\\u2028\\u2029]*",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "accDescr[\\t ]*\\{",
+        {
+          "token": "keyword",
+          "switchTo": "@accBlock"
+        }
+      ]
+    ],
+    "accBlock": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^}]*\\}",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^}]+",
+        {
+          "token": "keyword"
         }
       ]
     ],
