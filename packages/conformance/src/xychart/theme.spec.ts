@@ -89,7 +89,7 @@ async function differing(name: ThemeName, themeVariables?: Vars): Promise<string
  * Shared-variable overrides and the variables in which v13 differs from v12, with why. Since
  * D656 `default` keeps its block under both overrides, as v12's does. In the three dark themes of
  * D749 a dark author `primaryTextColor` reads on the light bars, so the labels take it where v12
- * kept `#131300`.
+ * kept `#131300`; so does the light text on an author's dark palette (the test above).
  */
 const D749 =
   'D749: the labels take the canvas text where it reads on the first bar colour, else v12’s #131300';
@@ -181,10 +181,13 @@ describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381,
         const listed = Object.keys(nested).map((k) => flatName(SECTION, k));
         for (const n of listed)
           expect(v13Of(theme, n), `${name} ${n}`).toBe(v12Of(old, VARS[n]!.nested!, n));
-        // The keys not set keep the theme's values.
-        expect(await differing(name, { xyChart: nested }), JSON.stringify(nested)).toEqual(
-          Object.keys(DIFFERENCES[name] ?? {}).filter((n) => !listed.includes(n))
-        );
+        // The keys not set keep the theme's values. In the dark themes of D749 the labels follow
+        // the author's first bar colour: on these dark palettes they take the canvas text, where
+        // v12 kept #131300.
+        const differ = Object.keys(DIFFERENCES[name] ?? {}).filter((n) => !listed.includes(n));
+        if (DARK_INK.includes(name) && 'plotColorPalette' in nested)
+          differ.push('xyChartDataLabelColor');
+        expect(await differing(name, { xyChart: nested }), JSON.stringify(nested)).toEqual(differ);
       }
     }
   );

@@ -682,4 +682,20 @@ describe("a table's palette variable (D545)", () => {
     const own: ThemeSpec = { ...bare, palettes: { plotColorArray: ['#abcdef'] } };
     expect(createTheme(own).palette('plotColorArray')).toEqual(['#abcdef']);
   });
+
+  it("is a palette slot() reads: the author's list, else the shared palette its rule names (D749)", () => {
+    const SLOT: DiagramThemeTable = {
+      ...PALETTE,
+      vars: { ...PALETTE.vars, demoInk: { alias: 'dmi', kind: 'color' } },
+      rules: { light: { ...PALETTE.rules.light, demoInk: 'slot(demoSeries, 1, lineColor)' } },
+    };
+    const ink = (themeVariables?: Record<string, unknown>) =>
+      createTheme(spec.base, { cssVariables: false, diagram: SLOT, themeVariables }).value(
+        'demoInk'
+      );
+    expect(ink()).toBe(BASE_TEN[1]);
+    expect(ink({ plotColorArray: '#111111, #222222' })).toBe('#222222');
+    expect(ink({ demoSeries: ['#333333', '#444444'] })).toBe('#444444');
+    expect(ink({ demo: { series: '#555555, #666666' } })).toBe('#666666');
+  });
 });

@@ -331,7 +331,7 @@
       "count": 1
     },
     "mermaid/no-brand-cast": {
-      "count": 11
+      "count": 10
     }
   },
   "packages/dev/src/browser/compare-pane.ts": {
