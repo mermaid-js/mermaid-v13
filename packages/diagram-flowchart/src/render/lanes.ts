@@ -1,8 +1,8 @@
 // Swimlane lanes (spec #528, D535, D536): when the `swimlane` engine lays a flowchart out, each
 // top-level group is a lane, drawn as v12's swimlane cluster (`clusters/swimlane.js` at
-// upstream c9b12739f): a title band filled `clusterBkg` and an unfilled body, both stroked
-// `clusterBorder`. Loose nodes sit in a lane the engine makes, which flowchart's model does
-// not have. v12's `log.warn`s for shared nodes and nested lanes are warnings here (D226).
+// upstream c9b12739f): a title band and a body, both filled `clusterBkg` and stroked
+// `clusterBorder`. v12 wrote `fill="none"` on the body, but its `.cluster rect` CSS filled it
+// (D768). Loose nodes sit in a lane the engine makes, which flowchart's model does not have. v12's `log.warn`s for shared nodes and nested lanes are warnings here (D226).
 // A part of its own (`../lanes.ts`, R-PERF-1), loaded with the engine for flowcharts only. It
 // imports only types from the renderer: what it draws with comes in the `Scene` and `makeLanes()`.
 import type { LayoutModel, LayoutModelGroup } from '@mermaid-js/core/layout';
@@ -117,8 +117,8 @@ function laneWarnings(
 }
 
 /**
- * A lane as v12's swimlane cluster: `rect.swimlane-body` (unfilled), `rect.swimlane-title`
- * (filled `clusterBkg`), both stroked `clusterBorder`, then the label, centred in the band and
+ * A lane as v12's swimlane cluster: `rect.swimlane-body` and `rect.swimlane-title`, both
+ * filled `clusterBkg` (D768) and stroked `clusterBorder`, then the label, centred in the band and
  * turned −90° when the band is on the left. In the colour themes both rects take the palette
  * slot, fill included, as v12's `[data-color-id]` lane rules did. The author's `style` and
  * `classDef` still win (spread after). No drop shadow: v12's swimlane styles turned it off.
@@ -148,7 +148,7 @@ function drawLane(
     'stroke-width': cluster.strokeWidth,
     ...own,
   });
-  w.outline('group', 'rect', { class: 'swimlane-body', ...parts.body, ...paintOf('none') });
+  w.outline('group', 'rect', { class: 'swimlane-body', ...parts.body, ...paintOf(cluster.fill) });
   w.outline('group', 'rect', { class: 'swimlane-title', ...parts.title, ...paintOf(cluster.fill) });
   if (view) {
     const { x, y } = box.title;
