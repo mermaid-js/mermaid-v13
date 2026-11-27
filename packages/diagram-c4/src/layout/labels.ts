@@ -10,6 +10,7 @@ import type { C4Model, C4Relation } from '../model.ts';
 import type { Measure, Measured } from './layout.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { LabelRoom } from './room.ts';
+import { fieldText, joinTexts, type C4Text } from '../label-text.ts';
 import type { Place, Stagger } from './pairs.ts';
 import { crosses, lineOf, type Route, type Work } from './route.ts';
 import { hitRect } from './shapes.ts';
@@ -19,13 +20,15 @@ export function relationLabelText(
   model: Pick<C4Model, 'c4Type'>,
   rel: C4Relation,
   index: number
-): string {
-  return (model.c4Type === 'C4Dynamic' ? `${index + 1}: ` : '') + rel.label;
+): C4Text {
+  const label = fieldText(rel, 'label', rel.label) ?? { text: '' };
+  return model.c4Type === 'C4Dynamic' ? joinTexts([`${index + 1}: `, label]) : label;
 }
 
 /** A relation's `[techn]` line, when it has one. */
-export function relationTechnText(rel: Pick<C4Relation, 'techn'>): string | undefined {
-  return rel.techn ? `[${rel.techn}]` : undefined;
+export function relationTechnText(rel: Pick<C4Relation, 'techn' | 'markdown'>): C4Text | undefined {
+  const techn = fieldText(rel, 'techn', rel.techn);
+  return techn?.text ? joinTexts(['[', techn, ']']) : undefined;
 }
 
 /** What measuring and placing a label reads from the layout. */

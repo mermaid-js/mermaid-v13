@@ -36,6 +36,7 @@ import type { ParseResult, Range, TokenStream, TokenView } from '@mermaid-js/cor
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import * as codes from '../codes.ts';
+import { isMarkdownString } from '../model.ts';
 import { MentionIds } from '../parser/mention-ids.ts';
 import type { C4ParseOptions } from '../parser/parser.ts';
 import type {
@@ -512,6 +513,7 @@ class C4BetaParser {
       tags: [],
       children: [],
     };
+    marked(node, 'label', label);
     this.fields(node);
     node.range.end = this.range(this.i - 1).end;
     this.counted(node);
@@ -522,16 +524,20 @@ class C4BetaParser {
   private fields(node: C4BetaElementNode): void {
     this.tested(lists.AFTER_NAME_LIST);
     if (this.kind() === BETA.String) {
-      node.description = this.unquote(this.i++);
+      node.description = marked(node, 'description', this.unquote(this.i++));
       this.tested(lists.AFTER_NAME_LIST);
     }
     if (node.description !== undefined && this.kind() === BETA.String) {
-      node.technology = this.unquote(this.i++);
+      node.technology = marked(node, 'technology', this.unquote(this.i++));
       this.tested(lists.AFTER_TECHNOLOGY_LIST);
     }
     if (this.kind() === BETA.Instances) {
       this.i++;
-      node.instances = this.quoted('`instances` takes a number in quotes, as in `instances "3"`');
+      node.instances = marked(
+        node,
+        'instances',
+        this.quoted('`instances` takes a number in quotes, as in `instances "3"`')
+      );
       this.tested(lists.AFTER_TAG_LIST);
     }
     while (this.kind() === BETA.Tag) {
@@ -622,10 +628,14 @@ class C4BetaParser {
   private labels(node: C4BetaRelationNode): void {
     if (this.kind() === BETA.Colon) {
       this.i++;
-      node.description = this.quoted('a relation label is quoted, as in `a --> b : "Uses"`');
+      node.description = marked(
+        node,
+        'description',
+        this.quoted('a relation label is quoted, as in `a --> b : "Uses"`')
+      );
       this.tested(lists.AFTER_LABEL_LIST);
       if (this.kind() === BETA.String) {
-        node.technology = this.unquote(this.i++);
+        node.technology = marked(node, 'technology', this.unquote(this.i++));
         this.tested(lists.AFTER_RELATION_LIST);
       }
     }
@@ -740,6 +750,15 @@ class C4BetaParser {
     }
     return i;
   }
+}
+
+/**
+ * `value`, field `field` of `node` as written in quotes, listed in the node's `markdown` when it
+ * is a quoted markdown string (`"`…`"` or `'`…`'`, spec #1368).
+ */
+function marked<F extends string>(node: { markdown?: F[] }, field: F, value: string): string {
+  if (isMarkdownString(value)) (node.markdown ??= []).push(field);
+  return value;
 }
 
 /** The text of a `title`, `accTitle:` or `accDescr` token, as the statement means it. */

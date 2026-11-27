@@ -7,14 +7,18 @@ import { layoutC4Beta } from './beta/layout.ts';
 import { isC4Beta, type C4BetaModel } from './beta/model.ts';
 import { parseC4Beta } from './beta/parser.ts';
 import { renderC4Beta } from './beta/render.ts';
+import { edgeLabelText, stereotypeOf } from './beta/prepare.ts';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import {
   boundaryTypeText,
+  descrText,
+  labelText,
   layoutC4,
   relationLabelText,
   relationTechnText,
   stereotypeText,
 } from './layout/index.ts';
+import { fieldText, type C4Text } from './label-text.ts';
 import type { C4Layout } from './layout/types.ts';
 import type { C4Model } from './model.ts';
 import { detectC4, parseC4 } from './parser/index.ts';
@@ -31,22 +35,36 @@ export type C4AnyModel = C4Model | C4BetaModel;
  * own text helpers, so the two cannot drift.
  */
 function c4Labels(model: C4Model): string[] {
-  const out: (string | undefined)[] = [];
-  for (const e of model.elements) out.push(e.label, stereotypeText(e), e.descr);
-  for (const b of model.boundaries) out.push(b.label, boundaryTypeText(b), b.descr);
+  const out: (C4Text | string | undefined)[] = [];
+  for (const e of model.elements) out.push(labelText(e), stereotypeText(e), descrText(e));
+  for (const b of model.boundaries) out.push(labelText(b), boundaryTypeText(b), descrText(b));
   model.relations.forEach((r, i) => out.push(relationLabelText(model, r, i), relationTechnText(r)));
   out.push(model.title);
-  return out.filter((t): t is string => t !== undefined && t.trim() !== '');
+  return texts(out);
 }
 
-/** c4-beta's texts as written: names, descriptions, technologies, instances and the title. */
+/**
+ * c4-beta's texts as drawn: names, type lines (technology and instances), descriptions, relation
+ * labels and technologies, and the title.
+ */
 function c4BetaLabels(model: C4BetaModel): string[] {
-  const out: (string | undefined)[] = [];
-  for (const e of model.elements) out.push(e.name, e.description, e.technology, e.instances);
-  for (const r of model.relations) out.push(r.description, r.technology);
+  const out: (C4Text | string | undefined)[] = [];
+  for (const e of model.elements) {
+    out.push(fieldText(e, 'name', e.name), fieldText(e, 'description', e.description));
+    out.push(stereotypeOf(e), fieldText(e, 'instances', e.instances));
+  }
+  for (const r of model.relations) {
+    out.push(edgeLabelText(r), fieldText(r, 'technology', r.technology));
+  }
   out.push(model.title);
-  return out.filter((t): t is string => t !== undefined && t.trim() !== '');
+  return texts(out);
 }
+
+/** The texts that are not empty. */
+const texts = (all: readonly (C4Text | string | undefined)[]): string[] =>
+  all
+    .map((t) => (typeof t === 'string' ? t : t?.text))
+    .filter((t): t is string => t !== undefined && t.trim() !== '');
 
 /**
  * The C4 plugin (DESIGN §12.1, spec #522): `layoutKind: 'custom'` with its own `C4Layout`.

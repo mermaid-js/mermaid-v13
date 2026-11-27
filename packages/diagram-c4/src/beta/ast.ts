@@ -47,6 +47,8 @@ export interface C4BetaElementNode extends AstNode<'Element'> {
   description?: string;
   technology?: string;
   instances?: string;
+  /** The fields written as a quoted markdown string (`"`…`"`, spec #1368), backticks kept. */
+  markdown?: ('label' | 'description' | 'technology' | 'instances')[];
   tags: string[];
   children: C4BetaElementNode[];
 }
@@ -61,6 +63,8 @@ export interface C4BetaRelationNode extends AstNode<'Relation'> {
   step?: number;
   description?: string;
   technology?: string;
+  /** The fields written as a quoted markdown string (`"`…`"`, spec #1368), backticks kept. */
+  markdown?: ('description' | 'technology')[];
   tags: string[];
 }
 

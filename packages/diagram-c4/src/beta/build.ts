@@ -218,6 +218,9 @@ class Builder {
       description: node.description ?? '',
       technology: NO_TECHNOLOGY.has(node.kind) ? '' : technology,
       ...(keepsInstances && node.instances !== undefined ? { instances: node.instances } : {}),
+      ...(node.markdown
+        ? { markdown: node.markdown.map((f) => (f === 'label' ? 'name' : f)) }
+        : {}),
       tags: node.tags,
       ...(parent === undefined ? {} : { parent }),
       boundary: node.children.length > 0 || node.kind === 'group' || keepsInstances,
@@ -255,6 +258,7 @@ class Builder {
         description: node.description ?? '',
         technology: node.technology ?? '',
         ...(node.step !== undefined && inDynamic ? { step: node.step } : {}),
+        ...(node.markdown ? { markdown: [...node.markdown] } : {}),
         tags: node.tags,
         ast: node.id,
       },

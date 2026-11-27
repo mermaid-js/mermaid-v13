@@ -5,6 +5,8 @@
  */
 export {
   boundaryTypeText,
+  descrText,
+  labelText,
   layoutC4,
   relationLabelText,
   relationTechnText,

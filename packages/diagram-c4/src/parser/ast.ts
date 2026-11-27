@@ -23,6 +23,11 @@ export interface C4Argument {
   name?: string;
   /** The value, trimmed (`''` for an empty argument). */
   value: string;
+  /**
+   * Set when the argument is a quoted markdown string: `"`…`"`, or `$name="`…`"` (spec #1368).
+   * The value keeps its backticks, as v12 stored it; bare backticks are not one.
+   */
+  markdown?: true;
   /** From the argument's first character (its quote or `$`) to its last. */
   range: Range;
 }
