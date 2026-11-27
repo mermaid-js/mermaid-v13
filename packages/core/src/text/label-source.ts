@@ -40,20 +40,17 @@ const RE_BR = /^<br\s*\/?>$/i;
 
 /** `text` without the blanks and `<br>`s at its end. */
 export function withoutEndBreaks(text: string): string {
-  let end = text.length;
-  for (;;) {
-    while (end > 0 && (text[end - 1] as string) <= ' ') end--;
-    if (text[end - 1] !== '>') break;
+  // Each pass steps back over blanks and one `<br>`; `<` and `>` past the start read as no match.
+  for (let end = text.length; ; ) {
+    while ((text[end - 1] as string) <= ' ') end--;
     const open = text.lastIndexOf('<', end - 1);
-    if (open < 0 || !RE_BR.test(text.slice(open, end))) break;
+    if (!RE_BR.test(text.slice(open, end))) return text.slice(0, end);
     end = open;
   }
-  return end === text.length ? text : text.slice(0, end);
 }
 
 /** `text` without the blank lines between its written lines. */
-export const withoutBlankLines = (text: string): string =>
-  text.includes('\n') ? text.replace(RE_BLANK_LINES, '\n') : text;
+export const withoutBlankLines = (text: string): string => text.replace(RE_BLANK_LINES, '\n');
 
 /**
  * Reads a label as written (D734). A quoted markdown string (`"`…`"`, with no backtick inside
@@ -74,15 +71,11 @@ export function labelSource(
   config: LabelConfig = {}
 ): LabelSource {
   const quoted = options.markdown ? undefined : RE_QUOTED_MARKDOWN.exec(label.trim())?.[1];
-  const markdown =
-    options.markdown === true || quoted !== undefined || config.markdownAlwaysOn === true;
-  const written = quoted ?? label;
-  const broken = written.includes('\\')
-    ? written.replace(RE_WRITTEN_BREAK, (m) => (m.length === 2 ? '<br>' : m))
-    : written;
+  const broken = (quoted ?? label).replace(RE_WRITTEN_BREAK, (m) => (m[2] ? m : '<br>'));
   return {
     text: withoutEndBreaks(withoutBlankLines(broken)),
-    markup: markdown ? 'markdown' : 'plain',
+    markup:
+      options.markdown || quoted !== undefined || config.markdownAlwaysOn ? 'markdown' : 'plain',
     backslashBreak: false,
   };
 }
