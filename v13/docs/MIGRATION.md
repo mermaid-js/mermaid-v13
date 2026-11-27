@@ -2063,11 +2063,20 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
 
 ### Text
 
+- **Tags and markdown strings draw (D735, amends D263):** the title, section names and task
+  labels (milestones and `vert` markers included) are read as labels are in every diagram type.
+  `<b>`, `<i>`, `<u>`, `<s>`, `<sub>`, `<sup>` and `<br>` draw, and a written `\n` breaks the
+  line; v12 drew all of them as written with `.text()`, except `<br>` in a section name. A quoted
+  markdown string (`` "`**bold** _ital_`" ``) is drawn as markdown, without its quotes and
+  backticks; v12 showed it as written. Plain `**x**`, `_x_` and backticks, and a tag Mermaid does
+  not know (`List<T>`), are still drawn as written. `legacyMarkdown` changes nothing here: v12
+  read no markdown in gantt labels. A section name still breaks on `</br>` as in v12. A task
+  label of several lines is centred on its bar, and a title of several lines grows upward from
+  where a one-line title sits.
 - **Entity codes are decoded (D563):** `#35;`, `#quot;`, `#lt;` and `#9829;` in the title, a
-  section name or a task label draw `#`, `"`, `<` and `♥`, as in v12. Markup and `\n` are still
-  shown as written, as v12 drew them with `.text()`. A reference typed with `&` (`&amp;`) is
-  decoded too; v12 showed it as written. A `#name;` Mermaid does not know stays as written
-  (D561).
+  section name or a task label draw `#`, `"`, `<` and `♥`, as in v12; a `#lt;b#gt;` is text, not
+  a tag. A reference typed with `&` (`&amp;`) is decoded too; v12 showed it as written. A
+  `#name;` Mermaid does not know stays as written (D561).
 - **A label wider than its bar goes outside it (D729, provisional):** with `excludes`, a task's
   bar is drawn shorter than its span. v12 chose the label's side from the whole span and placed
   it from the drawn bar, so a label wider than the drawn bar but not than the span was centred on

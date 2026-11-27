@@ -1,0 +1,33 @@
+---
+description: >-
+  Every gantt label kind (title, section name, task, milestone and vert
+  marker labels) written the ways of spec #1368: plain markdown, a quoted
+  markdown string, bare backticks, a code span in plain text, the common
+  tags and a written \n. Only the quoted markdown string reads markdown;
+  the tags draw and \n breaks the line (D735). The title can be written
+  once, so it carries the tags.
+---
+gantt
+  title title <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  dateFormat YYYY-MM-DD
+  axisFormat %m-%d
+  section section **bold** _ital_
+    task **bold** _ital_ :a1, 2024-01-01, 12d
+    milestone **bold** _ital_ :milestone, m1, after a1, 0d
+  section "`section **bold** _ital_`"
+    "`task **bold** _ital_`" :a2, after a1, 12d
+    "`milestone **bold** _ital_`" :milestone, m2, after a2, 0d
+  section `section **bold** _ital_`
+    `task **bold** _ital_` :a3, after a2, 12d
+    `milestone **bold** _ital_` :milestone, m3, after a3, 0d
+  section section a `code` b
+    task a `code` b :a4, after a3, 12d
+    milestone a `code` b :milestone, m4, after a4, 0d
+  section section <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    task <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O :a5, after a4, 12d
+    milestone <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O :milestone, m5, after a5, 0d
+  section section one\ntwo
+    task one\ntwo :a6, after a5, 12d
+    milestone one\ntwo :milestone, m6, after a6, 0d
+    "`vert **bold** _ital_`" :vert, v1, 2024-01-25, 0d
+    vert <b>bold</b><br>next :vert, v2, 2024-02-20, 0d

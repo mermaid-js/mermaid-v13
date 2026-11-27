@@ -7,6 +7,7 @@ import type { RenderContext } from '@mermaid-js/core';
 import {
   decodeEntities,
   fontSizePx,
+  labelSource,
   layoutLabel,
   Style,
   type FontKey,
@@ -49,10 +50,12 @@ export interface Env {
     readonly title: FontKey;
     readonly vert: FontKey;
   };
-  /** A label as written (no wrap), in `font`; `style` bits for bold / italic. */
+  /** A label (no wrap), in `font`, read by core's label handler; `style` bits for bold / italic. */
   label(text: string, font: FontKey, style?: number): MeasuredLabel;
-  /** A section title: its `<br>`s break lines (v12 `lineBreakRegex`). */
+  /** A section title, read as {@link Env.label} is, in the section font; `</br>` breaks too. */
   sectionLabel(text: string): MeasuredLabel;
+  /** An axis label, measured as written in the tick font: the axis format is no label. */
+  tickLabel(text: string): MeasuredLabel;
 }
 
 type Warn = GanttLayoutContext['warn'];
@@ -77,26 +80,37 @@ function sizeOf(value: unknown, fallback: number, base: number, path: string, wa
 const textOf = (value: unknown): string | undefined =>
   typeof value === 'string' && value !== '' ? value : undefined;
 
-// Task labels are plain text, as v12 drew them with `.text()`: markup and `\n` are shown as
-// written, so they are escaped before core's label layout reads them. Entity codes are decoded
-// first (D563): the parser hands `#35;` on as `&#35;`, which draws `#`, and the `<` of a `#lt;`
-// is plain text like a typed one. A math span (`$$…$$`, D176) an inline-box provider takes is
-// passed through untouched; one none takes is shown as written too. Icons (D292) contain none
-// of the escaped characters.
+// An axis label is no label: its text comes from the axis format, so it is measured as written,
+// as v12 drew it with `.text()`. Markup and `\n` are escaped before core's label layout reads
+// it; entity codes are decoded first (D563). A math span (`$$…$$`, D176) an inline-box provider
+// takes is passed through untouched; one none takes is shown as written too.
 const RE_MATH = /(\$\$[\s\S]*?\$\$)/;
 const RE_ESCAPED = /[&<]|\\(?=n)/g;
 const ESCAPES: Readonly<Record<string, string>> = { '&': '&amp;', '<': '&lt;', '\\': '&#92;' };
 const escaped = (part: string): string =>
   decodeEntities(part).replace(RE_ESCAPED, (c) => ESCAPES[c]!);
 /** `text` shown as written, but the math spans `boxed` says a provider takes. */
-export const literal = (text: string, boxed: (span: string) => boolean = () => false): string =>
+const literal = (text: string, boxed: (span: string) => boolean): string =>
   text
     .split(RE_MATH)
     .map((part, i) => (i % 2 === 1 && boxed(part) ? part : escaped(part)))
     .join('');
 
-/** v12 `common.lineBreakRegex`: `<br>`, `<br/>`, `</br>`, any case. */
-const RE_V12_BREAK = /<\/?br\s*\/?>/gi;
+/**
+ * The title, section names and task labels (`vert` markers included) go through core's label
+ * handler (D735, amending D263): the common tags draw, `<br>` and a written `\n` break the line,
+ * a quoted markdown string (`"`…`"`) is markdown, and all else is plain text. The parser keeps a
+ * label's quotes, so the handler finds the markdown string itself. v12 drew every gantt label
+ * with `.text()`, so no label kind read markdown there (`v12Markdown: false`). Entity codes
+ * decode as in every label, and the parser's `&lt;` for a `#lt;` is text (D563).
+ */
+const GANTT_LABEL = { v12Markdown: false } as const;
+
+/**
+ * v12 broke a section name on `common.lineBreakRegex`, which takes `</br>` too; core's label
+ * layout reads `</br>` as a closing tag. A section name keeps the v12 break.
+ */
+const RE_V12_CLOSE_BREAK = /<\/br\s*\/?>/gi;
 
 export function envOf(ctx: GanttLayoutContext): Env {
   const m = GANTT_METRICS;
@@ -133,11 +147,11 @@ export function envOf(ctx: GanttLayoutContext): Env {
     const out = ctx.inline?.extract(span, f, ctx.measurer);
     return out !== undefined && out.boxes.length === 1 && out.source.length === 1;
   };
-  const measure = (raw: string, f: FontKey, style = 0): MeasuredLabel =>
-    layoutLabel(raw, f, Infinity, ctx.measurer, {
-      style,
-      ...(ctx.inline ? { inline: ctx.inline } : {}),
-    });
+  const inline = ctx.inline ? { inline: ctx.inline } : {};
+  const measure = (text: string, f: FontKey, style = 0): MeasuredLabel => {
+    const source = labelSource(text, GANTT_LABEL, ctx.config);
+    return layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, style, ...inline });
+  };
   return {
     m,
     titleTopMargin: lengthOf(conf.titleTopMargin, d.titleTopMargin, 'gantt.titleTopMargin'),
@@ -165,19 +179,15 @@ export function envOf(ctx: GanttLayoutContext): Env {
     compact: conf.displayMode === 'compact',
     width,
     fonts,
-    label: (text, f, style = 0) =>
-      measure(
-        literal(text, (span) => boxed(span, f)),
-        f,
-        style
-      ),
-    sectionLabel: (text) =>
-      measure(
-        text
-          .split(RE_V12_BREAK)
-          .map((part) => literal(part, (span) => boxed(span, fonts.section)))
-          .join('<br>'),
-        fonts.section
+    label: measure,
+    sectionLabel: (text) => measure(text.replace(RE_V12_CLOSE_BREAK, '<br>'), fonts.section),
+    tickLabel: (text) =>
+      layoutLabel(
+        literal(text, (span) => boxed(span, fonts.tick)),
+        fonts.tick,
+        Infinity,
+        ctx.measurer,
+        inline
       ),
   };
 }

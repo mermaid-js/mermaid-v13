@@ -337,3 +337,35 @@ describe('gantt sections (R-PARSE-8)', () => {
     expect(svg).not.toMatch(/<g\/>|<g><\/g>/);
   });
 });
+
+// D735 (spec #1368 T11): gantt labels go through core's label handler.
+describe('gantt labels draw tags and markdown strings (D735)', () => {
+  const SOURCE = [
+    'title Plan <b>bold</b>',
+    'section Phase<br>one',
+    'Task <b>bold</b> <i>ital</i> :a, 2014-01-01, 3d',
+    '"`Md **strong** _em_`" :b, 2014-01-01, 3d',
+    'Plain **stars** `code` List<T> :c, 2014-01-01, 3d',
+    'Lines one\\ntwo :d, 2014-01-01, 3d',
+  ].join('\n');
+
+  it('draws tags and markdown strings, keeps plain markdown and List<T> as text', async () => {
+    const { svg } = await render(SOURCE);
+    expect(svg).toMatch(/<tspan[^>]*font-weight="bold"[^>]*>bold<\/tspan>/);
+    expect(svg).toMatch(/<tspan[^>]*font-style="italic"[^>]*>ital<\/tspan>/);
+    expect(svg).toMatch(/<tspan[^>]*font-weight="bold"[^>]*>strong<\/tspan>/);
+    expect(svg).toMatch(/<tspan[^>]*font-style="italic"[^>]*>em<\/tspan>/);
+    expect(svg).not.toContain('`Md');
+    expect(svg).toContain('Plain **stars** `code` List&lt;T&gt;');
+    expect(svg).not.toContain('one\\ntwo');
+    expect(svg).toMatch(/>Lines one<\/tspan>/);
+    expect(svg).toMatch(/>two<\/tspan>/);
+    expect(svg).not.toContain('&lt;b&gt;');
+  });
+
+  it('draws the same with legacyMarkdown: no gantt label kind read markdown in v12', async () => {
+    const plain = await render(SOURCE);
+    const legacy = await render(SOURCE, { legacyMarkdown: true });
+    expect(legacy.svg).toBe(plain.svg);
+  });
+});
