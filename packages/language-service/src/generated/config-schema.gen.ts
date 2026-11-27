@@ -3683,7 +3683,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "As v12's `sectionWidth || 200`. A number or a numeric string from 0 to 10,000; a width above 0 and below 26 is raised to 26, so cards keep a width, and anything else lays out with the default, each with one `KANBAN_CONFIG_IGNORED` warning."
+            "reason": "As v12's `sectionWidth || 200`. A number or a numeric string from 0 to 10,000; a width above 0 and below 36 is raised to 36, so cards keep a width, and anything else lays out with the default, each with one `KANBAN_CONFIG_IGNORED` warning."
           }
         },
         "ticketBaseUrl": {
