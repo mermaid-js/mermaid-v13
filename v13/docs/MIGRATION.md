@@ -3159,8 +3159,9 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   when the curve was unset or `basis`; in v13 an author's `flowchart.curve` (`basis` included)
   or `linkStyle default interpolate` wins.
 - **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
-  (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
-  then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned
+  and `rect.swimlane-title`, both filled `clusterBkg` and stroked `clusterBorder`, then the
+  label. v12 wrote `fill="none"` on the body but its `.cluster rect` CSS filled it; v13 fills
+  it in every look, the default lane too, and the hand-drawn look hachures it (D768). The title band is on top for `TB` and `BT`, and on the left, its label turned
   to read upward, for `LR` and `RL`. **Fixed:** v12 turned only `LR`, so `RL` lanes got a top
   band over a left-reserved layout; in v13 `RL` matches `LR` (D536). The default lane (nodes
   outside every subgraph) has no label, `data-id="__swimlane_default__"` and the palette slot
@@ -3574,6 +3575,7 @@ order are kept: `g.clusters` (each `g.usecase-system-boundary.system-boundary-<t
 | Labels in `foreignObject` (HTML), and a stereotype folded into a use case's label as Markdown (`«s»<br/>label`) | SVG text laid out by core ([Labels and text](#labels-and-text)): `<br>`, entities, Markdown, math and icons work. A stereotype is a first `text.usecase-stereotype` line `«s»` above the label, for actors and use cases alike. A plain label's markup is still text, as v12 escaped it (`Hostile("<img …>")` draws the tag's text); only Markdown labels read the HTML subset | D225, R-SEC-2 |
 | The front-matter `title` was set, then wiped by `db.clear()` before `insertTitle` ran: never drawn | Drawn above the diagram as `text.usecaseDiagramTitleText` in the root's text colour, centred, the drawing moved down by its height and the diagram padding; it does not name the diagram (`accTitle` does) | D472, D133 |
 | `<defs>` with `<marker>` elements (`point`, `circle`, `cross`, `extension`) referenced by `marker-end` | Each marker is a `path.marker` in its relationship's group: v12's classic point, circle, cross and the generalization's hollow triangle (filled `mainBkg`), sized as v12's classic markers in every theme, in the line's colour (an author's `style` stroke included) | DESIGN §7.1, D227 |
+| Every arrowhead (`.marker`) was filled with `lineColor`, so an include or extend head differed from its line in a theme that colours the line (`redux-color`) | An include or extend head takes its line's colour (`usecaseIncludeLine`, `usecaseExtendLine`); an author's `style` stroke still wins; generalization and association heads stay in the edge line colour | D767, #1227 |
 | An invisible `rect.usecase-actor-outline` (`opacity: 0`) around each actor | Not written: the actor's group carries the name, the layout its box | Nothing invisible is drawn |
 | Animated relationships: `stroke-dasharray: 9,5` and the `dash` keyframes | The same dashes, caps and speeds, moved by an `<animate>` in the relationship's group: the keyframes need a `<style>` | R-SEC-2, D606, as the flowchart |
 | An icon actor drew Font Awesome's fallback glyph (`usecase-actor-icon-fallback`) for an unknown icon | The icons extension's glyph (D293) in the frame, else the frame alone with one `ICON_NOT_RENDERED` | D293, D299 |
