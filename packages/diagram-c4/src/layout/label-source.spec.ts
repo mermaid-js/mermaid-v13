@@ -249,6 +249,36 @@ describe.each([false, true])('c4-beta labels, legacyMarkdown %s', (compat) => {
     );
     expect(text(tags.get('c.descr'))).toEqual(['descr i', 'two']);
   });
+
+  it('breaks at a written \\n in every kind, markdown string or not (#1368)', () => {
+    const nl = layBeta(
+      BETA((k) => `"${k} one\\ntwo"`),
+      compat
+    );
+    for (const name of ['c.name', 'c.descr', 'n.label', 'n.descr', 'c-s.label']) {
+      expect(text(nl.get(name)), name).toHaveLength(2);
+      expect(text(nl.get(name))[1], name).toBe('two');
+    }
+    expect(text(nl.get('c.type'))).toEqual(['[Container: techn one', 'two]']);
+    expect(text(nl.get('n.type'))).toEqual(['[ntech one', 'two] xinst one', 'two']);
+    const mdNl = layBeta(
+      BETA((k) => `"\`${k} **one**\\ntwo\`"`),
+      compat
+    );
+    expect(runs(mdNl.get('c.descr')?.text)).toEqual([
+      [
+        ['descr ', 0],
+        ['one', B],
+      ],
+      [['two', 0]],
+    ]);
+  });
+
+  it('keeps every other escape standing for its character', () => {
+    const at = layBeta('c4-beta context\nperson a "say \\"hi\\" \\t \\\\ x" \'it\\\'s\'', compat);
+    expect(text(at.get('a.name'))).toEqual(['say "hi" t \\ x']);
+    expect(text(at.get('a.descr'))).toEqual(["it's"]);
+  });
 });
 
 describe('the rendered SVG', () => {
@@ -269,4 +299,36 @@ describe('the rendered SVG', () => {
     expect(svg).not.toContain('`**md**');
     expect(svg).toContain('**plain** descr');
   });
+
+  // The label fixtures and their compatibility-mode twins (`legacyMarkdown: true`): no C4 text
+  // read markdown in v12, so each pair draws the same SVG.
+  const LABEL_FIXTURES = (
+    import.meta as ImportMeta & {
+      glob: (
+        pattern: string,
+        options: { query: '?raw'; import: 'default'; eager: true }
+      ) => Readonly<Record<string, string>>;
+    }
+  ).glob('../../../../e2e/diagrams/{c4,c4beta}/pr-check/label-syntax*.mmd', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  });
+
+  it.each([
+    ['c4', renderC4ForTest],
+    ['c4beta', renderC4BetaForTest],
+  ] as const)(
+    'draws %s’s label-syntax fixture and its compat twin alike',
+    async (folder, render) => {
+      const at = (name: string) => {
+        const src = LABEL_FIXTURES[`../../../../e2e/diagrams/${folder}/pr-check/${name}.mmd`];
+        if (src === undefined) throw new Error(`no ${folder}/${name}.mmd`);
+        return render(src);
+      };
+      const base = await at('label-syntax');
+      const compat = await at('label-syntax-compat');
+      expect(compat.svg).toBe(base.svg);
+    }
+  );
 });

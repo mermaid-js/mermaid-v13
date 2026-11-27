@@ -60,14 +60,15 @@ import type { Exclusion } from './d452.ts';
  */
 /**
  * The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus, #538's 12, #539's 2,
- * #542's 14 baselines, #683's 3, #739's 1, #681's 1, #680's 3, #730's 5, #774's 2 and #1400's 1).
+ * #542's 14 baselines, #683's 3, #739's 1, #681's 1, #680's 3, #730's 5, #774's 2 and #1400's 2).
  */
-const E2E_FIXTURES = 78;
+const E2E_FIXTURES = 79;
 
 /** The sources each D452 exclusion covers as they are (not in a variant), in corpus order. */
 const D452_EXCLUDED: Record<Exclusion, string[]> = {
   unquoted: [
     // #1400: bare backticks written as each kind's last argument, which v12 ran on past `)`.
+    'e2e/pr-check/label-syntax-compat.mmd',
     'e2e/pr-check/label-syntax.mmd',
     'c4-cases/paren-at-end',
     'c4-cases/unquoted-runs-over-close-paren',
@@ -127,7 +128,7 @@ const D452_EXCLUDED: Record<Exclusion, string[]> = {
  * How many sources, variants included, each exclusion covers: unquoted, comment, title, hash,
  * quote, direction.
  */
-const D452_COUNTS = [376, 43, 23, 22, 21, 95];
+const D452_COUNTS = [384, 43, 23, 22, 21, 95];
 
 /** A C4 header at the start of a text, as v12's detector and lexer read it. */
 const HEADER = /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/;

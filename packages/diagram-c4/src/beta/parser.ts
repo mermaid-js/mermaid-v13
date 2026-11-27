@@ -385,9 +385,14 @@ class C4BetaParser {
     this.i++;
   }
 
-  /** The text inside the quotes of a string token, `\` escapes resolved. */
+  /**
+   * The text inside the quotes of a string token, `\` escapes resolved: `\n` is a line break
+   * (#1368: a written `\n` breaks every label), any other character stands for itself.
+   */
   private unquote(j: number): string {
-    return this.raw(j).slice(1, -1).replace(/\\(.)/g, '$1');
+    return this.raw(j)
+      .slice(1, -1)
+      .replace(/\\(.)/g, (_, c: string) => (c === 'n' ? '\n' : c));
   }
 
   private quoted(hint: string): string {

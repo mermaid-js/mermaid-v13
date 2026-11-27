@@ -63,6 +63,7 @@ e2e/diagrams/c4/pr-check/direction-rl.mmd 1 f16d0202c4f6583e
 e2e/diagrams/c4/pr-check/direction-tb.mmd 1 50818e0603d61bb8
 e2e/diagrams/c4/pr-check/directional-relationships.mmd 1 c6cd5b12345a4c7c
 e2e/diagrams/c4/pr-check/dynamic-diagram.mmd 1 62fb1f6c29c007cc
+e2e/diagrams/c4/pr-check/label-syntax-compat.mmd 1 cd7033f8eabaf7e6
 e2e/diagrams/c4/pr-check/label-syntax.mmd 1 ce97315786af4f0e
 e2e/diagrams/c4/pr-check/line-hops.mmd 1 2e2e690e9c4293c7
 e2e/diagrams/c4/pr-check/person-short-label.mmd 1 cdc51099feee81ae

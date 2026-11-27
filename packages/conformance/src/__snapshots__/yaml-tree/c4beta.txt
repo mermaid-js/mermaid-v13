@@ -35,7 +35,8 @@ e2e/diagrams/c4beta/pr-check/config-show-stereotypes-off.mmd 1 10fc02b4e5efa421
 e2e/diagrams/c4beta/pr-check/config-use-max-width-off.mmd 1 0f5cb410935e0d45
 e2e/diagrams/c4beta/pr-check/context-diagram.mmd 1 377fc4fd1bbcb81d
 e2e/diagrams/c4beta/pr-check/dynamic-steps.mmd 1 801312d3c0c9d3bc
-e2e/diagrams/c4beta/pr-check/label-syntax.mmd 1 4736dd26e0581ffc
+e2e/diagrams/c4beta/pr-check/label-syntax-compat.mmd 1 6bd6dc57ebf8c86f
+e2e/diagrams/c4beta/pr-check/label-syntax.mmd 1 61e5e706dfc650f8
 e2e/diagrams/c4beta/pr-check/legend-kinds.mmd 1 e6f5c36e64d8282f
 e2e/diagrams/c4beta/pr-check/legend-tag-styles.mmd 1 f87e23d1d3bd6305
 e2e/diagrams/c4beta/pr-check/markup-and-quotes-in-every-text.mmd 1 5fd8ab5f450f1858

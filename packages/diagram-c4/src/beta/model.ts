@@ -4,7 +4,7 @@
  * element external by a tag and decides what is a boundary after the parse.
  *
  * - elements in statement order, a parent before its children; text as written inside the
- *   quotes with `\` escapes resolved, `''` where a statement leaves a field out; a field written
+ *   quotes with `\` escapes resolved (`\n` a line break, #1368), `''` where a statement leaves a field out; a field written
  *   as a quoted markdown string keeps its backticks and is listed in `markdown` (spec #1368);
  * - an element with children, a `group` and a `deploymentNode` is a boundary;
  * - relations in statement order. `a <-- b` is stored as `b → a`, so ranks follow meaning;
