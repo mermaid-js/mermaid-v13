@@ -1,0 +1,22 @@
+---
+description: >-
+  Label syntax (#1368, #1400): each XY chart label kind written as plain markdown markers, a
+  quoted markdown string, a code span in plain text, tags and a written `\n`. Only a quoted
+  markdown string is markdown: the title and both axis titles are one each and show it; the
+  categories, the plot names in the legend and the point labels show every form. Tags draw and
+  `\n` breaks everywhere. A bare backtick outside quotes is a lexical error, as in v12, so the
+  bare-backtick form is left out.
+config:
+  xyChart:
+    width: 1000
+    height: 700
+---
+xychart
+  title "`title **bold** _ital_`"
+  x-axis "`x-axis **bold** _ital_`" ["cat **bold** _ital_", "`cat **bold** _ital_`", "cat a `code` b", "cat <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O", "cat one\ntwo"]
+  y-axis "`y-axis **bold** _ital_`" 0 --> 10
+  bar "plot **bold** _ital_" [2, 3, 4, 5, 6]
+  bar "`plot **bold** _ital_`" [3, 4, 5, 6, 7]
+  bar "plot a `code` b" [1, 2, 3, 4, 5]
+  bar "plot <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" [2, 2, 2, 2, 2]
+  line "plot one\ntwo" [8 "point **bold** _ital_", 7 "`point **bold** _ital_`", 8 "point a `code` b", 7 "point <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O", 8 "point one\ntwo"]

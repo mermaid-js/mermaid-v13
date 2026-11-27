@@ -33,6 +33,7 @@
 import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { ishikawaLayoutConfig } from '../config.ts';
+import { ishikawaLabelSource } from '../label-source.ts';
 import {
   causeCount,
   sideOf,
@@ -97,8 +98,14 @@ function layout(model: IshikawaModel, ctx: IshikawaLayoutContext, fix: boolean):
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
   // v12's word wrap never split a word: keep one wider than the width whole.
-  const measure: Measure = (text, font, maxWidth) =>
-    layoutLabel(text, font, maxWidth, ctx.measurer, { ...inline, keepWords: true });
+  const measure: Measure = (text, font, maxWidth) => {
+    const source = ishikawaLabelSource(text, ctx.config);
+    return layoutLabel(source.text, font, maxWidth, ctx.measurer, {
+      ...inline,
+      ...source,
+      keepWords: true,
+    });
+  };
 
   const { effect, causes } = model;
   if (effect === undefined) {

@@ -1,0 +1,23 @@
+---
+description: >-
+  Label syntax (#1368, #1400): the ishikawa effect, causes and sub-causes at two depths, each
+  kind written as plain markdown markers, a quoted markdown string, bare backticks, a code span
+  in plain text, tags and a written `\n`. Only a line that is wholly a quoted markdown string is
+  markdown; bare backticks and plain markers are drawn as written; tags draw and `\n` breaks.
+  There is one effect, so it shows the markdown string only.
+---
+ishikawa-beta
+  "`effect **bold** _ital_`"
+  cause **bold** _ital_
+    sub **bold** _ital_
+  "`cause **bold** _ital_`"
+    "`sub **bold** _ital_`"
+      "`deep **bold** _ital_`"
+  `cause **bold** _ital_`
+    `sub **bold** _ital_`
+  cause a `code` b
+    sub a `code` b
+  cause <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    sub <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  cause one\ntwo
+    sub one\ntwo

@@ -51,6 +51,7 @@ e2e/diagrams/xychart/nightly-check/x-axis-range-same-value.mmd 1 a186cee011c9137
 e2e/diagrams/xychart/nightly-check/x-axis-title-not-required.mmd 1 ee884833e3ce1fc4
 e2e/diagrams/xychart/nightly-check/y-axis-title-not-required.mmd 1 e242def641594b48
 e2e/diagrams/xychart/pr-check/decimals-and-negative-numbers-are-supported.mmd 1 843715203f37bbf1
+e2e/diagrams/xychart/pr-check/label-syntax.mmd 1 88ba8ebdf07cefcf
 e2e/diagrams/xychart/pr-check/multiple-plots-can-be-rendered.mmd 1 f237010fb45b8733
 e2e/diagrams/xychart/pr-check/render-all-the-theme-color.mmd 1 c2fc166ebc1cdaa3
 e2e/diagrams/xychart/pr-check/render-with-show-axis-line-false.mmd 1 14559b391be943f4

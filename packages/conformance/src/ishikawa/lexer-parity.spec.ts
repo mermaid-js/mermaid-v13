@@ -84,7 +84,7 @@ describe('ishikawa lexer parity with mermaid@12 (jison)', () => {
     // Every e2e fixture (13 from v12, the nightly ones #580–#583 added, 17 baselines #585
     // added), harvested spec and syntax-page string and case reaches the lexer, the one case
     // v12 does not detect aside.
-    expect(e2e).toBe(54);
+    expect(e2e).toBe(55);
     expect(specs).toBe(4);
     expect(cases).toBe(104);
     // The only sources v12 does not lex: `ishikawas` (no word boundary after the keyword) and

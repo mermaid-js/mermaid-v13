@@ -55,7 +55,7 @@ describe('xychart layout invariants on parser-produced fixtures', () => {
         if (v.length > 0) failures.push(`${item.id} ${JSON.stringify(section)}: ${v.join('; ')}`);
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(63);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(64);
     expect(plots).toBeGreaterThan(2000);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 120_000);

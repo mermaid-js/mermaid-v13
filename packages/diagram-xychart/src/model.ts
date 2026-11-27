@@ -100,6 +100,14 @@ export interface XyChartModel {
   readonly yAxis: XyChartYAxis;
   /** Statement order (R-ARCH-7). */
   readonly plots: readonly XyChartPlot[];
+  /**
+   * The texts above written as a quoted markdown string (`"`…`"`, #1368), as the model
+   * holds them: with their backticks, as v12's DB kept them. The layout reads the text inside
+   * the backticks as markdown. Unquoted text cannot hold a backtick (a lexical error, as in v12),
+   * so a text wholly in backticks was quoted. Absent when there is none; never the front-matter
+   * title.
+   */
+  readonly markdownStrings?: readonly string[];
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
   readonly warnings: readonly Diagnostic[];
 }

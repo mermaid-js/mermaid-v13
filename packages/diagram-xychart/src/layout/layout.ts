@@ -74,7 +74,7 @@ export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): X
   );
   const warn = once(ctx.warn ?? ignoreWarning);
   const family = ctx.theme.value('fontFamily');
-  const texts = textMeasure(ctx.measurer, ctx.inline);
+  const texts = textMeasure(ctx.measurer, ctx.inline, ctx.config, model.markdownStrings);
   const orientation = model.orientation ?? options.chartOrientation;
   const horizontal = orientation === 'horizontal';
 

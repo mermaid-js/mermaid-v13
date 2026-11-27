@@ -12,6 +12,7 @@ import type { TextRenderContext } from '@mermaid-js/core';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { layoutLabel, type LabelOptions } from '@mermaid-js/core/text';
 import { drawOutline } from './ascii/outline.ts';
+import { ishikawaLabelSource } from './label-source.ts';
 import { plainLabel, plainTitle } from './labels.ts';
 import type { IshikawaCause, IshikawaModel } from './model.ts';
 import { asciiDropped, emphasised, glyphSetOf } from '@mermaid-js/shared/ascii';
@@ -41,7 +42,11 @@ export function ascii(model: IshikawaModel, _layout: unknown, ctx: IshikawaAscii
   const options: LabelOptions = ctx.inline ? { inline: ctx.inline } : {};
   const dropped: string[] = [];
   const plain = (text: string, ast: string): string => {
-    const label = layoutLabel(text, FONT, Infinity, cellMeasurer, options);
+    const source = ishikawaLabelSource(text, ctx.config);
+    const label = layoutLabel(source.text, FONT, Infinity, cellMeasurer, {
+      ...options,
+      ...source,
+    });
     if (emphasised(label)) dropped.push(ast);
     // A list item's own marker: a bullet written in the text stays as written.
     return glyphs.name === 'ascii' && label.left

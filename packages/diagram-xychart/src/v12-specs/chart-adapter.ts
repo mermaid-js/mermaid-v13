@@ -285,7 +285,7 @@ export class ChartLegend {
       this.model,
       options,
       font,
-      textMeasure(measurer(calc), undefined)
+      textMeasure(measurer(calc), undefined, {})
     );
   }
 
