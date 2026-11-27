@@ -67,7 +67,7 @@ describe('sequence layout invariants on parsed models', () => {
             warn: () => {},
           });
           laid++;
-          const found = sequenceLayoutViolations(result.model, layout).filter(
+          const found = sequenceLayoutViolations(result.model, layout, { sequence }).filter(
             (v) => !(late && /^message \S+ at y \S+ is outside /.test(v))
           );
           if (found.length > 0)
@@ -91,9 +91,31 @@ describe('sequence layout invariants on parsed models', () => {
       theme: createTheme(spec, { diagram: DIAGRAM_TABLES.sequence }),
       warn: () => {},
     });
-    const found = sequenceLayoutViolations(result.model, layout);
+    const found = sequenceLayoutViolations(result.model, layout, { sequence: {} });
     expect(found).toHaveLength(1);
     expect(found[0]).toMatch(/^message m:A>B#3 at y \S+ is outside B$/);
+  });
+
+  it("keep #1239's `:wrap` message inside Bob's and John's lifelines", async () => {
+    const name = 'nightly-check/should-handle-line-breaks-and-wrap-annotations.mmd';
+    const item = (await sequenceGateCorpus()).find((x) => x.id.endsWith(name));
+    const result = parseSequence(item!.source);
+    const layout = layoutSequence(result.model, {
+      config: { sequence: {} } as unknown as ResolvedConfig,
+      measurer: tableMeasurer,
+      units: pxProfile,
+      theme: createTheme(spec, { diagram: DIAGRAM_TABLES.sequence }),
+      warn: () => {},
+    });
+    expect(sequenceLayoutViolations(result.model, layout, { sequence: {} })).toEqual([]);
+    // The message the check is about: wrapped to more than one line.
+    const ast = result.model.statements.find((s) => s.kind === 'message' && s.wrap === true)!.ast;
+    const wrapped = layout.messages.find((m) => m.ast === ast)!;
+    expect([wrapped.from, wrapped.to, wrapped.label!.text.lines.length]).toEqual([
+      'Bob',
+      'John',
+      3,
+    ]);
   });
 });
 
