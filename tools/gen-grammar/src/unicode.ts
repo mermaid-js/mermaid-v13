@@ -1,8 +1,7 @@
 /**
  * Unicode id-letter table for the parser kit's `CharClass` (DESIGN §4.2): reads the
  * `UNICODE_TEXT` character class from v12's `flow.jison` and packs it as base-36 deltas.
- * Ported from Pele's `scripts/gen-unicode.mjs` (https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano).
+ * Ported from Pele's `scripts/gen-unicode.mjs`.
  *
  * Packed format: space-separated pairs `gap len`, both base 36. Range i starts `gap` after
  * the end of range i-1 (0 for the first) and ends `len` after its start, inclusive.

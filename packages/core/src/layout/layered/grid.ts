@@ -1,9 +1,8 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/layered.ts, src/layout/compound.ts
-// and src/layout/index.ts at 3a2f075. Copyright (c) 2026 kepano. MIT License: see
-// THIRD_PARTY_NOTICES in @mermaid-js/core.
+// Ported from Pele, src/layout/layered.ts, src/layout/compound.ts
+// and src/layout/index.ts at 3a2f075.
 // Changes from Pele: the grid mode (D78, D140) is one `GridHooks` object that `layered`,
 // `compoundLayout` and the engine call where a mode differs. The algorithm is unchanged.
-// cspell:ignore kepano cnode cnodes
+// cspell:ignore cnode cnodes
 //
 // The grid mode of the layered engine, behind one object. `gridHooks` is the only place that
 // reads the grid quantum: it gives `undefined` for px, and the pixel path never asks about the

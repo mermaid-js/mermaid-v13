@@ -1,6 +1,5 @@
-// `compass`'s orthogonal router, ported from Pele (https://github.com/obsidianmd/pele,
-// src/diagrams/architecture/render.ts:106-170, `route` and `simplify`, MIT, (c) 2026 kepano; see
-// THIRD_PARTY_NOTICES). Each end leaves along its side's normal: straight when the ends face and
+// `compass`'s orthogonal router, ported from Pele (src/diagrams/architecture/render.ts:106-170,
+// `route` and `simplify`). Each end leaves along its side's normal: straight when the ends face and
 // are in line, one bend when the sides are perpendicular and the corner is ahead of both, a turn
 // midway when they face but are offset, and otherwise a detour between or around the two boxes.
 //

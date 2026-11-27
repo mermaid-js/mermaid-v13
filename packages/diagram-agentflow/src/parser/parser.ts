@@ -12,15 +12,13 @@
  * An unclosed label or string, which swallows the rest of the text, is reported at its opener
  * and lexing restarts on the following line.
  *
- * The flow family's parser is ported from Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: the block rules are
- * agentflow's (`flow`, `global`, `connector`), as above; the rules agentflow shares with
- * flowchart (tokens, errors and recovery, vertices, links, chains, the one-line statements, the
- * header) are the flow family's (`@mermaid-js/shared/parser/flow`). Here are agentflow's own:
- * the `maxTextSize` source view (`source.ts`), its ranges over directives and blanks, v12's
- * `@{ … }` reading (its trailing commas, D464), AST ids for every mention (D468) and the
- * reserved `connectors` id (D464).
- * cspell:ignore kepano
+ * The flow family's parser is ported from Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075.
+ * Changed: the block rules are agentflow's (`flow`, `global`, `connector`), as above; the rules
+ * agentflow shares with flowchart (tokens, errors and recovery, vertices, links, chains, the
+ * one-line statements, the header) are the flow family's (`@mermaid-js/shared/parser/flow`). Here
+ * are agentflow's own: the `maxTextSize` source view (`source.ts`), its ranges over directives and
+ * blanks, v12's `@{ … }` reading (its trailing commas, D464), AST ids for every mention (D468) and
+ * the reserved `connectors` id (D464).
  */
 import {
   inKindSet,

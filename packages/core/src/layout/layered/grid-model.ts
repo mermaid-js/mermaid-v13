@@ -1,8 +1,7 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/index.ts at 3a2f075.
-// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
+// Ported from Pele, src/layout/index.ts at 3a2f075.
 // Changes from Pele: the grid mode (D78, D140) lives here, split out of `index.ts`, which reaches
 // it through `GridHooks` (grid.ts). The algorithm is unchanged.
-// cspell:ignore kepano cnode cnodes
+// cspell:ignore cnode cnodes
 //
 // What the layered engine does to the model on a grid of character cells: grows the sides that
 // have too many ends, places the group titles, puts routes onto cells and lays out self-loops.

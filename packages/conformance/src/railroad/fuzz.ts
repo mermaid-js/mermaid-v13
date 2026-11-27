@@ -2,7 +2,7 @@
 /**
  * Generated railroad inputs for the fuzz property (`fuzz.spec.ts`), per notation, adapted from
  * Pele's AST-equality fuzz (`pele@1.13.0`, `tests/support/railroad-oracle.ts` and
- * `tests/support/corpus.ts`, MIT, Copyright (c) 2026 kepano; spec #526 adopts it as a parity
+ * `tests/support/corpus.ts`; spec #526 adopts it as a parity
  * property, D325). Four sources of input, a quarter each: corpus inputs mutated with fragments
  * of the notation, random token pieces, well-formed grammars of random shape, and those
  * mutated. Every draw comes from one seeded generator, so a failure names a reproducible input.

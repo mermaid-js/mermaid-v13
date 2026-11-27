@@ -1,10 +1,9 @@
-// Grid placement for `compass` (D326), ported from Pele (https://github.com/obsidianmd/pele,
-// src/diagrams/architecture/layout.ts, `placeOnGrid`, MIT, (c) 2026 kepano; see
-// THIRD_PARTY_NOTICES). Every node takes a cell, an edge `a:R -- L:b` puts b in the cell to the
-// right of a, and a group is a solid rectangle of cells, so a group never encloses a node that is
-// not in it. Each container (every group, innermost first, then the diagram) is laid out on its
-// own, and a finished group is placed in its parent as one block. Integer arithmetic only: no
-// randomness, no clock.
+// Grid placement for `compass` (D326), ported from Pele (src/diagrams/architecture/layout.ts,
+// `placeOnGrid`). Every node takes a cell, an edge `a:R -- L:b` puts b in the cell to the right of
+// a, and a group is a solid rectangle of cells, so a group never encloses a node that is not in it.
+// Each container (every group, innermost first, then the diagram) is laid out on its own, and a
+// finished group is placed in its parent as one block. Integer arithmetic only: no randomness, no
+// clock.
 //
 // Changed from Pele: plain index input (the caller orders groups parents first and resolves
 // `in`), sides as indexes, edge ends that are groups (a flowchart edge to a subgraph: the link

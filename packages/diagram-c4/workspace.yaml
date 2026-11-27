@@ -89,21 +89,6 @@ grammars:
       module: beta/tokens.ts
       object: BETA
 
-# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4): the
-# files ported from Pele's C4 layout, router and label placement (#540) and its shapes (#541,
-# through flowchart's copy), as THIRD_PARTY_NOTICES lists them. Pele is a shared upstream (its
-# notices are mermaid's own); mermaid's CDN build bundles these files without their legal
-# comments, so notices/mermaid.txt names them in mermaid's notices.
-credits:
-  files:
-    src/layout/grid.ts: ['Pele']
-    src/layout/layout.ts: ['Pele']
-    src/layout/metrics.ts: ['Pele']
-    src/layout/path.ts: ['Pele']
-    src/layout/route.ts: ['Pele']
-    src/layout/shapes.ts: ['Pele']
-    src/render/shapes.ts: ['Pele']
-
 # languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
 languageBundle:
   renderer:

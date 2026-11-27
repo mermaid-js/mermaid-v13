@@ -2,9 +2,8 @@
 // flowchart, block and agentflow share, and the lined document and collapsed-group card, which
 // flowchart and agentflow share. Each one's size from its label, its drawer, and how far its
 // outline sits inside the layout box (so edges meet the outline, not the box). Ported from
-// Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano),
+// Pele's src/svg/shapes.ts @ 3a2f075,
 // with v12's shape names and the theme's padding and radius tokens.
-// cspell:ignore kepano
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
 import {
   box,

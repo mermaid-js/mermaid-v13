@@ -4,8 +4,7 @@
  * flow collections, quoted and plain scalars, and block scalars. Used for front matter and for
  * flowchart shape data (`@{ … }`).
  *
- * Ported from Pele's `src/util/yaml.ts` @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano). Changes from Pele:
+ * Ported from Pele's `src/util/yaml.ts` @ 3a2f075. Changes from Pele:
  * - it reads a range of the original source in place, so every diagnostic has a real range;
  * - errors are diagnostics, not exceptions; the first error stops the read (as in js-yaml);
  * - `__proto__`, `constructor` and `prototype` keys are dropped with a warning;
@@ -19,7 +18,6 @@
  *
  * Every step is linear in the text it reads (R-PARSE-7).
  */
-// cspell:words kepano
 import { CR, LF, NUL, SPACE, TAB } from '../parser-kit/char-codes.ts';
 import { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Diagnostic } from '../parser-kit/diagnostics.ts';

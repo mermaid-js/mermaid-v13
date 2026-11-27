@@ -1,9 +1,8 @@
 /**
- * Where each C4 relation's label goes (D455, Pele `render.ts` at commit 3a2f075,
- * https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano): measured after routing, then placed
+ * Where each C4 relation's label goes (D455, Pele `render.ts` at commit 3a2f075): measured
+ * after routing, then placed
  * along its line where it covers least of what it should keep off.
  */
-// cspell:ignore kepano
 import { Style } from '@mermaid-js/core/text';
 import type { C4LayoutConfig, C4Fonts } from '../config.ts';
 import type { C4Model, C4Relation } from '../model.ts';

@@ -1,16 +1,15 @@
 /**
  * The five C4 shapes' drawers: flowchart's `person`, `rounded`, `cyl`, `h-cyl` and `fr-rect`
  * (`@mermaid-js/shared/shapes/*`, whose cylinder, queue and frame-line paths these write; ported
- * from Pele's src/svg/shapes.ts at 3a2f075, https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano), with v12 C4's corners (`rx` 12 on `rounded` and the person's body,
- * `c4ShapeAdapter.ts`). Each draws an element's laid-out box, in the canvas frame, exactly as
- * the layout's outline (`../layout/shapes.ts` `piecesOf`) that relations were clipped at.
+ * from Pele's src/svg/shapes.ts at 3a2f075), with v12 C4's corners (`rx` 12 on `rounded` and the
+ * person's body, `c4ShapeAdapter.ts`). Each draws an element's laid-out box, in the canvas frame,
+ * exactly as the layout's outline (`../layout/shapes.ts` `piecesOf`) that relations were clipped
+ * at.
  *
  * Outlines go through `w.outline` (D301, D302): the shape as `node`, the cylinder's and the
  * queue's rim and `fr-rect`'s frame lines as `divider`, so the hand-drawn extension sketches
  * them as v12 did.
  */
-// cspell:ignore kepano
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
 import {
   capRy,

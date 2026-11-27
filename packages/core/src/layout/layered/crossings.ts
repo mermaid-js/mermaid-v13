@@ -1,8 +1,7 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
-// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
+// Ported from Pele, src/layout/compound.ts at 3a2f075.
 // Changes from Pele: split out of `compound.ts` (D596): `crossingsOf` runs as separate phases
 // that share one `Segs` record. Its scratch arrays are taken from the same frame. The algorithm is unchanged.
-// cspell:ignore kepano segs
+// cspell:ignore segs
 //
 import { ease, type LayeredOptions } from './layered.ts';
 import { pxProfile } from '../units.ts';

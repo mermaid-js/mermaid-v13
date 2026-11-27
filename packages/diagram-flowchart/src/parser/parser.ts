@@ -3,18 +3,17 @@
  * {@link FlowModel}, the typed AST, symbols, statement spans and diagnostics (DESIGN §4.3).
  *
  * The grammar is v12's `flow.jison` (LALR); the descent follows Pele's port of it
- * (`src/diagrams/flowchart/parser.ts` @ 3a2f075, https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano), so it accepts and rejects what jison does. Unlike jison it does not stop
- * at the first error: it reports it, skips to the next statement boundary and carries on
- * (R-PARSE-4). An unclosed label or string, which swallows the rest of the text, is reported
- * at its opener and lexing restarts on the following line.
+ * (`src/diagrams/flowchart/parser.ts` @ 3a2f075), so it accepts and rejects what jison does. Unlike
+ * jison it does not stop at the first error: it reports it, skips to the next statement boundary
+ * and carries on (R-PARSE-4). An unclosed label or string, which swallows the rest of the text, is
+ * reported at its opener and lexing restarts on the following line.
  *
  * The rules flowchart shares with the grammars cut from it (tokens, errors and recovery,
  * vertices, links, chains, the one-line statements, the header) are the flow family's
  * (`@mermaid-js/shared/parser/flow`); here are flowchart's own: its tables, `subgraph … end`,
  * how it reads `@{ … }`, and the parse.
  */
-// cspell:words kepano LALR
+// cspell:words LALR
 import { Kind } from '@mermaid-js/core/parser-kit';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type {

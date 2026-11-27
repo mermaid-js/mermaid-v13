@@ -23,10 +23,8 @@
  *
  * Every scan is linear in the text it consumes (R-PARSE-7).
  *
- * Flowchart's lexer is ported from Pele's `src/diagrams/flowchart/lexer.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * Flowchart's lexer is ported from Pele's `src/diagrams/flowchart/lexer.ts` at 3a2f075.
  */
-// cspell:words kepano
 import {
   DASH,
   DOT,

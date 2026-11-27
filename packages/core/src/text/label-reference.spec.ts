@@ -1,4 +1,4 @@
-// cspell:words dejavu hhea kepano kinsoku
+// cspell:words dejavu hhea kinsoku
 import { describe, expect, it, vi } from 'vitest';
 import type { LabelBoxSpan } from '../svg/writer.ts';
 import type { SafeValue } from '../svg/types.ts';

@@ -5,10 +5,9 @@
  * `../config.ts`; nothing else in `src/layout/` writes a length.
  *
  * v12's own constants (`c4Renderer.ts`, `c4LabelHelper.ts`, `styles.js`, `c4ShapeAdapter.ts`)
- * and Pele's router constants (`src/diagrams/c4/route.ts`, `render.ts` at commit 3a2f075,
- * https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano) are marked as such.
+ * and Pele's router constants (`src/diagrams/c4/route.ts`, `render.ts` at commit 3a2f075)
+ * are marked as such.
  */
-// cspell:ignore kepano
 export const C4_METRICS = {
   /** v12 `c4LabelHelper.ts`: the gap between an element's name, type and description. */
   sectionGap: 3,

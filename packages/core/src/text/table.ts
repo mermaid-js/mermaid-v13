@@ -1,7 +1,7 @@
-// cspell:words dejavu hhea kepano
+// cspell:words dejavu hhea
 // Table measurer: the Node/worker default and the `deterministic: true` measurer
 // (DESIGN §5.1, R-TEXT-6, R-TEXT-7). Sums advance widths from generated font tables.
-// Based on Pele's metricsMeasurer (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+// Based on Pele's metricsMeasurer.
 import { ASCII_MAX, LATIN1_MAX, SPACE } from '../parser-kit/char-codes.ts';
 import { familyNames } from './fonts.ts';
 import {

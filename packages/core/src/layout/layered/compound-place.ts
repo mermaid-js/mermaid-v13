@@ -1,10 +1,9 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
-// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
+// Ported from Pele, src/layout/compound.ts at 3a2f075.
 // Changes from Pele: split out of `compound.ts` (D596): `place`, which lays every level out and
 // puts the results in the plane in phases, and the pass that reads port hints off the routes.
 // They share the `Compound` record. A level's routes go into the plane straight from its layout's
 // points, not through a map of routes in its box. The algorithm is unchanged.
-// cspell:ignore kepano lnode lnodes cnode
+// cspell:ignore lnode lnodes cnode
 //
 import type { CNode } from './compound.ts';
 import { buildLayer, layOutLevel } from './compound-layer.ts';

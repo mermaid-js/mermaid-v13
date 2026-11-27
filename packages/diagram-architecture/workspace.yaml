@@ -28,8 +28,8 @@ languageBundle:
 release:
   summary: 'The architecture diagram plugin (SVG; `architecture-beta`), laid out by `compass`.'
   install: 'with `mermaid/slim`'
-# credits: none. The ported Pele grid placement is core's `compass` engine (D326), which carries
-# its credit; this package ports only v12's own code.
+# credits: none. This package ports only v12's own code; its grid placement is core's `compass`
+# engine (D326).
 
 # theme: none. The layout (#607) reads the core font rows (`fontFamily`, `fontSize`), the renderer
 # (#614) `textColor` and its own table (`src/theme/vocabulary.ts`, the five `arch*` variables).

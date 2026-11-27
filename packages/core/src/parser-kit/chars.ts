@@ -1,8 +1,7 @@
 /**
  * Character classes on UTF-16 code units, as lexers read them with `charCodeAt`. Past the
  * end of a string the code is NaN, which is in no class. ASCII predicates ported from Pele's
- * `util/chars.ts`, the Unicode table approach from Pele's `util/unicode.ts`
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * `util/chars.ts`, the Unicode table approach from Pele's `util/unicode.ts`.
  */
 import {
   ASCII_MAX,

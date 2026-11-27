@@ -1,6 +1,6 @@
 /**
  * The C4 relation router (D455), ported from Pele's `src/diagrams/c4/route.ts`
- * (https://github.com/obsidianmd/pele at commit 3a2f075, MIT, (c) 2026 kepano): a straight line where it
+ * (at commit 3a2f075): a straight line where it
  * crosses no other shape; past a shape, an orthogonal elbow through a free lane in the gap
  * between columns or rows, or a detour lane round the shapes in the way; ports spread along a
  * side, reverse pairs shifted apart, self-loops on the right side.
@@ -13,7 +13,6 @@
  * the path, `./path.ts`), lengths come from the metrics table, outlines are `./shapes.ts`'s
  * (rounded corners included), and the path's arrowhead trims are left to the renderer.
  */
-// cspell:ignore kepano
 import { channelPath, type Port, type Taken } from './channels.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import { hit, hitRect, insideAlong, portBox, sidesOf, type Outline, type Sides } from './shapes.ts';

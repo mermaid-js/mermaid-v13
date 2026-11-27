@@ -1,7 +1,5 @@
-// Edge paths from layout routes, trimmed at each end for an end marker (DESIGN §7.1).
-// Ported from Pele's src/svg/edges.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
-// (c) 2026 kepano): `routePath`. The one route drawing every graph diagram shares.
-// cspell:ignore kepano
+// Edge paths from layout routes, trimmed at each end for an end marker (DESIGN §7.1). Ported from
+// Pele's src/svg/edges.ts @ 3a2f075: `routePath`. The one route drawing every graph diagram shares.
 import type { Warning } from '@mermaid-js/core';
 import type { EdgeRouting, RoutePoint } from '@mermaid-js/core/layout';
 import type { PathData, SvgWriter } from '@mermaid-js/core/svg';

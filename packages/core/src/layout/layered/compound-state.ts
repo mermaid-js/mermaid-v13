@@ -1,7 +1,6 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
-// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
+// Ported from Pele, src/layout/compound.ts at 3a2f075.
 // Changes from Pele: split out of `compound.ts` (D596): the types and the state record the phases of `compoundLayout` share. The algorithm is unchanged.
-// cspell:ignore kepano lnode lnodes cnode
+// cspell:ignore lnode lnodes cnode
 //
 import type { LayoutMetrics } from '../units.ts';
 import type { CEdge, CNode, CompoundResult, Dir } from './compound.ts';

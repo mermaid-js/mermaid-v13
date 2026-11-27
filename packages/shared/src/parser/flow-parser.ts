@@ -5,10 +5,9 @@
  * reads `@{ … }`, and its `parse()`.
  *
  * The descent follows Pele's port of v12's `flow.jison` (`src/diagrams/flowchart/parser.ts` at
- * 3a2f075, https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changes from Pele are
+ * 3a2f075). Changes from Pele are
  * listed in `flow-parser-base.ts`.
  */
-// cspell:words kepano
 import { inKindSet, Kind, nodeId } from '@mermaid-js/core/parser-kit';
 import { STOP } from './support.ts';
 import type {

@@ -1,9 +1,8 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/layered.ts and
-// src/layout/compound.ts at 3a2f075. Copyright (c) 2026 kepano. MIT License: see
-// THIRD_PARTY_NOTICES in @mermaid-js/core.
+// Ported from Pele, src/layout/layered.ts and
+// src/layout/compound.ts at 3a2f075.
 // Changes from Pele: the grid mode (D78, D140) lives here, split out of `layered.ts` and
 // `compound.ts`, which reach it through `GridHooks` (grid.ts). The algorithm is unchanged.
-// cspell:ignore kepano lnode
+// cspell:ignore lnode
 //
 // What the layered engine does differently on a grid of character cells, while it lays out and
 // while it places groups: rounding to cells, one cell for each edge end, one row for each track.

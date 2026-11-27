@@ -1,11 +1,10 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/layered.ts at 3a2f075.
-// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
+// Ported from Pele, src/layout/layered.ts at 3a2f075.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
 // noUncheckedIndexedAccess. `NODE_INPUTS`/`EDGE_INPUTS`/`layoutInputs` are new. Length
 // constants come from `opt.metrics` (D77), and `opt.grid` puts the layout on a grid (D140).
 // `LEdge.heads` is new, and the label rank's `headRoom` shift skips the grid, not `tracks` (D682).
 // The algorithm is otherwise unchanged.
-// cspell:ignore kepano lnode lnodes indeg topo cand maxs Köpf
+// cspell:ignore lnode lnodes indeg topo cand maxs Köpf
 //
 // Layered (Sugiyama-style) layout of one flat graph. Ranks run down the y axis; callers
 // rotate the result for other directions.

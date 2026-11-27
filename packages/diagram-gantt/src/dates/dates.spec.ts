@@ -6,7 +6,6 @@ import { add, format, parseDuration, parseStrict, readEndDate, readStartDate } f
 // the v12 quirks and the time zones below. Pele's cases build dates with the local-time Date
 // constructor, so they hold in any zone; vitest runs this file under TZ=UTC and under
 // TZ=America/Los_Angeles (root vitest.config.ts), where the DST cases bite.
-// cspell:ignore kepano
 
 const NOW = new Date(2031, 4, 6, 9, 30, 15, 250);
 const parse = (input: string, template: string): Date | undefined =>

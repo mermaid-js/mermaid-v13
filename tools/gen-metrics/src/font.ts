@@ -1,7 +1,7 @@
-// cspell:words cmap hhea hmtx kepano
+// cspell:words cmap hhea hmtx
 // Minimal TrueType reader: horizontal advances by code point (cmap format 4 + hmtx) and the
 // hhea vertical metrics. Values are in thousandths of an em, rounded to integers.
-// Based on Pele's scripts/gen-metrics.mjs (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+// Based on Pele's scripts/gen-metrics.mjs.
 
 export interface Face {
   /** Advance width of a code point, or undefined when the font has no glyph for it. */

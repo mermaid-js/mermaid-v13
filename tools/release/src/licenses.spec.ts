@@ -4,17 +4,12 @@ import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkLicenses } from './licenses.ts';
 
-const MIT_NOTICE = `Pele
-----
-Ported from Pele, https://github.com/obsidianmd/pele, under the MIT License:
+const ICONIFY_HEADER =
+  '// Ported from Iconify (https://github.com/iconify/iconify, MIT License, Copyright (c) 2021-PRESENT Vjacheslav Trushkin).\n';
 
-MIT License
-
-Copyright (c) 2026 kepano
-`;
-
-const GOOD_HEADER =
-  '// Ported from Pele (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano), src/x.ts.\n';
+/** `@iconify/utils`' section of a notices file, listing `files`. */
+const iconifyNotice = (...files: string[]) =>
+  `@iconify/utils\n--------------\n${files.map((f) => `  ${f}\n`).join('')}\nMIT License\n\nCopyright (c) 2021-PRESENT Vjacheslav Trushkin\n`;
 
 /** Writes `files` (path → content) under a fresh directory and returns it. */
 function workspace(files: Record<string, string>): string {
@@ -33,9 +28,9 @@ describe('license check (R-REL-4)', () => {
   it('passes when every ported file has an MIT header and is listed in the notices', () => {
     const root = workspace({
       'packages/core/package.json': manifest(),
-      'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\nFiles:\n  src/layout/a.ts\n`,
-      'packages/core/src/layout/a.ts': `${GOOD_HEADER}export const a = 1;\n`,
-      'packages/core/src/other.ts': '// Not from Pele.\nexport const b = 2;\n',
+      'packages/core/THIRD_PARTY_NOTICES': iconifyNotice('src/layout/a.ts'),
+      'packages/core/src/layout/a.ts': `${ICONIFY_HEADER}export const a = 1;\n`,
+      'packages/core/src/other.ts': '// Our own code.\nexport const b = 2;\n',
     });
     expect(checkLicenses(root)).toEqual([]);
   });
@@ -43,52 +38,43 @@ describe('license check (R-REL-4)', () => {
   it('reports a ported file whose header lacks the MIT attribution', () => {
     const root = workspace({
       'packages/core/package.json': manifest(),
-      'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\n  src/a.ts\n`,
+      'packages/core/THIRD_PARTY_NOTICES': iconifyNotice('src/a.ts'),
       'packages/core/src/a.ts':
-        '// Ported from Pele (https://github.com/obsidianmd/pele), src/a.ts.\nexport {};\n',
+        '// Ported from Iconify (https://github.com/iconify/iconify), src/a.ts.\nexport {};\n',
     });
     expect(checkLicenses(root)).toEqual([
-      'packages/core/src/a.ts: Pele-derived header must name the MIT license and "kepano"',
+      'packages/core/src/a.ts: @iconify/utils-derived header must name the MIT license and "Vjacheslav Trushkin"',
     ]);
   });
 
   it('reports a ported file that the package notices do not list', () => {
     const root = workspace({
       'packages/core/package.json': manifest(),
-      'packages/core/THIRD_PARTY_NOTICES': MIT_NOTICE,
-      'packages/core/src/a.ts': `/**\n * Doc.\n${GOOD_HEADER.replace('//', ' *')} */\nexport {};\n`,
+      'packages/core/THIRD_PARTY_NOTICES': iconifyNotice(),
+      'packages/core/src/a.ts': `/**\n * Doc.\n${ICONIFY_HEADER.replace('//', ' *')} */\nexport {};\n`,
     });
     expect(checkLicenses(root)).toEqual([
-      'packages/core/src/a.ts: not listed in packages/core/THIRD_PARTY_NOTICES',
+      'packages/core/src/a.ts: not listed under @iconify/utils in packages/core/THIRD_PARTY_NOTICES',
     ]);
   });
 
   it('requires a THIRD_PARTY_NOTICES with the MIT text that the package publishes', () => {
     const missing = workspace({
-      'packages/flow/package.json': JSON.stringify({ name: 'flow', files: ['dist'] }),
-      'packages/flow/src/a.ts': `${GOOD_HEADER}export {};\n`,
+      'packages/icons/package.json': JSON.stringify({ name: 'icons', files: ['dist'] }),
+      'packages/icons/src/a.ts': `${ICONIFY_HEADER}export {};\n`,
     });
     expect(checkLicenses(missing)).toEqual([
-      'packages/flow: has files ported from Pele but no THIRD_PARTY_NOTICES',
-    ]);
-    // It names the upstreams the files come from.
-    const iconifyOnly = workspace({
-      'packages/icons/package.json': JSON.stringify({ name: 'icons', files: ['dist'] }),
-      'packages/icons/src/a.ts':
-        '// Ported from Iconify (https://github.com/iconify/iconify, MIT License, Copyright (c) 2021-PRESENT Vjacheslav Trushkin).\nexport {};\n',
-    });
-    expect(checkLicenses(iconifyOnly)).toEqual([
       'packages/icons: has files ported from @iconify/utils but no THIRD_PARTY_NOTICES',
     ]);
 
     const unpublished = workspace({
-      'packages/flow/package.json': JSON.stringify({ name: 'flow', files: ['dist'] }),
-      'packages/flow/THIRD_PARTY_NOTICES': 'Pele\n  src/a.ts\n',
-      'packages/flow/src/a.ts': `${GOOD_HEADER}export {};\n`,
+      'packages/icons/package.json': JSON.stringify({ name: 'icons', files: ['dist'] }),
+      'packages/icons/THIRD_PARTY_NOTICES': '@iconify/utils\n  src/a.ts\n',
+      'packages/icons/src/a.ts': `${ICONIFY_HEADER}export {};\n`,
     });
     expect(checkLicenses(unpublished)).toEqual([
-      'packages/flow/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2026 kepano"',
-      'packages/flow/package.json: "files" must include THIRD_PARTY_NOTICES',
+      'packages/icons/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2021-PRESENT Vjacheslav Trushkin"',
+      'packages/icons/package.json: "files" must include THIRD_PARTY_NOTICES',
     ]);
   });
 
@@ -118,35 +104,18 @@ describe('license check (R-REL-4)', () => {
     expect(checkLicenses(root)).toEqual([]);
   });
 
-  it('still requires the Pele text in notices that credit no runtime dependency', () => {
-    const root = workspace({
-      'packages/layout/package.json': JSON.stringify({
-        name: 'layout',
-        files: ['dist', 'THIRD_PARTY_NOTICES'],
-        dependencies: { elkjs: '0.12.0' },
-      }),
-      'packages/layout/THIRD_PARTY_NOTICES': 'Some notes\n',
-      'packages/layout/src/a.ts': '// Our own code.\nexport {};\n',
-    });
-    expect(checkLicenses(root)).toEqual([
-      'packages/layout/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2026 kepano"',
-    ]);
-  });
-
-  it('needs no Pele text when every ported file comes from another upstream', () => {
-    const header =
-      '// Ported from Iconify (https://github.com/iconify/iconify, MIT License, Copyright (c) 2021-PRESENT Vjacheslav Trushkin).\n';
-    const iconify =
-      '@iconify/utils\n--------------\n  src/a.ts\n\nMIT License\n\nCopyright (c) 2021-PRESENT Vjacheslav Trushkin\n';
+  it("checks each upstream's text and listing in its own section", () => {
     const files = {
       'packages/icons/package.json': JSON.stringify({
         name: 'icons',
         files: ['dist', 'THIRD_PARTY_NOTICES'],
       }),
-      'packages/icons/src/a.ts': `${header}export {};\n`,
+      'packages/icons/src/a.ts': `${ICONIFY_HEADER}export {};\n`,
     };
     expect(
-      checkLicenses(workspace({ ...files, 'packages/icons/THIRD_PARTY_NOTICES': iconify }))
+      checkLicenses(
+        workspace({ ...files, 'packages/icons/THIRD_PARTY_NOTICES': iconifyNotice('src/a.ts') })
+      )
     ).toEqual([]);
     expect(
       checkLicenses(workspace({ ...files, 'packages/icons/THIRD_PARTY_NOTICES': 'MIT License\n' }))
@@ -159,61 +128,52 @@ describe('license check (R-REL-4)', () => {
   it('reports notice entries for files that no longer exist', () => {
     const root = workspace({
       'packages/core/package.json': manifest(),
-      'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\n  src/a.ts\n  src/gone.ts\n`,
-      'packages/core/src/a.ts': `${GOOD_HEADER}export {};\n`,
+      'packages/core/THIRD_PARTY_NOTICES': iconifyNotice('src/a.ts', 'src/gone.ts'),
+      'packages/core/src/a.ts': `${ICONIFY_HEADER}export {};\n`,
     });
     expect(checkLicenses(root)).toEqual([
       'packages/core/THIRD_PARTY_NOTICES: lists src/gone.ts, which does not exist',
     ]);
   });
 
-  it('ignores Pele links outside the file header, spec files and private packages', () => {
+  it('ignores upstream links outside the file header, spec files and private packages', () => {
     const root = workspace({
       'packages/core/package.json': manifest(),
       'packages/core/src/a.ts':
-        'export const a = 1;\n// see https://github.com/obsidianmd/pele for the idea\n',
-      'packages/core/src/a.spec.ts': '// https://github.com/obsidianmd/pele\n',
+        'export const a = 1;\n// see https://github.com/iconify/iconify for the idea\n',
+      'packages/core/src/a.spec.ts': '// https://github.com/iconify/iconify\n',
       'packages/bench/package.json': JSON.stringify({ name: 'bench', private: true }),
-      'packages/bench/src/b.ts': '// https://github.com/obsidianmd/pele\n',
+      'packages/bench/src/b.ts': '// https://github.com/iconify/iconify\n',
     });
     expect(checkLicenses(root)).toEqual([]);
   });
 
   it('checks headers (not notices) of ported tools', () => {
     const root = workspace({
-      'tools/gen/src/a.ts': '// Ported from https://github.com/obsidianmd/pele.\n',
+      'tools/gen/src/a.ts': '// Ported from https://github.com/iconify/iconify.\n',
     });
     expect(checkLicenses(root)).toEqual([
-      'tools/gen/src/a.ts: Pele-derived header must name the MIT license and "kepano"',
+      'tools/gen/src/a.ts: @iconify/utils-derived header must name the MIT license and "Vjacheslav Trushkin"',
     ]);
   });
 
   it('requires the upstream notice and listing for a file ported from @braintree/sanitize-url', () => {
-    const header =
-      '// Port of @braintree/sanitize-url (MIT, (c) 2017 Braintree) via Pele (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).\n';
-    const braintree = `@braintree/sanitize-url\n-----------------------\nMIT License\n\nCopyright (c) 2017 Braintree\n`;
+    const header = '// Port of @braintree/sanitize-url (MIT, (c) 2017 Braintree).\n';
+    const braintree = `@braintree/sanitize-url\n-----------------------\n  src/svg/url.ts\n\nMIT License\n\nCopyright (c) 2017 Braintree\n`;
     const files = {
       'packages/core/package.json': manifest(),
       'packages/core/src/svg/url.ts': `${header}export {};\n`,
     };
     expect(
       checkLicenses(
-        workspace({
-          ...files,
-          'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\n  src/svg/url.ts\n`,
-        })
+        workspace({ ...files, 'packages/core/THIRD_PARTY_NOTICES': '  src/svg/url.ts\n' })
       )
     ).toEqual([
       'packages/core/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2017 Braintree"',
       'packages/core/src/svg/url.ts: not listed under @braintree/sanitize-url in packages/core/THIRD_PARTY_NOTICES',
     ]);
     expect(
-      checkLicenses(
-        workspace({
-          ...files,
-          'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\n  src/svg/url.ts\n\n${braintree}\n  src/svg/url.ts\n`,
-        })
-      )
+      checkLicenses(workspace({ ...files, 'packages/core/THIRD_PARTY_NOTICES': braintree }))
     ).toEqual([]);
   });
 
@@ -229,11 +189,10 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
-  it('requires core/svg/url.ts to credit both Pele and @braintree/sanitize-url', () => {
+  it('requires core/svg/url.ts to credit @braintree/sanitize-url', () => {
     const root = workspace({
       'packages/core/package.json': manifest(),
-      'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\n  src/svg/url.ts\n`,
-      'packages/core/src/svg/url.ts': `${GOOD_HEADER}export {};\n`,
+      'packages/core/src/svg/url.ts': '// Our own code.\nexport {};\n',
     });
     expect(checkLicenses(root)).toEqual([
       'packages/core/src/svg/url.ts: header must credit @braintree/sanitize-url',
@@ -310,7 +269,6 @@ describe('license check (R-REL-4)', () => {
       }),
       'packages/flow/src/layout/d3-sankey.ts': `${header}export {};\n`,
     };
-    // Pele's text is not needed for d3 files.
     expect(
       checkLicenses(
         workspace({
@@ -346,7 +304,6 @@ describe('license check (R-REL-4)', () => {
       }),
       'packages/tree/src/layout/tiles.ts': `${header}export {};\n`,
     };
-    // Pele's text is not needed for d3 files.
     expect(
       checkLicenses(
         workspace({
@@ -418,16 +375,13 @@ describe('license check (R-REL-4)', () => {
       bsd('fmin', 'Copyright 2016, Ben Frederickson'),
     ];
     expect(
-      checkLicenses(
-        workspace({ ...files, 'packages/mermaid/THIRD_PARTY_NOTICES': MIT_NOTICE + d3.join('\n') })
-      )
+      checkLicenses(workspace({ ...files, 'packages/mermaid/THIRD_PARTY_NOTICES': d3.join('\n') }))
     ).toEqual([]);
     expect(
       checkLicenses(
         workspace({
           ...files,
-          'packages/mermaid/THIRD_PARTY_NOTICES':
-            MIT_NOTICE + [...d3.slice(0, 2), ...d3.slice(3)].join('\n'),
+          'packages/mermaid/THIRD_PARTY_NOTICES': [...d3.slice(0, 2), ...d3.slice(3)].join('\n'),
         })
       )
     ).toEqual([
@@ -437,8 +391,7 @@ describe('license check (R-REL-4)', () => {
       checkLicenses(
         workspace({
           ...files,
-          'packages/mermaid/THIRD_PARTY_NOTICES':
-            MIT_NOTICE + [...d3.slice(0, 4), ...d3.slice(5)].join('\n'),
+          'packages/mermaid/THIRD_PARTY_NOTICES': [...d3.slice(0, 4), ...d3.slice(5)].join('\n'),
         })
       )
     ).toEqual([
@@ -448,7 +401,7 @@ describe('license check (R-REL-4)', () => {
       checkLicenses(
         workspace({
           ...files,
-          'packages/mermaid/THIRD_PARTY_NOTICES': MIT_NOTICE + d3.slice(0, 5).join('\n'),
+          'packages/mermaid/THIRD_PARTY_NOTICES': d3.slice(0, 5).join('\n'),
         })
       )
     ).toEqual([

@@ -1,12 +1,10 @@
-// The `tree` engine (D280–D285): LayoutGraph → LayoutModel as a two-sided tidy tree. The root
-// sits in the middle, its first branches run right and the rest left, and each side is a tidy
-// tree whose levels run outwards. The band stacking and the split are ported from Pele's mindmap
-// layout (https://github.com/obsidianmd/pele, src/diagrams/mindmap/render.ts, MIT, (c) 2026
-// kepano; see THIRD_PARTY_NOTICES): each subtree takes a band across the flow, siblings' bands
-// are stacked, and a parent is centred on its first and last child, so nothing overlaps by
-// construction and the work is linear. Changed from Pele: plain LayoutGraph input with measured
-// sizes, gaps from `spacing` only, edges as route points with ports, and input that is not one
-// tree (D285).
+// The `tree` engine (D280–D285): LayoutGraph → LayoutModel as a two-sided tidy tree. The root sits
+// in the middle, its first branches run right and the rest left, and each side is a tidy tree whose
+// levels run outwards. The band stacking and the split are ported from Pele's mindmap layout
+// (src/diagrams/mindmap/render.ts): each subtree takes a band across the flow, siblings' bands are
+// stacked, and a parent is centred on its first and last child, so nothing overlaps by construction
+// and the work is linear. Changed from Pele: plain LayoutGraph input with measured sizes, gaps from
+// `spacing` only, edges as route points with ports, and input that is not one tree (D285).
 import type {
   LayoutEdge,
   LayoutGraph,
