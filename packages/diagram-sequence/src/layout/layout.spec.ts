@@ -6,7 +6,7 @@ import { cellProfile, pxProfile, type UnitProfile } from '@mermaid-js/core/layou
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { SequenceModel } from '../model.ts';
-import { FIXTURES, hello, model as modelOf, msg, note, p as part } from './fixtures.ts';
+import { FIXTURES, frag, hello, model as modelOf, msg, note, p as part } from './fixtures.ts';
 import { fontsOf } from './env.ts';
 import { layoutSequence, type SequenceLayout } from './index.ts';
 import { sequenceLayoutViolations } from './invariants.ts';
@@ -72,7 +72,7 @@ describe('sequence layout invariants', () => {
         for (const [name, model] of Object.entries(FIXTURES)) {
           it(`${name}, ${theme}, ${unit}, ${config}`, () => {
             const layout = lay(model, units, measurer, sequence, theme);
-            expect(sequenceLayoutViolations(model, layout)).toEqual([]);
+            expect(sequenceLayoutViolations(model, layout, { sequence })).toEqual([]);
             expect(layout.units).toBe(unit);
           });
         }
@@ -116,7 +116,7 @@ describe('sequence layout invariants', () => {
       messages: [{ ...first!, y: NaN }, ...good.messages.slice(1)],
       notes: good.notes.map((n) => ({ ...n, y: 0 })),
     };
-    const found = sequenceLayoutViolations(model, broken);
+    const found = sequenceLayoutViolations(model, broken, {});
     expect(found).toContain('layout.messages[0].y is NaN');
     expect(found.some((v) => v.startsWith(`frame ${frame!.ast} does not contain`))).toBe(true);
     expect(found.some((v) => v.includes(' overlaps the box of '))).toBe(true);
@@ -135,7 +135,8 @@ describe('sequence layout in px follows v12', () => {
     expect([m!.startX, m!.stopX]).toEqual([76, 271]);
     // v12 puts the line at the row top + 10 + one line + the text height - 10 + boxMargin.
     expect(m!.y - 2 * m!.label!.text.lineHeight).toBeCloseTo(65 + 10);
-    expect(m!.label!.y).toBe(75);
+    // Its baseline sits 1 em less half the wrap padding above the line (#1237, D723).
+    expect(m!.y - m!.label!.y - m!.label!.text.baseline).toBeCloseTo(16 - 5);
     // Mirrored boxes start two boxMargins below the last row; the viewBox is v12's.
     expect(b!.bottom).toBe(m!.y + 20);
     expect([l.bounds.x, l.bounds.width]).toEqual([-50, 450]);
@@ -198,6 +199,182 @@ describe('sequence layout in px follows v12', () => {
   it('numbers messages from autonumber until it is turned off', () => {
     const l = lay(FIXTURES.numbersAndWrap!);
     expect(l.messages.map((m) => m.number?.value)).toEqual([10, 15, undefined, undefined]);
+  });
+});
+
+describe('message label height above its line (#1237, D723)', () => {
+  // mermaid 12.2.0 (the conformance oracle's dist) in Chromium at 16 px: the last line's
+  // alphabetic baseline sits 10.81 px above the message line in `default` (6.81 px from its
+  // glyph box) and 10.86 px in `redux`, for every arrow and a curved self message; 0.81 px for a
+  // self message with `rightAngles`, whose line v12 draws a boxMargin higher. v13's `redux`
+  // draws messages at 14 px, so it is measured here at v12's 16.
+  const V12_GAP: Readonly<Record<ThemeName, number>> = { default: 10.81, redux: 10.86 };
+  const AT_16 = { fontSize: '16px' };
+  const lastBaseline = (l: SequenceLayout['messages'][number]): number => {
+    const t = l.label!.text;
+    const n = t.lines.length;
+    return l.label!.y + (t.baselines?.[n - 1] ?? (n - 1) * t.lineHeight + t.baseline);
+  };
+  const ARROWS = [
+    ['solid', msg('A', 'B', 'Hello John, how are you?', 'solid')],
+    ['dotted', msg('B', 'A', 'Great, thanks!', 'dotted')],
+    ['async', msg('A', 'B', 'See you later!', 'solid_point')],
+    ['self', msg('B', 'B', 'self message', 'solid')],
+  ] as const;
+
+  for (const theme of THEMES)
+    for (const lines of ['one line', 'two lines'] as const)
+      for (const [kind, m] of ARROWS)
+        it(`${kind}, ${lines}, ${theme}: v12's gap, within 1 px`, () => {
+          const text = lines === 'one line' ? m.text : m.text.replace(' ', '<br>');
+          const model = modelOf([part('A'), part('B')], [{ ...m, text }]);
+          const l = lay(model, pxProfile, tableMeasurer, {}, theme, AT_16);
+          const [placed] = l.messages;
+          expect(placed!.label!.text.lines).toHaveLength(lines === 'one line' ? 1 : 2);
+          const gap = placed!.y - lastBaseline(placed!);
+          expect(Math.abs(gap - V12_GAP[theme])).toBeLessThanOrEqual(1);
+        });
+
+  it('a self message with rightAngles ends its label on the line, not through it', () => {
+    // v12's last baseline sat 0.81 px above the square loop's top, which struck the descenders
+    // through. v13 lifts the label until its box ends on the line (#1337 review): the last
+    // baseline then sits the font's descent above it.
+    const descent: Readonly<Record<ThemeName, number>> = { default: 3.552, redux: 3.92 };
+    for (const theme of THEMES) {
+      const model = modelOf([part('A')], [msg('A', 'A', 'self')]);
+      const l = lay(model, pxProfile, tableMeasurer, { rightAngles: true }, theme, AT_16);
+      const [placed] = l.messages;
+      const label = placed!.label!;
+      expect(label.y + label.height, theme).toBeCloseTo(placed!.y, 6);
+      expect(placed!.y - lastBaseline(placed!), theme).toBeCloseTo(descent[theme], 3);
+    }
+  });
+
+  it('leaves cells as they were: the label on the row above its line', () => {
+    const l = lay(hello, cellProfile(), cellMeasurer);
+    const [m] = l.messages;
+    expect([m!.label!.y, m!.y]).toEqual([4, 5]);
+  });
+});
+
+describe('frame title and section label height (#1238, D723)', () => {
+  // mermaid 12.2.0 (the conformance oracle's dist) in Chromium at 16 px: the first line's glyph
+  // box is centred 12.5 px below the frame's top line (or the section's dashed line) in
+  // `default` and 12.59 px in `redux`, for every fragment kind, nested or not. v13's `redux`
+  // draws messages at 14 px, so it is measured here at v12's 16.
+  const V12_CENTRE: Readonly<Record<ThemeName, number>> = { default: 12.5, redux: 12.59 };
+  const AT_16 = { fontSize: '16px' };
+  const two = [msg('A', 'B', 'one')];
+  const KINDS = [
+    ['loop', frag('loop', ['Every minute', two])],
+    ['alt/else', frag('alt', ['is sick', two], ['is well', two], ['other', two])],
+    ['opt', frag('opt', ['Extra response', two])],
+    ['par/and', frag('par', ['Alice to Bob', two], ['Alice to John', two])],
+    ['critical/option', frag('critical', ['Connect', two], ['Timeout', two], ['Rejected', two])],
+    ['break', frag('break', ['when the booking fails', two])],
+    [
+      'nested',
+      frag(
+        'par',
+        ['Alice to Bob', two],
+        ['Alice to John', [frag('par', ['John to Charlie', two], ['John to Diana', two])]]
+      ),
+    ],
+  ] as const;
+  /** Each title's and section label's first-line centre, below the line it hangs from. */
+  const centres = (l: SequenceLayout): number[] =>
+    l.fragments.flatMap((f) => [
+      ...(f.title ? [f.title.y + f.title.text.lineHeight / 2 - f.y] : []),
+      ...f.sections.flatMap((s) =>
+        s.label ? [s.label.y + s.label.text.lineHeight / 2 - s.y] : []
+      ),
+    ]);
+
+  for (const theme of THEMES)
+    for (const [kind, statement] of KINDS)
+      it(`${kind}, ${theme}: v12's centre, within 1 px`, () => {
+        const model = modelOf([part('A'), part('B')], [statement]);
+        const l = lay(model, pxProfile, tableMeasurer, {}, theme, AT_16);
+        const found = centres(l);
+        expect(found.length).toBeGreaterThan(0);
+        for (const c of found) expect(Math.abs(c - V12_CENTRE[theme])).toBeLessThanOrEqual(1);
+      });
+
+  it('never lifts a title above its frame or a section label above its line', () => {
+    const model = modelOf([part('A'), part('B')], [KINDS[1][1]]);
+    const l = lay(model, pxProfile, tableMeasurer, {}, 'default', { fontSize: '40px' });
+    for (const f of l.fragments) {
+      expect(f.title!.y).toBeGreaterThanOrEqual(f.y);
+      for (const s of f.sections) expect(s.label!.y).toBeGreaterThanOrEqual(s.y);
+    }
+  });
+
+  it('keeps every frame, tab, section line and the diagram height where they were', () => {
+    // Pinned before #1238 moved the text: `y+height tab [section lines]` per frame.
+    const r = (v: number): string => v.toFixed(2);
+    const pins = THEMES.map((theme) => {
+      const l = lay(FIXTURES.fragments!, pxProfile, tableMeasurer, {}, theme);
+      const frames = l.fragments.map(
+        (f) =>
+          `${r(f.y)}+${r(f.height)} ${f.tab.height} [${f.sections.map((s) => r(s.y)).join(',')}]`
+      );
+      return `${theme} ${r(l.bounds.height)}: ${frames.join(', ')}`;
+    });
+    expect(pins).toMatchInlineSnapshot(`
+      [
+        "redux 1480.50: 82.10+388.80 35 [], 169.30+291.60 35 [261.50,429.80], 343.70+71.10 35 [], 480.90+276.60 35 [573.10,732.50], 767.50+234.40 35 [859.70], 1011.90+87.20 35 [], 1109.10+35.00 35 [], 1220.20+87.20 35 []",
+        "default 1478.25: 75.00+408.61 20 [], 167.15+306.46 20 [264.30,440.03], 351.46+73.58 20 [], 493.61+291.46 20 [590.76,760.06], 795.06+244.30 20 [892.22], 1049.37+92.15 20 [], 1151.52+20.00 20 [], 1250.10+92.15 20 []",
+      ]
+    `);
+  });
+
+  it('leaves cells as they were', () => {
+    const l = lay(FIXTURES.fragments!, cellProfile(), cellMeasurer);
+    const labels = l.fragments.map((f) => [f.title?.y, f.sections.map((s) => s.label?.y)]);
+    expect(labels).toMatchInlineSnapshot(`
+      [
+        [
+          5,
+          [],
+        ],
+        [
+          10,
+          [
+            15,
+            27,
+          ],
+        ],
+        [
+          undefined,
+          [],
+        ],
+        [
+          31,
+          [
+            36,
+            undefined,
+          ],
+        ],
+        [
+          47,
+          [
+            52,
+          ],
+        ],
+        [
+          60,
+          [],
+        ],
+        [
+          undefined,
+          [],
+        ],
+        [
+          74,
+          [],
+        ],
+      ]
+    `);
   });
 });
 
@@ -361,7 +538,7 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
       for (const sequence of [{}, VARIANT])
         for (const [name, m] of Object.entries(models)) {
           const l = lay(m, pxProfile, tableMeasurer, sequence, 'redux', { actorGlyphBand: band });
-          expect(sequenceLayoutViolations(m, l), `${name}, band ${band}`).toEqual([]);
+          expect(sequenceLayoutViolations(m, l, { sequence }), `${name}, band ${band}`).toEqual([]);
         }
   });
 
@@ -373,13 +550,13 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
 
   it('catches a symbol or label off its band and a lifeline inside its row', () => {
     const good = neo(SYMBOLS);
-    expect(sequenceLayoutViolations(SYMBOLS, good)).toEqual([]);
+    expect(sequenceLayoutViolations(SYMBOLS, good, {})).toEqual([]);
     const u = good.participants.findIndex((p) => p.id === 'U');
     const p = good.participants[u]!;
     const broken = (q: Partial<typeof p>): string[] => {
       const participants = [...good.participants];
       participants[u] = { ...p, ...q };
-      return sequenceLayoutViolations(SYMBOLS, { ...good, participants });
+      return sequenceLayoutViolations(SYMBOLS, { ...good, participants }, {});
     };
     expect(broken({ band: { ...p.band!, top: p.height + 1 } })).toContain(
       'the top glyph band of U leaves its row'

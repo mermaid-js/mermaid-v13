@@ -59,6 +59,7 @@ e2e/diagrams/sequence/nightly-check/redux-neo-with-notes-and-loops-redux-color-t
 e2e/diagrams/sequence/nightly-check/redux-neo-with-notes-and-loops-redux-dark-color-theme.mmd 6 fc936983e6539a99
 e2e/diagrams/sequence/nightly-check/redux-neo-with-notes-and-loops-redux-dark-theme.mmd 6 7a5a74b359630981
 e2e/diagrams/sequence/nightly-check/redux-neo-with-notes-and-loops-redux-theme.mmd 6 a68c8805984be09b
+e2e/diagrams/sequence/nightly-check/right-angles-self-message-labels.mmd 1 8686de018de5cf94
 e2e/diagrams/sequence/nightly-check/should-align-multiline-actor-labels-on-the-datum-neo.mmd 4 812a60dac8165549
 e2e/diagrams/sequence/nightly-check/should-be-possible-to-use-actor-symbols-instead-of-boxes.mmd 1 7057db3da04008f8
 e2e/diagrams/sequence/nightly-check/should-handle-bidirectional-arrows-with-autonumber.mmd 1 2ef7de3f661c3293
@@ -214,6 +215,7 @@ e2e/diagrams/sequence/nightly-check/v2-classic-participant-creation-and-destruct
 e2e/diagrams/sequence/nightly-check/v2-classic-with-different-font-settings.mmd 4 8eefab5aad722730
 e2e/diagrams/sequence/nightly-check/v2-complex-sequence-with-all-features.mmd 7 1a57732e252c6f88
 e2e/diagrams/sequence/nightly-check/v2-with-wrapped-messages-and-notes.mmd 1 737e6a1bbdaa0359
+e2e/diagrams/sequence/nightly-check/wrap-in-span-narrowed-by-activations.mmd 1 4f492100be2c2984
 e2e/diagrams/sequence/pr-check/math-should-render-tex-in-every-sequence-label.mmd 1 35ee97248131ed25
 e2e/diagrams/sequence/pr-check/should-handle-complex-interactions-between-different-participant-types.mmd 8 0c19288254158b2c
 e2e/diagrams/sequence/pr-check/should-render-a-sequence-diagram-with-various-participant-types.mmd 9 8200d3f59f2da4a1
