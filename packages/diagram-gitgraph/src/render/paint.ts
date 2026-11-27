@@ -58,8 +58,8 @@ export interface Paints {
   /** Merge and highlight insides, reverse crosses. */
   readonly inset: Paint;
   readonly crossWidth: Length;
-  /** A cherry-pick bullet: its body (undefined: v12 classic sets none, so it is black). */
-  readonly cherry: { readonly fill?: Paint; readonly ink: Paint };
+  /** A cherry-pick bullet: its body (classic: `textColor`, v12's root `fill` rule) and its ink. */
+  readonly cherry: { readonly fill: Paint; readonly ink: Paint };
   /** Branch lines. */
   readonly line: { readonly stroke: Paint; readonly dash: SafeValue };
   readonly commitLabel: {
@@ -181,7 +181,7 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     inset: nodeColors ? mainBkg : theme.color('primaryColor'),
     crossWidth: nodeColors ? strokeWidth : CLASSIC_CROSS_WIDTH,
     cherry: {
-      fill: nodeColors ? nodeBorder : undefined,
+      fill: nodeColors ? nodeBorder : theme.color('textColor'),
       ink: colorOr(theme, GIT_PAINT.cherryPickInk, CHERRY_INK),
     },
     line: {
