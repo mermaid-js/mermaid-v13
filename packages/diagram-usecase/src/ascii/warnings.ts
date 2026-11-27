@@ -3,6 +3,7 @@
 // "one `ASCII_DROPPED`"). Each warning names the AST ids of what it dropped: the elements from
 // the views, and the statements when the AST is given. A `usecase` option text output cannot
 // honour is one more kind (pitfall 22): fonts, colours and the SVG's width and margin.
+import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { UsecaseConfigKey, UsecaseLayoutConfig } from '../config.ts';
@@ -20,6 +21,7 @@ export type AsciiDroppedFeature =
   | 'emphasis'
   | 'glyph'
   | 'animation'
+  | 'curve'
   | 'config'
   | 'accessibility';
 
@@ -36,6 +38,7 @@ const FEATURE_TEXT: Record<AsciiDroppedFeature, string> = {
   emphasis: 'bold and italic text',
   glyph: 'business marks, icons and the hollow and awesome actor figures',
   animation: 'edge animation',
+  curve: 'edge curves',
   config: 'usecase fonts, colorScheme, useMaxWidth or diagramPadding',
   accessibility: 'accTitle and accDescr',
 };
@@ -93,12 +96,14 @@ function nodeFeatures(prepared: UsecasePrepared, add: Add): void {
 /**
  * The warnings for one drawing: the features without a text form, one per kind (D82). `ast`
  * adds the statements' ids (`style:1`, `classDef:1`, `accTitle:1`, …); the config is the one
- * the layout resolved (`prepared.config`), whose rejected values already warned.
+ * the layout resolved (`prepared.config`), whose rejected values already warned. `curve` is
+ * the `usecase.curve` or `curve` the config sets: text lines are always square (D748).
  */
 export function asciiWarnings(
   model: UsecaseModel,
   prepared: UsecasePrepared,
-  ast?: AstNode
+  ast?: AstNode,
+  config?: ResolvedConfig
 ): AsciiWarning[] {
   const dropped = droppedFeatures(FEATURE_TEXT, STATEMENTS);
   const { add } = dropped;
@@ -113,6 +118,7 @@ export function asciiWarnings(
     if (emphasised(e.label)) add('emphasis', e.id);
     if (e.relationship.animate || e.relationship.animation) add('animation', e.id);
   }
+  if ((config?.usecase?.curve ?? config?.curve) !== undefined) add('curve');
   const undrawn = undrawnConfig(prepared.config);
   if (undrawn.length > 0) add('config');
   if (model.accTitle || model.accDescr) add('accessibility');
