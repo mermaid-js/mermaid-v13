@@ -102,5 +102,13 @@
     "reason": "core's parseYaml rejects a tab-indented plain scalar document (`tabs are not allowed for indentation`), where js-yaml 4, which v12 used, read it as text; v12 then ignored the non-mapping data. Only the generated tabs variant writes it (core YAML, not kanban; #453).",
     "owner": "#453",
     "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-theme/dark-with-darkMode",
+    "inputHash": "sha256:ede6c86614a50297",
+    "kind": "model",
+    "reason": "A colour difference, not a parse one: under `theme: dark` with `themeVariables.darkMode: true` v13 lightens the columns (`lightenHsl(cScale<n>, 10%)`), as `theme: dark` alone does in both, where v12's adjuster darkened them on the author's darkMode (D741, amends D374). Source: `---\\nconfig:\\n  theme: dark\\n  themeVariables:\\n    darkMode: true\\n---\\nkanban\\n  todo[Todo]\\n    a[Card]\\n`. No corpus item has this id, so the parity runner never observes it; `packages/conformance/src/kanban/theme.spec.ts` checks it against v12's style sheet (MIGRATION 220-kanban).",
+    "owner": "D741",
+    "since": "2026-11-27"
   }
 ]

@@ -166,10 +166,16 @@ describe('colours (v12 styles.ts, D374)', () => {
     expect(await column('default', { cScale2: RED })).toBe(LIGHTER);
     expect(await column('neo', { cScale2: RED })).toBe(LIGHTER);
     expect(await column('redux', { cScale2: RED })).toBe(LIGHTER);
-    expect(await column('dark', { cScale2: RED })).toBe(DARKER);
-    // neo-dark, which v12 left light (D183), darkens: the trait, not the name.
+    // neo-dark and redux-dark, which v12 left light (D183), darken: the trait, not the name.
     expect(await column('neo-dark', { cScale2: RED })).toBe(DARKER);
+    expect(await column('redux-dark', { cScale2: RED })).toBe(DARKER);
+    expect(await column('redux-dark-color', { cScale2: RED })).toBe(DARKER);
     expect(await column('default', { cScale2: RED, darkMode: true })).toBe(DARKER);
+  });
+
+  it('lightens under theme: dark, as v12 does, even with darkMode (D741)', async () => {
+    expect(await column('dark', { cScale2: RED })).toBe(LIGHTER);
+    expect(await column('dark', { cScale2: RED, darkMode: true })).toBe(LIGHTER);
   });
 
   it("gives column k slot (k + 1) mod 12, so the eleventh and later columns aren't black", async () => {

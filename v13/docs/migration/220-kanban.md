@@ -56,10 +56,14 @@
   ([Kanban SVG structure](#kanban-svg-structure)). The ticket and assignee follow the label
   rule, so a tag the ticket draws as formatting is left out of its link: `<b>T-1</b>` draws a
   bold `T-1` and links to `…T-1`, where v12 put the tags in the URL (D712).
-- **Column colours** (D374) come from the `cScale` palette in every theme, lightened by 10 or
-  darkened under a dark theme, and cycle through the twelve slots, so v12's black columns past
-  the tenth are gone and `neo-dark` darkens where v12 left it light
+- **Column colours** (D374, D741) come from the `cScale` palette in every theme, lightened by
+  10, or darkened under `themeVariables.darkMode` and in `neo-dark`, `redux-dark` and
+  `redux-dark-color`. They cycle through the twelve slots, so v12's black columns past the tenth
+  are gone, and those three dark themes darken where v12 left them light
   ([Kanban SVG structure](#kanban-svg-structure)).
+- **`theme: dark` with `themeVariables.darkMode: true`** (D741): the columns lighten, as under
+  `theme: dark` alone, where v12 darkened them. The dark theme's columns follow v12's `dark`,
+  which never set `darkMode`; an author's `darkMode` darkens only a light theme.
 - **Config** (D378). The `kanban` section is honoured with v12's defaults: `sectionWidth` (200),
   `padding` (8), `ticketBaseUrl` (empty, so no links) and `useMaxWidth` (true); `kanban.theme`
   wins over the top-level `theme` for kanban boards. v12's kanban read three `mindmap` keys:
