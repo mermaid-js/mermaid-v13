@@ -49,4 +49,4 @@
   wrap property (boolean) 3:3-3:5 "se" -> "wrap: "
   fontSize property (number) 3:3-3:5 "se" -> "fontSize: "
   markdownAutoWrap property (boolean) 3:3-3:5 "se" -> "markdownAutoWrap: "
-  legacyMarkdown property (boolean) 3:3-3:5 "se" -> "legacyMarkdown: "
+  markdownAlwaysOn property (boolean) 3:3-3:5 "se" -> "markdownAlwaysOn: "
