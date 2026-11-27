@@ -413,7 +413,7 @@ function withDataLabels(
       const at: Point = { x: bar.x + bar.width / 2, y: outside ? bar.y - margin : bar.y + margin };
       return place(m, at, 'middle', outside ? 'alphabetic' : 'hanging');
     });
-    return { ...p, dataLabels };
+    return outside ? { ...p, dataLabels, dataLabelsOutside: true } : { ...p, dataLabels };
   });
 }
 

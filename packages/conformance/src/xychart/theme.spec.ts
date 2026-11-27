@@ -8,8 +8,10 @@
  * palette as its list of colours (v12 split the string on `,`).
  *
  * Every value that differs is in `DIFFERENCES` with its decision, and the list must match the
- * differences found exactly: D333(b), the data labels of the six themes whose v12 block leaves
- * them out take the theme's own `primaryTextColor` where v12 drew theme-default's `#131300`.
+ * differences found exactly: D333(b), the data labels of the three light themes whose v12 block
+ * leaves them out take the theme's own `primaryTextColor` where v12 drew theme-default's
+ * `#131300`. The three dark ones (redux-dark, redux-dark-color, neo-dark) draw `#131300` again,
+ * as v12 did, because their light text is unreadable on the light bars (D749, amending D333(b)).
  * Author overrides: a nested `themeVariables.xyChart` key wins key by key as in v12 (D335),
  * colours and the palette (a string or an array) alike; the flat name wins over it (D540); a
  * shared `primaryTextColor` or `background` override moves the derived colours as in v12: in
@@ -39,8 +41,15 @@ function v12XyChart(theme: string, themeVariables?: object): Block {
 }
 
 const VARS = xychart.theme.vars;
+/**
+ * v13's own variable, which v12 has no key for: labels outside the bars, which v12 drew in
+ * `dataLabelColor` like the ones inside (D749). Compared with v12 on its own below.
+ */
+const OUTSIDE = 'xyChartDataLabelOutsideColor';
 /** Flat v13 name → v12's nested `xyChart` key (the table's `nested`, D335). */
-const NESTED = Object.entries(VARS).map(([name, v]) => [name, v.nested ?? ''] as const);
+const NESTED = Object.entries(VARS)
+  .filter(([name]) => name !== OUTSIDE)
+  .map(([name, v]) => [name, v.nested ?? ''] as const);
 const PALETTE = 'xyChartPlotColorPalette';
 
 const SECTION = xychart.theme.section!;
@@ -62,14 +71,9 @@ const v12Of = (block: Block, key: string, name: string): string | undefined =>
 /** Every variable where v13 differs from v12, by theme, with its decision. */
 const D333B =
   'D333(b): v12’s block here sets no dataLabelColor, so it drew theme-default’s #131300; v13 takes the theme’s primaryTextColor';
-const UNTHEMED: readonly ThemeName[] = [
-  'redux',
-  'redux-color',
-  'redux-dark',
-  'redux-dark-color',
-  'neo',
-  'neo-dark',
-];
+const UNTHEMED: readonly ThemeName[] = ['redux', 'redux-color', 'neo'];
+/** The dark themes whose v12 block also sets no dataLabelColor: v13 draws v12's ink (D749). */
+const DARK_INK: readonly ThemeName[] = ['redux-dark', 'redux-dark-color', 'neo-dark'];
 const DIFFERENCES: Readonly<Record<string, Readonly<Record<string, string>>>> = Object.fromEntries(
   UNTHEMED.map((t) => [t, { xyChartDataLabelColor: D333B }])
 );
@@ -82,16 +86,24 @@ async function differing(name: ThemeName, themeVariables?: Vars): Promise<string
 }
 
 /**
- * Shared-variable overrides and the variables in which v13 differs from v12, with why. None since
- * D656: `default` keeps its block under both overrides, as v12's does.
+ * Shared-variable overrides and the variables in which v13 differs from v12, with why. Since
+ * D656 `default` keeps its block under both overrides, as v12's does. In the three dark themes of
+ * D749 a dark author `primaryTextColor` reads on the light bars, so the labels take it where v12
+ * kept `#131300`.
  */
+const D749 =
+  'D749: the labels take the canvas text where it reads on the first bar colour, else v12’s #131300';
 const OVERRIDES: readonly {
   readonly theme: ThemeName;
   readonly vars: Vars;
   readonly differ: Readonly<Record<string, string>>;
-}[] = [];
+}[] = DARK_INK.map((theme) => ({
+  theme,
+  vars: { primaryTextColor: '#102030' },
+  differ: { xyChartDataLabelColor: D749 },
+}));
 
-describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381, D540, D656)', () => {
+describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381, D540, D656, D749)', () => {
   it("covers v12's thirteen xyChart keys, each a flat xyChart variable nested under `xyChart`", () => {
     const keys = Object.keys(v12Vars('default').xyChart as Block).sort();
     expect(NESTED.map(([, key]) => key).sort()).toEqual(keys);
@@ -120,6 +132,35 @@ describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381,
       expect((v12Vars(name).xyChart as Block).dataLabelColor).toBeUndefined();
       const theme = await v13Theme(name);
       expect(hex(theme.value('xyChartDataLabelColor'))).toBe(hex(theme.value('primaryTextColor')));
+    }
+  );
+
+  it.each(DARK_INK.map((n) => [n]))(
+    '%s: data labels are v12’s #131300, not the theme’s light primaryTextColor (D749)',
+    async (name) => {
+      expect((v12Vars(name).xyChart as Block).dataLabelColor).toBeUndefined();
+      const theme = await v13Theme(name);
+      expect(hex(theme.value('xyChartDataLabelColor'))).toBe(hex(v12XyChart(name).dataLabelColor));
+      expect(hex(theme.value('primaryTextColor'))).not.toBe('#131300');
+    }
+  );
+
+  it.each(THEME_NAMES.map((n) => [n]))(
+    '%s: labels outside the bars are v12’s dataLabelColor, or the canvas text where v12 fell back to #131300 (D749)',
+    async (name) => {
+      const theme = await v13Theme(name);
+      const fallback = (v12Vars(name).xyChart as Block).dataLabelColor === undefined;
+      expect(hex(theme.value(OUTSIDE))).toBe(
+        fallback ? hex(theme.value('primaryTextColor')) : hex(v12XyChart(name).dataLabelColor)
+      );
+      // An author's dataLabelColor colours both, as in v12; the outside key only the outside.
+      const shared = await v13Theme(name, { xyChart: { dataLabelColor: '#0a0b0c' } });
+      expect(hex(shared.value(OUTSIDE))).toBe('#0a0b0c');
+      const own = await v13Theme(name, {
+        xyChart: { dataLabelColor: '#0a0b0c', dataLabelOutsideColor: '#fefdfc' },
+      });
+      expect(hex(own.value(OUTSIDE))).toBe('#fefdfc');
+      expect(hex(own.value('xyChartDataLabelColor'))).toBe('#0a0b0c');
     }
   );
 

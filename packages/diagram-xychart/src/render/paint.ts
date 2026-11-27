@@ -1,7 +1,7 @@
 // The colours the XY chart renderer draws with (spec #426 §Renderer, D215, D227): the plot
 // palette `xyChartPlotColorPalette` (D545; plot `index` takes slot `index` mod its length, as
-// v12's `getPlotColorFromPalette`), and the twelve `xyChart*` colours of the plugin's theme
-// table. Each name is written as a literal, so the vocabulary `usedBy` scan
+// v12's `getPlotColorFromPalette`), and the thirteen `xyChart*` colours of the plugin's theme
+// table, one of them for data labels outside the bars (D749). Each name is written as a literal, so the vocabulary `usedBy` scan
 // (`theme-used-by.spec.ts`) sees it. The XY chart has no theme-name or `look` branch (D227).
 import type { RenderContext } from '@mermaid-js/core';
 import type { Paint } from '@mermaid-js/core/svg';
@@ -20,7 +20,10 @@ export interface AxisPaints {
 export interface Paints {
   readonly background: Paint;
   readonly title: Paint;
+  /** Data labels inside the bars. */
   readonly dataLabel: Paint;
+  /** Data labels outside the bars, on the canvas (D749). */
+  readonly dataLabelOutside: Paint;
   readonly legendText: Paint;
   readonly xAxis: AxisPaints;
   readonly yAxis: AxisPaints;
@@ -69,11 +72,16 @@ function axisPaints(theme: Theme, a: XyAxisLayout, names: AxisNames): AxisPaints
  */
 export function paints(theme: Theme, layout: XyChartLayout): Paints {
   const palette = theme.palette('xyChartPlotColorPalette');
-  const labelled = layout.plots.some((p) => p.kind === 'bar' && p.dataLabels.length > 0);
+  const labelled = (outside: boolean) =>
+    layout.plots.some(
+      (p) =>
+        p.kind === 'bar' && p.dataLabels.length > 0 && (p.dataLabelsOutside === true) === outside
+    );
   return {
     background: theme.color('xyChartBackgroundColor'),
     title: layout.title ? theme.color('xyChartTitleColor') : CURRENT_COLOR,
-    dataLabel: labelled ? theme.color('xyChartDataLabelColor') : CURRENT_COLOR,
+    dataLabel: labelled(false) ? theme.color('xyChartDataLabelColor') : CURRENT_COLOR,
+    dataLabelOutside: labelled(true) ? theme.color('xyChartDataLabelOutsideColor') : CURRENT_COLOR,
     legendText: layout.legend ? theme.color('xyChartLegendTextColor') : CURRENT_COLOR,
     xAxis: axisPaints(theme, layout.xAxis, X_AXIS),
     yAxis: axisPaints(theme, layout.yAxis, Y_AXIS),

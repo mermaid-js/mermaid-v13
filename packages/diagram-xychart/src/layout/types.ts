@@ -109,6 +109,11 @@ export interface XyBarPlotLayout {
    * (`XYCHART_LABEL_TOO_SMALL`).
    */
   readonly dataLabels: readonly XyText[];
+  /**
+   * `showDataLabelOutsideBar`: the labels sit on the canvas beside their bars, so the renderer
+   * draws them in `xyChartDataLabelOutsideColor` (D749). Absent when they are inside the bars.
+   */
+  readonly dataLabelsOutside?: true;
 }
 
 /** One point of a line: data point `datum` of its plot. */

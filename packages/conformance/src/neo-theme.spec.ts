@@ -51,6 +51,8 @@ const LOOK_GEOMETRY_WHY =
 const DIFFERENCES: Readonly<Record<string, string>> = {
   xyChartDataLabelColor:
     'D333(b): v12 neo sets no xyChart.dataLabelColor (its DB drew theme-default’s); v13 takes primaryTextColor',
+  xyChartDataLabelOutsideColor:
+    'D749: v12 has no variable; it drew labels outside the bars in dataLabelColor; v13 takes primaryTextColor',
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
   // Journey (#327): v12 sets neither; `.face` falls back to #FFF8DC and dots to actorColours.
   faceColor: 'D245: v12 sets no faceColor; v13 gives its `.face` fallback #FFF8DC as the value',
