@@ -66,7 +66,7 @@ beforeAll(async () => {
 
 describe('venn render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with titles, overlaps, text nodes and styles', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(84);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(85);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const all = cases.map((c) => c.r.svg).join('');

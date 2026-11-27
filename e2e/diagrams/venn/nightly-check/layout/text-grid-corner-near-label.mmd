@@ -1,0 +1,15 @@
+---
+description: >-
+  A labelled set's grid of three text nodes, whose empty fourth cell lies on the label "Mid" of
+  a neighbouring overlap: the grid stays in its set (D750).
+---
+venn-beta
+  set A["Alpha"]:5
+    text a0x
+    text a1
+    text a2
+  set B:20
+  set C:10
+  union A,B:2
+  union A,C["Mid"]:1
+  union B,C:2

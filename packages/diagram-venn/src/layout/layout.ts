@@ -476,7 +476,9 @@ function placeNodes(cells: GridCells, grid: Rect, parts: GridParts): VennTextNod
  * D750: the grid of an area with a placed label, or of one whose nodes in v12's grid meet a
  * label, with its {@link fewerColumns}; undefined for any other area, which keeps v12's grid.
  * It starts `labelTextGap` below the area's own label (or the labels its nodes met), and below
- * every label the grid would then meet, and is {@link fitted} under that line.
+ * every label its node boxes would then meet, and is {@link fitted} under that line. Only the
+ * boxes count: an empty cell or the room between boxes may lie on a label, so a grid moves
+ * down only for a label that one of its nodes would meet.
  */
 function clearGrid(
   v12Cells: GridCells,
@@ -493,9 +495,10 @@ function clearGrid(
   const below = (met: readonly PlacedLabel[]): number =>
     Math.max(...met.map((l) => l.y + l.height + gap));
   let grid = fitted(cells, Math.max(cells.v12.y, below(first)), parts);
-  // Each pass starts the grid below a label it met, so it meets that one no more.
+  // Each pass starts the grid below a label a node box met, so it meets that one no more.
   for (;;) {
-    const met = labels.filter((l) => overlaps(grid, l));
+    const boxes = placeNodes(cells, grid, parts).map((n) => n.box);
+    const met = labels.filter((l) => boxes.some((b) => overlaps(b, l)));
     if (met.length === 0) return { cells, grid };
     grid = fitted(cells, below(met), parts);
   }
