@@ -65,7 +65,14 @@ import type {
   TreemapSectionNode,
   TreemapStatementNode,
 } from './ast.ts';
-import { classDefParts, nameValue, numberValue, splitStyles, v12StyleEntities } from './convert.ts';
+import {
+  classDefParts,
+  markdownName,
+  nameValue,
+  numberValue,
+  splitStyles,
+  v12StyleEntities,
+} from './convert.ts';
 import { lex } from './lexer.ts';
 import { normalise } from './normalise.ts';
 import type { ClassDefRead } from './normalise.ts';
@@ -516,7 +523,8 @@ class TreemapParser extends RuleParser<PreprocessResult> {
   private item(indent: number): void {
     const s = this.i++;
     const nameRange = this.range(s);
-    const name = nameValue(this.raw(s));
+    const image = this.raw(s);
+    const name = nameValue(image);
     let j = this.i;
     this.tested(AFTER_NAME);
     if (this.kind(j) === T.Indentation) this.tested(SEPARATORS, ++j);
@@ -552,6 +560,7 @@ class TreemapParser extends RuleParser<PreprocessResult> {
         depth: 0,
       } satisfies TreemapSectionNode;
     }
+    if (markdownName(image)) node.markdown = true;
     this.tested(CLASS);
     if (this.kind() === T.StyleSeparator) {
       this.i++;

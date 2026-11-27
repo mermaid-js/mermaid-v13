@@ -4,7 +4,7 @@
  * coordinates: v12 translated its container down by the title band, here every box already
  * is. Rectangles have their top-left corner at `x`, `y`.
  */
-import type { FontKey } from '@mermaid-js/core/text';
+import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
 import type { Rect } from '@mermaid-js/shared/layout';
 import type { TreemapNode } from '../model.ts';
 
@@ -15,9 +15,10 @@ export type TreemapTextAnchor = 'start' | 'middle' | 'end';
 export type TreemapBaseline = 'middle' | 'hanging';
 
 /**
- * One line of plain text (D405: entities decoded, tags printed as written), measured in `font`
- * and placed by `anchor` and `baseline` at (`x`, `y`). `box` is its extent: the measured width
- * by the font size, the height v12 fitted against.
+ * A text, measured in `font` and placed by `anchor` and `baseline` at (`x`, `y`). `box` is its
+ * extent. Without `block`, one line of text in one style (entities decoded): its box is the
+ * measured width by the font size, the height v12 fitted against. With `block`, a label of
+ * several lines or styled runs (#1368), drawn as core lays it out, its block centred on `y`.
  */
 export interface TreemapText {
   readonly text: string;
@@ -27,6 +28,8 @@ export interface TreemapText {
   readonly anchor: TreemapTextAnchor;
   readonly baseline: TreemapBaseline;
   readonly box: Rect;
+  /** The label's lines and runs, when it is not one line of text in one style (#1368). */
+  readonly block?: MeasuredLabel;
 }
 
 /** What sections and leaves share. */

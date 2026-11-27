@@ -13,7 +13,8 @@
  * the complex leaf label truncated with `...`.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { decodeEntities, type FontKey, type Measurer } from '@mermaid-js/core/text';
+import type { FontKey, MeasuredLabel, Measurer } from '@mermaid-js/core/text';
+import type { MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { treemapLayoutConfig, type TreemapLayoutConfig } from '../config.ts';
 import { treemapValueFormat } from '../format/index.ts';
 import { classStyles, type TreemapModel } from '../model.ts';
@@ -25,7 +26,18 @@ import {
   TREEMAP_METRICS as M,
   type LeafFit,
 } from './metrics.ts';
-import { classFont, textWidth, truncate } from './text.ts';
+import {
+  blockOf,
+  classFont,
+  placed,
+  placedBlock,
+  readTreemapLabel,
+  textWidth,
+  truncate,
+  truncateBlock,
+  type TextAt,
+  type TreemapLabelText,
+} from './text.ts';
 import { tileTreemap, type Tile } from './tiles.ts';
 import type {
   Rect,
@@ -33,14 +45,13 @@ import type {
   TreemapLeafLayout,
   TreemapSectionLayout,
   TreemapText,
-  TreemapTextAnchor,
 } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
 import { growRect } from '@mermaid-js/core/layout';
 
 /** What the layout reads from the render context (`warn` for `TREEMAP_CONFIG_INVALID`). */
 export type TreemapLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn'>>;
+  Partial<Pick<RenderContext, 'warn' | 'inline'>>;
 
 /** For a layout run without a `warn` sink (unit tests, the invariants). */
 const ignoreWarning = (): void => undefined;
@@ -52,6 +63,8 @@ interface Frame {
   readonly config: TreemapLayoutConfig;
   readonly format: (value: number) => string;
   readonly model: TreemapModel;
+  /** What the label handler reads (#1368): the config, the warning sink, the inline spans. */
+  readonly labels: MarkdownWarningContext;
   /** The title band: every box moves down by it. */
   readonly band: number;
   /** `treemapTitleFontSize` (D407). */
@@ -63,15 +76,24 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
   const config = treemapLayoutConfig(ctx.config.treemap, ctx.warn ?? ignoreWarning);
   const width = config.nodeWidth ? config.nodeWidth * M.canvasScale : M.fallbackWidth;
   const height = config.nodeHeight ? config.nodeHeight * M.canvasScale : M.fallbackHeight;
-  const band = model.title ? M.titleBand : 0;
+  const family = ctx.theme.value('fontFamily');
+  const titleFont = {
+    family,
+    size: ctx.theme.number('treemapTitleFontSize'),
+    weight: NORMAL_WEIGHT,
+  };
+  const reading = labelContext(ctx);
+  const head = readTitle(model.title, titleFont, reading, ctx.measurer);
+  const { band } = head;
   const frame: Frame = {
     measurer: ctx.measurer,
-    family: ctx.theme.value('fontFamily'),
+    family,
     config,
     format: treemapValueFormat(config.valueFormat),
     model,
+    labels: reading,
     band,
-    titleSize: ctx.theme.number('treemapTitleFontSize'),
+    titleSize: titleFont.size,
   };
 
   const tree = tileTreemap(model.roots, { width, height, padding: config.padding });
@@ -96,7 +118,7 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
   tree.leaves.forEach((t, index) => {
     if (t.node) leaves.push(leafOf(t, index, frame, fit, fills, labels));
   });
-  const title = model.title ? titleOf(model.title, width, frame) : undefined;
+  const title = head.text && titleOf(head.text, head.block, width, frame);
 
   const box = new Box();
   for (const s of sections) {
@@ -128,6 +150,36 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
   };
 }
 
+/** The label handler's context from the layout's: a run without `warn` drops the warning. */
+function labelContext(ctx: TreemapLayoutContext): MarkdownWarningContext {
+  const warn = ctx.warn ?? ignoreWarning;
+  return ctx.inline
+    ? { config: ctx.config, warn, inline: ctx.inline }
+    : { config: ctx.config, warn };
+}
+
+/**
+ * The title read by the label rule (#1368), its block when it is not one line of text in one
+ * style, and the title band: none without a title, wider by the extra lines of a title of
+ * several lines.
+ */
+function readTitle(
+  title: string | undefined,
+  font: FontKey,
+  labels: MarkdownWarningContext,
+  measurer: Measurer
+): { text?: TreemapLabelText; block?: MeasuredLabel; band: number } {
+  if (!title) return { band: 0 };
+  const text = readTreemapLabel(title, false, labels, font, measurer);
+  if (text.line !== undefined) return { text, band: M.titleBand };
+  const block = blockOf(text, font, measurer);
+  return {
+    text,
+    block,
+    band: M.titleBand + Math.max(0, block.lines.length - 1) * block.lineHeight,
+  };
+}
+
 /**
  * Whether a value is printed: under `showValues`, and not when 0 (v12 printed nothing for a
  * falsy value, so NaN neither) nor when not finite (D402: a sum that overflows, or a value of
@@ -140,34 +192,6 @@ function shows(frame: Frame, value: number): boolean {
 /** d3's rectangle of `t`, moved down by the title band. */
 function rectOf(t: Tile, band: number): Rect {
   return { x: t.x0, y: t.y0 + band, width: t.x1 - t.x0, height: t.y1 - t.y0 };
-}
-
-/** How far left of its point a text's box starts, in text widths. */
-const ANCHOR_SHIFT: Readonly<Record<TreemapTextAnchor, number>> = {
-  start: 0,
-  middle: 1 / 2,
-  end: 1,
-};
-
-/** One line at (`x`, `y`): its box from the anchor, the baseline and the font size. */
-function placed(
-  text: string,
-  font: FontKey,
-  measurer: Measurer,
-  at: { x: number; y: number; anchor: TreemapTextAnchor; baseline: 'middle' | 'hanging' }
-): TreemapText {
-  const width = textWidth(measurer, text, font);
-  const shift = ANCHOR_SHIFT[at.anchor] * width;
-  const top = at.baseline === 'middle' ? at.y - font.size / 2 : at.y;
-  return {
-    text,
-    font,
-    x: at.x,
-    y: at.y,
-    anchor: at.anchor,
-    baseline: at.baseline,
-    box: { x: at.x - shift, y: top, width, height: font.size },
-  };
 }
 
 /** `inner` lies inside `outer`. */
@@ -206,21 +230,10 @@ function sectionOf(
   const space = showValue
     ? box.width - M.sectionValueInset - M.sectionValueEstimate - M.sectionLabelGap - M.sectionLabelX
     : box.width - M.sectionLabelX - M.sectionLabelRightPad;
-  const text = truncate(
-    frame.measurer,
-    decodeEntities(node.name),
-    labelFont,
-    Math.max(M.sectionLabelMinWidth, space)
-  );
-  const label =
-    text === ''
-      ? undefined
-      : placed(text, labelFont, frame.measurer, {
-          x: box.x + M.sectionLabelX,
-          y: headerY,
-          anchor: 'start',
-          baseline: 'middle',
-        });
+  const label = sectionLabel(node.name, node.markdown === true, frame, labelFont, {
+    space: Math.max(M.sectionLabelMinWidth, space),
+    at: { x: box.x + M.sectionLabelX, y: headerY, anchor: 'start', baseline: 'middle' },
+  });
 
   const valueText = showValue
     ? placed(
@@ -256,6 +269,28 @@ function sectionOf(
 }
 
 /**
+ * A section's header label truncated to `space`, or undefined when nothing of it is left. A
+ * label of several lines or styled runs (#1368) keeps its first line, as the header is one line
+ * high, with `...` after it when lines were cut off.
+ */
+function sectionLabel(
+  name: string,
+  markdown: boolean,
+  frame: Frame,
+  font: FontKey,
+  { space, at }: { space: number; at: TextAt }
+): TreemapText | undefined {
+  const { measurer } = frame;
+  const read = readTreemapLabel(name, markdown, frame.labels, font, measurer);
+  if (read.line !== undefined) {
+    const text = truncate(measurer, read.line, font, space);
+    return text === '' ? undefined : placed(text, font, measurer, at);
+  }
+  const block = truncateBlock(blockOf(read, font, measurer), font, measurer, space, true);
+  return block && block.lines.length > 0 ? placedBlock(block, font, at) : undefined;
+}
+
+/**
  * A leaf (`:312-523`): its label centred, starting at 38 px (16 px past 20 leaves, or the
  * class's `font-size`), shrunk 1 px at a time to fit the width, then the height with the value
  * under it, hidden below the minimum; its value under it at 0.6 of the label's size, hidden
@@ -286,6 +321,52 @@ function leafOf(
   };
 }
 
+/**
+ * A leaf label's extent at a font size: one line's width by the size (v12's), or the block of
+ * lines and runs core lays out (#1368), laid out once per size.
+ */
+interface LeafShape {
+  width(size: number): number;
+  height(size: number): number;
+  /** The label at `size`, truncated to `space` when set; undefined when nothing is left. */
+  place(size: number, at: TextAt, space?: number): TreemapText | undefined;
+}
+
+function leafShape(
+  read: TreemapLabelText,
+  measurer: Measurer,
+  font: (size: number) => FontKey
+): LeafShape {
+  const { line } = read;
+  if (line !== undefined)
+    return {
+      width: (size) => textWidth(measurer, line, font(size)),
+      height: (size) => size,
+      place: (size, at, space) => {
+        if (space === undefined) return placed(line, font(size), measurer, at);
+        const text = truncate(measurer, line, font(size), space);
+        return text === '' ? undefined : placed(text, font(size), measurer, at);
+      },
+    };
+  const blocks = new Map<number, MeasuredLabel>();
+  const block = (size: number): MeasuredLabel => {
+    let b = blocks.get(size);
+    if (b === undefined) blocks.set(size, (b = blockOf(read, font(size), measurer)));
+    return b;
+  };
+  return {
+    width: (size) => block(size).width,
+    height: (size) => block(size).height,
+    place: (size, at, space) => {
+      const b =
+        space === undefined
+          ? block(size)
+          : truncateBlock(block(size), font(size), measurer, space, false);
+      return b && b.lines.length > 0 ? placedBlock(b, font(size), at) : undefined;
+    },
+  };
+}
+
 /** v12's leaf label fitting and value placement, or nothing when the label is hidden. */
 function fitLeaf(
   t: Tile,
@@ -298,42 +379,49 @@ function fitLeaf(
   const availableHeight = box.height - 2 * fit.padding;
   if (availableWidth < fit.minBox || availableHeight < fit.minBox) return {};
 
-  const start = classFont(classStyles(frame.model, t.node!.classSelector), {
+  const node = t.node!;
+  const start = classFont(classStyles(frame.model, node.classSelector), {
     family: frame.family,
     size: fit.labelSize,
     weight: NORMAL_WEIGHT,
   });
   const font = (size: number): FontKey => ({ ...start, size });
-  const name = decodeEntities(t.node!.name);
+  const read = readTreemapLabel(node.name, node.markdown === true, frame.labels, start, measurer);
+  const shape = leafShape(read, measurer, font);
   const valueSize = (size: number): number =>
     Math.max(fit.minValueSize, Math.min(fit.valueSize, Math.round(size * M.valueScale)));
 
   // v12 read the size back with `parseInt`.
   let size = Math.trunc(start.size);
   // 1. Shrink to the width.
-  while (textWidth(measurer, name, font(size)) > availableWidth && size > fit.minLabelSize) size--;
+  while (shape.width(size) > availableWidth && size > fit.minLabelSize) size--;
   // 2. Shrink until the label, the gap and the value fit the height.
-  while (size + fit.gap + valueSize(size) > availableHeight && size > fit.minLabelSize) size--;
+  while (
+    shape.height(size) + fit.gap + valueSize(size) > availableHeight &&
+    size > fit.minLabelSize
+  )
+    size--;
   // 3. Hide what still does not fit; a complex treemap kept a too-wide label (clipped in v12).
-  let text = name;
   if (size < fit.minLabelSize) return {};
-  if (fit === M.complex) {
-    if (availableHeight < fit.minLabelSize) return {};
-    text = truncate(measurer, name, font(size), availableWidth);
-    if (text === '') return {};
-  } else if (textWidth(measurer, name, font(size)) > availableWidth || availableHeight < size)
-    return {};
-
-  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-  const label = placed(text, font(size), measurer, {
-    ...centre,
+  const centre: TextAt = {
+    x: box.x + box.width / 2,
+    y: box.y + box.height / 2,
     anchor: 'middle',
     baseline: 'middle',
-  });
+  };
+  let label: TreemapText | undefined;
+  if (fit === M.complex) {
+    if (availableHeight < fit.minLabelSize) return {};
+    label = shape.place(size, centre, availableWidth);
+    // A block of lines taller than the leaf is hidden, as one line is in a simple treemap.
+    if (!label || (label.block && label.box.height > availableHeight)) return {};
+  } else if (shape.width(size) > availableWidth || availableHeight < shape.height(size)) return {};
+  else label = shape.place(size, centre);
+  if (!label) return {};
   if (!shows(frame, t.value)) return { label };
 
   const valueFont = font(valueSize(size));
-  const top = box.height / 2 + size / 2 + fit.gap;
+  const top = box.height / 2 + shape.height(size) / 2 + fit.gap;
   const valueText = placed(frame.format(t.value), valueFont, measurer, {
     x: centre.x,
     y: box.y + top,
@@ -351,13 +439,15 @@ function fitLeaf(
  * The title (`:126-134`): middle-anchored at `(width / 2, 15)`, at `treemapTitleFontSize`
  * (v12's `.treemapTitle` rule, 14 px, D407), which the renderer draws it at.
  */
-function titleOf(title: string, width: number, frame: Frame): TreemapText {
-  return placed(
-    decodeEntities(title),
-    { family: frame.family, size: frame.titleSize, weight: NORMAL_WEIGHT },
-    frame.measurer,
-    { x: width / 2, y: frame.band / 2, anchor: 'middle', baseline: 'middle' }
-  );
+function titleOf(
+  title: TreemapLabelText,
+  block: MeasuredLabel | undefined,
+  width: number,
+  frame: Frame
+): TreemapText {
+  const font = { family: frame.family, size: frame.titleSize, weight: NORMAL_WEIGHT };
+  const at: TextAt = { x: width / 2, y: frame.band / 2, anchor: 'middle', baseline: 'middle' };
+  return block ? placedBlock(block, font, at) : placed(title.line!, font, frame.measurer, at);
 }
 
 /**

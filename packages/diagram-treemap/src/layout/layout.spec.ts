@@ -187,9 +187,12 @@ describe('layoutTreemap', () => {
     expect(a.valueText?.text).toBe('1e+308');
   });
 
-  it('decodes entities and prints tags (D405)', () => {
+  it('decodes entities; a tag is read, not printed (#1368, labels.spec.ts)', () => {
     const l = layoutTreemap(model([leaf('a &amp; &#9829; <b>', 1)]), context(theme));
-    expect(l.leaves[0]!.label!.text).toBe('a & ♥ <b>');
+    expect(l.leaves[0]!.label!.text).toBe('a & ♥');
+    const plain = layoutTreemap(model([leaf('a &amp; &#9829;', 1)]), context(theme));
+    expect(plain.leaves[0]!.label).toMatchObject({ text: 'a & ♥' });
+    expect(plain.leaves[0]!.label!.block).toBeUndefined();
   });
 
   it('bounds what is drawn, padded by diagramPadding; with no rows, the canvas', () => {

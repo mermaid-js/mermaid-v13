@@ -15,6 +15,11 @@ export interface TreemapNode {
   /** The name between the quotes, as v12 converted it (no escapes; may be empty). */
   readonly name: string;
   /**
+   * Set when the name is a markdown string (`"`…`"`, #1368): `name` keeps its backticks, and the
+   * text between them is laid out as markdown.
+   */
+  readonly markdown?: true;
+  /**
    * A leaf's value as v12 converted it: `parseFloat` of the text with commas removed, so `NaN`
    * for `.` (D402: the layout gives a NaN leaf no area and prints no value). Absent on a
    * section, whose value is the sum the layout computes.

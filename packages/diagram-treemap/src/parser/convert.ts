@@ -26,6 +26,15 @@ export function nameValue(image: string): string {
   return image.slice(1, -1);
 }
 
+/**
+ * Whether a name as written (`image`, quotes included) is a markdown string (#1368): backticks
+ * just inside double quotes, with no backtick between them. Its name keeps the backticks; the
+ * layout reads the text between them as markdown.
+ */
+export function markdownName(image: string): boolean {
+  return /^"`[^`]*`"$/.test(image);
+}
+
 /** A value: `parseFloat` with every comma removed (`1,234` is 1234, `.` is `NaN`). */
 export function numberValue(image: string): number {
   return parseFloat(image.replaceAll(',', ''));
