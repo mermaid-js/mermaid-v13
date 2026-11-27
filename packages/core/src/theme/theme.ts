@@ -16,7 +16,6 @@ import {
   checkFilter,
   checkStyle,
   noteRootText,
-  splitTopLevel,
   styleScope,
   styleText,
   type NotedText,
@@ -56,12 +55,10 @@ import type { DiagramThemeFamily, DiagramThemeTable, ThemeFamily } from './diagr
 import { contrastCss } from './contrast-css.ts';
 import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
-import { BASE_PLOT, BASE_SERIES } from './specs/palettes.ts';
-import { baseScalesFor } from './specs/scales.ts';
+import { BASE_SERIES } from './specs/palettes.ts';
+import { NO_PALETTES, paletteSource, type PaletteSource } from './palette-source.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
-  GIT_PALETTE_LIMIT,
-  PALETTE_LIMIT,
   PALETTE_SLOT,
   PALETTE_VARIABLES,
   type PaletteVariable,
@@ -304,14 +301,21 @@ class Resolver {
   }
 
   /**
-   * The palette's entries as literal colours, or as channels. A table's `palette` variable the
-   * author leaves unset reads the shared palette its rule names (D545); any other rule, none.
+   * The palette a name reads: a shared one itself; a table's `palette` variable its own list, or,
+   * where the author leaves it unset, the shared palette its rule names (D545). Else undefined.
    */
+  private paletteOf(p: string): string | undefined {
+    if ((PALETTE_VARIABLES as readonly string[]).includes(p)) return p;
+    if (this.defs[p]?.kind !== 'palette') return undefined;
+    const reads = !this.palettes.user[p] && this.rules[p];
+    return reads && (PALETTE_VARIABLES as readonly string[]).includes(reads) ? reads : p;
+  }
+
+  /** The palette's entries as literal colours, or as channels, read through `paletteOf`. */
   palette(p: string): SafeColor[];
   palette(p: string, rgba: true): (Rgba | undefined)[];
   palette(p: string, rgba?: true): (SafeColor | Rgba | undefined)[] {
-    const reads = this.defs[p]?.kind === 'palette' && !this.palettes.user[p] && this.rules[p];
-    const source = reads && (PALETTE_VARIABLES as readonly string[]).includes(reads) ? reads : p;
+    const source = this.paletteOf(p) ?? p;
     const n = (this.palettes.user[source] ?? this.palettes.spec[source] ?? []).length;
     return Array.from({ length: n }, (_, i) => {
       const r = this.slot(source, i);
@@ -464,12 +468,13 @@ class Resolver {
         if (e.fn === 'slot') {
           // The slot when the palette is non-empty, else the fallback (D474).
           const [, n, b] = e.args as [Expr, Expr, Expr];
-          if (x.k !== 'ref' || !(PALETTE_VARIABLES as readonly string[]).includes(x.name))
-            throw new SyntaxError('slot needs a palette');
+          // A table's palette reads its shared one as palette() does (D545, D749).
+          const p = x.k === 'ref' ? this.paletteOf(x.name) : undefined;
+          if (p === undefined) throw new SyntaxError('slot needs a palette');
           if (n.k !== 'num' || !Number.isInteger(n.value) || n.value < 0)
             throw new SyntaxError('slot needs a slot number');
-          const list = this.palettes.user[x.name] ?? this.palettes.spec[x.name];
-          return list?.length ? this.entry(x.name, n.value) : this.evaluate(b);
+          const list = this.palettes.user[p] ?? this.palettes.spec[p];
+          return list?.length ? this.entry(p, n.value) : this.evaluate(b);
         }
         if (e.fn !== 'literal') return this.call(e as Call);
         // The computed colour, written as a literal (D332): a hue turn stays byte-identical
@@ -639,129 +644,6 @@ function checkOverrides(
     out.set(name, v);
   }
   return out;
-}
-
-const MAX_PALETTE = 64;
-/**
- * v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`,
- * `git3`, `gitInv3`, `gitBranchLabel3`. v12 reads no leading zero, so `cScale05` is an unknown
- * name, ignored (R-CONF-5).
- */
-const RE_SLOT = /^(cScale(?:Inv|Label)?|git(?:Inv|BranchLabel)?)(0|[1-9]\d?)$/;
-
-type PaletteLists = Readonly<Partial<Record<string, readonly string[]>>>;
-
-/** What the palettes of one render are built from (D258). */
-interface PaletteSource {
-  /** The theme's entries: colours or rules. */
-  readonly spec: PaletteLists;
-  /** The author's whole lists, checked colours, a table's `palette` variables' among them. */
-  readonly user: Readonly<Partial<Record<string, readonly SafeColor[]>>>;
-  /** The author's numbered entries (`cScale3`), checked colours. */
-  readonly slots: ReadonlyMap<string, SafeColor>;
-}
-
-const NO_PALETTES: PaletteSource = { spec: {}, user: {}, slots: new Map() };
-
-/** A palette override as a list: an array as given, or a comma-separated string. */
-function paletteItems(raw: unknown): readonly unknown[] | undefined {
-  if (Array.isArray(raw)) return raw as unknown[];
-  return typeof raw === 'string' ? splitTopLevel(raw, 'comma') : undefined;
-}
-/** The author's numbered palette entries (`cScale3`) that are safe colours; the rest dropped. */
-function numberedOverrides(
-  vars: Readonly<Record<string, unknown>>,
-  drop: (name: string, raw: unknown) => void
-): [string, SafeColor][] {
-  const out: [string, SafeColor][] = [];
-  for (const key of Object.keys(vars)) {
-    const m = RE_SLOT.exec(key);
-    const raw = vars[key];
-    if (
-      !m ||
-      // The git palettes have eight slots, the others twelve (D267, D258).
-      Number(m[2]) >= (m[1]!.startsWith('g') ? GIT_PALETTE_LIMIT : PALETTE_LIMIT) ||
-      raw === undefined ||
-      raw === null ||
-      raw === ''
-    )
-      continue;
-    const c = typeof raw === 'string' ? checkCssColor(raw) : undefined;
-    if (c === undefined) drop(key, raw);
-    else out.push([key, c]);
-  }
-  return out;
-}
-
-const SCALE_PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel', 'git', 'gitInv', 'gitBranchLabel'];
-
-/**
- * `lists` with the scale and git palettes it leaves out taken from v12 theme-base's derivation
- * over the base colours (`baseScalesFor`). An inverse whose palette the theme writes inverts
- * that palette's slots, as v12 derives one from a fixed `cScale`; the built-in themes write all
- * six, so they read none of these.
- */
-function withBaseScales(lists: PaletteLists, darkMode: boolean): PaletteLists {
-  if (SCALE_PALETTES.every((p) => own(lists, p))) return lists;
-  const inverted = (p: 'cScale' | 'git') =>
-    lists[p] && { [`${p}Inv`]: lists[p].map((_, i) => `invert(${p}${i})`) };
-  return { ...baseScalesFor(darkMode), ...inverted('cScale'), ...inverted('git'), ...lists };
-}
-
-/**
- * The palette overrides of one render, checked: a whole list (`borderColorArray`, `cScale`, …)
- * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>`,
- * `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>` and `gitBranchLabel<n>` replace one entry. Any
- * unsafe colour drops that override with a warning. The theme's own entries are evaluated when a
- * renderer reads the palette.
- */
-function paletteSource(
-  spec: ThemeSpec,
-  vars: Readonly<Record<string, unknown>> | undefined,
-  warn: ThemeOptions['warn'],
-  /** The author's `themeVariables.darkMode`, not the theme's `dark` flag. */
-  darkMode: boolean,
-  /** The diagram table's `palette` variables, which the author lists as palettes (D545). */
-  tablePalettes: readonly string[] = []
-): PaletteSource {
-  const drop = (name: string, raw: unknown) =>
-    warn?.({
-      code: 'THEME_VARIABLE_DROPPED',
-      message: `themeVariables.${name} value ${JSON.stringify(String(raw).slice(0, 60))} is not allowed and was dropped.`,
-    });
-  // A theme that leaves the chart series palette out reads v12 theme-base's (D545).
-  const lists = withBaseScales(
-    {
-      plotColorArray: BASE_PLOT,
-      ...spec.palettes,
-      ...(darkMode ? spec.darkModePalettes : undefined),
-    },
-    darkMode
-  );
-  const user: Partial<Record<string, readonly SafeColor[]>> = {};
-  const slots = new Map<string, SafeColor>();
-  if (!vars) return { spec: lists, user, slots };
-  for (const name of [...PALETTE_VARIABLES, ...tablePalettes]) {
-    const raw = own(vars, name) ? vars[name] : undefined;
-    if (raw === undefined || raw === null) continue;
-    const checked = paletteItems(raw)?.map((c) =>
-      typeof c === 'string' ? checkCssColor(c) : undefined
-    );
-    if (!checked || checked.length > MAX_PALETTE || checked.includes(undefined)) {
-      drop(name, raw);
-      continue;
-    }
-    // An empty chart palette is unset, as an empty value is: a reader cycles through it (D545).
-    if (checked.length || (name !== 'plotColorArray' && !tablePalettes.includes(name)))
-      user[name] = checked as SafeColor[];
-  }
-  for (const [key, c] of numberedOverrides(vars, drop)) {
-    // An entry the palette has no slot for is accepted and ignored (R-CONF-5).
-    const m = RE_SLOT.exec(key) as RegExpExecArray;
-    const p = m[1]!;
-    if (Number(m[2]) < (user[p] ?? lists[p] ?? []).length) slots.set(key, c);
-  }
-  return { spec: lists, user, slots };
 }
 
 /** Builds one render's theme. */

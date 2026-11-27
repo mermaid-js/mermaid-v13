@@ -50,6 +50,7 @@ e2e/diagrams/venn/nightly-check/layout/label-three-lines.mmd 1 ad0c1fe6d4226017
 e2e/diagrams/venn/nightly-check/layout/label-written-on-four-lines.mmd 1 26ed81c83d9219c0
 e2e/diagrams/venn/nightly-check/layout/one-set.mmd 1 440908ee4f43b108
 e2e/diagrams/venn/nightly-check/layout/padding-too-large.mmd 1 87bb124049417f90
+e2e/diagrams/venn/nightly-check/layout/text-grid-corner-near-label.mmd 1 9f76ccd873fd0c31
 e2e/diagrams/venn/nightly-check/layout/text-grid-labelled.mmd 1 154bbb37425bc18b
 e2e/diagrams/venn/nightly-check/layout/text-grid.mmd 1 93e02b841a692391
 e2e/diagrams/venn/nightly-check/layout/text-in-undrawn-areas.mmd 1 712a72b8bba3bd2a

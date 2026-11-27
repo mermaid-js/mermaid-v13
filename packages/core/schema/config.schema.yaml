@@ -133,14 +133,19 @@ properties:
         `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`,
         `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every
         theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`;
-        fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take
-        5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the
-        other text fills `primaryTextColor`; both borders `primaryBorderColor`. The XY chart's 13
-        (`xyChartBackgroundColor`, `xyChartTitleColor`, `xyChartDataLabelColor`,
+        fills 2–4 add 5, 10 and 15 to each RGB channel of the colour `quadrant1Fill`'s default
+        comes from, not of `quadrant1Fill` itself, so an author's `quadrant1Fill` recolours
+        quadrant 1 only (D738), and text fills 2–4 take 5, 10 and 15 off `primaryTextColor`
+        (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`;
+        both borders `primaryBorderColor`. The XY chart's 14 (`xyChartBackgroundColor`,
+        `xyChartTitleColor`, `xyChartDataLabelColor`, `xyChartDataLabelOutsideColor`,
         `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and
         `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in
         both families: the background `background`, the other colours `primaryTextColor`, the
-        palette `plotColorArray` (each theme's own ten, D381). The usecase diagram's eight
+        palette `plotColorArray` (each theme's own ten, D381). In `redux-dark`,
+        `redux-dark-color` and `neo-dark` the data labels inside the bars take `#131300` unless
+        the text reads on the first bar colour; labels outside the bars take
+        `xyChartDataLabelOutsideColor`, an author's `dataLabelColor` else the text colour (D749). The usecase diagram's eight
         (`usecaseActorBkg`, `usecaseActorBorder`, `usecaseBkg`, `usecaseBorder`,
         `usecaseBoundaryBkg`, `usecaseBoundaryBorder`, `usecaseIncludeLine`, `usecaseExtendLine`)
         are the same rules in both families, keyed by the palette, not the family (D474): where

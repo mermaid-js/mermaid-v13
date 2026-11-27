@@ -128,6 +128,22 @@ describe('xychart theme table', () => {
     }
   );
 
+  it.each(DARK_INK)(
+    "%s: inside labels read the author's own first bar colour, AA on a dark palette (D749)",
+    async (name) => {
+      for (const vars of [
+        { xyChart: { plotColorPalette: '#1e293b, #334155' } },
+        { xyChartPlotColorPalette: ['#1e293b', '#334155'] },
+      ]) {
+        const t = await resolve(name, vars);
+        const first = parseColor(t.palette('xyChartPlotColorPalette')[0]!)!;
+        const ink = parseColor(t.value('xyChartDataLabelColor'))!;
+        expect(contrastRatio(ink, first)).toBeGreaterThanOrEqual(4.5);
+        expect(t.value('xyChartDataLabelColor')).toBe(t.value('primaryTextColor'));
+      }
+    }
+  );
+
   it.each(DARK_INK)("%s: an author's dataLabelColor still wins (D749)", async (name) => {
     expect(
       (await resolve(name, { xyChart: { dataLabelColor: '#ffeeaa' } })).value(

@@ -251,6 +251,19 @@ describe('venn layout: labels and text nodes (D414)', () => {
     expect(carrot.label.y).toBeGreaterThanOrEqual(vegetables.y + vegetables.height + 5);
   });
 
+  it("keeps a grid in its set when only an empty cell would meet a neighbour's label (D750)", () => {
+    // Three nodes in two columns leave the fourth cell empty; it lies on "Mid", which no node
+    // meets. Testing the whole grid there pushed it below its inner circle, out of the set.
+    const { layout } = laid(`${LAYOUT}/text-grid-corner-near-label`);
+    const [t] = layout.textAreas;
+    const label = labelOf(layout, t!.sets);
+    expect(t!.grid.y).toBeCloseTo(label.y + label.height + 5, 9);
+    expect(t!.grid.y).toBeLessThan(t!.inner.y + t!.inner.radius);
+    const mid = labelOf(layout, ['A', 'C']);
+    expect(overlaps(t!.grid, mid)).toBe(true);
+    for (const n of t!.nodes) expect(overlaps(n.box, mid), n.id).toBe(false);
+  });
+
   it('draws no text node whose area is not drawn', () => {
     const { layout } = laid(`${LAYOUT}/text-in-undrawn-areas`);
     expect(layout.textAreas.map((t) => t.sets.join('+'))).toEqual(['B']);
