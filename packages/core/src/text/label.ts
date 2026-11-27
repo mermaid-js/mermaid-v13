@@ -177,12 +177,10 @@ export function layoutLabel(
   const lines: Run[][] = [];
   const indents: number[] = [];
   const widths: number[] = [];
-  const tags: Tags = { open: {}, dropped: options.inline?.dropped };
-  // `<script>` and `<style>` lose what they hold, as in v12 (D566); `inline` drops the tags.
-  const shown = (markdown ? src : text).replace(RE_SCRIPT, '$1$2').replace(RE_STYLE, '$1$2');
+  const tags: Tags = {};
   for (const { source, bullet } of markdown
-    ? markdownLines(shown)
-    : plainLines(shown, options.backslashBreak)) {
+    ? markdownLines(src)
+    : plainLines(text, options.backslashBreak)) {
     const pieces = tidy(inline(source, base, tags, markup, spans?.boxes));
     let indent = 0;
     let hang = 0;
@@ -345,26 +343,6 @@ export function markdownLines(text: string): SourceLine[] {
   return out;
 }
 
-const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
-// A `<script>` or `<style>` start tag, recognised as `RE_TAG` does, with what the element holds:
-// up to its end tag, which stays for `inline` to drop. With no end tag the element holds nothing
-// and the rest of the label is matched as group 2, so that it is kept and scanned once.
-const RE_SCRIPT = /(<script(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/script(?:\s[^<>]*)?\/?>)|([^]*))/gi;
-const RE_STYLE = /(<style(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/style(?:\s[^<>]*)?\/?>)|([^]*))/gi;
-// HTML elements whose tags are read as tags: a tag of `TAG_STYLE` draws its style (D566, D710)
-// and `<br>` breaks the line; any other is dropped, its text kept (R-TEXT-3), and reported as
-// `HTML_DROPPED`. Anything else shaped like a tag, such as the type in List<T>, is text.
-const HTML_TAGS = new Set(
-  (
-    'a abbr address article aside audio b bdi bdo big blockquote body br button caption center cite code col ' +
-    'colgroup data dd del details dfn dialog div dl dt em embed fieldset figcaption figure font footer form h1 h2 ' +
-    'h3 h4 h5 h6 head header hr html i iframe img input ins kbd label legend li link main map mark meta meter nav ' +
-    'noscript object ol optgroup option output p picture pre progress q rp rt ruby s samp script section select ' +
-    'small source span strike strong style sub summary sup table tbody td template textarea tfoot th thead time ' +
-    'title tr track tt u ul var video wbr'
-  ).split(' ')
-);
-
 // The tags that are drawn (D566, D710), with the `Style` bit each sets: Bold 1, Italic 2,
 // Sub 8, Sup 16, Underline 32, Strike 64 (as numbers, which keeps core small).
 const TAG_STYLE: Readonly<Record<string, StyleBits>> = {
@@ -381,22 +359,24 @@ const TAG_STYLE: Readonly<Record<string, StyleBits>> = {
   del: 64,
 };
 
+// A tag read as a tag: one of `TAG_STYLE`, or a `<br>` that `RE_MD_BREAK` has not made a break
+// (`</br>`, `<br class="x">`), which draws nothing. Any other text shaped like a tag, `<img>`,
+// `<span>` and `<script>…</script>` included, is drawn as written (#1440, #1368).
+const RE_TAG = new RegExp(
+  `<(\\/?)(br|${Object.keys(TAG_STYLE).join('|')})(?:\\s[^<>]*)?\\/?>`,
+  'iy'
+);
+
 /** How many of the drawn tags are open, per style bit. HTML tags stay open across line breaks. */
-interface Tags {
-  open: Record<StyleBits, number>;
-  /** Where the names of the other tags go: the render's `InlineSpans.dropped`. */
-  dropped: Set<string> | undefined;
-}
+type Tags = Record<StyleBits, number>;
 
 const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
 const RE_WORD = /\w/;
 
-/** The HTML subset tag that starts at `i`, or undefined. */
-function tagAt(source: string, i: number): RegExpExecArray | undefined {
+/** The drawn tag that starts at `i`, or undefined. */
+function tagAt(source: string, i: number): RegExpExecArray | null {
   RE_TAG.lastIndex = i;
-  const m = RE_TAG.exec(source);
-  const tag = m?.[2]?.toLowerCase();
-  return m && tag !== undefined && HTML_TAGS.has(tag) ? m : undefined;
+  return RE_TAG.exec(source);
 }
 
 /**
@@ -453,7 +433,7 @@ function inline(
   let marked = 0;
   const restyle = (): void => {
     let next = base | marked;
-    for (const bit in tags.open) if ((tags.open[bit] as number) > 0) next |= +bit;
+    for (const bit in tags) if ((tags[bit] as number) > 0) next |= +bit;
     if (next === style) return;
     if (text !== '') out.push({ text, style });
     text = '';
@@ -463,8 +443,7 @@ function inline(
   // Counts one HTML tag: `step` is 1 for a start tag and -1 for an end tag.
   const count = (tag: string, step: number): void => {
     const bit = TAG_STYLE[tag];
-    if (bit === undefined) tags.dropped?.add(tag);
-    else tags.open[bit] = Math.max(0, (tags.open[bit] ?? 0) + step);
+    if (bit !== undefined) tags[bit] = Math.max(0, (tags[bit] ?? 0) + step);
     restyle();
   };
   let i = 0;

@@ -27,7 +27,7 @@ e2e/diagrams/kanban/nightly-check/classes-and-icons.mmd 3 6ff15263e6eb86b3
 e2e/diagrams/kanban/nightly-check/comments.mmd 1 6b6103506b9c8b73
 e2e/diagrams/kanban/nightly-check/example-personal-board.mmd 1 c0de229f8975f0fa
 e2e/diagrams/kanban/nightly-check/example-sprint-board.mmd 7 c02f398cb0621b29
-e2e/diagrams/kanban/nightly-check/html-attribute-in-quoted-label.mmd 2 2279e056d8546ef6
+e2e/diagrams/kanban/nightly-check/html-attribute-in-quoted-label.mmd 2 954546201259da4f
 e2e/diagrams/kanban/nightly-check/knsv2-31-kanban-tickets.mmd 6 bca511a382fa086e
 e2e/diagrams/kanban/nightly-check/knsv2-45-kanban-tickets.mmd 2 3d5930ccaa227636
 e2e/diagrams/kanban/nightly-check/knsv2-46-kanban-tickets.mmd 6 160f3c62fc55a9cf

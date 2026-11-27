@@ -357,7 +357,8 @@ describe('review fixes (#143)', () => {
   });
 
   it('draws no title for a fragment label that is empty once read', async () => {
-    const svg = await render('loop </style>\nA->>B: x\nend');
+    // A tag labels do not draw is text (#1440); a drawn tag with nothing in it reads as empty.
+    const svg = await render('loop <b></b>\nA->>B: x\nend');
     expect(svg).not.toContain('class="loopText"');
   });
 });
