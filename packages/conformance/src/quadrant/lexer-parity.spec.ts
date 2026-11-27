@@ -90,9 +90,9 @@ describe('quadrant lexer parity with mermaid@12 (jison)', () => {
       diffs.push(`${item.id} @${at}\n  v12 ${around(expected)}\n  v13 ${around(actual)}`);
     }
     process.stdout.write(`quadrant lexer parity: ${compared} of ${items.length} sources lexed\n`);
-    // Every e2e fixture reaches the quadrant lexer: v12's 14, the 18 baselines (#317 and later)
+    // Every e2e fixture reaches the quadrant lexer: v12's 14, the 19 baselines (#317 and later, #1265)
     // and #1039's override fixture.
-    expect(e2e).toBe(14 + 18 + 1);
+    expect(e2e).toBe(14 + 19 + 1);
     // Every source is compared, but the listed ones v12 does not detect.
     expect(undetected.sort()).toEqual([...NOT_DETECTED.keys()].sort());
     expect(compared).toBe(items.length - NOT_DETECTED.size);
