@@ -52,6 +52,26 @@ export interface EventModelMetrics {
    */
   readonly underDrop: number;
   readonly underStep: number;
+  /**
+   * v13 (D743): a relation between lanes whose segment comes this close to a box other than its
+   * two, or enters it, takes a detour.
+   */
+  readonly relationGap: number;
+  /**
+   * v13 (D743): a detour goes up or down this far at least from every box of the lanes it
+   * crosses, and its ends this far at least in from the corners of its two boxes.
+   */
+  readonly detourClearance: number;
+  /**
+   * v13 (D743): detours that would share a run go this far apart: across the gap between two
+   * lanes, or side by side through the lanes between.
+   */
+  readonly detourStep: number;
+  /**
+   * v13 (D743): a detour's column lies at most this far outside its two boxes; where none fits,
+   * the relation keeps its segment.
+   */
+  readonly detourReach: number;
 }
 
 export const EVENTMODELING_METRICS: EventModelMetrics = {
@@ -77,6 +97,10 @@ export const EVENTMODELING_METRICS: EventModelMetrics = {
   selfLoopInset: 10,
   underDrop: 25,
   underStep: 10,
+  relationGap: 5,
+  detourClearance: 10,
+  detourStep: 8,
+  detourReach: 100,
 };
 
 /**
@@ -89,6 +113,16 @@ export const TARGET_ANCHOR: readonly [number, number] = [1, 3];
 
 /** `width` times a fraction, multiplied first as v12 did. */
 export const share = (width: number, [n, d]: readonly [number, number]): number => (width * n) / d;
+
+/**
+ * Where the `k`-th of `n` relations that leave one side of a box leaves it (D743): the first at
+ * v12's ⅔, the others `⅓ / (n + 1)` of the width apart to the right of it, so none reaches the
+ * corner. Shares, not lengths.
+ */
+export const departure = (width: number, k: number, n: number): number =>
+  k === 0
+    ? share(width, SOURCE_ANCHOR)
+    : share(width, SOURCE_ANCHOR) + (share(width, TARGET_ANCHOR) * k) / (n + 1);
 
 /**
  * `eventmodeling.padding` must stay finite times this (D366's headroom test): the bounds add it

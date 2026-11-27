@@ -9,8 +9,8 @@
  * - boxes' x order follows the frames' order;
  * - each relation starts on its source box's edge and ends on its target's, and a self loop's
  *   ends meet no other relation's;
- * - no relation within a lane enters a box other than its ends, and no two relations share a
- *   run (D659; a relation between lanes keeps v12's one segment, which may cross a box);
+ * - no relation enters a box other than its ends, so none strikes out a box's name or data, and
+ *   no two relations share a run (D659; D743 adds the relations between lanes to the first);
  * - a relation within a lane stays inside the lane, and a self loop's legs are at least twice
  *   the head long (D659);
  * - each box's name and data lie inside the box;
@@ -18,6 +18,7 @@
  */
 import type { EventModel } from '../model.ts';
 import { eventModelStructure } from '../structure.ts';
+import { segmentEnters } from './detour.ts';
 import { drawn } from './layout.ts';
 import { EVENTMODELING_METRICS as M } from './metrics.ts';
 import type { EventModelLayout, EventModelRelationLayout, Point, Rect } from './types.ts';
@@ -102,26 +103,8 @@ function placementViolations({ lanes, boxes }: EventModelLayout, out: string[]):
   }
 }
 
-/** The segment from `p` to `q` passes through the inside of `r` (Liang–Barsky clipping). */
-function enters(p: Point, q: Point, r: Rect): boolean {
-  let t0 = 0;
-  let t1 = 1;
-  const dx = q.x - p.x;
-  const dy = q.y - p.y;
-  const sides: [number, number][] = [
-    [-dx, p.x - (r.x + EPS)],
-    [dx, r.x + r.width - EPS - p.x],
-    [-dy, p.y - (r.y + EPS)],
-    [dy, r.y + r.height - EPS - p.y],
-  ];
-  for (const [d, room] of sides) {
-    if (d === 0) {
-      if (room < 0) return false;
-    } else if (d < 0) t0 = Math.max(t0, room / d);
-    else t1 = Math.min(t1, room / d);
-  }
-  return t1 - t0 > EPS;
-}
+/** The segment from `p` to `q` passes through the inside of `r`, past the tolerance. */
+const enters = (p: Point, q: Point, r: Rect): boolean => segmentEnters(p, q, r, EPS, EPS);
 
 type Segment = readonly [Point, Point];
 const segments = (r: EventModelRelationLayout): Segment[] =>
@@ -201,17 +184,15 @@ function laneViolations(r: EventModelRelationLayout, lane: Rect | undefined, out
 }
 
 /**
- * No relation within a lane passes through a box other than its own two (D659). A relation
- * between lanes is v12's one segment from anchor to anchor (D521), which may cross a box of a
- * lane between or beside them, so it is left out. Boxes come in x order, so each segment meets
- * only the boxes from the first that may reach its left end to the last that starts before its
- * right end.
+ * No relation passes through a box other than its own two (D659 within a lane, D743 between
+ * lanes): a box's name and data lie inside it, so none is struck out. Boxes come in x order, so
+ * each segment meets only the boxes from the first that may reach its left end to the last that
+ * starts before its right end.
  */
 function throughViolations({ boxes, relations }: EventModelLayout, out: string[]): void {
   let widest = 0;
   for (const b of boxes) widest = Math.max(widest, b.width);
   for (const r of relations) {
-    if (boxes[r.source]?.lane !== boxes[r.target]?.lane) continue;
     for (const seg of segments(r))
       for (const k of crossed(seg, boxes, widest))
         if (k !== r.source && k !== r.target) out.push(`relation ${r.id} runs through box ${k}`);

@@ -24,7 +24,9 @@ import { parseEventModelForParity } from './v13.ts';
  *   down by as much;
  * - box x equals v12's up to the first box v12 put less than 10 after its lane's previous box
  *   (over it, mostly), where v13 puts it 10 after (D521); a model with no such box has every x,
- *   the lane widths and every relation segment between lanes equal to v12's;
+ *   the lane widths and every relation segment between lanes equal to v12's, except that
+ *   relations leaving one side of a box leave from distinct points (keeping v12's target end),
+ *   and one whose v12 segment comes within 5 px of another box takes a detour (D743);
  * - a relation within a lane runs from the source's right edge to the target's left (D521), or
  *   under the row when it skips a box of the lane (D659), and a self relation loops (v12 drew
  *   all three through the boxes).
@@ -35,6 +37,51 @@ const stub: Measurer = {
   metrics: () => ({ ascent: 0, descent: 0, lineHeight: 0 }),
 };
 const PAD = 10;
+/** D743: a segment this close to a box other than its two takes a detour. */
+const GAP = 5;
+
+interface Pt {
+  x: number;
+  y: number;
+}
+interface Box extends Pt {
+  width: number;
+  height: number;
+}
+
+/** The segment from `p` to `q` enters `r` grown by `GAP` (Liang–Barsky clipping). */
+function nearBox(p: Pt, q: Pt, r: Box): boolean {
+  let t0 = 0;
+  let t1 = 1;
+  const sides: [number, number][] = [
+    [p.x - q.x, p.x - (r.x - GAP)],
+    [q.x - p.x, r.x + r.width + GAP - p.x],
+    [p.y - q.y, p.y - (r.y - GAP)],
+    [q.y - p.y, r.y + r.height + GAP - p.y],
+  ];
+  for (const [d, room] of sides) {
+    if (d === 0) {
+      if (room < 0) return false;
+    } else if (d < 0) t0 = Math.max(t0, room / d);
+    else t1 = Math.min(t1, room / d);
+  }
+  return t1 > t0;
+}
+
+/**
+ * How D743 may change a relation between lanes: `detour` when v12's segment (at v13's box
+ * edges) comes within `GAP` of another box, `spread` when another relation leaves the same side
+ * of its source, else `none`.
+ */
+function d743(v13: EventModelLayout, k: number, v12: number[]): 'detour' | 'spread' | 'none' {
+  const r = v13.relations[k] as EventModelLayout['relations'][number];
+  const from = { x: v12[0] ?? 0, y: r.points[0]?.y ?? 0 };
+  const to = { x: v12[2] ?? 0, y: r.points[r.points.length - 1]?.y ?? 0 };
+  if (v13.boxes.some((b, j) => j !== r.source && j !== r.target && nearBox(from, to, b)))
+    return 'detour';
+  const sameSide = (o: typeof r): boolean => o.source === r.source && o.route === r.route;
+  return v13.relations.filter(sameSide).length > 1 ? 'spread' : 'none';
+}
 
 let theme: Theme;
 let oracle: Oracle;
@@ -133,12 +180,12 @@ function compare(v12: EventModelV12Geometry, v13: EventModelLayout, ids: string[
         const skips = v13.boxes.some((b, j) => j > lo && j < hi && b.lane === lane);
         const route = v.source === v.target ? 'self' : skips ? 'under' : 'along';
         eq(`relation ${k} route`, route, v.route);
-      } else
-        eq(
-          `relation ${k}`,
-          r.points,
-          v.points.flatMap((p) => [p.x, p.y - (shift[laneOf(p.y)] ?? 0)])
-        );
+      } else {
+        const changed = d743(v13, k, r.points);
+        const ours = v.points.flatMap((p) => [p.x, p.y - (shift[laneOf(p.y)] ?? 0)]);
+        if (changed === 'none') eq(`relation ${k}`, r.points, ours);
+        else if (changed === 'spread') eq(`relation ${k} end`, r.points.slice(2), ours.slice(2));
+      }
     });
   }
   return out;

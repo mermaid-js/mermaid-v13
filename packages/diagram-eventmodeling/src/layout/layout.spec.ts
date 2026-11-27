@@ -208,6 +208,66 @@ describe('layoutEventModel', () => {
     expect(l.boxes.map((b) => b.y)).toEqual([15, 15, 15, 15]);
   });
 
+  // docs-008 (#1234): E, U (inferred from E), and a reset C ->> E between them in x.
+  const resetting = model(
+    frame('evt', 'E'),
+    frame('ui', 'U'),
+    frame('rmo', 'C', { reset: true, sources: ['01'] })
+  );
+
+  it('leaves a box from distinct points when relations leave the same side (D743)', () => {
+    const l = lay(resetting);
+    // E at (250, 295), U at (280, 15), C at (310, 155), each 100 × 100. Both relations leave E's
+    // top; the one to the target further left first, at ⅔, the next ⅑ of the width right of it.
+    const from = l.relations.map((r) => r.points[0]);
+    expect(new Set(from.map((p) => p?.x)).size).toBe(2);
+    const toC = l.relations.find((r) => r.id === 'relation:01->03');
+    expect(toC?.points.map((p) => [round(p.x), p.y])).toEqual([
+      [327.78, 295],
+      [343.33, 255],
+    ]);
+  });
+
+  it('takes a relation between lanes past an unrelated box it would meet (D743)', () => {
+    const l = lay(resetting);
+    // The straight segment from E to U runs inside C's left edge. It goes up 10 left of C
+    // instead, where both E's top and U's bottom are, in one vertical segment.
+    const toU = l.relations.find((r) => r.id === 'relation:01->02');
+    expect(toU).toMatchObject({
+      route: 'up',
+      points: [
+        { x: 300, y: 295 },
+        { x: 300, y: 115 },
+      ],
+    });
+  });
+
+  it('jogs a detour between the lanes when no column reaches both boxes (D743)', () => {
+    // Fan-out: P ->> Orders, Stats (the lane above), Mailer, Billing (the top lane).
+    const l = lay(
+      model(
+        frame('cmd', 'Place'),
+        frame('evt', 'P'),
+        frame('rmo', 'Orders', { reset: true, sources: ['02'] }),
+        frame('rmo', 'Stats', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Mailer', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Billing', { reset: true, sources: ['02'] })
+      )
+    );
+    const fromP = l.relations.filter((r) => r.source === 1).map((r) => r.points[0]?.x);
+    expect(new Set(fromP).size).toBe(4);
+    // Mailer (500, 15) and Billing (610, 15) sit above Orders (360) and Stats (470): their
+    // relations leave P's top, run right in the gap above the events lane, and go up clear of
+    // Stats, into the target's bottom.
+    for (const id of ['relation:02->05', 'relation:02->06']) {
+      const r = l.relations.find((x) => x.id === id);
+      expect(r?.points.length, id).toBe(4);
+      const [, a, b] = r?.points ?? [];
+      expect(a?.y, id).toBe(b?.y);
+      expect(b?.x, id).toBeGreaterThanOrEqual(580);
+    }
+  });
+
   it('draws no relation to the first frame or a reset frame', () => {
     const l = lay(model(frame('ui', 'A'), frame('cmd', 'B', { reset: true }), frame('evt', 'C')));
     expect(l.relations.map((r) => r.id)).toEqual(['relation:02->03']);
