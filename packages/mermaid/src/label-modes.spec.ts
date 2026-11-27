@@ -84,26 +84,27 @@ describe('label modes per diagram type (#763, D564)', () => {
     ]);
   });
 
-  it('sequence: a written backslash-n stays text, <br> breaks the line', async () => {
+  it('sequence: a written backslash-n breaks the line, as <br> does (#1368, #1400)', async () => {
     const texts = await render('sequence/baseline/text/written-backslash-n.mmd');
     expect(texts).toEqual([
-      'Al\\nice',
-      'Al\\nice',
+      'Al / ice',
+      'Al / ice',
       'B',
       'B',
       'loop',
-      '[l\\nx]',
-      'n\\nx',
-      'm\\nx',
+      '[l / x]',
+      'n / x',
+      'm / x',
       'one / two',
-      'C:\\new\\path',
+      'C: / ew\\path',
     ]);
   });
 
-  it('sequence: text output keeps the written backslash-n', async () => {
+  it('sequence: text output breaks at the written backslash-n (#1368, #1400)', async () => {
     const r = await textOf('sequence/baseline/text/written-backslash-n.mmd');
-    for (const text of ['Al\\nice', 'm\\nx', 'n\\nx', 'l\\nx', 'C:\\new\\path'])
-      expect(r.text).toContain(text);
+    for (const text of ['Al', 'ice', '[l', 'x]', 'ew\\path']) expect(r.text).toContain(text);
+    for (const text of ['Al\\nice', 'm\\nx', 'n\\nx', 'l\\nx', 'C:\\new'])
+      expect(r.text).not.toContain(text);
   });
 
   it('requirement: text output draws the backticks', async () => {
