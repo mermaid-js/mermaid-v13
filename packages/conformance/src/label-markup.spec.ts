@@ -54,9 +54,9 @@ const CASES: Readonly<Record<string, Case>> = {
       ['Bold and italic title', 'Bold'],
       ['Markdown section', 'Markdown'],
       ['md task', 'md'],
-      ['Me', 'Me'],
     ],
-    literal: ['Plain **section**'],
+    // Backticks without quotes are no markdown string (#1368).
+    literal: ['Plain **section**', '`**Me**`', '`*No quotes*`'],
   },
   kanban: {
     file: 'kanban/nightly-check/plain-vs-markdown.mmd',
@@ -110,7 +110,8 @@ const CASES: Readonly<Record<string, Case>> = {
       ['Markdown string', 'Markdown'],
       ['bold and italic', 'bold'],
     ],
-    literal: ['**stays literal**', 'List<T> stays text'],
+    // Backticks without quotes are no markdown string (#1368).
+    literal: ['**stays literal**', 'List<T> stays text', '`*backticks only*`'],
   },
   venn: {
     file: 'venn/nightly-check/markdown-labels.mmd',
