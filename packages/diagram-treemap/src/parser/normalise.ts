@@ -43,6 +43,7 @@ const escapeName = idEscaper('%/@');
 interface Building {
   type: TreemapNode['type'];
   name: string;
+  markdown?: true;
   value?: number;
   classSelector?: string;
   depth: number;
@@ -74,6 +75,7 @@ export function buildTree(rows: readonly TreemapRowNode[]): Building[] {
       children: [],
       astId,
     };
+    if (row.markdown) node.markdown = true;
     if (row.type === 'Leaf') node.value = row.value;
     if (row.classSelector !== undefined) node.classSelector = row.classSelector;
     (parent ? parent.node.children : roots).push(node);
@@ -90,6 +92,7 @@ function freeze(node: Building): TreemapNode {
     children: Object.freeze(node.children.map(freeze)),
     astId: node.astId,
   };
+  if (node.markdown) out.markdown = true;
   if (node.value !== undefined) out.value = node.value;
   if (node.classSelector !== undefined) out.classSelector = node.classSelector;
   return Object.freeze(out);

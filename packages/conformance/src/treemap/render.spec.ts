@@ -95,7 +95,10 @@ function extents(tree: SvgView): { x: number; y: number; tag: string }[] {
       const half = tree.getAttr(node, 'stroke') === undefined ? 0 : at('stroke-width') / 2;
       put(at('x') - half, at('y') - half);
       put(at('x') + at('width') + half, at('y') + at('height') + half);
-    } else if (tag === 'text') put(at('x'), at('y'));
+    } else if ((tag === 'text' || tag === 'tspan') && tree.getAttr(node, 'y') !== undefined) {
+      // A label of several lines or runs (#1368) places its lines' first `<tspan>`s.
+      put(at('x'), at('y'));
+    }
     for (const c of tree.children(node)) walk(c);
   };
   walk(tree.root);
@@ -552,9 +555,8 @@ describe('treemap render: accessibility, ids, security and formats', () => {
     expect(() => assertInert(result.svg)).not.toThrow();
     expect(wellFormed(result.svg)).toBeUndefined();
     expect(result.svg).not.toMatch(/<script|<img|javascript:|expression\(|url\(/);
-    expect(textOf(result.tree, byClass(result.tree, 'treemapSectionLabel')[0]!)).toBe(
-      '<script>alert(1)</script>'
-    );
+    // A `<script>` loses what it holds (D566), as in any label (#1368).
+    expect(textOf(result.tree, byClass(result.tree, 'treemapSectionLabel')[0]!).trim()).toBe('');
     const codes = result.warnings.map((w) => w.code);
     expect(codes).toContain('STYLE_VALUE_DROPPED');
     expect(codes).toContain('STYLE_PROPERTY_DROPPED');

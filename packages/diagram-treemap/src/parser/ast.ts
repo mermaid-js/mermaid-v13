@@ -25,6 +25,8 @@ interface TreemapRowFields {
   name: string;
   /** The quoted name, quotes included. */
   nameRange: Range;
+  /** Set when the name is a markdown string, `"`…`"` (#1368). */
+  markdown?: true;
   /** The row's indent as v12 read it: the length of the blank run before the name, else 0. */
   indent: number;
   /** Where the row sits in the tree: 0 at the top (the model's `depth`). */

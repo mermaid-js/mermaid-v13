@@ -5,7 +5,7 @@ e2e/diagrams/treemap/baseline/config/value-formats.mmd 1 d733c21be1e3de5e
 e2e/diagrams/treemap/baseline/data/complex-many-leaves.mmd 1 ff4946fa85760fda
 e2e/diagrams/treemap/baseline/data/thirteen-sections.mmd 1 b0b04866941f005e
 e2e/diagrams/treemap/baseline/styles/classdef.mmd 1 237044078a924e7b
-e2e/diagrams/treemap/baseline/text/front-matter-title-and-entities.mmd 1 b82292d29b9f41bd
+e2e/diagrams/treemap/baseline/text/front-matter-title-and-entities.mmd 1 35f535933c84abed
 e2e/diagrams/treemap/baseline/text/long-labels.mmd 1 aacc7e68243c1666
 e2e/diagrams/treemap/baseline/theme-variables/nested-title-dark.mmd 1 9a6c8db91feb4069
 e2e/diagrams/treemap/baseline/theme-variables/peers-and-flat-redux.mmd 1 c57bce0b7a1622c5
@@ -52,3 +52,4 @@ e2e/diagrams/treemap/pr-check/5-should-render-with-a-forest-theme.mmd 1 eab13cda
 e2e/diagrams/treemap/pr-check/7-should-handle-classdef-with-multiple-styles.mmd 1 cc1e3066fb019e13
 e2e/diagrams/treemap/pr-check/8d-should-handle-dollar-sign-with-thousands-separator-and-decimal-places.mmd 1 76eb229308dd162b
 e2e/diagrams/treemap/pr-check/9-should-handle-a-complex-example-with-multiple-features.mmd 1 02353bea99dd91e6
+e2e/diagrams/treemap/pr-check/label-syntax.mmd 1 9a421e2645686a2b

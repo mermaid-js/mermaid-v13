@@ -153,8 +153,8 @@ describe('treemap lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =
     expect([...needed].sort()).toEqual([...EXCLUDED.keys()].sort());
     expect(notLexed.sort()).toEqual(NOT_LEXED);
     // Every e2e fixture reaches the treemap lexer (26 from v12, 6 `parser-*` from #484, 21
-    // baselines from #514, 1 from #844).
-    expect(e2e).toBe(54);
+    // baselines from #514, 1 from #844, 1 from #1403).
+    expect(e2e).toBe(55);
     expect(compared).toBe(items.length - NOT_LEXED.length);
   }, 300_000);
 });

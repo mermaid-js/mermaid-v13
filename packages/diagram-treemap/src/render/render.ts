@@ -4,7 +4,8 @@
 // section (d3's breadth-first order) and one `g.treemapLeafGroup` per leaf (d3's `leaves()`).
 // v12's class names are kept; a leaf group is `treemapNode treemapLeafGroup leaf<i> <class>`
 // without v12's trailing `x` (D403). No `<style>` (but `theme: 'auto'`'s), no `clipPath`, no
-// transform: the layout keeps text inside its box (D405) and every box is absolute.
+// transform: the layout keeps text inside its box (D405) and every box is absolute. A label of
+// several lines or styled runs (#1368) is drawn by `w.label`, as core lays it out.
 //
 // Each section's and leaf's group carries `data-ast`; its rects and texts `data-id` only
 // (pitfall 12). The in-text title's text carries both. A `classDef`'s styles are checked
@@ -85,8 +86,19 @@ function textStyles(checked: CheckedStyle): Attrs {
   return rest as Attrs;
 }
 
-/** One line of text at the layout's point, anchor, baseline and size. */
+/**
+ * One line of text at the layout's point, anchor, baseline and size; a label of several lines or
+ * styled runs (#1368) as core's label writer draws it, centred on its box.
+ */
 function text(w: SvgWriter, t: TreemapText, attrs: Attrs): void {
+  if (t.block) {
+    const { box } = t;
+    w.label(t.block, box.x + box.width / 2, box.y + box.height / 2, {
+      ...attrs,
+      'font-size': t.font.size,
+    });
+    return;
+  }
   w.open('text', {
     ...attrs,
     x: t.x,

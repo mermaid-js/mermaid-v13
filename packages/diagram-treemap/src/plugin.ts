@@ -14,7 +14,8 @@ import { treemapConfigDefaults } from './generated/config-defaults.ts';
  * on v12's canvas; `render` writes the whole `<svg>` document. SVG only (D320).
  *
  * `theme` is treemap's own table (`theme/table.ts`, D322, D331, D406, D407). No `labels`: treemap
- * text is plain (D405) and never goes through core's label layout. The registry loads it from
+ * labels follow the label rule (#1368) but are laid out without inline boxes, so no extension
+ * needs to see them. The registry loads it from
  * the package's `mermaid` manifest (#514); `configDefaults` are the `treemap` section's generated
  * defaults.
  */
