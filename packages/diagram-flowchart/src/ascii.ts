@@ -69,6 +69,7 @@ export function ascii(model: FlowModel, layout: FlowLayout, ctx: FlowAsciiContex
   const maxWidth = ctx.config.ascii?.maxWidth;
   return drawFlowchart(flow, laid, routes, glyphs, {
     title: ctx.title,
+    ctx,
     ...(maxWidth !== undefined ? { maxWidth } : {}),
   });
 }

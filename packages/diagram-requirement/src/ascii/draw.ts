@@ -25,6 +25,7 @@ import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { BoxView, RelationView, RequirementPrepared } from '../layout/prepare.ts';
 import { cellRect, cellsOf, cut, drawLineCells, finish, tee } from '@mermaid-js/shared/ascii';
+import type { MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 
 /** A charset's glyphs and requirement's own marks in it, picked once (`glyphsFor`, `../ascii.ts`). */
 export interface RequirementGlyphs {
@@ -138,6 +139,8 @@ export interface DrawOptions {
   readonly title?: string;
   /** `ascii.maxWidth`: a longer title wraps to it (or to the drawing, when that is wider). */
   readonly maxWidth?: number;
+  /** The render context, for the title's label rule and warning (#1406). */
+  readonly ctx?: MarkdownWarningContext;
 }
 
 /**
@@ -186,5 +189,5 @@ export function drawRequirement(
     }
   }
 
-  return finish(canvas, options.title, options.maxWidth);
+  return finish(canvas, options.title, options.maxWidth, options.ctx);
 }

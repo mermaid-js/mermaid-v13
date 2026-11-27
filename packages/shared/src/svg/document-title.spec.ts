@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { tableMeasurer } from '@mermaid-js/core/text';
+import { testConfig } from '../testing/test-context.ts';
 import { placeTitle, titledViewBox, type TitleContext } from './document.ts';
 
 type Box = readonly [number, number, number, number];
@@ -12,6 +13,8 @@ const tuple = (v: ReturnType<typeof titledViewBox>): Box => {
 const ctx: TitleContext = {
   theme: { value: () => 'Arial' },
   measurer: tableMeasurer,
+  config: testConfig('flowchart'),
+  warn: () => undefined,
 };
 
 describe('placeTitle (D652)', () => {

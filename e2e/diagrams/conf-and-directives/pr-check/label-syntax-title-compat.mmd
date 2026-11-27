@@ -1,0 +1,12 @@
+---
+title: 'Title **bold** _ital_\nnext <i>tag</i> H<sub>2</sub>O'
+description: >-
+  The source of label-syntax-title.mmd with markdownAlwaysOn (#1368, #1406):
+  every label is markdown, the front-matter title included, so "bold" is drawn
+  bold and "ital" italic. The written \n still breaks the line and the tags
+  still draw, as in the default mode.
+config:
+  markdownAlwaysOn: true
+---
+flowchart LR
+  A[node] --> B[other]

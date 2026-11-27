@@ -22,14 +22,8 @@ import type {
   ThemeRef,
   Warn,
 } from '@mermaid-js/core/svg';
-import {
-  labelSource,
-  layoutLabel,
-  type InlineSpans,
-  type LabelConfig,
-  type MeasuredLabel,
-  type Measurer,
-} from '@mermaid-js/core/text';
+import { layoutLabel, type MeasuredLabel, type Measurer } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 
 /** The part of a render context the root reads. `idPrefix` is read only when an id is written. */
 export interface RootContext {
@@ -225,9 +219,10 @@ export function animateEdge(w: SvgWriter, edge: AnimatedEdge): boolean {
 // The front-matter `title` over a drawing, as v12's `insertTitle` placed it (D652): centred
 // over the drawing, its baseline `titleTopMargin` above the drawing's top, and the viewBox grown
 // to hold it with the diagram's padding around it. The title is read by the label rule, as any
-// label is (#1368): a quoted markdown string in the string YAML gives is markdown, anything else
-// is plain, tags draw and a written `\n` breaks. Inline boxes are not drawn in it. It is not the
-// accessible name (D133).
+// label is (#1368, #1406): a quoted markdown string in the string YAML gives is markdown, and so
+// is every title under `markdownAlwaysOn`; anything else is plain, and markdown in it gives the
+// render's `MARKDOWN_NOT_READ` warning. Tags draw and a written `\n` breaks. Inline boxes are not
+// drawn in it. It is not the accessible name (D133).
 
 /** A laid-out title and its centre. */
 export interface PlacedTitle {
@@ -236,13 +231,13 @@ export interface PlacedTitle {
   readonly y: number;
 }
 
-/** The part of a render context a title reads. */
-export interface TitleContext {
+/**
+ * The part of a render context a title reads: the label rule takes `config`, and the
+ * `MARKDOWN_NOT_READ` warning goes through `inline` or `warn` (#1368, #1406).
+ */
+export interface TitleContext extends MarkdownWarningContext {
   readonly theme: { value(name: 'fontFamily'): string };
   readonly measurer: Measurer;
-  readonly inline?: InlineSpans | undefined;
-  /** The render's resolved config (`ctx.config`), for the label rule. */
-  readonly config?: LabelConfig;
 }
 
 /**
@@ -260,7 +255,7 @@ export function placeTitle(
   const t = text?.trim();
   if (!t) return undefined;
   const font = { family: ctx.theme.value('fontFamily'), size, weight: 400 };
-  const source = labelSource(t, { v12Markdown: false }, ctx.config);
+  const source = readLabel(t, undefined, ctx);
   const label = layoutLabel(source.text, font, Infinity, ctx.measurer, {
     ...source,
     inline: ctx.inline && { ...ctx.inline, extract: () => undefined },

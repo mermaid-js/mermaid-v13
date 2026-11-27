@@ -42,6 +42,7 @@ import {
   tee,
   writeLabel,
 } from '@mermaid-js/shared/ascii';
+import type { MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 
 /** The actor's figure (D478), the same in both charsets. */
 const FIGURE = [' O ', '/|\\', '/ \\'] as const;
@@ -326,6 +327,8 @@ export interface DrawOptions {
   readonly title?: string;
   /** `ascii.maxWidth`: a longer title wraps to it (or to the drawing, when that is wider). */
   readonly maxWidth?: number;
+  /** The render context, for the title's label rule and warning (#1406). */
+  readonly ctx?: MarkdownWarningContext;
   /** Cells between a table cell's divider and its text (the profile's `nodePad.x`). */
   readonly pad: number;
 }
@@ -394,5 +397,5 @@ export function drawUsecase(
     else if (!actor) leave(canvas, glyphs, end);
   }
 
-  return finish(canvas, options.title, options.maxWidth);
+  return finish(canvas, options.title, options.maxWidth, options.ctx);
 }

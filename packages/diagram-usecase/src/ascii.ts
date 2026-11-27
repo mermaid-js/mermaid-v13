@@ -98,6 +98,7 @@ export function ascii(model: UsecaseModel, layout: UsecaseLayout, ctx: TextRende
   if (routeWarning) ctx.warn(routeWarning);
   return drawUsecase(prepared, laid, routes, glyphs, {
     title: ctx.title ?? model.title,
+    ctx,
     pad: units.builder.nodePad.x,
     ...(options.maxWidth !== undefined ? { maxWidth: options.maxWidth } : {}),
   });
