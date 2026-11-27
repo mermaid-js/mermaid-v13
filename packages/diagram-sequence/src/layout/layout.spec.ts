@@ -378,6 +378,58 @@ describe('frame title and section label height (#1238, D723)', () => {
   });
 });
 
+describe('frame title clear of its tab (#1361, D734)', () => {
+  // The docs' `critical` example, from #1361: the self message widens the title's reach, so
+  // the frame is as wide as its title and tab need.
+  const KEYWORDS = ['loop', 'alt', 'opt', 'par', 'critical', 'break'] as const;
+  const repro = (keyword: (typeof KEYWORDS)[number]): SequenceModel =>
+    modelOf(
+      [part('Service'), part('DB')],
+      [
+        frag(
+          keyword,
+          ['Establish a connection to the DB', [msg('Service', 'DB', 'connect')]],
+          ['Network timeout', [msg('Service', 'Service', 'Log error')]]
+        ),
+      ]
+    );
+
+  for (const theme of THEMES)
+    for (const keyword of KEYWORDS)
+      it(`${keyword}, ${theme}: the title starts right of the tab`, () => {
+        const model = repro(keyword);
+        const l = lay(model, pxProfile, tableMeasurer, {}, theme);
+        expect(sequenceLayoutViolations(model, l, {})).toEqual([]);
+        const [f] = l.fragments;
+        expect(f!.title!.x).toBeGreaterThanOrEqual(f!.tab.x + f!.tab.width - 1e-9);
+      });
+
+  it('grows the frame by no more than the tab is wider than labelBoxWidth', () => {
+    // At 16 px `critical` needs a tab wider than 50 px; `loop` does not, and its frame is v12's.
+    const frame = (keyword: 'loop' | 'critical') =>
+      lay(repro(keyword), pxProfile, tableMeasurer, {}, 'default').fragments[0]!;
+    const loop = frame('loop');
+    const critical = frame('critical');
+    expect([loop.x, loop.width, loop.tab.width]).toEqual([-9, 295, 50]);
+    expect(critical.tab.width).toBeGreaterThan(50);
+    expect(critical.width).toBeGreaterThan(loop.width);
+    expect(critical.width - loop.width).toBeLessThanOrEqual(critical.tab.width - 50);
+  });
+
+  it('keeps cells as they were: the keyword is on the border, the title below it', () => {
+    const l = lay(repro('critical'), cellProfile(), cellMeasurer);
+    const [f] = l.fragments;
+    expect([f!.x, f!.width, f!.title!.x, f!.title!.y]).toMatchInlineSnapshot(`
+      [
+        -1,
+        44,
+        7,
+        5,
+      ]
+    `);
+  });
+});
+
 describe('the top-level fontSize (D620, #765)', () => {
   const withNote = modelOf(
     [part('A'), part('B')],
