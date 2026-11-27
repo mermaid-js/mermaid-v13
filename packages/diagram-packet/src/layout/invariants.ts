@@ -14,26 +14,33 @@ export function packetLayoutViolations(model: PacketModel, layout: PacketLayout)
   const { options, rows } = layout;
   const { rowHeight, bitWidth, bitsPerRow, paddingX } = options;
   const descending = options.bitOrder === 'descending';
-  const pitch = rowHeight + layout.paddingY;
+  const pY = layout.paddingY;
   const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
 
-  // The canvas: v12's width and height (renderer.ts:14-16).
+  // The canvas: v12's width and height (renderer.ts:14-16), with the rows' own heights (D740).
   if (bitsPerRow !== model.bitsPerRow)
     out.push(`laid out with ${bitsPerRow} bits per row, the model has ${model.bitsPerRow}`);
   if (!near(layout.width, bitWidth * bitsPerRow + 2 * m.margin))
     out.push(`the canvas is ${layout.width} wide`);
-  const height = pitch * (rows.length + 1) - (model.title ? 0 : rowHeight);
+  const end = rows.reduce((y, row) => y + row.height + pY, pY);
+  const height = end + (model.title ? rowHeight : 0);
   if (!near(layout.height, height)) out.push(`the canvas is ${layout.height} tall, not ${height}`);
 
   // The model's rows and pieces, in order.
   if (rows.length !== model.rows.length)
     out.push(`${rows.length} rows for the model's ${model.rows.length}`);
+  let top = pY;
   rows.forEach((row, r) => {
     const want = model.rows[r] ?? [];
     const got = row.pieces.map((p) => `${p.field}:${p.start}-${p.end}`).join();
     const wanted = want.map((p) => `${p.field}:${p.start}-${p.end}`).join();
     if (got !== wanted) out.push(`row ${r} has pieces ${got}, the model ${wanted}`);
-    if (!near(row.y, r * pitch + layout.paddingY)) out.push(`row ${r} is at y ${row.y}`);
+    // Each row starts pY below the one above, and is as tall as its tallest label (D740).
+    if (!near(row.y, top)) out.push(`row ${r} is at y ${row.y}, not ${top}`);
+    top = row.y + row.height + pY;
+    const tallest = Math.max(rowHeight, ...row.pieces.map((p) => p.label.height));
+    if (!near(row.height, tallest))
+      out.push(`row ${r} is ${row.height} tall, not its tallest label's ${tallest}`);
 
     let bits = 0;
     for (const p of row.pieces) {
@@ -48,7 +55,7 @@ export function packetLayoutViolations(model: PacketModel, layout: PacketLayout)
       const first = p.start % bitsPerRow;
       const column = descending ? bitsPerRow - first - p.bits : first;
       if (!near(box.x, column * bitWidth + m.margin)) out.push(`${name} is at x ${box.x}`);
-      if (!near(box.y, row.y) || !near(box.height, rowHeight))
+      if (!near(box.y, row.y) || !near(box.height, row.height))
         out.push(`${name} is not the row's height`);
       labelViolations(p, out);
       bitNumberViolations(p, row.y, options.showBits, descending, out);
@@ -95,7 +102,7 @@ export function packetLayoutViolations(model: PacketModel, layout: PacketLayout)
   return out;
 }
 
-/** The label centred on its piece, in a font no larger than the labels' and no smaller than the bits'. */
+/** The label centred on its piece, its lines inside it, its box its measured size. */
 function labelViolations(p: PacketPieceLayout, out: string[]): void {
   const { box, label } = p;
   if (
@@ -103,6 +110,9 @@ function labelViolations(p: PacketPieceLayout, out: string[]): void {
     Math.abs(label.y + label.height / 2 - (box.y + box.height / 2)) > EPS
   )
     out.push(`piece ${p.start}-${p.end}'s label is not centred on it`);
+  // Every line inside the box from top to bottom (D740); only the width may still overflow (D343).
+  if (label.y < box.y - EPS || label.y + label.height > box.y + box.height + EPS)
+    out.push(`piece ${p.start}-${p.end} has a label line outside its box`);
   if (label.width !== label.text.width || label.height !== label.text.height)
     out.push(`piece ${p.start}-${p.end}'s label box is not its measured size`);
 }
@@ -187,7 +197,7 @@ function titleViolations(model: PacketModel, layout: PacketLayout, out: string[]
   if (Math.abs(title.x + title.width / 2 - layout.width / 2) > EPS)
     out.push('the title is not centred on the canvas');
   const lastRow = layout.rows[layout.rows.length - 1];
-  const bottom = lastRow ? lastRow.y + layout.options.rowHeight : -Infinity;
+  const bottom = lastRow ? lastRow.y + lastRow.height : -Infinity;
   if (title.y < bottom - EPS)
     out.push(`the title's top ${title.y} is above the last row's bottom ${bottom}`);
   const pitch = layout.options.rowHeight + layout.paddingY;

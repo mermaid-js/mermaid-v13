@@ -1,9 +1,12 @@
 ---
 description: >-
-  a label of four <br> lines does not fit the 32 px block even at the
-  bit-number size (10 px): it stops there and overflows above and below,
-  centred, as D343's width fit does (#774)
+  a label of four <br> lines keeps the label size (12 px) and its row grows
+  to fit it: both blocks of the row take its height, the lines stay inside
+  the box, and the next row, its bit numbers and the title move down below
+  it (D740, #1267)
 ---
 packet
+  title Four-line label
   0-15: "one<br>two<br>three<br>four"
   16-31: "ok"
+  32-63: "next row"

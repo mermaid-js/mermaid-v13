@@ -2,9 +2,10 @@
  * The packet custom layout (spec #421 T3, `layoutKind: 'custom'`): `PacketModel` in,
  * `PacketLayout` out. It follows v12's `renderer.ts` with the drawing taken out: every label,
  * bit number and the title is measured first through the injected measurer, in `fontFamily`
- * (pitfall 16), then placed where v12 put it. Positions never depend on the measurements: they
- * only shrink a label that is wider or taller than its piece (D343) and grow the bounds (D344). Every
- * length comes from the metrics table, the checked config or the theme (pitfall 13).
+ * (pitfall 16), then placed where v12 put it. The measurements shrink a label that is wider than
+ * its piece (D343), grow a row to a label of more lines than fit it (D740) and grow the bounds
+ * (D344); rows of one-line labels keep v12's positions. Every length comes from the metrics
+ * table, the checked config or the theme (pitfall 13).
  *
  * v12 bugs fixed on the way: a `paddingX` wider than a piece no longer gives a negative width
  * (D342), and the viewBox no longer clips a title or label that runs past it (D344).
@@ -53,19 +54,17 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
   const { ascent, descent } = ctx.measurer.metrics(fonts.byte);
 
   /**
-   * A label in a piece `width` wide and `rowHeight` tall, shrunk to fit both down to the
-   * bit-number size (D343; the height since #774, for labels of several `<br>` lines).
+   * A label in a piece `width` wide, shrunk to fit it down to the bit-number size (D343). The
+   * height never shrinks it: a taller label grows its row instead (D740, #1267).
    */
-  const fitted = (text: string, width: number): { text: MeasuredLabel; font: FontKey } => {
+  const fitted = (text: string, width: number): Fitted => {
     let f = fonts.label;
     let t = measure(text, f);
     const min = Math.min(fonts.label.size, fonts.byte.size);
-    const over = (l: MeasuredLabel): boolean => l.width > width || l.height > rowHeight;
-    // Scale by the larger overflow; a measurer need not scale with the size, so the last step is
-    // the floor itself, and a label that still does not fit overflows at the bit-number size.
-    for (let i = 1; over(t) && f.size > min; i++) {
-      const share = Math.min(Math.max(width, 0) / t.width, Math.max(rowHeight, 0) / t.height);
-      const scaled = f.size * share;
+    // A measurer need not scale with the size, so the last step is the floor itself, and a
+    // label that still does not fit overflows at the bit-number size.
+    for (let i = 1; t.width > width && f.size > min; i++) {
+      const scaled = f.size * (Math.max(width, 0) / t.width);
       f = font(i < FIT_STEPS ? Math.max(min, scaled) : min);
       t = measure(text, f);
     }
@@ -94,17 +93,18 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
   };
 
   const firstPiece = new Set<number>();
-  const piece = (p: PacketPiece, rowY: number): PacketPieceLayout => {
+  const widthOf = (p: PacketPiece): number =>
+    Math.max(0, (p.end - p.start + 1) * bitWidth - paddingX);
+  const piece = (p: PacketPiece, rowY: number, h: number, label: Fitted): PacketPieceLayout => {
     const f = model.fields[p.field]!;
     const bits = p.end - p.start + 1;
     const first = p.start % bitsPerRow;
     const column = descending ? bitsPerRow - first - bits : first;
     const x = column * bitWidth + m.margin;
-    const width = Math.max(0, bits * bitWidth - paddingX);
-    const box: Rect = { x, y: rowY, width, height: rowHeight };
-    const label = fitted(f.label, width);
+    const width = widthOf(p);
+    const box: Rect = { x, y: rowY, width, height: h };
     const cx = x + width / 2;
-    const cy = rowY + rowHeight / 2;
+    const cy = rowY + h / 2;
     const placed: PlacedLabel = {
       x: cx - label.text.width / 2,
       y: cy - label.text.height / 2,
@@ -137,13 +137,19 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
     };
   };
 
+  // v12's fixed pitch, plus what the rows above grew by: a row is as tall as its tallest label
+  // (D740), so with one-line labels every position is v12's.
+  let grown = 0;
   const rows: PacketRowLayout[] = model.rows.map((pieces, r) => {
-    const y = r * pitch + pY;
-    return { y, pieces: pieces.map((p) => piece(p, y)) };
+    const y = r * pitch + pY + grown;
+    const labels = pieces.map((p) => fitted(model.fields[p.field]!.label, widthOf(p)));
+    const height = labels.reduce((h, l) => Math.max(h, l.text.height), rowHeight);
+    grown += height - rowHeight;
+    return { y, height, pieces: pieces.map((p, i) => piece(p, y, height, labels[i]!)) };
   });
 
   const width = bitWidth * bitsPerRow + 2 * m.margin;
-  const height = pitch * (rows.length + 1) - (model.title ? 0 : rowHeight);
+  const height = pitch * (rows.length + 1) - (model.title ? 0 : rowHeight) + grown;
 
   // The title's first line is centred where v12 centred its one line; more lines grow down. A
   // title taller than the row pitch moves down to sit on the last row instead of over it, the
@@ -151,7 +157,8 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
   let title: PlacedLabel | undefined;
   if (model.title) {
     const text = measure(model.title, fonts.title);
-    const bottom = rows.length > 0 ? rows[rows.length - 1]!.y + rowHeight : -Infinity;
+    const last = rows[rows.length - 1];
+    const bottom = last ? last.y + last.height : -Infinity;
     const y = Math.max(height - pitch / 2 - text.lineHeight / 2, bottom);
     title = {
       x: width / 2 - text.width / 2,
@@ -191,6 +198,12 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
     fonts,
     bounds: box.rect(),
   };
+}
+
+/** A label measured in the font it fits its piece's width in. */
+interface Fitted {
+  readonly text: MeasuredLabel;
+  readonly font: FontKey;
 }
 
 /** How much of a text's width lies left of its anchor. */
