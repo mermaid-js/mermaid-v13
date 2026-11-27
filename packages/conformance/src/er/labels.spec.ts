@@ -1,4 +1,4 @@
-// ER labels through the public render (#1368, D731): Markdown only in a markdown string, every
+// ER labels through the public render (#1368): Markdown only in a markdown string, every
 // label as markdown with `markdownAlwaysOn`, and one MARKDOWN_NOT_READ warning per render.
 import { describe, expect, it } from 'vitest';
 import { createMermaid, type MermaidConfig } from 'mermaid';

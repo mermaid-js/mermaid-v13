@@ -58,7 +58,7 @@ e2e/diagrams/er-diagram/nightly-check/should-render-subgraphs-with-explicit-id-a
 e2e/diagrams/er-diagram/nightly-check/should-render-subgraphs-with-quoted-ids.mmd 1 d44cbd70174f7fb8
 e2e/diagrams/er-diagram/pr-check/1433-should-render-a-simple-er-diagram-with-a-title.mmd 1 7940a4035e200ceb
 e2e/diagrams/er-diagram/pr-check/label-syntax-compat.mmd 1 36b16a2252a4c2b1
-e2e/diagrams/er-diagram/pr-check/label-syntax.mmd 1 f71136ed5ed902b4
+e2e/diagrams/er-diagram/pr-check/label-syntax.mmd 1 377938abfbabbceb
 e2e/diagrams/er-diagram/pr-check/math-should-render-tex-in-every-er-label.mmd 1 86683fdb06074dde
 e2e/diagrams/er-diagram/pr-check/should-render-a-cyclical-er-diagram.mmd 1 9ed03e0fe6f29470
 e2e/diagrams/er-diagram/pr-check/should-render-a-not-so-simple-er-diagram.mmd 1 ade952ef34dbd33c

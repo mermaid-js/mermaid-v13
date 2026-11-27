@@ -1,6 +1,6 @@
 // ER labels read Markdown emphasis in every ER label kind (#754, D565) with
 // `markdownAlwaysOn: true`, which these fixtures set and which draws every label as markdown;
-// by default only a markdown string does (#1368, D731).
+// by default only a markdown string does (#1368).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawnRuns } from './testing/labels.ts';

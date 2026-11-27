@@ -1,4 +1,4 @@
-// How each ER label kind reads what is written (#1368, D731): Markdown only in a markdown
+// How each ER label kind reads what is written (#1368): Markdown only in a markdown
 // string, and in every label with `markdownAlwaysOn`.
 import type { Warning } from '@mermaid-js/core';
 import { describe, expect, it } from 'vitest';
