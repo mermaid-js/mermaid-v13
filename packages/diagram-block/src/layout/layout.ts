@@ -16,6 +16,8 @@ import { layoutLabel, type FontKey } from '@mermaid-js/core/text';
 import { isComposite, type Block, type BlockEdge, type BlockModel } from '../model.ts';
 import { themePads, type Pads } from '@mermaid-js/shared/shapes/kit';
 import { clipOutline, outlineExtent, type Point } from '../shapes/outline.ts';
+import { arrowheads } from '@mermaid-js/shared/svg/arrowheads';
+import { clearTags } from './edge-label.ts';
 import { placeGrid, sizeGrid, type GridNode } from './grid.ts';
 import { kindOf, SHAPE_OF, type Natural } from './kinds.ts';
 import { BLOCK_METRICS, CUBIC_MIDDLE, NORMAL_WEIGHT } from './metrics.ts';
@@ -159,7 +161,8 @@ export function layoutBlock(model: BlockModel, ctx: BlockLayoutContext): BlockLa
   sizeGrid(root, padding, BLOCK_METRICS.maxSizings);
   placeGrid(root, padding);
   const blocks = items.map((item) => placedBlock(item, padding, pads));
-  const edges = edgesOf(model.edges, blockIndex(blocks), (text) => measure(text, base, 0));
+  const placed = edgesOf(model.edges, blockIndex(blocks), (text) => measure(text, base, 0));
+  const edges = clearTags(placed, blocks, arrowheads(ctx.theme));
   return { columns: model.columns, blocks, edges, padding, bounds: boundsOf(blocks, edges) };
 }
 
