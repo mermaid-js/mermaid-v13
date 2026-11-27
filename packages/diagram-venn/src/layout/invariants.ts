@@ -9,11 +9,12 @@
  * - circles are inside the chart's box, `width × (height − titleHeight)`;
  * - text: each text node's cell centre (where its label is centred) is inside its area's inner
  *   circle, each cell is inside the area's grid and the cells do not overlap. Whole cells are
- *   not checked against the inner circle: v12's grid, which an area keeps when its nodes meet no
- *   label, is the `1.9 · r` square about it, so every cell's corners reach past it. Two rules put
- *   a cell centre past the circle too, when the circle is small for the canvas width or the
- *   nodes: the grid's least size (`80s × 60s`) and its move down (v12's `min(32s, r / 4)` and
- *   `30s`, and D750's start below the labels); a centre is let past for those only (GAPS #491);
+ *   not checked against the inner circle: v12's grid, which an area keeps when it has no label
+ *   and its nodes meet none (D750), is the `1.9 · r` square about it, so every cell's corners
+ *   reach past it. Two rules put a cell centre past the circle too, when the circle is small for
+ *   the canvas width or the nodes: the grid's least size (`80s × 60s`) and its move down (v12's
+ *   `min(32s, r / 4)` and `30s`, and D750's start below the labels); a centre is let past for
+ *   those only (GAPS #491);
  * - the labels of different areas do not overlap (a repeated area's copies share one place);
  * - no text node's label meets a set or overlap label, its own area's or a neighbour's (D750);
  * - everything drawn is inside `bounds`.
