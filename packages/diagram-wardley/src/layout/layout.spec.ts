@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Measurer } from '@mermaid-js/core/text';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { parseWardley } from '../parser/index.ts';
 import { layoutWardley, type PlacedText, type WardleyLayout } from './index.ts';
@@ -467,10 +468,77 @@ describe('wardley layout: labels follow the label rule (#1368)', () => {
     expect(runs(l.accelerators[0]!.label)).toEqual(['x _i_']);
   });
 
-  it('reads them the same with legacyMarkdown: no wardley label kind read markdown in v12', () => {
+  // Every label kind, each written plain with an emphasis pair.
+  const PLAIN = [
+    'title t **b** _i_',
+    'evolution "s **b** _i_" -> B -> C -> D',
+    'anchor "a **b** _i_" [0.95, 0.6]',
+    'component "c **b** _i_" [0.5, 0.5]',
+    'component "d **b** _i_" [0.2, 0.2]',
+    '"c **b** _i_" -> "d **b** _i_" ; l **b** _i_',
+    'pipeline "c **b** _i_" {\n  component "p **b** _i_" [0.6]\n}',
+    'note "n **b** _i_" [0.1, 0.9]',
+    'annotations [0.05, 0.4]',
+    'annotation 1, [0.5, 0.9] "a **b** _i_"',
+    'accelerator "x **b** _i_" [0.4, 0.4]',
+    'deaccelerator "y **b** _i_" [0.4, 0.7]',
+  ].join('\n');
+
+  /** Every label of a layout, as `runs`. */
+  const everyLabel = (l: WardleyLayout): string[][] => [
+    runs(l.title!),
+    runs(l.stages[0]!.label),
+    ...l.nodes.map((n) => runs(n.label)),
+    ...l.links.map((k) => runs(k.label!)),
+    ...l.notes.map((n) => runs(n.label)),
+    ...l.annotationsBox!.lines.map(runs),
+    ...[...l.accelerators, ...l.deaccelerators].map((a) => runs(a.label)),
+  ];
+
+  it('reads every label kind as markdown with markdownAlwaysOn, as written without it', () => {
+    const always = everyLabel(lay(PLAIN, {}, [], { markdownAlwaysOn: true }));
+    expect(always).toEqual([
+      ['t *b* _i_'],
+      ['s *b* _i_'],
+      ['a *b* _i_'],
+      ['c *b* _i_'],
+      ['d *b* _i_'],
+      ['p *b* _i_'],
+      ['l *b* _i_'],
+      ['n *b* _i_'],
+      ['1. a *b* _i_'],
+      ['x *b* _i_'],
+      ['y *b* _i_'],
+    ]);
+    const plain = everyLabel(lay(PLAIN));
+    expect(plain.flat().every((t) => t.endsWith('**b** _i_'))).toBe(true);
+    // The fixed texts are no labels: the axis names stay plain.
+    const l = lay(PLAIN, {}, [], { markdownAlwaysOn: true });
+    expect([l.axes.xLabel.markup, l.annotations[0]!.label.markup]).toEqual(['plain', 'plain']);
+  });
+
+  it('reads markdown strings, tags, entities and \\n with markdownAlwaysOn as without it', () => {
+    const always = lay(SOURCE, {}, [], { markdownAlwaysOn: true });
     const plain = lay(SOURCE);
-    const legacy = lay(SOURCE, {}, [], { legacyMarkdown: true });
-    expect(legacy).toEqual(plain);
+    // A markdown string, a tag, an entity-coded tag and a written `\n` draw the same.
+    for (const id of ['`c **b** _i_`', 'a <b>b</b><br>n H<sub>2</sub>O', 'c one\ntwo'])
+      expect(runs(node(always, id).label)).toEqual(runs(node(plain, id).label));
+    const coded = (l: WardleyLayout) => l.nodes.find((n) => n.id.startsWith('<b>lit'))!.label;
+    expect(runs(coded(always))).toEqual(['<b>lit</b> \\n']);
+    expect(runs(always.notes[0]!.label)).toEqual(runs(plain.notes[0]!.label));
+    // Plain text is now markdown: the single-quoted name's pair and the code span.
+    expect(runs(node(always, 'q **b**').label)).toEqual(['q *b*']);
+  });
+
+  it('warns once per label that holds markdown it does not read, never with markdownAlwaysOn', () => {
+    const warned: Warning[] = [];
+    lay(PLAIN, {}, warned);
+    // Without `ctx.inline` (no API) the warning comes from each such label.
+    expect(new Set(warned.map((w) => w.code))).toEqual(new Set([MARKDOWN_NOT_READ.code]));
+    const none: Warning[] = [];
+    lay(PLAIN, {}, none, { markdownAlwaysOn: true });
+    lay('component "`c **b**`" [0.5, 0.5]\nnote "`n _i_`" [0.1, 0.1]\ntitle "`t **b**`"', {}, none);
+    expect(none.filter((w) => w.code === MARKDOWN_NOT_READ.code)).toEqual([]);
   });
 
   it('keeps the first line where v12 drew its one line, the others below it', () => {

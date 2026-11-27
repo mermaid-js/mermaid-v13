@@ -1,16 +1,20 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd: the same wardley labels
-  with legacyMarkdown set. No wardley label kind read markdown in v12, so the
-  picture is expected to equal the default one (#1368).
+  label-syntax.mmd with markdownAlwaysOn set: every wardley label is markdown,
+  so the plain **bold** _ital_ rows of every label kind (title, stage names,
+  component, anchor and pipeline names, link labels, notes, annotations,
+  accelerators) draw bold and italic and the code-span rows draw inline code.
+  Tags and a written \n draw as in the default mode. The picture differs from
+  label-syntax.mmd (#1368).
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 wardley-beta
-title "`title **bold** _ital_`"
+title title **bold** _ital_
 size [1400, 1000]
 evolution "stage **bold** _ital_" -> "`stage **bold** _ital_`" -> "stage a `code` b" -> "stage <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" -> "stage one\ntwo"
-anchor "anchor <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" [0.96, 0.45]
+anchor "anchor **bold** _ital_" [0.96, 0.3]
+anchor "anchor <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" [0.96, 0.75]
 component "comp **bold** _ital_" [0.88, 0.08]
 component "`comp **bold** _ital_`" [0.88, 0.62]
 component "comp a `code` b" [0.72, 0.08]
@@ -25,8 +29,9 @@ component "`comp` **bare** _ital_" [0.56, 0.62]
 "`comp **bold** _ital_`" -> "comp <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" ; link one\ntwo
 component "pipeline parent" [0.18, 0.4]
 pipeline "pipeline parent" {
-  component "`pipe **bold** _ital_`" [0.33]
-  component "pipe <b>bold</b><br>next" [0.5]
+  component "`pipe **bold** _ital_`" [0.3]
+  component "pipe <b>bold</b><br>next" [0.38]
+  component "pipe **bold** _ital_" [0.67]
 }
 note "note **bold** _ital_" [0.4, 0.62]
 note "`note **bold** _ital_`" [0.34, 0.62]
@@ -39,5 +44,6 @@ annotation 2, [0.48, 0.34] "`annot **bold** _ital_`"
 annotation 3, [0.48, 0.38] "annot a `code` b"
 annotation 4, [0.48, 0.42] "annot <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
 annotation 5, [0.48, 0.46] "annot one\ntwo"
-accelerator "`accel **bold** _ital_`" [0.1, 0.5]
+accelerator "accel **bold** _ital_" [0.1, 0.5]
+accelerator "`accel **bold** _ital_`" [0.1, 0.9]
 deaccelerator "deaccel <b>bold</b><br>next" [0.1, 0.78]

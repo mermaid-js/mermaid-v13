@@ -6,7 +6,7 @@
  * strokes, dashes and opacities the renderer draws with are in `WARDLEY_METRICS`.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { FontKey, LabelMarkup, MeasuredLabel } from '@mermaid-js/core/text';
 import type { WardleyFlow, WardleyNodeClass, WardleyStrategy } from '../model.ts';
 
 export interface Point {
@@ -42,6 +42,8 @@ export interface PlacedText extends Rect {
   readonly text: string;
   /** The laid-out lines and runs, as `SvgWriter.label()` draws them. */
   readonly label: MeasuredLabel;
+  /** How the text was read: `plain` unless it is a markdown string or every label is markdown. */
+  readonly markup: LabelMarkup;
   /** The font it was measured in, and so is drawn in. */
   readonly font: FontKey;
   /** From the box's top to the first line's baseline (the font's ascent). */

@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import {
@@ -490,7 +491,7 @@ describe('wardley render: what is drawn', () => {
     expect(svg).toContain('>Tea &amp; &amp; &quot;Cups&quot;</text>');
   });
 
-  it('draws labels by the label rule, the same with legacyMarkdown (#1368)', async () => {
+  it('draws labels by the label rule (#1368)', async () => {
     const src = [
       'wardley-beta',
       'title t <b>b</b>',
@@ -499,7 +500,7 @@ describe('wardley render: what is drawn', () => {
       'component "one\\ntwo" [0.3, 0.3]',
       '"`c **b**`" -> "c **b**" ; l <i>i</i>',
     ].join('\n');
-    const { tree, svg } = await render(src);
+    const { tree } = await render(src);
     const tspans = (n: SvgElement) =>
       tree.children(n).map((c) => [textOf(tree, c), attr(tree, c, 'font-weight') ?? '']);
     const [title] = byClass(tree, 'wardley-title');
@@ -528,8 +529,87 @@ describe('wardley render: what is drawn', () => {
       '',
       'italic',
     ]);
-    const legacy = await api.render('x', `---\nconfig:\n  legacyMarkdown: true\n---\n${src}`);
-    expect(legacy.svg).toBe(svg);
+  });
+
+  // Every label kind, each written plain with an emphasis pair.
+  const PLAIN = [
+    'wardley-beta',
+    'title t **b** _i_',
+    'evolution "s **b** _i_" -> B -> C -> D',
+    'anchor "a **b** _i_" [0.95, 0.6]',
+    'component "c **b** _i_" [0.5, 0.5]',
+    'component "d **b** _i_" [0.2, 0.2]',
+    '"c **b** _i_" -> "d **b** _i_" ; l **b** _i_',
+    'pipeline "c **b** _i_" {\n  component "p **b** _i_" [0.6]\n}',
+    'note "n **b** _i_" [0.1, 0.9]',
+    'annotations [0.05, 0.4]',
+    'annotation 1, [0.5, 0.9] "a **b** _i_"',
+    'accelerator "x **b** _i_" [0.4, 0.4]',
+    'deaccelerator "y **b** _i_" [0.4, 0.7]',
+  ].join('\n');
+
+  /** Each user label's text runs, `*bold*` and `_italic_`, in drawing order. */
+  const drawnRuns = (tree: SvgView): string[] =>
+    tree
+      .find(
+        (n, t) =>
+          t.tag(n) === 'text' && !(t.getAttr(n, 'class') ?? '').includes('wardley-axis-label')
+      )
+      .map((n) => {
+        const parts = n.children.map((c) => {
+          if (c.text !== undefined) return c.text;
+          const t = textOf(tree, c);
+          if (attr(tree, c, 'font-weight') === 'bold') return `*${t}*`;
+          return attr(tree, c, 'font-style') === 'italic' ? `_${t}_` : t;
+        });
+        return parts.join('');
+      })
+      .filter((t) => !/^\d$|^(B|C|D)$/.test(t));
+
+  const always = (section: boolean): string =>
+    section
+      ? `---\nconfig:\n  wardley-beta:\n    markdownAlwaysOn: true\n---\n${PLAIN}`
+      : `---\nconfig:\n  markdownAlwaysOn: true\n---\n${PLAIN}`;
+
+  it('draws every plain label kind as markdown with markdownAlwaysOn, global or in its section (#1368)', async () => {
+    const expected = [
+      't *b* _i_',
+      's *b* _i_',
+      'l *b* _i_',
+      'a *b* _i_',
+      'c *b* _i_',
+      'd *b* _i_',
+      'p *b* _i_',
+      '1. a *b* _i_',
+      'n *b* _i_',
+      'x *b* _i_',
+      'y *b* _i_',
+    ];
+    for (const section of [false, true]) {
+      const { tree, warnings } = await render(always(section));
+      expect(drawnRuns(tree).sort(), `section ${section}`).toEqual([...expected].sort());
+      expect(warnings.map((w) => w.code)).not.toContain(MARKDOWN_NOT_READ.code);
+    }
+    // Without the setting the same labels are drawn as written, with one warning.
+    const { tree, warnings } = await render(PLAIN);
+    expect(drawnRuns(tree).every((t) => t.endsWith('**b** _i_'))).toBe(true);
+    expect(warnings.filter((w) => w.code === MARKDOWN_NOT_READ.code)).toHaveLength(1);
+  });
+
+  it('draws markdown strings, tags and \\n the same with markdownAlwaysOn, and warns for none (#1368)', async () => {
+    const src = [
+      'wardley-beta',
+      'title "`t **b**`"',
+      'component "`c **b**`" [0.5, 0.5]',
+      'component "t <b>b</b><br>n" [0.7, 0.7]',
+      'component "one\\ntwo" [0.3, 0.3]',
+      'note "`n _i_`" [0.1, 0.9]',
+    ].join('\n');
+    const plain = await render(src);
+    const on = await render(`---\nconfig:\n  markdownAlwaysOn: true\n---\n${src}`);
+    expect(drawnRuns(on.tree)).toEqual(drawnRuns(plain.tree));
+    for (const r of [plain, on])
+      expect(r.warnings.map((w) => w.code)).not.toContain(MARKDOWN_NOT_READ.code);
   });
 
   it('draws the in-text title with data-ast, a front-matter one without (D218)', async () => {

@@ -5,7 +5,7 @@
  * the canvas and the projection, the stages and the grid, then the pipelines, which move their
  * parents (in model order) and hand the moved positions to the links, the trends and the nodes,
  * then the annotations, the notes and the (de)accelerators. Every text is read by the label rule
- * (`labelSource`, #1368: tags draw, a quoted markdown string is markdown, a written `\n` breaks
+ * (`readLabel`, #1368: tags draw, a quoted markdown string is markdown, a written `\n` breaks
  * the line) and laid out by core's label layout, measured through the injected measurer in the
  * theme's font family (D422, pitfall 16). Its first line is placed where v12's `text-anchor` and
  * `dominant-baseline` put v12's one line, and any further lines follow below it; the bounds grow
@@ -22,7 +22,8 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import { labelSource, layoutLabel, type FontKey, type LabelOptions } from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type LabelOptions } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { wardleyLayoutConfig, wardleySection, type WardleyLayoutConfig } from '../config.ts';
 import { WARDLEY_LINK_DROPPED, WARDLEY_STAGE_CLAMPED } from '../codes.ts';
 import type { WardleyAccelerator, WardleyLabel, WardleyModel, WardleyNode } from '../model.ts';
@@ -64,8 +65,8 @@ type Positions = ReadonlyMap<string, Point>;
 
 /** One text to measure and place. */
 interface TextParts {
-  /** As the label rule reads it; a fixed text of the diagram's is plain. */
-  readonly text: WardleyLabel;
+  /** A label, which the label rule reads; or a fixed text of the diagram's, which it does not. */
+  readonly text: WardleyLabel | string;
   readonly font: FontKey;
   readonly at: Point;
   readonly anchor: WardleyTextAnchor;
@@ -133,14 +134,14 @@ export function layoutWardley(model: WardleyModel, ctx: WardleyLayoutContext): W
     },
     y: { from: { x: padding, y: padding }, to: { x: padding, y: height - padding } },
     xLabel: type.place({
-      text: { text: AXIS_LABELS.x },
+      text: AXIS_LABELS.x,
       font: fonts.axis,
       at: { x: padding + chartWidth / 2, y: height - padding * metrics.axis.xLabelFactor },
       anchor: 'middle',
       baseline: 'auto',
     }),
     yLabel: type.place({
-      text: { text: AXIS_LABELS.y },
+      text: AXIS_LABELS.y,
       font: fonts.axis,
       at: { x: padding * metrics.axis.yLabelFactor, y: padding + chartHeight / 2 },
       anchor: 'middle',
@@ -172,7 +173,7 @@ export function layoutWardley(model: WardleyModel, ctx: WardleyLayoutContext): W
       point,
       radius: metrics.annotation.radius,
       label: type.place({
-        text: { text: String(a.number) },
+        text: String(a.number),
         font: fonts.annotationNumber,
         at: point,
         anchor: 'middle',
@@ -242,22 +243,24 @@ function fontsOf(config: WardleyLayoutConfig, family: string): Fonts {
 /** How far left of its anchor a text's box starts, in text widths. */
 const ANCHOR_SHIFT: Readonly<Record<WardleyTextAnchor, number>> = { start: 0, middle: 1 / 2 };
 
-/** No wardley label is a v12 markdown label kind: v12 drew every text with `.text()` (#1368). */
-const LABEL_KIND = { v12Markdown: false } as const;
-
 /**
- * Texts as the label rule reads them (#1368), laid out by core's label layout in their font
- * without wrapping, and boxed on `at`: the first line where v12's `text-anchor` and
- * `dominant-baseline` put v12's one line, any further lines below it.
+ * Texts laid out by core's label layout in their font without wrapping, and boxed on `at`: the
+ * first line where v12's `text-anchor` and `dominant-baseline` put v12's one line, any further
+ * lines below it. A label is read by the label rule (`readLabel`, #1368), which also gives the
+ * render its one `MARKDOWN_NOT_READ`; a fixed text (an axis name, a default stage, an
+ * annotation number) is plain.
  */
 function typesetter(ctx: WardleyLayoutContext, fonts: Fonts): Typesetter {
-  const { measurer, config } = ctx;
+  const { measurer } = ctx;
   const inline: Pick<LabelOptions, 'inline'> = ctx.inline ? { inline: ctx.inline } : {};
+  const reader: MarkdownWarningContext = { ...ctx, warn: ctx.warn ?? ignoreWarning };
   return {
     fonts,
     place({ text, font, at, anchor, baseline, rotate = 0 }) {
-      const kind = text.markdown ? { ...LABEL_KIND, markdown: true } : LABEL_KIND;
-      const source = labelSource(text.text, kind, config);
+      const source =
+        typeof text === 'string'
+          ? { text, markup: 'plain' as const }
+          : readLabel(text.text, text.markdown ? { markdown: true } : {}, reader);
       const label = layoutLabel(source.text, font, Infinity, measurer, { ...inline, ...source });
       const { width, lineHeight, baseline: ascent } = label;
       return {
@@ -268,6 +271,7 @@ function typesetter(ctx: WardleyLayoutContext, fonts: Fonts): Typesetter {
         height: Math.max(label.height, lineHeight),
         text: label.lines.map((line) => line.map((run) => run.text).join('')).join('\n'),
         label,
+        markup: source.markup,
         font,
         ascent,
         at,
@@ -332,7 +336,7 @@ function stagesOf({ model, frame, type, warn }: StageParts): WardleyStageLayout[
     const start = padding + from * chartWidth;
     const end = padding + to * chartWidth;
     const label = type.place({
-      text: evolution?.drawn[i] ?? { text: name },
+      text: evolution?.drawn[i] ?? name,
       font: type.fonts.stage,
       at: { x: (start + end) / 2, y: labelY },
       anchor: 'middle',
