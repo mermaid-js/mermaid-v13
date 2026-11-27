@@ -288,16 +288,42 @@ const styleBits = (style: CheckedStyle): number =>
   style.text['font-style'] === 'italic' ? Style.Italic : 0;
 
 /**
+ * The tags core's label layout draws (D566, D710): `<br>` and the style tags with their aliases
+ * (core's `TAG_STYLE`, `core/src/text/label.ts`, which core does not export). `layout.spec.ts`
+ * checks that core draws each of them.
+ */
+export const DRAWN_TAGS: ReadonlySet<string> = new Set(
+  'br b strong i em u ins s strike del sub sup'.split(' ')
+);
+
+// Anything shaped like a tag, as core's label layout finds one (`RE_TAG`).
+const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)((?:\s[^<>]*)?\/?)>/g;
+
+/**
+ * `text` with every tag but the drawn ones written as text: core would drop a known HTML tag it
+ * does not draw (`<img>`, `<span>`, `<a>`, `<script>` with what it holds), and a label must never
+ * lose what was written that way. As v12 escaped it, it shows as written, and stays text (D471).
+ */
+const drawnTagsOnly = (text: string): string =>
+  text.includes('<')
+    ? text.replace(RE_TAG, (m, close: string, name: string, rest: string) =>
+        DRAWN_TAGS.has(name.toLowerCase()) ? m : `&lt;${close}${name}${rest}&gt;`
+      )
+    : text;
+
+/**
  * How an actor, use case, note, boundary or association label is read (D735): core's label
  * handler, with the parser's mark for a markdown string. Markdown is read only there; in every
- * label the tags draw, entities decode and a written `\n` breaks the line. v12 read no markdown
- * in a plain usecase label, so no kind has a v12 profile (`v12Markdown`).
+ * label the drawn tags ({@link DRAWN_TAGS}) draw, any other tag shows as written, entities
+ * decode and a written `\n` breaks the line. v12 read no markdown in a plain usecase label, so
+ * no kind has a v12 profile (`v12Markdown`).
  */
 export const readLabel = (
   text: string,
   type: UsecaseLabelType,
   config: ResolvedConfig
-): LabelSource => labelSource(text, { markdown: type === 'markdown', v12Markdown: false }, config);
+): LabelSource =>
+  labelSource(drawnTagsOnly(text), { markdown: type === 'markdown', v12Markdown: false }, config);
 
 /**
  * A text drawn as written: a stereotype, an include or extend label, a JSON table's id or cell,

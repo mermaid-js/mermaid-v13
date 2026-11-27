@@ -194,11 +194,15 @@ describe('the front-matter title (D472)', () => {
 });
 
 describe('labels', () => {
-  it('drops a tag it does not draw from a plain label, and writes no element for it (D471, D735)', async () => {
+  it('shows a tag it does not draw as text, and writes no element for it (D471, D735)', async () => {
     const { svg } = await render('pr-check/small-representative-visual-snapshot');
-    // The decoded `Hostile("<img …>")`: an HTML tag core drops, so the use case draws no text.
-    expect(texts(inside(svg, 'node', 'Hostile')).map((t) => t.text.trim())).toEqual(['']);
+    // The decoded `Hostile("<img …>")` of D471: the tag's text, escaped (wrapped over two lines),
+    // and no element.
+    const label = texts(inside(svg, 'node', 'Hostile')).find((t) => t.cls === 'usecase-label')!;
+    expect(decode(label.text).replace(/\s+/g, '')).toBe('<imgsrc=xonerror=alert(1)>');
     expect(svg).not.toMatch(/<img\b/);
+    const name = elements(svg, 'g').find((e) => e['data-id'] === 'Hostile')!['aria-label'];
+    expect(name).toBe('use case <img src=x onerror=alert(1)>');
   });
 
   it('draws tags and a written \\n in every label kind, and markdown only in a markdown string (D735)', async () => {
@@ -230,6 +234,10 @@ describe('labels', () => {
     const { svg } = await render('pr-check/label-syntax');
     const legacy = await render('pr-check/label-syntax', { config: { legacyMarkdown: true } });
     expect(legacy.svg).toBe(svg);
+    // The compatibility-mode twin sets the key in its front matter.
+    const twin = await render('pr-check/label-syntax-compat');
+    expect(twin.config.legacyMarkdown).toBe(true);
+    expect(twin.svg).toBe(svg);
   });
 
   it('draws a stereotype as a first line «s» above the label, for actors and use cases', async () => {

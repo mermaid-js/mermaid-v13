@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { validateLayout, type LayoutGraph } from '@mermaid-js/core/layout';
-import { Style, tableMeasurer, type MeasuredLabel } from '@mermaid-js/core/text';
+import { layoutLabel, Style, tableMeasurer, type MeasuredLabel } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { parseUsecase } from '../parser/index.ts';
 import { usecaseLayoutProblems } from './invariants.ts';
 import { layoutUsecase, type UsecaseLayout, type UsecaseLayoutContext } from './layout.ts';
+import { DRAWN_TAGS } from './prepare.ts';
 
 let theme: Theme | undefined;
 
@@ -285,6 +286,32 @@ describe('plain and Markdown labels', () => {
     expect(runs([...by.values()].at(-1)!)).toEqual(bold('edge'));
     const a = (await labels('usecase-beta\nA("a<br>b &amp; &lt;b&gt;c&lt;/b&gt;")')).get('A')!;
     expect(text(a)).toEqual(['a', 'b & <b>c</b>']);
+  });
+
+  it('shows every tag core does not draw as written, in a plain label and a markdown string', async () => {
+    const by = await labels(
+      'usecase-beta\nA("a <img src=x> <span>s</span> <a href=y>l</a> <script>x</script> <T> b")\nM("`m <img> **b**`")'
+    );
+    // (Wrapped at the use case's width.)
+    expect(text(by.get('A')!).join(' ')).toBe(
+      'a <img src=x> <span>s</span> <a href=y>l</a> <script>x</script> <T> b'
+    );
+    expect(runs(by.get('M')!)).toEqual([
+      [
+        ['m <img> ', 0],
+        ['b', Style.Bold],
+      ],
+    ]);
+  });
+
+  it('draws each tag of DRAWN_TAGS as core does: a style or a break', () => {
+    const font = { family: 'sans-serif', size: 16, weight: 400 };
+    for (const tag of DRAWN_TAGS) {
+      const l = layoutLabel(`a<${tag}>b</${tag}>`, font, Infinity, tableMeasurer);
+      const drawn = l.lines.length === 2 || l.lines.flat().some((r) => r.style !== 0);
+      expect(drawn, tag).toBe(true);
+      expect(text(l).join(''), tag).toBe('ab');
+    }
   });
 
   it('reads markdown only in a markdown string, and breaks at a written \\n in both', async () => {
