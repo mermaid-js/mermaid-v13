@@ -1,6 +1,20 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`layered: side hints routed again round the nodes > leaves layered's model as it is when no hint moves an end 1`] = `
+exports[`layered: side hints routed again round the nodes > draws again, square, the edges whose hints name the sides layered took (D718) 1`] = `
+{
+  "edges": {
+    "ab": "87.5,48 87.5,60 43,60 43,98 | bottom/top",
+    "ad": "103.5,48 103.5,60 148,60 148,98 | bottom/top",
+    "bc": "43,128 43,178 | bottom/top",
+  },
+  "size": [
+    181,
+    222,
+  ],
+}
+`;
+
+exports[`layered: side hints routed again round the nodes > leaves layered's model as it is with no hints 1`] = `
 {
   "edges": {
     "ab": "87.5,48 43,98 | bottom/top",
@@ -37,7 +51,7 @@ exports[`layered: side hints routed again round the nodes > reroutes several edg
     "ad": "136,48 178,98 178,128 178,178 178,214 121,264 | bottom/top",
     "bc": "54,128 104,178 | bottom/top",
     "cd": "143,196 155,196 155,306 108,306 108,294 | right/bottom",
-    "db": "95,264 95,252 145,252 145,113 80,113 | top/right",
+    "db": "108,264 108,252 145,252 145,113 80,113 | top/right",
   },
   "size": [
     186,

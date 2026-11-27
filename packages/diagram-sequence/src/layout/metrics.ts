@@ -106,6 +106,8 @@ export interface FixedLengths {
   readonly numberRadius: number;
   readonly numberBaseline: number;
   readonly numberFontSizes: readonly [number, number, number];
+  /** The least room between a message label and the sequence number circle under it (#1337). */
+  readonly numberLabelGap: number;
   /** v12 `SEQUENCE_NUMBER_RADIUS`: how far a numbered line moves its start or end clear of it. */
   readonly numberShift: number;
   /** A numbered self message with a head at its start starts this far out. */
@@ -228,6 +230,7 @@ const PX: MetricsTable = {
     numberRadius: 12,
     numberBaseline: 4,
     numberFontSizes: [12, 9, 7],
+    numberLabelGap: 2,
     numberShift: 6,
     numberSelfShift: 10,
     numberCentralShift: 5,
@@ -310,6 +313,7 @@ const CELL: MetricsTable = {
     numberRadius: 0,
     numberBaseline: 0,
     numberFontSizes: [1, 1, 1],
+    numberLabelGap: 0,
     numberShift: 0,
     numberSelfShift: 0,
     numberCentralShift: 0,
@@ -381,7 +385,7 @@ export function themeLengths(
 }
 
 /** The table for a unit profile. */
-export function metricsTable(units: UnitProfile): MetricsTable {
+export function metricsTable(units: Pick<UnitProfile, 'id'>): MetricsTable {
   return units.id === 'cell' ? CELL : PX;
 }
 

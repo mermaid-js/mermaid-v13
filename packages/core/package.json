@@ -71,6 +71,11 @@
       "types": "./dist/text/font-tables.d.ts",
       "default": "./dist/text/font-tables.js"
     },
+    "./layout/sides": {
+      "mermaid-source": "./src/layout/layered/sides.ts",
+      "types": "./dist/layout/layered/sides.d.ts",
+      "default": "./dist/layout/layered/sides.js"
+    },
     "./layout/hops": {
       "mermaid-source": "./src/layout/hops/index.ts",
       "types": "./dist/layout/hops/index.d.ts",

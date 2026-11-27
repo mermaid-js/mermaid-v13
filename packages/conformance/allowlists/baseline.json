@@ -107,7 +107,6 @@
     "xychart-cases/unclosed-directive-twice (reject)"
   ],
   "skips": [
-    "packages/core/src/layout/layered/sides.spec.ts > spreads every end on a side apart: dropped for size (T0b rework); a moved end goes to the ",
     "packages/core/src/layout/layered/sides.spec.ts > refuses an unknown side with a RangeError: dropped for size (T0b rework); `Side` is typed ",
     "packages/core/src/layout/layered/sides.spec.ts > draws a self-loop with both ends on one side there: kept as layered's loop for size (GAPS T0b)",
     "packages/core/src/layout/swimlane/__tests__/postProcessing.spec.ts > continues reroute scanning against current edge points after each fix",

@@ -1,0 +1,17 @@
+---
+description: >-
+  Wrapped messages between neighbours whose line is narrowed by a wide
+  activation bar. A word wider than the room inside the lifelines stays whole
+  on its own line instead of breaking into one letter per line (#1337 review,
+  D724).
+config:
+  sequence:
+    activationWidth: 220
+    wrap: true
+---
+sequenceDiagram
+  participant A as Alice
+  participant B as Bob
+  A->>+B: Start
+  B->>A: Acknowledged, processing everything
+  B-->>-A: Done

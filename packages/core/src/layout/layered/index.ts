@@ -24,11 +24,10 @@ import {
   type CEdge,
   type CNode,
 } from './compound.ts';
-import { hits, markerRect, rectOf, type Rect } from './end-markers.ts';
+import { hits, markerRect, OUTWARD, rectOf, type Rect } from './end-markers.ts';
 import { gridHooks, type GridHooks } from './grid.ts';
 import { gridObstacles, type GridBorders } from './grid-obstacles.ts';
 import type { LayeredOptions } from './layered.ts';
-import { honourSides, OUTWARD } from './sides.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 // Length constants (port and loop sizes, corners, the turn breakpoint) come from
@@ -418,7 +417,9 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     groups,
     direction: rootDir,
   };
-  return hooks ? laid : honourSides(graph, laid, M, index, margin); // sides are hints (D503)
+  // Named sides are not read here: `honourSides` (`@mermaid-js/core/layout/sides`) draws them
+  // on the model, called by the diagram that names them, and places the end labels again (D718).
+  return laid;
 }
 
 // Edge-end labels (D102), placed once the routes are final: each sits beside the segment that
@@ -430,7 +431,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
 // node or a group's title. On the grid all of it is whole cells: the label starts in the row or
 // column `along` cells past the end cell, `across` blank cells off the line, and it also moves
 // past every route's end cell and every group border row (column) it would cover.
-function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
+export function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
   if (!graph.edges.some((e) => e.startLabel ?? e.endLabel)) return model;
   const M = graph.metrics ?? pxProfile.engine;
   const walls: Rect[] = [...model.nodes.values()].map((b) => rectOf(b, b));

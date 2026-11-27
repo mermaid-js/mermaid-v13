@@ -5,7 +5,7 @@ import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import type { SequenceModel } from '../model.ts';
+import type { SequenceModel, SequenceStatement } from '../model.ts';
 import { FIXTURES, act, frag, model, msg, note, p } from './fixtures.ts';
 import { layoutSequence, type SequenceLayout } from './index.ts';
 import { sequenceLayoutViolations } from './invariants.ts';
@@ -48,7 +48,7 @@ const violations = (
   cell = false,
   sequence: Record<string, unknown> = {},
   theme: Parameters<typeof lay>[4] = {}
-) => sequenceLayoutViolations(m, lay(m, cell, sequence, [], theme));
+) => sequenceLayoutViolations(m, lay(m, cell, sequence, [], theme), { sequence });
 
 describe('sequence layout, review regressions', () => {
   it('a box centred on a destroying message clears the row above', () => {
@@ -106,7 +106,7 @@ describe('sequence layout, review regressions', () => {
     ]);
     // The left-out message still takes its number, as the participant v12 adds would.
     expect(l.messages.map((x) => x.number?.value)).toEqual([2]);
-    expect(sequenceLayoutViolations(m, l)).toEqual([
+    expect(sequenceLayoutViolations(m, l, {})).toEqual([
       `${m.statements[1]!.ast} is not laid out`,
       `${m.statements[2]!.ast} is not laid out`,
     ]);
@@ -158,6 +158,148 @@ describe('sequence layout, review regressions', () => {
     });
     const l = lay(hidden, false, { hideUnusedParticipants: true });
     expect([l.boxes.length, l.participants[0]!.top]).toEqual([0, lay(plain).participants[0]!.top]);
+  });
+
+  it('keeps every message label clear of the sequence number circles (#1337)', () => {
+    // Self messages, both directions, reverse and two-headed arrows (the number moves to the
+    // other end), one and two lines, a label as wide as its span.
+    const texts = ['x', 'Self', 'a label as wide as the gap between them', 'two<br>lines'];
+    const arrows = ['solid', 'dotted', 'solid_arrow_top_reverse', 'bidirectional_solid'] as const;
+    const statements: SequenceStatement[] = [{ kind: 'autonumber', ast: 'st:n', visible: true }];
+    for (const [from, to] of ['AB', 'BA', 'AA', 'BB'])
+      for (const arrow of arrows)
+        for (const text of texts) statements.push(msg(from!, to!, text, arrow));
+    const m = model([p('A'), p('B')], statements);
+    const configs = [
+      {},
+      { rightAngles: true },
+      { messageAlign: 'left' },
+      { messageAlign: 'right' },
+      { wrap: true, width: 60 },
+    ];
+    const problems: string[] = [];
+    for (const classic of [false, true])
+      for (const sequence of configs) {
+        const l = lay(m, false, sequence, [], { classic });
+        expect(l.messages.filter((x) => x.number && x.label)).toHaveLength(64);
+        const where = `${classic ? 'default' : 'redux'} ${JSON.stringify(sequence)}`;
+        for (const v of sequenceLayoutViolations(m, l, { sequence }))
+          problems.push(`${where}: ${v}`);
+      }
+    expect(problems).toEqual([]);
+    // A self label centred on its number sits 2 px above the circle (radius 12) on its line.
+    const self = lay(m).messages.find((x) => x.from === 'A' && x.to === 'A')!;
+    expect(self.y - self.label!.y - self.label!.height).toBeCloseTo(14, 6);
+  });
+
+  it('wraps a message between neighbouring participants inside their lifelines (#1239)', () => {
+    // The two examples in #1239: a `:wrap` message, and `wrap: true` with each `messageAlign`.
+    const debate = "John! Are you still debating about how you're doing? How long does it take??";
+    const align = 'a message that is long enough to see the alignment and wrapping happen';
+    const m = model(
+      [p('Bob'), p('John'), p('A'), p('B')],
+      [msg('Bob', 'John', debate, 'solid_cross', { wrap: true }), msg('A', 'B', align)]
+    );
+    for (const classic of [false, true])
+      for (const messageAlign of ['center', 'left', 'right'])
+        for (const sequence of [{ messageAlign }, { messageAlign, wrap: true }]) {
+          expect(violations(m, false, sequence, { classic })).toEqual([]);
+          const l = lay(m, false, sequence, [], { classic });
+          const lines = (i: number) =>
+            l.messages.find((x) => x.ast === m.statements[i]!.ast)!.label!.text.lines.length;
+          // Both examples wrap: the check does not pass on a one-line label.
+          expect(lines(0)).toBeGreaterThan(1);
+          if (sequence.wrap) expect(lines(1)).toBeGreaterThan(1);
+        }
+  });
+
+  it('a wrapped label between neighbours keeps its words whole when bars eat the span', () => {
+    // A bar 340 px wide on B leaves the B->A line about 25 px: wrapped at that span less the
+    // padding, the label broke into one glyph per line (#1337 review).
+    const words = ['reply', 'with', 'several', 'words'];
+    const m = model(
+      [p('A'), p('B')],
+      [act('B', true), msg('B', 'A', words.join(' '), 'solid', { wrap: true })]
+    );
+    for (const classic of [false, true]) {
+      const sequence = { activationWidth: 340 };
+      expect(violations(m, false, sequence, { classic })).toEqual([]);
+      const l = lay(m, false, sequence, [], { classic });
+      const label = l.messages[0]!.label!;
+      const lines = label.text.lines.map((line) => line.map((r) => r.text).join(''));
+      expect(lines).toEqual(words);
+    }
+  });
+
+  it('a whole word wider than the room inside the lifelines stays on the line', () => {
+    // A wide bar on B leaves room for less than `Acknowledged,` inside the padding, but the line
+    // holds it: with every `messageAlign` the word stays between the lifelines.
+    const m = model(
+      [p('A'), p('B')],
+      [
+        act('B', true),
+        msg('B', 'A', 'Acknowledged, processing everything', 'solid', { wrap: true }),
+        msg('A', 'B', 'Acknowledged, processing everything', 'solid', { wrap: true }),
+      ]
+    );
+    for (const classic of [false, true]) {
+      // The bar width at which the word is wider than the line less the padding, not the line.
+      const fits = (activationWidth: number): boolean => {
+        const [back] = lay(m, false, { activationWidth }, [], { classic }).messages;
+        const line = Math.abs(back!.startX - back!.stopX);
+        return back!.label!.width > line - 20 && back!.label!.width <= line;
+      };
+      const activationWidth = [160, 180, 200, 220].find(fits);
+      expect(activationWidth).toBeDefined();
+      for (const messageAlign of ['left', 'center', 'right']) {
+        const sequence = { activationWidth, messageAlign };
+        expect(violations(m, false, sequence, { classic }), messageAlign).toEqual([]);
+        const [back] = lay(m, false, sequence, [], { classic }).messages;
+        expect(back!.label!.text.lines[0]!.map((r) => r.text).join('')).toBe('Acknowledged,');
+      }
+    }
+  });
+
+  it('keeps every message label above its line (#1337 review)', () => {
+    // A large wrapPadding, a small message font and a square self message each put the last
+    // baseline at or below the line, so the arrow struck through the text.
+    const m = model(
+      [p('A'), p('B')],
+      [
+        { kind: 'autonumber', ast: 'st:n', visible: false },
+        msg('A', 'B', 'to B'),
+        msg('B', 'A', 'two<br>lines', 'dotted'),
+        msg('A', 'A', 'self'),
+        msg('B', 'B', 'self<br>twice', 'solid_open'),
+      ]
+    );
+    const configs = [
+      { wrapPadding: 40 },
+      { messageFontSize: 6 },
+      { rightAngles: true },
+      { rightAngles: true, messageFontSize: 8, wrapPadding: 30 },
+      { wrap: true, wrapPadding: 60 },
+    ];
+    const problems: string[] = [];
+    for (const classic of [false, true])
+      for (const sequence of configs)
+        for (const v of violations(m, false, sequence, { classic }))
+          problems.push(`${classic ? 'default' : 'redux'} ${JSON.stringify(sequence)}: ${v}`);
+    expect(problems).toEqual([]);
+  });
+
+  it('checks wrapped labels when the top-level `wrap` or `sequence.wrap` is set', () => {
+    // The layout wraps every message when either is set (#1337 review): so does the check.
+    const m = model([p('A'), p('B')], [msg('A', 'B', 'a label that is long enough to wrap')]);
+    const l = lay(m);
+    const [first] = l.messages;
+    const right = l.participants[1]!.lifeline.x;
+    const label = { ...first!.label!, x: right - first!.label!.width / 2 };
+    const broken: SequenceLayout = { ...l, messages: [{ ...first!, label }] };
+    const crosses = `the wrapped label of message ${first!.ast} crosses a lifeline`;
+    expect(sequenceLayoutViolations(m, broken, { wrap: true })).toContain(crosses);
+    expect(sequenceLayoutViolations(m, broken, { sequence: { wrap: true } })).toContain(crosses);
+    expect(sequenceLayoutViolations(m, broken, {})).not.toContain(crosses);
   });
 
   it('message ends stay on their columns when bars or wrapped boxes are wide', () => {

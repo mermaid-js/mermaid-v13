@@ -189,6 +189,18 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     expect(file.inputs.every(isCompass)).toBe(true);
   });
 
+  // D718 (D557): honouring named sides under `layered` is a core subpath of its own, which only
+  // architecture, whose edges name sides, loads; flowchart's closure (R-PERF-1) does not carry it.
+  it('keeps the named-side redraw out of core, loaded by architecture only', () => {
+    const isSides = (input: string) => input.endsWith('core/src/layout/layered/sides.ts');
+    expect(coreModules(stable).filter(isSides)).toEqual([]);
+    const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isSides));
+    expect(files).toHaveLength(1);
+    const [path] = files[0]!;
+    expect(coreFiles(stable)).not.toContain(path);
+    expect(diagramsLoading(stable, path)).toEqual(['architecture']);
+  });
+
   // #818 (D559): `@mermaid-js/shared/parser/common-values` is lazy, out of core, and loaded by the
   // diagrams ported from a langium grammar and by no other diagram. Since #1066 every one of them
   // loads `@mermaid-js/shared/parser/rule` too, so esbuild puts the readers in the rule chunk.
