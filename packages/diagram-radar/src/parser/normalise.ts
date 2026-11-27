@@ -69,7 +69,12 @@ export function normalise(
   diagnostics: Diagnostics
 ): Omit<RadarModel, 'warnings'> {
   const axes: RadarAxis[] = parts.axes.map((a) =>
-    Object.freeze({ name: a.name, label: a.label ?? a.name, astId: a.id })
+    Object.freeze({
+      name: a.name,
+      label: a.label ?? a.name,
+      ...(a.markdown ? { markdown: a.markdown } : {}),
+      astId: a.id,
+    })
   );
   const unknown: UnknownEntry[] = [];
   const curves = parts.curves.map((c) => resolveCurve(c, axes, unknown, diagnostics));
@@ -107,6 +112,7 @@ function resolveCurve(
     Object.freeze({
       name: c.name,
       label: c.label ?? c.name,
+      ...(c.markdown ? { markdown: c.markdown } : {}),
       entries: Object.freeze(entries),
       astId: c.id,
     });

@@ -26,6 +26,7 @@ only with `showDomainDescriptions`), `g.cynefin-items` (always; a translated `g`
 | Out-of-range or non-finite `width`, `height`, `padding` and `boundaryAmplitude` drawn as given (negative rect sizes, `NaN` in path data) | `width`, `height` and `padding` fall back to their defaults and `boundaryAmplitude` clamps to [0, 50], each with one `CYNEFIN_CONFIG_INVALID` warning per render; a non-finite `seed` counts as 0 | D366, D226 |
 | `look: neo` and the neo and redux themes drew the same shapes as the classic themes | The same: cynefin differs between families by colour (and the theme's font family) only, with no gradient and no shadow. Checked against v12 12.2.0's computed styles in every theme, with and without `look: neo` | D215, D227 |
 | `format: 'ascii'` | Throws `UnsupportedFormatError`: cynefin has no text output | D320 |
+| Items, transition labels and the title drawn as written: `**b**`, backticks and tags printed | Each goes through core's label handler: markdown only in a markdown string (`"`…`"`, also `'`…`'` for items and transition labels); plain `**b**`, a code span and a title in bare backticks (`` title `x` ``) drawn as written, while a quoted title (`title "`…`"`) is now read as markdown (v13 had it the other way round); tags draw, `<br>` and a written `\n` break the line, blank lines and a trailing `<br>` are dropped. `markdownAlwaysOn: true` (or `cynefin.markdownAlwaysOn`) draws every label as markdown, plain ones too | #1368, #1394 |
 
 ### Cynefin theme colours
 

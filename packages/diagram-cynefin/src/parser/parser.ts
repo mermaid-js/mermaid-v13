@@ -67,7 +67,7 @@ import type {
   CynefinStatementNode,
   CynefinTransitionNode,
 } from './ast.ts';
-import { labelValue } from './convert.ts';
+import { isMarkdownString, labelValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { CYNEFIN_TRIVIA, T } from './tokens.ts';
 
@@ -191,7 +191,13 @@ class CynefinParser extends RuleParser<PreprocessResult> {
     for (const [name, nodes] of this.blocks) {
       const last = nodes[nodes.length - 1];
       if (!last) continue;
-      const items = last.children.map((n) => Object.freeze({ label: n.label, ast: n.id }));
+      const items = last.children.map((n) =>
+        Object.freeze({
+          label: n.label,
+          ...(n.markdown ? { markdown: n.markdown } : {}),
+          ast: n.id,
+        })
+      );
       domains.push(Object.freeze({ name, ast: last.id, items: Object.freeze(items) }));
     }
     // D218: the in-text title if non-empty, else the front-matter one.
@@ -410,9 +416,11 @@ class CynefinParser extends RuleParser<PreprocessResult> {
       if (this.kind(j) !== T.String) return;
       this.i = j + 1;
       const range = this.range(j);
-      const label = labelValue(this.raw(j));
+      const raw = this.raw(j);
+      const label = labelValue(raw);
       const id = this.id(`i:${node.name}/${esc(label)}`);
-      node.children.push({ id, type: 'Item', range, label });
+      const mark = isMarkdownString(raw) ? { markdown: true as const } : {};
+      node.children.push({ id, type: 'Item', range, label, ...mark });
       checkLimit(
         this.st.diagnostics,
         'maxNodes',
@@ -438,12 +446,15 @@ class CynefinParser extends RuleParser<PreprocessResult> {
     const range = { start: fromRange.start, end: toRange.end };
     let label: string | undefined;
     let labelRange: Range | undefined;
+    let mark: { markdown?: true } = {};
     this.tested(AFTER_TARGET);
     if (this.kind() === T.Colon) {
       this.i++;
       const labelToken = this.expect(T.String, QUOTE_LABEL);
       labelRange = this.range(labelToken);
-      label = labelValue(this.raw(labelToken));
+      const raw = this.raw(labelToken);
+      label = labelValue(raw);
+      if (isMarkdownString(raw)) mark = { markdown: true };
       range.end = labelRange.end;
     }
     const node: CynefinTransitionNode = {
@@ -454,7 +465,7 @@ class CynefinParser extends RuleParser<PreprocessResult> {
       fromRange,
       to,
       toRange,
-      ...(labelRange ? { label, labelRange } : {}),
+      ...(labelRange ? { label, ...mark, labelRange } : {}),
     };
     this.children.push(node);
     this.st.statement('transition', range);
@@ -471,7 +482,12 @@ class CynefinParser extends RuleParser<PreprocessResult> {
     if (from === to) this.selfLoops.push(node);
     else {
       // v12's `t.label || undefined`: an empty label is none.
-      const model: CynefinTransition = { from, to, ast: node.id, ...(label ? { label } : {}) };
+      const model: CynefinTransition = {
+        from,
+        to,
+        ast: node.id,
+        ...(label ? { label, ...mark } : {}),
+      };
       this.transitions.push(Object.freeze(model));
     }
     this.eol();

@@ -1,0 +1,18 @@
+---
+description: >-
+  Label syntax (#1368): the title, axis and legend labels written as plain markdown, a quoted
+  markdown string (axis labels also with single quotes), a code span, tags and a written \n.
+  Only the markdown strings are bold and italic; the plain markdown and the code span are drawn
+  as written. Axis and curve labels are always quoted, so they have no bare form.
+---
+radar-beta
+  title title **bold** _ital_
+  axis a["axis **bold** _ital_"], b["`axis **bold** _ital_`"], c['`axis single **bold**`']
+  axis d["axis a `code` b"], e["axis <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+  axis f["axis one\ntwo"]
+  curve p["curve **bold** _ital_"]{1, 2, 3, 4, 5, 6}
+  curve q["`curve **bold** _ital_`"]{6, 5, 4, 3, 2, 1}
+  curve r["curve a `code` b"]{3, 3, 3, 3, 3, 3}
+  curve s["curve <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]{2, 4, 2, 4, 2, 4}
+  curve t["curve one\ntwo"]{5, 1, 5, 1, 5, 1}
+  max 6

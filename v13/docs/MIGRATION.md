@@ -2337,6 +2337,7 @@ strings; grammar in [syntax/radar.md](./syntax/radar.md)). What changes in the d
 | `max` equal to `min` wrote `NaN` paths; a curve whose entry count is not the axis count was skipped silently; `ticks` over 32 was only logged | Curves drawn at the centre with one `RADAR_EMPTY_RANGE` warning; the curve is still left out, with one `RADAR_CURVE_SKIPPED` warning naming every such curve; `RADAR_TICKS_CLAMPED`. A detailed entry naming no axis is still ignored, with `RADAR_UNKNOWN_AXIS` | D356 |
 | `radar.legendBoxSize` (12) was declared and never read: the swatch was always 12 px | `radarLegendBoxSize` sizes the swatch, and the legend text stays 4 px right of it; with the default, nothing changes | D359 |
 | `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+| Every label (title, axis, legend) drawn as written with d3 `.text()`: `**b**`, backticks and tags printed, a written `\n` in the title printed and one in a label string turned into a space | Every label goes through core's label handler: markdown only in a markdown string (`["`…`"]`, also `['`…`']`, or `title "`…`"`); plain `**b**`, a code span and a title in bare backticks (`` title `x` ``) drawn as written (v13 had read the bare form as markdown); tags draw, `<br>` and a written `\n` break the line, blank lines and a trailing `<br>` are dropped. `markdownAlwaysOn: true` (or `radar.markdownAlwaysOn`) draws every label as markdown, plain ones too | #1368, #1394 |
 
 ## Radar SVG structure
 
@@ -2456,6 +2457,7 @@ only with `showDomainDescriptions`), `g.cynefin-items` (always; a translated `g`
 | Out-of-range or non-finite `width`, `height`, `padding` and `boundaryAmplitude` drawn as given (negative rect sizes, `NaN` in path data) | `width`, `height` and `padding` fall back to their defaults and `boundaryAmplitude` clamps to [0, 50], each with one `CYNEFIN_CONFIG_INVALID` warning per render; a non-finite `seed` counts as 0 | D366, D226 |
 | `look: neo` and the neo and redux themes drew the same shapes as the classic themes | The same: cynefin differs between families by colour (and the theme's font family) only, with no gradient and no shadow. Checked against v12 12.2.0's computed styles in every theme, with and without `look: neo` | D215, D227 |
 | `format: 'ascii'` | Throws `UnsupportedFormatError`: cynefin has no text output | D320 |
+| Items, transition labels and the title drawn as written: `**b**`, backticks and tags printed | Each goes through core's label handler: markdown only in a markdown string (`"`…`"`, also `'`…`'` for items and transition labels); plain `**b**`, a code span and a title in bare backticks (`` title `x` ``) drawn as written, while a quoted title (`title "`…`"`) is now read as markdown (v13 had it the other way round); tags draw, `<br>` and a written `\n` break the line, blank lines and a trailing `<br>` are dropped. `markdownAlwaysOn: true` (or `cynefin.markdownAlwaysOn`) draws every label as markdown, plain ones too | #1368, #1394 |
 
 ### Cynefin theme colours
 

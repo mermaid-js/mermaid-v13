@@ -15,6 +15,7 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { largestEntry, type RadarModel, type RadarOptions } from '../model.ts';
 import { radarLayoutConfig, type RadarLayoutConfig } from '../config.ts';
 import { closedRoundCurve, relativeRadius } from './curve.ts';
@@ -90,17 +91,24 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
     graticule: theme.number('radarGraticuleStrokeWidth'),
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure = (text: string, labelFont: FontKey): MeasuredLabel => {
-    const md = markdownString(text);
-    return md === undefined
-      ? layoutLabel(text, labelFont, Infinity, ctx.measurer, inline)
-      : layoutLabel(md, labelFont, Infinity, ctx.measurer, { ...inline, markdown: true });
+  // Every label through core's label handler (#1368, #1394), which also warns about markdown
+  // that is drawn as written. A label the parser marked as a markdown string holds its
+  // backticks, without its quotes; the text between them is the markdown.
+  const reading: MarkdownWarningContext = {
+    config: ctx.config,
+    warn: ctx.warn ?? ignoreWarning,
+    ...inline,
+  };
+  const measure = (text: string, labelFont: FontKey, markdown = false): MeasuredLabel => {
+    const written = markdown ? text.slice(1, -1) : text;
+    const source = readLabel(written, { markdown }, reading);
+    return layoutLabel(source.text, labelFont, Infinity, ctx.measurer, { ...inline, ...source });
   };
 
   // Measure first: axis labels, legend rows, the title.
-  const axisText = model.axes.map((axis) => measure(axis.label, fonts.axis));
+  const axisText = model.axes.map((axis) => measure(axis.label, fonts.axis, axis.markdown));
   const legendText = model.options.showLegend
-    ? model.curves.map((curve) => measure(curve.label, fonts.legend))
+    ? model.curves.map((curve) => measure(curve.label, fonts.legend, curve.markdown))
     : [];
   const titleText = model.title === undefined ? undefined : measure(model.title, fonts.title);
 
@@ -331,15 +339,6 @@ function placeAt(
 function extraLines(text: MeasuredLabel): number {
   return Math.max(0, text.height - text.lineHeight);
 }
-
-/**
- * The source of a markdown string (D355), written as in flowcharts: a backtick and a double
- * quote around it. A label comes without its quotes, so the backticks are enough.
- */
-function markdownString(text: string): string | undefined {
-  return RE_MARKDOWN.exec(text.trim())?.[2];
-}
-const RE_MARKDOWN = /^("?)`([^]*)`\1$/;
 
 /** The union of what is drawn. */
 class Box extends RectUnion {

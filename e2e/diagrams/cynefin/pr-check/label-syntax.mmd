@@ -1,0 +1,27 @@
+---
+description: >-
+  Label syntax (#1368): the title, items and transition labels written as plain markdown, a
+  quoted markdown string (one item also with single quotes), a code span, tags and a written
+  \n. Only the markdown strings are bold and italic; the plain markdown and the code span are
+  drawn as written.
+config:
+  cynefin:
+    seed: 7
+---
+cynefin-beta
+  title title **bold** _ital_
+  complex
+    "item **bold** _ital_"
+    "`item **bold** _ital_`"
+  complicated
+    "item a `code` b"
+    '`item single **bold**`'
+  chaotic
+    "item <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  clear
+    "item one\ntwo"
+  complex --> complicated : "transition **bold** _ital_"
+  complicated --> clear : "`transition **bold** _ital_`"
+  clear --> chaotic : "transition a `code` b"
+  chaotic --> complex : "transition <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  complex --> clear : "transition one\ntwo"

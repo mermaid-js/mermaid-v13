@@ -142,7 +142,7 @@ describe('radar lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () => 
     expect(diffs).toEqual([]);
     expect([...needed].sort()).toEqual([...EXCLUDED.keys()].sort());
     // Every e2e fixture reaches the radar lexer.
-    expect(e2e).toBe(27);
+    expect(e2e).toBe(29);
     expect(unreached).toEqual([]);
     expect(compared).toBeGreaterThan(600);
   }, 300_000);

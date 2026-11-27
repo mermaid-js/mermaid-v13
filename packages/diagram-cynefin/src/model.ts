@@ -28,6 +28,11 @@ export type CynefinDomainName = (typeof CYNEFIN_DOMAIN_NAMES)[number];
 export interface CynefinItem {
   /** The label as v12's DB kept it. `""` is a valid, empty item. */
   readonly label: string;
+  /**
+   * Set when the item was written as a markdown string (`"`…`"`, #1368). `label` then holds the
+   * backticks, as v12's did; the text between them is laid out as markdown.
+   */
+  readonly markdown?: true;
   /** `i:<domain>/<label>`; `@2`, … for a repeated label within the diagram. */
   readonly ast: AstId;
 }
@@ -46,6 +51,8 @@ export interface CynefinTransition {
   readonly to: CynefinDomainName;
   /** The label; absent when none or empty (`: ""`), as v12's `t.label || undefined`. */
   readonly label?: string;
+  /** As for `CynefinItem.markdown`. */
+  readonly markdown?: true;
   /** `t:<from>><to>`; `#2`, … for a parallel repeat. */
   readonly ast: AstId;
 }

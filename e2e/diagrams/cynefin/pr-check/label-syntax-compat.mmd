@@ -1,0 +1,29 @@
+---
+description: >-
+  label-syntax.mmd with markdownAlwaysOn (#1368): every label is markdown, so the plain
+  **bold** _ital_ title, items and transition labels draw bold and italic and the code spans
+  draw as inline code; markdown strings, tags and the written \n draw as in the default mode.
+  Domain names and descriptions are fixed text and stay plain. The picture differs from
+  label-syntax.mmd.
+config:
+  markdownAlwaysOn: true
+  cynefin:
+    seed: 7
+---
+cynefin-beta
+  title title **bold** _ital_
+  complex
+    "item **bold** _ital_"
+    "`item **bold** _ital_`"
+  complicated
+    "item a `code` b"
+    '`item single **bold**`'
+  chaotic
+    "item <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  clear
+    "item one\ntwo"
+  complex --> complicated : "transition **bold** _ital_"
+  complicated --> clear : "`transition **bold** _ital_`"
+  clear --> chaotic : "transition a `code` b"
+  chaotic --> complex : "transition <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  complex --> clear : "transition one\ntwo"

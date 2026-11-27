@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import type { Measurer } from '@mermaid-js/core/text';
+import { Style, type Measurer, type MeasuredLabel } from '@mermaid-js/core/text';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { RadarModel } from '../model.ts';
 import { radar as plugin } from '../plugin.ts';
@@ -315,11 +316,112 @@ describe('radar layout: legend and title', () => {
     expect(lay(FIXTURES.multiple!).title).toBeUndefined();
     expect(lay(FIXTURES.simple!, {}, [], { fontSize: '80px' }).fonts.title.size).toBe(80);
   });
+});
 
-  it('lays out a markdown string as markdown', () => {
-    const l = lay(model([axis('A', '`**bold**`')], [], {}, { title: '`*it*`' }));
-    expect(l.spokes[0]!.label.text.lines[0]!.map((r) => r.text).join('')).toBe('bold');
-    expect(l.title!.text.lines[0]!.map((r) => r.text).join('')).toBe('it');
+describe('radar layout: labels through the core label handler (#1368, #1394)', () => {
+  /** Each line's text, and whether a run of it is bold, for the title, axis 0 and legend row 0. */
+  const read = (l: MeasuredLabel) =>
+    l.lines.map((line) => ({
+      text: line.map((r) => r.text).join(''),
+      bold: line.some((r) => (r.style & Style.Bold) !== 0),
+    }));
+  const kinds = (src: string, markdownAlwaysOn = false) => {
+    const { model: m } = parseRadar(src);
+    const l = layoutRadar(m, {
+      config: { radar: {}, markdownAlwaysOn } as unknown as ResolvedConfig,
+      measurer: tenPx,
+      theme: createTheme(spec, { diagram: plugin.theme }),
+    });
+    return {
+      title: read(l.title!.text),
+      axis: read(l.spokes[0]!.label.text),
+      curve: read(l.legend[0]!.label.text),
+    };
+  };
+  const chart = (title: string, label: string) =>
+    `radar-beta\ntitle ${title}\naxis A[${label}], B, C\ncurve c[${label}]{1, 2, 3}`;
+  /** The default reading; with `same`, also checks that `markdownAlwaysOn` reads it alike. */
+  const each = (title: string, label: string, same = true) => {
+    const got = kinds(chart(title, label));
+    expect(got.axis).toEqual(got.curve);
+    if (same) expect(kinds(chart(title, label), true)).toEqual(got);
+    return got;
+  };
+
+  it('reads a quoted markdown string as markdown in every label kind', () => {
+    const got = each('"`**t**`"', '"`**l**`"');
+    expect(got.title).toEqual([{ text: 't', bold: true }]);
+    expect(got.axis).toEqual([{ text: 'l', bold: true }]);
+    // Either quote: the grammar's strings are one kind of string.
+    expect(each('x', "'`**l**`'").axis).toEqual([{ text: 'l', bold: true }]);
+  });
+
+  it('draws bare backticks, plain markdown and a code span as written (#1368)', () => {
+    expect(each('`**t**`', '"x"', false).title).toEqual([{ text: '`**t**`', bold: false }]);
+    expect(each('**t** _i_', '"**l** _i_"', false).axis).toEqual([
+      { text: '**l** _i_', bold: false },
+    ]);
+    expect(each('a `c` b', '"a `c` b"', false).title).toEqual([{ text: 'a `c` b', bold: false }]);
+    // A backtick inside the outer pair: no markdown string.
+    expect(each('"`a `b` c`"', '"`a `b` c`"', false)).toEqual({
+      title: [{ text: '"`a `b` c`"', bold: false }],
+      axis: [{ text: '`a `b` c`', bold: false }],
+      curve: [{ text: '`a `b` c`', bold: false }],
+    });
+  });
+
+  it('draws tags and breaks at <br> and a written \\n, in a markdown string too', () => {
+    const tags = each('t <b>b</b><br>n', '"l <b>b</b><br>n"');
+    expect(tags.title).toEqual([
+      { text: 't b', bold: true },
+      { text: 'n', bold: false },
+    ]);
+    expect(tags.axis).toEqual([
+      { text: 'l b', bold: true },
+      { text: 'n', bold: false },
+    ]);
+    const written = each('"`t\\nn`"', '"`l\\\\nn`"');
+    expect(written.title.map((line) => line.text)).toEqual(['t', 'n']);
+    expect(written.axis.map((line) => line.text)).toEqual(['l', 'n']);
+  });
+
+  it('with markdownAlwaysOn, reads every label kind as markdown', () => {
+    const runs = (l: MeasuredLabel) =>
+      l.lines.flat().map((r) => [r.text, r.style & (Style.Bold | Style.Italic | Style.Mono)]);
+    const { model: m } = parseRadar(chart('**t** _i_ `c`', '"**l** _i_ `c`"'));
+    const l = layoutRadar(m, {
+      config: { radar: {}, markdownAlwaysOn: true } as unknown as ResolvedConfig,
+      measurer: tenPx,
+      theme: createTheme(spec, { diagram: plugin.theme }),
+    });
+    const expected = (k: string) => [
+      [k, Style.Bold],
+      [' ', 0],
+      ['i', Style.Italic],
+      [' ', 0],
+      ['c', Style.Mono],
+    ];
+    expect(runs(l.title!.text)).toEqual(expected('t'));
+    expect(runs(l.spokes[0]!.label.text)).toEqual(expected('l'));
+    expect(runs(l.legend[0]!.label.text)).toEqual(expected('l'));
+  });
+
+  it('warns about markdown drawn as written, never in a markdown string', () => {
+    const codes = (src: string, markdownAlwaysOn = false) => {
+      const warnings: Warning[] = [];
+      layoutRadar(parseRadar(src).model, {
+        config: { radar: {}, markdownAlwaysOn } as unknown as ResolvedConfig,
+        measurer: tenPx,
+        theme: createTheme(spec, { diagram: plugin.theme }),
+        warn: (w) => warnings.push(w),
+      });
+      return warnings.map((w) => w.code);
+    };
+    // Without the API's `inline` (which gives it once per render), each such label warns:
+    // the title, the axis label and the legend label.
+    expect(codes(chart('**t**', '"**l**"'))).toEqual(Array(3).fill(MARKDOWN_NOT_READ.code));
+    expect(codes(chart('**t**', '"**l**"'), true)).toEqual([]);
+    expect(codes(chart('"`**t**`"', '"`**l**`"'))).toEqual([]);
   });
 });
 

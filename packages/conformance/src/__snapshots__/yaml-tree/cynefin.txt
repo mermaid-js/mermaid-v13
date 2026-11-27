@@ -22,6 +22,8 @@ e2e/diagrams/cynefin/baseline/themes/redux.mmd 1 725e1c54958e7cc3
 e2e/diagrams/cynefin/nightly-check/default-theme-base-colour-overrides.mmd 1 ce5093caeb00f41d
 e2e/diagrams/cynefin/nightly-check/should-render-cynefin-with-straight-boundaries-when-amplitude-is-zero.mmd 1 09a14ccc5d6775ab
 e2e/diagrams/cynefin/nightly-check/should-render-cynefin-without-domain-descriptions.mmd 1 0244fed1b2e5991e
+e2e/diagrams/cynefin/pr-check/label-syntax-compat.mmd 1 7e614f30c46ac9e6
+e2e/diagrams/cynefin/pr-check/label-syntax.mmd 1 3a9d68bf85b96eea
 e2e/diagrams/cynefin/pr-check/should-render-a-cynefin-diagram-with-transitions.mmd 1 40046bade5626bc9
 e2e/diagrams/cynefin/pr-check/should-render-a-simple-cynefin-diagram-with-all-five-domains.mmd 1 0ba74070fb105db8
 e2e/diagrams/cynefin/pr-check/should-render-an-empty-cynefin-framework.mmd 1 6ed6fcdfcdc99d75
