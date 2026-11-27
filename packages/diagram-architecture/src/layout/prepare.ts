@@ -133,7 +133,7 @@ const IGNORED_KEYS = [...FCOSE_KEYS, 'fontSize', 'useWidth'] as const;
  */
 function warnIgnoredSettings(ctx: ArchitectureLayoutContext): void {
   const section = (ctx.config.architecture ?? {}) as Readonly<Record<string, unknown>>;
-  const set = IGNORED_KEYS.filter((k) => Object.hasOwn(section, k));
+  const set = IGNORED_KEYS.filter((k) => Object.hasOwn(section, k) && section[k] !== undefined);
   if (set.length === 0) return;
   const path = (k: string) => `architecture.${k}`;
   const fcose = set.filter((k) => (FCOSE_KEYS as readonly string[]).includes(k));
