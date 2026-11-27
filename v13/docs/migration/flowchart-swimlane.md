@@ -27,8 +27,10 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   it acts only when `ignoreCrossLaneEdges` is `false`) and `automaticLaneOrdering` (default
   `false`: lanes keep their source order; `true` reorders them so busy lanes sit together).
 - **Curve.** Edges draw `rounded` unless the author sets a curve. v12's engine forced `rounded`
-  when the curve was unset or `basis`; in v13 an author's `flowchart.curve` (`basis` included)
-  or `linkStyle default interpolate` wins.
+  when the curve was unset or `basis`; in v13 an author's curve (`basis` included) wins: a
+  per-edge curve or `linkStyle default interpolate`, then the new `swimlane.curve`, then
+  `flowchart.curve`, then the new top-level `curve` (D733). Within one config source
+  `swimlane.curve` wins over `flowchart.curve`, as every key both sections have does.
 - **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
   (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
   then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned
