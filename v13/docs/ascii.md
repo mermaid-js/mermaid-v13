@@ -559,7 +559,8 @@ User──┐
   `rankSpacing`, `wrappingWidth`, `minNodeWidth`); the defaults give the cell profile's own.
 - Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`),
   `emphasis`, `glyph` (business marks, icons and the hollow and awesome figures, drawn as the
-  plain figure and boxes), `animation`, `config` (the `usecase` fonts, `colorScheme`,
+  plain figure and boxes), `animation`, `curve` (`usecase.curve` or `curve`: text lines are
+  always square, D760), `config` (the `usecase` fonts, `colorScheme`,
   `useMaxWidth` and `diagramPadding` set off their defaults) and `accessibility`.
 
 ## Agentflow diagrams
@@ -623,8 +624,8 @@ agentflow-beta LR
   of the flow. Edge labels and heads stay off every other frame.
 - The front-matter `title` is centred on the first line.
 - Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`,
-  `linkStyle`; palette colours are dropped silently), `curve` (`linkStyle … interpolate`, a
-  `flowchart.curve` that is set), `emphasis`, `animation`, `link` (`click` links, tooltips and
+  `linkStyle`; palette colours are dropped silently), `curve` (`linkStyle … interpolate`, an
+  `agentflow.curve` or `curve` that is set), `emphasis`, `animation`, `link` (`click` links, tooltips and
   callbacks), `config` (`agentflow.useMaxWidth`, `diagramPadding`, `minNodeWidth` and
   `titleTopMargin` set off their defaults, and `flowchart.padding` or a
   `flowchart.subGraphTitleMargin` that is set) and `accessibility` (`accTitle`, `accDescr`).
@@ -731,7 +732,7 @@ requirementDiagram
   arrowhead at the target.
 - A drawing wider than `ascii.maxWidth` is drawn whole, with `ASCII_TOO_WIDE`.
 - Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`),
-  `curve` (a `flowchart.curve` other than `step`, `stepBefore` or `stepAfter`), `emphasis`
+  `curve` (a `requirement.curve` or `curve` other than `step`, `stepBefore` or `stepAfter`), `emphasis`
   (bold and italic text) and `accessibility` (`accTitle`, `accDescr`).
 
 ## Ishikawa diagrams

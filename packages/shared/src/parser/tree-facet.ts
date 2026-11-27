@@ -121,12 +121,16 @@ export interface OutlineKinds {
   /** `::icon(` and `:::`. */
   readonly iconStart: number;
   readonly classStart: number;
+  /** `accTitle` and `accDescr`, for a diagram that has them (kanban). */
+  readonly accTitle?: number;
+  readonly accDescr?: number;
 }
 
 /**
  * The keywords at an outline statement start, labels matched whatever their case: the header
  * where the parser expects it; else, where a node may go and one is written above (`afterNode`),
- * its decorations `::icon()` and `:::`.
+ * its decorations `::icon()` and `:::`; and where the parser expects them, `accTitle` and
+ * `accDescr`.
  */
 export function outlineKeywords(
   at: StartWord,
@@ -154,5 +158,8 @@ export function outlineKeywords(
     keyword('::icon()', kinds.iconStart, 'operator');
     keyword(':::', kinds.classStart, 'operator');
   }
+  const { accTitle, accDescr } = kinds;
+  if (accTitle !== undefined && expected.has(accTitle)) keyword('accTitle', accTitle, 'keyword');
+  if (accDescr !== undefined && expected.has(accDescr)) keyword('accDescr', accDescr, 'keyword');
   return out;
 }

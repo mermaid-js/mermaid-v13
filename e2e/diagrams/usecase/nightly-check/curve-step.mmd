@@ -1,0 +1,23 @@
+---
+description: >-
+  `usecase.curve` (D733, #1379) draws every relationship and note line, over the top-level
+  `curve`: right angles here (`step`), where the default draws S-curves.
+config:
+  curve: linear
+  usecase:
+    curve: step
+---
+usecase-beta
+    direction TB
+    actor Customer("Customer")
+    actor Admin("Administrator")
+    Browse("Browse catalog")
+    Checkout("Place order")
+    Pay("Pay")
+    Manage[Manage catalog]
+    note for Pay "Card or invoice"
+    Customer --> Browse
+    Customer --> Checkout
+    Checkout ..> : include Pay
+    Admin --> Manage
+    Admin --> Browse

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ConfigInput } from '@mermaid-js/core/config';
 import type { SvgNode, SvgTree } from '@mermaid-js/core/svg';
 import { renderForTest } from '../testing.fixtures.ts';
 
@@ -202,6 +203,31 @@ describe('state render: composites and concurrency regions', () => {
     expect(body(outer)).not.toBe(body(inner));
   });
 
+  it('draws the title strip line 4 px below the title and 20 px above the first child (D732)', async () => {
+    const { tree, layout } = await renderForTest(
+      'stateDiagram-v2\n  state Outer {\n    [*] --> Inner\n    state Inner {\n      [*] --> X\n    }\n  }'
+    );
+    const rect = (g: SvgNode, cls: string) => {
+      const r = tree.children(g).find((c) => classOf(tree, c) === cls)!;
+      return { y: Number(tree.getAttr(r, 'y')), x: Number(tree.getAttr(r, 'x')) };
+    };
+    const top = (id: string) => {
+      const b = layout.nodes.get(id) ?? layout.groups.get(id)!;
+      return b.y - b.height / 2;
+    };
+    for (const [id, first] of [
+      ['Outer', 'Outer_start'],
+      ['Inner', 'Inner_start'],
+    ] as const) {
+      const g = one(tree, `s:${id}`);
+      const band = rect(g, 'inner').y;
+      const title = layout.groups.get(id)!.title.y + layout.state.views.get(id)!.label.height / 2;
+      expect(band - title, id).toBeCloseTo(4);
+      expect(top(first) - band, id).toBeCloseTo(20);
+      expect(band - rect(g, 'outer').y, id).toBeGreaterThan(8);
+    }
+  });
+
   it('draws regions and dashed dividers from the layout, one fewer divider than regions', async () => {
     const { tree, layout } = await renderForTest(
       'stateDiagram-v2\n  state Active {\n    [*] --> A\n    --\n    [*] --> B\n    --\n    [*] --> C\n  }'
@@ -360,5 +386,84 @@ describe('state render: links', () => {
     expect(tree.getAttr(link, 'target')).toBe('_blank');
     expect(tags(tree, one(tree, 'n:B'))).toEqual(['rect', 'text']);
     expect(warnings.map((w) => w.code)).toContain('URL_REFUSED');
+  });
+});
+
+describe('state render: edge curve (D733, #1324, #1325)', () => {
+  const src =
+    'stateDiagram-v2\n  [*] --> A\n  A --> B\n  A --> C\n  B --> D\n  C --> D\n  D --> [*]';
+  const edgePaths = (tree: SvgTree, kind: 'transition' | 'note-edge' = 'transition') =>
+    tree
+      .find({ tag: 'g' })
+      .filter((g) => tree.getAttr(g, 'class')?.split(' ').includes(kind))
+      .map((g) => tree.getAttr(tree.children(g).find((c) => tree.tag(c) === 'path')!, 'd')!);
+  const paths = async (config?: ConfigInput, source = src) =>
+    edgePaths((await renderForTest(source, { config })).tree);
+
+  it('draws a transition with the curved default when no curve is set', async () => {
+    const unset = await paths();
+    expect(unset).toEqual(await paths({ state: { curve: 'basis' } }));
+    expect(unset.some((d) => d.includes('C'))).toBe(true);
+  });
+
+  it('draws state.curve linear as straight segments and step with right angles', async () => {
+    const unset = await paths();
+    const linear = await paths({ state: { curve: 'linear' } });
+    const step = await paths({ state: { curve: 'step' } });
+    expect(linear).not.toEqual(unset);
+    for (const d of linear) expect(d).not.toMatch(/[QAC]/);
+    expect(step).not.toEqual(unset);
+    expect(step).not.toEqual(linear);
+    for (const d of step) expect(d).not.toMatch(/[QAC]/);
+  });
+
+  it('draws the global curve when state.curve is unset, and state.curve over it', async () => {
+    const linear = await paths({ state: { curve: 'linear' } });
+    expect(await paths({ curve: 'linear' })).toEqual(linear);
+    expect(await paths({ curve: 'step', state: { curve: 'linear' } })).toEqual(linear);
+    expect(await paths({ curve: 'linear', state: { curve: 'step' } })).toEqual(
+      await paths({ state: { curve: 'step' } })
+    );
+  });
+
+  it('is not changed by flowchart.curve', async () => {
+    const unset = await renderForTest(src);
+    const flow = await renderForTest(src, { config: { flowchart: { curve: 'linear' } } });
+    expect(flow.svg).toBe(unset.svg);
+    expect(flow.warnings).toEqual(unset.warnings);
+  });
+
+  it('keeps a self-transition rounded, whatever the curve', async () => {
+    const loop = 'stateDiagram-v2\n  A --> A : again\n  A --> B';
+    const unset = await paths(undefined, loop);
+    const step = await paths({ state: { curve: 'step' } }, loop);
+    const linear = await paths({ state: { curve: 'linear' } }, loop);
+    // Edge 0 is the self-loop; edge 1 follows the curve.
+    expect(step[0]).toBe(unset[0]);
+    expect(linear[0]).toBe(unset[0]);
+  });
+
+  it('draws a note connector with the same curve', async () => {
+    const note = 'stateDiagram-v2\n  A --> B\n  A --> C\n  note right of A : n';
+    const unset = await renderForTest(note);
+    const step = await renderForTest(note, { config: { state: { curve: 'step' } } });
+    expect(edgePaths(unset.tree, 'note-edge')[0]).toMatch(/C/);
+    const d = edgePaths(step.tree, 'note-edge')[0]!;
+    expect(d).not.toMatch(/[QAC]/);
+  });
+
+  it('warns CURVE_UNKNOWN once for an unknown name, however many edges there are', async () => {
+    const { warnings } = await renderForTest(src, { config: { state: { curve: 'bogus' } } });
+    const curve = warnings.filter((w) => w.code === 'CURVE_UNKNOWN');
+    expect(curve).toHaveLength(1);
+    expect(curve[0]!.message).toContain('bogus');
+    expect(await paths({ state: { curve: 'bogus' } })).toEqual(
+      await paths({ state: { curve: 'rounded' } })
+    );
+  });
+
+  it('warns for an unknown global name once as well', async () => {
+    const { warnings } = await renderForTest(src, { config: { curve: 'bogus' } });
+    expect(warnings.filter((w) => w.code === 'CURVE_UNKNOWN')).toHaveLength(1);
   });
 });

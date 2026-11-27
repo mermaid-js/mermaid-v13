@@ -5,6 +5,7 @@
   themeVariables property (object) 2:36-2:38 "th" -> "themeVariables: "
   layout property (string) 2:36-2:38 "th" -> "layout: "
   lineHops property (boolean | string) 2:36-2:38 "th" -> "lineHops: "
+  curve property (string) 2:36-2:38 "th" -> "curve: "
   ascii property (object) 2:36-2:38 "th" -> "ascii: "
   darkMode property (boolean) 2:36-2:38 "th" -> "darkMode: "
   fontFamily property (string) 2:36-2:38 "th" -> "fontFamily: "
@@ -19,4 +20,4 @@
   wrap property (boolean) 2:36-2:38 "th" -> "wrap: "
   fontSize property (number) 2:36-2:38 "th" -> "fontSize: "
   markdownAutoWrap property (boolean) 2:36-2:38 "th" -> "markdownAutoWrap: "
-  legacyMarkdown property (boolean) 2:36-2:38 "th" -> "legacyMarkdown: "
+  markdownAlwaysOn property (boolean) 2:36-2:38 "th" -> "markdownAlwaysOn: "
