@@ -37,6 +37,11 @@ export interface BlockMetrics {
   readonly labelClearance: number;
   /** How finely a tag is tested against borders and slid along its edge (#1362). */
   readonly labelRimStep: number;
+  /**
+   * Every how many rim steps a sliding tag is tried first; it is then tried step by step only
+   * where a nearer spot can be (#1362).
+   */
+  readonly labelSlideStride: number;
 }
 
 export const BLOCK_METRICS: BlockMetrics = {
@@ -49,6 +54,7 @@ export const BLOCK_METRICS: BlockMetrics = {
   maxPadding: 1000,
   labelClearance: 2,
   labelRimStep: 1,
+  labelSlideStride: 4,
 };
 
 /** A cubic Bézier's point at one half: its ends weigh 1/8 each, its control points 3/8. */

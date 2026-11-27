@@ -54,6 +54,27 @@ export function markerTrim(type: string, g: Arrowheads): number {
   return 0;
 }
 
+/** How far an end marker reaches back along its line from the node outline, and to each side. */
+export interface MarkerReach {
+  readonly back: number;
+  readonly side: number;
+}
+
+/**
+ * The box an end marker of this v12 type is drawn in (as `marker` draws it): from the node
+ * outline `back` along the line and `side` to each side of it. Empty for a type with no head.
+ */
+export function markerReach(type: string, g: Arrowheads): MarkerReach {
+  if (type === 'arrow_point') return { back: g.gap + g.length, side: g.width / 2 };
+  if (type === 'arrow_circle') return { back: g.circleGap + g.circleSize, side: g.circleSize / 2 };
+  if (type === 'arrow_cross') {
+    // The arms reach half the square's side along and across the line, plus half the stroke.
+    const half = g.crossSize / 2 + g.crossStrokeWidth / 2;
+    return { back: g.crossGap + g.crossSize / 2 + half, side: half };
+  }
+  return { back: 0, side: 0 };
+}
+
 /** `markerTrim` of a point head, from its gap and length alone. */
 export const pointTrim = (gap: number, length: number): number => gap + Math.max(0, length - 1);
 

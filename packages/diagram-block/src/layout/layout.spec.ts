@@ -276,12 +276,14 @@ describe('edges (D441)', () => {
       const sides = new Set(rim.map((p) => inside(b, p)));
       expect([b.id, sides.size]).toEqual([b.id, 1]);
     }
-    // Its centre is on the edge, between the ends …
+    // The edge is too short for the tag between the borders and the head, so it sits beside
+    // the edge, 2 px clear of it, between the ends …
     const c = { x: tag.x + tag.width / 2, y: tag.y + tag.height / 2 };
     const len = Math.hypot(t.x - s.x, t.y - s.y);
     const u = { x: (t.x - s.x) / len, y: (t.y - s.y) / len };
     const k = (c.x - s.x) * u.x + (c.y - s.y) * u.y;
-    expect(Math.abs((c.x - s.x) * u.y - (c.y - s.y) * u.x)).toBeLessThan(1e-6);
+    const across = (tag.width / 2 + 2) * Math.abs(u.y) + (tag.height / 2 + 2) * Math.abs(u.x);
+    expect(Math.abs((c.x - s.x) * u.y - (c.y - s.y) * u.x)).toBeCloseTo(across, 6);
     expect(k).toBeGreaterThan(0);
     expect(k).toBeLessThan(len);
     // … and the arrowhead at `work` (the last `head` px of the edge) is not under it.
@@ -292,6 +294,18 @@ describe('edges (D441)', () => {
       const under =
         p.x > tag.x && p.x < tag.x + tag.width && p.y > tag.y && p.y < tag.y + tag.height;
       expect([d, under]).toEqual([d, false]);
+    }
+    // Nor are the corners of its base, beside the line.
+    const g = arrowheads(theme);
+    const base = { x: t.x - u.x * (g.gap + g.length), y: t.y - u.y * (g.gap + g.length) };
+    for (const side of [-1, 1]) {
+      const p = {
+        x: base.x - side * u.y * (g.width / 2),
+        y: base.y + side * u.x * (g.width / 2),
+      };
+      const under =
+        p.x > tag.x && p.x < tag.x + tag.width && p.y > tag.y && p.y < tag.y + tag.height;
+      expect([side, under]).toEqual([side, false]);
     }
   });
 });
