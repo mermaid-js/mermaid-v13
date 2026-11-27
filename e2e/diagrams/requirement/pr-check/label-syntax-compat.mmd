@@ -1,11 +1,12 @@
 ---
 description: >-
-  Label syntax with legacyMarkdown (D731, #1368): label-syntax.mmd's source with
-  `legacyMarkdown: true`. Every requirement label kind is one v12 read markdown in, so plain
-  `**bold** _ital_` draws as emphasis again; markdown strings, code spans, tags and the
-  written `\n` draw as in the default mode.
+  Label syntax with markdownAlwaysOn (#1368): label-syntax.mmd's source with
+  `markdownAlwaysOn: true`, which reads every label as markdown. So the plain
+  `**bold** _ital_` boxes draw bold and italic in every label kind (names, id,
+  text, type, docref) and the code-span boxes draw inline code; markdown
+  strings, tags and the written `\n` draw as in the default mode.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 requirementDiagram
   requirement "reqName **bold** _ital_" {

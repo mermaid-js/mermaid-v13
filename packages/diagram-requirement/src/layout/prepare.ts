@@ -17,14 +17,8 @@ import {
   type CurveKind,
 } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import {
-  labelSource,
-  layoutLabel,
-  Style,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
-import { warnMarkdownOutside } from '@mermaid-js/core/text/markdown-warning';
+import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type { BoxOf, MarkdownField, Relation, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
@@ -129,8 +123,8 @@ export const requirementCurve = curveKind;
 
 /**
  * Measures one label. `text` is a box's name or body line when `written` is set (`false`, or
- * `true` for a markdown string, its backticks dropped), and then read by the label handler as a
- * label kind v12 read markdown in (#1368); without it, a keyword the layout wrote (`<<kind>>`).
+ * `true` for a markdown string, its backticks dropped), and then read by the label handler
+ * (#1368); without it, a keyword the layout wrote (`<<kind>>`), which is no label: plain text.
  */
 type Measure = (text: string, font: FontKey, bits: number, written?: boolean) => MeasuredLabel;
 
@@ -402,11 +396,10 @@ export function prepareRequirement(
     weight: 400,
   };
   const measure: Measure = (text, f, bits, written) => {
-    // Names and body lines are a label kind v12 read markdown in (D731, #1368); a keyword the
-    // layout wrote is plain text.
-    const kind = { markdown: written === true, v12Markdown: written !== undefined };
-    const source = labelSource(text, kind, ctx.config);
-    warnMarkdownOutside(text, kind, ctx);
+    const source =
+      written === undefined
+        ? { text, markup: 'plain' as const }
+        : readLabel(text, { markdown: written }, ctx);
     return layoutLabel(source.text, f, Infinity, measurer, {
       ...source,
       style: bits,

@@ -5,7 +5,8 @@ import { createMermaid } from 'mermaid';
 /**
  * Requirement labels through the public API (D731, #1368): markdown is read only in a markdown
  * string, a written `\n` breaks the line, and markdown written outside a markdown string gives
- * one `MARKDOWN_NOT_READ` warning per render, none with `legacyMarkdown` set.
+ * one `MARKDOWN_NOT_READ` warning per render. With `markdownAlwaysOn`, set globally or in the
+ * `requirement` section, every label is markdown and nothing warns.
  */
 function api(): ReturnType<typeof createMermaid> {
   const m = createMermaid();
@@ -52,18 +53,33 @@ describe('requirement labels (D731, #1368)', () => {
     expect(drawn(r.svg)).toContain('**strong** name');
     expect(drawn(r.svg)).toContain('Text: **bold** _ital_');
     expect(notRead(r.warnings)).toHaveLength(1);
-    expect(notRead(r.warnings)[0]!.message).toContain('legacyMarkdown: true');
+    expect(notRead(r.warnings)[0]!.message).toContain('markdownAlwaysOn: true');
   });
 
-  it('gives no warning with legacyMarkdown, and draws the markdown as v12 did', async () => {
-    const r = await api().render('r', PLAIN, { config: { legacyMarkdown: true } });
-    expect(notRead(r.warnings)).toEqual([]);
-    expect(drawn(r.svg)).not.toContain('**strong**');
-    expect(drawn(r.svg)).not.toContain('_ital_');
+  it('with markdownAlwaysOn, globally or for requirement, reads every label kind as markdown', async () => {
+    const markdown = await api().render('r', MARKDOWN);
+    for (const config of [
+      { markdownAlwaysOn: true },
+      { requirement: { markdownAlwaysOn: true } },
+    ]) {
+      const r = await api().render('r', PLAIN, { config });
+      expect(notRead(r.warnings)).toEqual([]);
+      expect(drawn(r.svg)).not.toContain('**');
+      expect(drawn(r.svg)).not.toContain('_');
+      // Every name and value draws as its markdown string does.
+      expect(drawn(r.svg)).toEqual(drawn(markdown.svg));
+      expect(r.svg.match(/font-weight="bold"/g)).toEqual(markdown.svg.match(/font-weight="bold"/g));
+      expect(r.svg.match(/font-style="italic"/g)).toEqual(
+        markdown.svg.match(/font-style="italic"/g)
+      );
+      const text = await api().render('r', PLAIN, { config, format: 'ascii' });
+      expect(text.text).toContain('strong name');
+      expect(text.text).not.toContain('**');
+    }
   });
 
   it('reads markdown strings as markdown, with no warning, in both modes', async () => {
-    for (const config of [{}, { legacyMarkdown: true }]) {
+    for (const config of [{}, { markdownAlwaysOn: true }]) {
       const r = await api().render('r', MARKDOWN, { config });
       expect(notRead(r.warnings)).toEqual([]);
       expect(drawn(r.svg)).not.toContain('`');
@@ -73,11 +89,13 @@ describe('requirement labels (D731, #1368)', () => {
     }
   });
 
-  it('breaks a written \\n in a name and a text', async () => {
+  it('breaks a written \\n in a name and a text, in both modes', async () => {
     const src = 'requirementDiagram\nrequirement "one\\ntwo" {\n  text: three\\nfour\n}\n';
-    const r = await api().render('r', src);
-    expect(drawn(r.svg)).not.toContain('\\n');
-    for (const t of ['>one<', '>two<', '>Text: three<', '>four<']) expect(r.svg).toContain(t);
+    for (const config of [{}, { markdownAlwaysOn: true }]) {
+      const r = await api().render('r', src, { config });
+      expect(drawn(r.svg)).not.toContain('\\n');
+      for (const t of ['>one<', '>two<', '>Text: three<', '>four<']) expect(r.svg).toContain(t);
+    }
   });
 
   it('text output draws what the SVG draws and gives the same warning', async () => {

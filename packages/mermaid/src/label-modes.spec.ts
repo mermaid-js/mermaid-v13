@@ -1,7 +1,7 @@
 // Label modes per diagram type (#763, #781, D564). The expected texts are what mermaid 12.2.0
 // draws: its `markdownToHTML` reads bold and italic, and hands back a list item or a code span
-// as written. Requirement reads markdown only in a markdown string (D731, #1368), and as v12 did
-// with `legacyMarkdown: true`. Bullets and inline code in a mindmap markdown string are v13's own (D56).
+// as written. Requirement reads markdown only in a markdown string (D731, #1368), and in every
+// label with `markdownAlwaysOn: true`. Bullets and inline code in a mindmap markdown string are v13's own (D56).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawnRuns } from './testing/labels.ts';
@@ -69,16 +69,16 @@ describe('label modes per diagram type (#763, D564)', () => {
     ]);
   });
 
-  it('requirement, legacyMarkdown: emphasis is read, a code span is drawn as written (D564, D610)', async () => {
+  it('requirement, markdownAlwaysOn: every label is markdown, a code span is inline code (#1368)', async () => {
     const texts = await render('requirement/baseline/text/emphasis-beside-code-span.mmd');
     expect(texts).toEqual([
       '<<Requirement>>',
-      '<b><i>italic</i></b><b> beside `**not bold**`</b>',
+      '<b><i>italic</i></b><b> beside </b><b><code>**not bold**</code></b>',
       'ID: 1',
-      'Text: <b>bold</b> and `code`',
+      'Text: <b>bold</b> and <code>code</code>',
       '<<Element>>',
-      '<b>`x_1` and bold</b>',
-      'Type: `sim` <i>model</i>',
+      '<b><code>x_1</code></b><b> and bold</b>',
+      'Type: <code>sim</code> <i>model</i>',
     ]);
   });
 

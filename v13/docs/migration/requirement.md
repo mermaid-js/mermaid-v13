@@ -15,9 +15,10 @@
   value is plain text: v12's documented example (`requirement "__test_req__"`,
   `text: "*italicized text* **bold text**"`, "Markdown Formatting" in v12's
   requirementDiagram.md) now draws its underscores and stars, and the render gives one
-  `MARKDOWN_NOT_READ` warning. Set `legacyMarkdown: true` to read plain bold and italic as v12
-  did (D564, D610: a code span and a value that starts with `- `, `* ` or `+ ` stay as
-  written), or write a markdown string. Tags (`<b>`, `<br>`, `<sub>`, …) draw in every label.
+  `MARKDOWN_NOT_READ` warning. Write a markdown string, or set `markdownAlwaysOn: true`
+  (top level or `requirement.markdownAlwaysOn`), which draws every label as markdown: bold and
+  italic as in v12, and also a code span as inline code and a leading `- ` as a list item,
+  which v12 drew as written. Tags (`<b>`, `<br>`, `<sub>`, …) draw in every label.
 - **Line breaks** (#1368): a written `\n` in a name or a value breaks the line, in both modes;
   v12 drew it as the two characters.
 - **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where

@@ -1,9 +1,10 @@
 ---
 description: >-
   Markdown bold/italic emphasis in requirement/element quoted fields, with
-  htmlLabels disabled under the elk layout. Plain markdown is read as v12 read it, with legacyMarkdown (D731).
+  htmlLabels disabled under the elk layout. With markdownAlwaysOn every label is markdown, so the plain markers draw
+  bold and italic (#1368).
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
   layout: elk
   htmlLabels: false
 ---
