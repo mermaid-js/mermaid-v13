@@ -245,6 +245,26 @@ describe('edges (D441)', () => {
   });
 });
 
+describe('block arrows (#1193)', () => {
+  // v12 sized an arrow from its drawn polygon, so the four-way arrow's heads stay inside its
+  // cell and the grid's padding stays between neighbouring arrows.
+  it('keeps every pair of arrow polygons at least block.padding apart', () => {
+    const { model, config } = fixture(
+      'nightly-check/should-handle-block-arrows-in-different-directions'
+    );
+    const l = layoutBlock(model, blockTestContext(theme, config, gridMeasurer));
+    const arrows = l.blocks.filter((b) => b.shape === 'block-arrow').map((b) => b.box);
+    expect(arrows).toHaveLength(7);
+    for (const [i, a] of arrows.entries()) {
+      for (const b of arrows.slice(i + 1)) {
+        const gapX = Math.max(b.x - right(a), a.x - right(b));
+        const gapY = Math.max(b.y - (a.y + a.height), a.y - (b.y + b.height));
+        expect(Math.max(gapX, gapY)).toBeGreaterThanOrEqual(l.padding - 1e-9);
+      }
+    }
+  });
+});
+
 describe('bounds (D224) and degenerate input (D445)', () => {
   it('cover everything drawn, plus 5 px', () => {
     const l = lay('block\na --> a');

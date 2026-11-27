@@ -6,7 +6,7 @@
  * arrow have kinds of their own; a space is measured as nothing and draws nothing.
  */
 import { isComposite, type BlockType } from '../model.ts';
-import { blockArrowPolygon, blockArrowSize } from '../shapes/block-arrow.ts';
+import { blockArrowPolygon, blockArrowReach, blockArrowSize } from '../shapes/block-arrow.ts';
 import { keepsSize, leafOutline, leafSize, type LeafShape, type Pads } from '../shapes/leaf.ts';
 import type { Outline, Point } from '../shapes/outline.ts';
 import { BLOCK_METRICS } from './metrics.ts';
@@ -91,15 +91,18 @@ const KINDS: Readonly<Record<'composite' | 'block-arrow' | 'leaf', Kind>> = {
     natural: (parts) => {
       const { w, h } = blockArrowSize(
         { width: labelOf(parts).w, height: labelOf(parts).h },
-        parts.padding
+        parts.padding,
+        parts.directions
       );
       return { w, h, dy: 0, band: 0 };
     },
-    // v12 stretched the arrow to its cell only when it spans and the cell is wider.
+    // v12 stretched the arrow to its cell only when it spans and the cell is wider. The natural
+    // size holds the polygon's reach past its body (#1193); the body is drawn without it.
     draw: (parts) => {
       const { span, cell, natural, directions, padding } = parts;
-      const width = span > 1 && cell.w > natural.w ? cell.w : natural.w;
       const label = { width: labelOf(parts).w, height: labelOf(parts).h };
+      const reach = 2 * blockArrowReach(directions, label, padding).x;
+      const width = span > 1 && cell.w > natural.w ? cell.w - reach : natural.w - reach;
       return {
         outline: {
           kind: 'polygon',

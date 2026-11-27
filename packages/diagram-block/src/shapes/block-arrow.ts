@@ -274,13 +274,39 @@ export const getArrowPoints = (
   return pointFactory(arrowMetrics(bbox, node.padding ?? 0, totalWidth));
 };
 
-/** v12 `block_arrow`'s natural size about a label box, with the block padding. */
-export function blockArrowSize(
+/**
+ * How far the polygon for `directions` reaches past its body (the box `arrowMetrics` gives) on
+ * each side, across and down. Only the four-way arrow reaches out (its heads, `2 · padding`);
+ * every other polygon fits its body, and reaches 0.
+ */
+export function blockArrowReach(
+  directions: readonly string[],
   label: { readonly width: number; readonly height: number },
   padding: number
+): { x: number; y: number } {
+  const { width, height } = arrowMetrics(label, padding);
+  let x = 0;
+  let y = 0;
+  for (const p of getArrowPoints(directions, label, { padding })) {
+    x = Math.max(x, -p.x, p.x - width);
+    y = Math.max(y, p.y, -p.y - height);
+  }
+  return { x, y };
+}
+
+/**
+ * v12 `block_arrow`'s natural size about a label box, with the block padding: the drawn
+ * polygon's bounds, as v12 sized the block from its bbox (#1193). The body grows by the
+ * polygon's reach on both sides, so the polygon stays centred.
+ */
+export function blockArrowSize(
+  label: { readonly width: number; readonly height: number },
+  padding: number,
+  directions: readonly string[]
 ): { w: number; h: number } {
   const { width, height } = arrowMetrics(label, padding);
-  return { w: width, h: height };
+  const reach = blockArrowReach(directions, label, padding);
+  return { w: width + 2 * reach.x, h: height + 2 * reach.y };
 }
 
 /** What {@link blockArrowPolygon} draws. */
