@@ -15,6 +15,10 @@ export const theme: DiagramThemeTable = {
       rowOdd: 'inline(rowBkg)',
       rowEven: 'inline(rowAltBkg)',
       erEdgeLabelBackground: 'inline(linkLabelBkg)',
+      // The tag's ink (#1347, D713, D715): textColor where it reads on the tag, else black or
+      // white, whichever reads better. D715 amends D572: ER gains a variable for it.
+      erEdgeLabelColor:
+        'contrast(erEdgeLabelBackground, textColor, contrast(erEdgeLabelBackground, #000000, #ffffff))',
       // v12 classic draws the zero circle white.
       erMarkerFill: '#ffffff',
       // Attribute text (#758, D572): an author's nodeTextColor where it reads on the row, else

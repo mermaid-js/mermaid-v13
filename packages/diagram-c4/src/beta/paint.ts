@@ -3,7 +3,8 @@
  * element is an outline on the page: its fill the page's `background`, its outline the theme's
  * `c4<Kind>Border` and its text `c4<Kind>Color` (`External` for an element tagged `external`,
  * `Container` for a group or a deployment node drawn as a shape); boundaries, relations and the
- * title take the shared variables `c4BoundaryColor`, `c4RelationColor` and `c4TitleColor`. The
+ * title take the shared variables `c4BoundaryColor`, `c4RelationColor` and `c4TitleColor`, and a
+ * relation label's tag `c4EdgeLabelBackground` and `c4EdgeLabelColor` (D715). The
  * `c4` section's `<kind>_bg_color` keys are legacy C4's and colour nothing here. Every theme
  * colour is read before the root is written, in drawing order, as `render/paint.ts` does.
  *
@@ -253,9 +254,20 @@ function dashOf(keys: Keys): Pick<RelationPaint, 'dash'> {
   return dash ? { dash } : {};
 }
 
-/** The text and the box under it, for a relation that has a label or a technology. */
-function labelOf(colours: Colours, r: C4RelationLayout, text: Paint): Partial<RelationPaint> {
-  return r.label || r.techn ? { text, labelBkg: colours.theme('background') } : {};
+/**
+ * The text and the tag under it, for a relation that has a label or a technology: a style's
+ * `color` as written, else `c4EdgeLabelColor`, on `c4EdgeLabelBackground` (D713, D714, D715).
+ */
+function labelOf(
+  colours: Colours,
+  r: C4RelationLayout,
+  color: Paint | undefined
+): Partial<RelationPaint> {
+  if (!r.label && !r.techn) return {};
+  return {
+    text: color ?? colours.theme('c4EdgeLabelColor'),
+    labelBkg: colours.theme('c4EdgeLabelBackground'),
+  };
 }
 
 /** One relation's paint: the theme's, then its tags' `stroke`, `color` and `line`. */
@@ -267,7 +279,7 @@ function relationPaint(st: Styling, r: C4RelationLayout): RelationPaint {
   return {
     stroke: s.stroke ?? line,
     head: s.stroke ?? colours.theme('textColor'),
-    ...labelOf(colours, r, s.color ?? line),
+    ...labelOf(colours, r, s.color),
     ...dashOf(keys),
   };
 }

@@ -11,6 +11,7 @@
 
 import { agentflow } from '@mermaid-js/diagram-agentflow';
 import { describe } from 'vitest';
+import { describeTagVariables } from '../edge-label-tag-paint.ts';
 import { describeDiagramOverrides, keys, type ReferenceTable } from '../override-matrix.ts';
 
 /** v12 12.2.0's agentflow colours: `capture-theme-overrides.ts agentflow`. */
@@ -57,4 +58,8 @@ describe('agentflow colours under one override, against v12 12.2.0 (#1037, D654)
     differences: DIFFERENCES,
     responseOnly: RESPONSE_ONLY,
   });
+});
+
+describe('the agentflow edge-label tag (#1348, D713, D715)', () => {
+  describeTagVariables('agentflow', 'agentflow', ['tags', 'tags-in-container']);
 });

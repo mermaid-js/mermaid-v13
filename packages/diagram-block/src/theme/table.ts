@@ -7,7 +7,15 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
-  rules: { light: {} },
+  rules: {
+    light: {
+      // An edge label's tag (#1349, D713, D715): filled with the shared edgeLabelBackground unless
+      // block sets its own, inked with textColor where it reads there, else black or white.
+      blockEdgeLabelBackground: 'edgeLabelBackground',
+      blockEdgeLabelColor:
+        'contrast(blockEdgeLabelBackground, textColor, contrast(blockEdgeLabelBackground, #000000, #ffffff))',
+    },
+  },
   families: {
     // v12 classic: block's `.node .cluster` rule paints a composite with the cluster colours
     // (#771).

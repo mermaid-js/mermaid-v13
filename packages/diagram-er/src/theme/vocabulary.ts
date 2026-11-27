@@ -11,6 +11,8 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   rowOdd: { alias: 'ro', kind: 'color', usedBy: ['er'] },
   rowEven: { alias: 're', kind: 'color', usedBy: ['er'] },
   erEdgeLabelBackground: { alias: 'eel', kind: 'color', usedBy: ['er'] },
+  // The tag's ink (#1347, D713); its fill is the line above.
+  erEdgeLabelColor: { alias: 'eec', kind: 'color', usedBy: ['er'] },
   erMarkerFill: { alias: 'emf', kind: 'color', usedBy: ['er'] },
   // Attribute text on each row (#758): the ink against that row's own fill, as nodeTextColor is
   // against the entity's; the header keeps nodeTextColor.

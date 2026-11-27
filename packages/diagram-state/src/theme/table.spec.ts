@@ -4,7 +4,14 @@
  * `createTheme` as in v12.
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
-import { THEME_VARIABLES, createTheme, loadTheme } from '@mermaid-js/core/theme';
+import {
+  THEME_NAMES,
+  THEME_VARIABLES,
+  contrastRatio,
+  createTheme,
+  loadTheme,
+  parseColor,
+} from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { state } from '../plugin.ts';
 
@@ -15,6 +22,8 @@ const OWN = [
   'altBackground',
   'stateLabelColor',
   'compositeTitleColor',
+  'stateEdgeLabelBackground',
+  'stateEdgeLabelColor',
 ];
 
 const themed = async (name: string, themeVariables?: Record<string, unknown>) =>
@@ -125,5 +134,52 @@ describe('the state theme table (#414 T3)', () => {
     });
     expect(t.value('compositeTitleBackground')).toBe('#ff0000');
     expect(t.value('altBackground')).toBe('#00ff00');
+  });
+
+  it('fills the transition tag with edgeLabelBackground and inks it with textColor (#1346, D713, D715)', async () => {
+    // [ink, fill] with no override: the textColor and background the tag drew before.
+    const TAG: Record<string, [string, string]> = {
+      default: ['#333333', '#ffffff'],
+      dark: ['#cccccc', '#333333'],
+      forest: ['#000000', '#ffffff'],
+      neutral: ['#000000', '#ffffff'],
+      base: ['#333333', '#f4f4f4'],
+      redux: ['#28253d', '#ffffff'],
+      'redux-color': ['#28253d', '#ffffff'],
+      'redux-dark': ['#cccccc', '#333333'],
+      'redux-dark-color': ['#cccccc', '#333333'],
+      neo: ['#333333', '#ffffff'],
+      'neo-dark': ['#cccccc', '#333333'],
+    };
+    expect(THEME_NAMES).toHaveLength(11);
+    for (const name of THEME_NAMES) {
+      const t = await themed(name);
+      expect([t.value('stateEdgeLabelColor'), t.value('stateEdgeLabelBackground')], name).toEqual(
+        TAG[name]
+      );
+      expect(TAG[name], name).toEqual([t.value('textColor'), t.value('edgeLabelBackground')]);
+    }
+  });
+
+  it('follows edgeLabelBackground, and stateEdgeLabelBackground for state alone (D715)', async () => {
+    const shared = await themed('default', { edgeLabelBackground: '#ffe0a0' });
+    expect(shared.value('stateEdgeLabelBackground')).toBe('#ffe0a0');
+    const own = await themed('default', { stateEdgeLabelBackground: '#a0e0ff' });
+    expect([own.value('stateEdgeLabelBackground'), own.value('edgeLabelBackground')]).toEqual([
+      '#a0e0ff',
+      '#ffffff',
+    ]);
+  });
+
+  it('keeps the tag ink readable on a light tag under a dark theme (D713)', async () => {
+    for (const vars of [{ background: '#fafafa' }, { edgeLabelBackground: '#fafafa' }]) {
+      const t = await themed('dark', vars);
+      const ink = parseColor(t.value('stateEdgeLabelColor'))!;
+      const fill = parseColor(t.value('stateEdgeLabelBackground'))!;
+      expect(contrastRatio(ink, fill), JSON.stringify(vars)).toBeGreaterThanOrEqual(4.5);
+    }
+    // An author's own ink wins as written.
+    const own = await themed('dark', { stateEdgeLabelColor: '#123456' });
+    expect(own.value('stateEdgeLabelColor')).toBe('#123456');
   });
 });

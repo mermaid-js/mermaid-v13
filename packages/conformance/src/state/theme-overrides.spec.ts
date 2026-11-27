@@ -11,6 +11,7 @@
 
 import { state } from '@mermaid-js/diagram-state';
 import { describe } from 'vitest';
+import { describeTagVariables } from '../edge-label-tag-paint.ts';
 import { describeDiagramOverrides, keys, type ReferenceTable } from '../override-matrix.ts';
 
 /** v12 12.2.0's state colours: `capture-theme-overrides.ts state`. */
@@ -127,4 +128,8 @@ describe('state colours under one override, against v12 12.2.0 (#1037, D654)', (
     differences: DIFFERENCES,
     responseOnly: RESPONSE_ONLY,
   });
+});
+
+describe('the state transition-label tag (#1346, D713, D715)', () => {
+  describeTagVariables('state', 'state-diagram-v2', ['tags', 'tags-in-container']);
 });
