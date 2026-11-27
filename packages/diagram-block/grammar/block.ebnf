@@ -4,7 +4,8 @@ diagrams.
 The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
 parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
 decides what is valid, this file is fixed to match, and the parser must match this file
-(DESIGN §4.4).
+(DESIGN §4.4). One difference is chosen: a label may be a markdown string, which mermaid@12's
+grammar rejected (D736).
 
 **Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
 matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
@@ -15,7 +16,8 @@ opaque text that no rule takes apart; and a line break appended. Keywords are ca
 **Line breaks mean nothing.** Blanks and line breaks only separate tokens, so statements need
 no separator: `columns 2 a b` on one line is a `columns` statement and two blocks. An id takes
 any character but blanks, `( ) [ ] { } < > - : =`, so `;`, `,`, `.`, `|`, `%`, `#`, quotes and
-Unicode are id characters, and an inline `%%` is not a comment. Labels are always quoted.
+Unicode are id characters, and an inline `%%` is not a comment. Labels are always quoted, as a
+string `"text"` or a markdown string `` "`**text**`" ``.
 
 A block written again merges into the first (its position and span stay). A composite
 `block:id … end` or `block … end` holds at least one statement. A span `:n` goes only after the
@@ -38,7 +40,7 @@ BLOCK_DIAGRAM_KEY            /block\b/                       :keyword ;
 (** `columns n` or `columns auto`: how many columns the level's grid has; the last one wins. *)
 COLUMNS                      /columns\s+auto\b/              :keyword ;
 COLUMNS                      /columns\s+[\d]+/               :keyword ;
-(** A markdown string, which block diagrams do not take. *)
+(** A markdown string, as a label in a shape, a block arrow or an edge (D736). *)
 -                            /["][`]/                        push(md_string) :string ;
 <md_string> MD_STR           /[^`"]+/                        :string ;
 <md_string> -                /[`]["]/                        pop :string ;
@@ -185,9 +187,12 @@ nodeStatement = Sized { Edge Block } ;
 Sized @Block = node [ SIZE ] ;
 Block @Block = node ;
 node = NODE_ID [ shape ] ;
-shape = NODE_DSTART STR NODE_DEND | BLOCK_ARROW_START STR DIR { DIR } BLOCK_ARROW_END ;
+shape = NODE_DSTART label NODE_DEND | BLOCK_ARROW_START label DIR { DIR } BLOCK_ARROW_END ;
+(** A label: a string, or a markdown string (D736). *)
+label = STR | MD_STR ;
 Edge @Edge = link ;
-link = LINK | START_LINK LINK_LABEL STR LINK ;
+(* jison returns no `LINK_LABEL` before a markdown string. *)
+link = LINK | START_LINK LINK_LABEL STR LINK | START_LINK MD_STR LINK ;
 
 Columns @Columns = COLUMNS ;
 Space @Space = SPACE_BLOCK ;

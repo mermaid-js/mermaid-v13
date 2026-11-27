@@ -24,6 +24,10 @@ export const SHAPE_KINDS = [T.NodeDStart, T.BlockArrowStart];
 export const SIZE_KINDS = [T.Size];
 /** What may follow a block in a chain. */
 export const LINK_KINDS = [T.Link, T.StartLink];
+/** What may hold a shape's or block arrow's label: a string or a markdown string (D736). */
+export const LABEL_KINDS = [T.Str, T.MdStr];
+/** What may follow an edge's `--`: the label's quote, or a markdown string (D736). */
+export const EDGE_LABEL_KINDS = [T.LinkLabel, T.MdStr];
 export const DIR_KINDS = [T.Dir];
 export const DIR_OR_CLOSE_KINDS = [T.Dir, T.BlockArrowEnd];
 

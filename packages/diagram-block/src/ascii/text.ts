@@ -22,7 +22,9 @@ export function drawBlockText(
     spacing: BLOCK_TEXT_METRICS.spacing[padding],
     ...(maxWidth !== undefined ? { maxWidth } : {}),
     ...(ctx.inline ? { inline: ctx.inline } : {}),
+    config: ctx.config,
   });
-  const warnings = asciiWarnings(model, drawn.grid, drawn.forced, ctx.ast, ctx.inline);
+  const labels = { config: ctx.config, ...(ctx.inline ? { inline: ctx.inline } : {}) };
+  const warnings = asciiWarnings(model, drawn.grid, drawn.forced, ctx.ast, labels);
   return { ...drawn, warnings };
 }

@@ -138,6 +138,43 @@ export function learnSentenceModel(sources: readonly string[]): SentenceModel {
   return model;
 }
 
+/** The end of the directives (`%%{…}%%`) from `i` on: `i` when none starts there. */
+function afterDirectives(source: string, i: number): number {
+  let at = i;
+  while (source.startsWith('%%{', at)) {
+    const end = source.indexOf('}%%', at + 3);
+    if (end < 0) return at;
+    at = end + 3;
+  }
+  return at;
+}
+
+/**
+ * `source` as mermaid\@12 is asked about it: each markdown string written as a string. D736
+ * takes a markdown string wherever v12 took a string, which v12's grammar rejected; everything
+ * else stays for v12 to decide. A directive may split a markdown string's quote and backtick
+ * (directives are removed before lexing); it stays where it is.
+ */
+export function withoutMarkdownStrings(source: string): string {
+  if (!source.includes('`')) return source;
+  let out = '';
+  let from = 0;
+  for (let q = source.indexOf('"'); q >= 0; q = source.indexOf('"', q + 1)) {
+    const open = afterDirectives(source, q + 1);
+    if (source[open] !== '`') continue;
+    let close = open + 1;
+    while (close < source.length && source[close] !== '`' && source[close] !== '"') close++;
+    if (source[close] !== '`') continue;
+    const quote = afterDirectives(source, close + 1);
+    if (source[quote] !== '"') continue;
+    out +=
+      source.slice(from, open) + source.slice(open + 1, close) + source.slice(close + 1, quote);
+    from = quote;
+    q = quote;
+  }
+  return out + source.slice(from);
+}
+
 /**
  * Whether mermaid\@12 accepted the syntax: false on a jison lexer or parse error, undefined
  * when it rejected for another reason (its DB's TypeError on `style`, or it did not detect the

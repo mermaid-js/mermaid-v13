@@ -1,4 +1,19 @@
+import { labelSource, type LabelConfig, type LabelSource } from '@mermaid-js/core/text';
 import type { Block, BlockModel } from './model.ts';
+
+/** A block's or an edge's label as the model holds it. */
+export interface Labelled {
+  readonly label: string;
+  readonly markdown?: true;
+}
+
+/**
+ * A block's or an edge's label as the label handler reads it (D734): a markdown string the
+ * parser marked (D736) is markdown, any other label plain. v12 read markdown in no block label
+ * (its grammar rejected markdown strings), so no label kind has `v12Markdown`.
+ */
+export const blockLabelSource = (item: Labelled, config: LabelConfig): LabelSource =>
+  labelSource(item.label, { markdown: item.markdown === true, v12Markdown: false }, config);
 
 /**
  * The label texts the diagram draws, as written (`DiagramPlugin.labels`): each block's but a

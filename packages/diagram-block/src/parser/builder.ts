@@ -35,6 +35,8 @@ export interface Mention {
   type: BlockType;
   /** The quoted label, if any. */
   label: string | undefined;
+  /** Set when the label was a markdown string, given without its wrapper (D736). */
+  markdown?: true;
   /** The span to keep if the block is new (undefined: 1). */
   span: number | undefined;
   /** As v12's lexer read them (blanks kept). */
@@ -51,6 +53,8 @@ export interface Place {
 export interface LinkText {
   link: string;
   label?: string;
+  /** Set when the label was a markdown string, given without its wrapper (D736). */
+  markdown?: true;
 }
 
 /** An edge as the model reads it. */
@@ -125,7 +129,7 @@ export class ModelBuilder {
   mention(m: Mention, place: Place): void {
     const label = m.label === undefined || m.label === '' ? m.id : m.label;
     const existing = this.byId.get(m.id);
-    if (existing) this.merge(existing, m.type, label);
+    if (existing) this.merge(existing, m.type, label, m.markdown);
     else this.create({ ...m, label }, place);
   }
 
@@ -137,7 +141,7 @@ export class ModelBuilder {
     const label = m.label ?? '';
     const existing = this.byId.get(m.id);
     if (existing) {
-      this.merge(existing, 'composite', label);
+      this.merge(existing, 'composite', label, m.markdown);
       existing.colorIndex ??= this.nextColor++;
       return existing;
     }
@@ -180,10 +184,21 @@ export class ModelBuilder {
     this.create(m, place).cells = cells;
   }
 
-  /** v12's merge into an existing block: a type other than `na`, a label other than the id. */
-  private merge(existing: OpenBlock, type: BlockType, label: string): void {
+  /**
+   * v12's merge into an existing block: a type other than `na`, a label other than the id. The
+   * label's markdown mark goes with it (D736).
+   */
+  private merge(
+    existing: OpenBlock,
+    type: BlockType,
+    label: string,
+    markdown: true | undefined
+  ): void {
     if (type !== 'na') existing.type = type;
-    if (label !== existing.id) existing.label = label;
+    if (label === existing.id) return;
+    existing.label = label;
+    if (markdown) existing.markdown = true;
+    else delete existing.markdown;
   }
 
   /** A new block, with the classes named for it before (D442). */
@@ -199,6 +214,7 @@ export class ModelBuilder {
       children: [],
     };
     if (m.directions) block.directions = m.directions.map((d) => d.trim());
+    if (m.markdown) block.markdown = true;
     this.pendingClasses.delete(m.id);
     into.push(block);
     this.byId.set(m.id, block);
@@ -221,6 +237,7 @@ export class ModelBuilder {
       start: e.start,
       end: e.end,
       label: e.label ?? '',
+      ...(e.markdown ? { markdown: true as const } : {}),
       arrowTypeStart: arrowStart(e.link),
       arrowTypeEnd: arrowEnd(e.link),
       thickness: thickness(e.link),

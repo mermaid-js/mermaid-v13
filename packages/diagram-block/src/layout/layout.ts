@@ -13,6 +13,7 @@ import { pxProfile } from '@mermaid-js/core/layout';
 import { BLOCK_CONFIG_INVALID } from '../codes.ts';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { layoutLabel, type FontKey } from '@mermaid-js/core/text';
+import { blockLabelSource, type Labelled } from '../labels.ts';
 import { isComposite, type Block, type BlockEdge, type BlockModel } from '../model.ts';
 import { themePads, type Pads } from '@mermaid-js/shared/shapes/kit';
 import { clipOutline, outlineExtent, type Point } from '../shapes/outline.ts';
@@ -36,7 +37,7 @@ export type BlockLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'th
 
 /** A measured label before it is placed. */
 type Measured = Omit<PlacedLabel, 'x' | 'y'>;
-type Measure = (text: string, font: FontKey, style: number) => Measured;
+type Measure = (item: Labelled, font: FontKey, style: number) => Measured;
 
 /** One grid node and what the layout needs to draw it. */
 interface Item extends BlockGridItem {
@@ -137,15 +138,16 @@ function prepare(model: BlockModel, ctx: BlockLayoutContext) {
   const pads = themePads(ctx.theme, padding);
   const font = fonts(model, ctx);
   const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure: Measure = (text, f, style) => {
-    const t = layoutLabel(text, f, Infinity, ctx.measurer, { ...inline, style });
+  const measure: Measure = (item, f, style) => {
+    const source = blockLabelSource(item, ctx.config);
+    const t = layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, ...inline, style });
     return { text: t, font: f, width: t.width, height: t.height };
   };
   const { root, items } = measureGrid(
     model,
     (b) => {
       const [f, bits] = font.fontOf(b);
-      return measure(b.label, f, bits);
+      return measure(b, f, bits);
     },
     padding,
     pads
@@ -159,7 +161,7 @@ export function layoutBlock(model: BlockModel, ctx: BlockLayoutContext): BlockLa
   sizeGrid(root, padding, BLOCK_METRICS.maxSizings);
   placeGrid(root, padding);
   const blocks = items.map((item) => placedBlock(item, padding, pads));
-  const edges = edgesOf(model.edges, blockIndex(blocks), (text) => measure(text, base, 0));
+  const edges = edgesOf(model.edges, blockIndex(blocks), (e) => measure(e, base, 0));
   return { columns: model.columns, blocks, edges, padding, bounds: boundsOf(blocks, edges) };
 }
 
@@ -330,7 +332,7 @@ function clipAt(b: BlockNodeLayout, dx: number, dy: number): Point {
 function edgesOf(
   edges: readonly BlockEdge[],
   byId: ReadonlyMap<string, BlockNodeLayout>,
-  measure: (text: string) => Measured
+  measure: (edge: BlockEdge) => Measured
 ): BlockEdgeLayout[] {
   const { loopAngle, loopReach } = BLOCK_METRICS;
   const angle = (loopAngle * Math.PI) / 180;
@@ -376,7 +378,7 @@ function edgesOf(
       }
       points = [s, middle, t];
     }
-    const label = labelRoom(e.label, middle, measure);
+    const label = labelRoom(e, middle, measure);
     out.push({
       id: e.id,
       ast: e.ast,
@@ -400,12 +402,12 @@ function edgesOf(
  * takes no room.
  */
 function labelRoom(
-  text: string,
+  edge: BlockEdge,
   middle: Point,
-  measure: (text: string) => Measured
+  measure: (edge: BlockEdge) => Measured
 ): PlacedLabel | undefined {
-  if (text === '') return undefined;
-  const measured = measure(text);
+  if (edge.label === '') return undefined;
+  const measured = measure(edge);
   if (blank(measured.text)) return undefined;
   const patch = pxProfile.builder.labelPatch;
   return {

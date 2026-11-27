@@ -20,8 +20,8 @@ interface Case {
 
 const CASES: Case[] = [
   {
-    name: 'an unquoted label, then a markdown label',
-    lines: ['block', '  a[x]', '  b["`md`"]', '  c'],
+    name: 'an unquoted label, then a label in bare backticks',
+    lines: ['block', '  a[x]', '  b[`md`]', '  c'],
     errors: [
       ['UNEXPECTED', 2],
       ['UNEXPECTED', 3],
@@ -159,8 +159,8 @@ const CASES: Case[] = [
     keeps: ['a'],
   },
   {
-    name: 'a markdown edge label, then a labelled edge with no label',
-    lines: ['block', '  a -- "`x`" --> b', '  c', '  d -- e', '  f'],
+    name: 'an edge label in bare backticks, then a labelled edge with no label',
+    lines: ['block', '  a -- `x` --> b', '  c', '  d -- e', '  f'],
     errors: [
       ['UNEXPECTED', 2],
       ['UNCLOSED_LABEL', 4],

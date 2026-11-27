@@ -21,7 +21,8 @@
  *   (R-ARCH-6), where v12 drew a `Math.random` id; no author id can take that form (`-` is not
  *   an id character);
  * - labels as v12's grammar handed them to its DB: entities as written (v12's `#35;` form reads
- *   `&#35;`), nothing decoded or sanitised (v13 writes text escaped).
+ *   `&#35;`), nothing decoded or sanitised (v13 writes text escaped). A markdown string, which
+ *   v12's grammar rejected, is taken without its wrapper and marked `markdown` (D736).
  */
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
@@ -54,6 +55,11 @@ export interface Block {
   readonly type: BlockType;
   /** The quoted label, the id for a leaf without one, `''` for a composite without one. */
   readonly label: string;
+  /**
+   * Whether the label was a markdown string (`["`…`"]`), whose wrapper `label` does not hold: it
+   * is laid out as markdown (D736, as D712). Undefined otherwise.
+   */
+  readonly markdown?: true;
   /** Columns taken (v12 `widthInColumns`), 1 to 1,000. */
   readonly span: number;
   /** A composite's last `columns` (-1 for `auto`); undefined without one. */
@@ -85,6 +91,8 @@ export interface BlockEdge {
   readonly end: string;
   /** The quoted label, or `''`. */
   readonly label: string;
+  /** Whether the label was a markdown string (`-- "`…`" -->`), as {@link Block.markdown}. */
+  readonly markdown?: true;
   readonly arrowTypeStart: BlockArrowType;
   readonly arrowTypeEnd: BlockArrowType;
   readonly thickness: 'normal' | 'thick';

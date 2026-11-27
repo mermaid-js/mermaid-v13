@@ -94,7 +94,6 @@ import {
   IDS,
   LABEL,
   depthLimitMessage,
-  MARKDOWN_HINT,
   OPEN_ARROW,
   OPEN_MD_STRING,
   OPEN_STRING,
@@ -203,6 +202,8 @@ interface Shape {
   /** The opener and closer (`[]`, `<[]>`). */
   typeStr: string;
   label: string;
+  /** Set when the label was a markdown string (D736). */
+  markdown?: true;
   directions?: string[];
   /** Where it ends. */
   end: number;
@@ -214,6 +215,8 @@ interface NodeParts {
   nameAt: number;
   typeStr?: string;
   label?: string;
+  /** Set when the label was a markdown string (D736). */
+  markdown?: true;
   directions?: string[];
   range: Range;
 }
@@ -676,26 +679,35 @@ class BlockParser {
     return undefined;
   }
 
-  /** `NODE_DSTART STR NODE_DEND`. */
+  /**
+   * A shape's or block arrow's label: a string, or a markdown string (D736; v12's grammar took
+   * only a string), given without its wrapper and marked.
+   */
+  private label(): { label: string; markdown?: true } {
+    const { c } = this;
+    c.tested(EXPECTED.LABEL_KINDS);
+    if (c.kind !== T.Str && c.kind !== T.MdStr) this.fail(LABEL, UNQUOTED_HINT);
+    const markdown = c.kind === T.MdStr;
+    const label = this.raw(c.next());
+    return markdown ? { label, markdown } : { label };
+  }
+
+  /** `NODE_DSTART (STR | MD_STR) NODE_DEND`. */
   private shape(): Shape {
     const { c } = this;
     const open = this.raw(c.next());
-    c.tested(T.Str);
-    if (c.kind !== T.Str) this.fail(LABEL, c.kind === T.MdStr ? MARKDOWN_HINT : UNQUOTED_HINT);
-    const label = this.raw(c.next());
+    const label = this.label();
     c.tested(T.NodeDEnd);
     if (c.kind !== T.NodeDEnd) this.fail(closerFor(open));
     const close = c.next();
-    return { typeStr: open + this.raw(close), label, end: this.range(close).end };
+    return { typeStr: open + this.raw(close), ...label, end: this.range(close).end };
   }
 
-  /** `BLOCK_ARROW_START STR DIR+ BLOCK_ARROW_END`. */
+  /** `BLOCK_ARROW_START (STR | MD_STR) DIR+ BLOCK_ARROW_END`. */
   private blockArrow(): Shape {
     const { c } = this;
     c.next();
-    c.tested(T.Str);
-    if (c.kind !== T.Str) this.fail(LABEL, c.kind === T.MdStr ? MARKDOWN_HINT : UNQUOTED_HINT);
-    const label = this.raw(c.next());
+    const label = this.label();
     c.tested(EXPECTED.DIR_KINDS);
     if (c.kind !== T.Dir) this.fail(DIRECTION);
     const directions: string[] = [];
@@ -706,26 +718,33 @@ class BlockParser {
     }
     if (c.kind !== T.BlockArrowEnd) this.fail(DIRECTION_OR_CLOSE);
     const close = c.next();
-    return { typeStr: '<[' + this.raw(close), label, directions, end: this.tightEnd(close) };
+    return { typeStr: '<[' + this.raw(close), ...label, directions, end: this.tightEnd(close) };
   }
 
-  /** `link`: `LINK`, or `START_LINK LINK_LABEL STR LINK`. */
+  /**
+   * `link`: `LINK`, or `START_LINK LINK_LABEL STR LINK`, or `START_LINK MD_STR LINK` (D736; v12's
+   * grammar took no markdown string, and its lexer returns no `LINK_LABEL` before one).
+   */
   private link(): LinkParts {
     const { c } = this;
     const j = c.next();
     const start = this.range(j).start;
     if (this.c.tokens.kind[j] === T.Link)
       return { link: this.raw(j), range: { start, end: this.tightEnd(j) } };
-    c.tested(T.LinkLabel);
-    if (c.kind !== T.LinkLabel) this.fail(EDGE_LABEL);
-    c.next();
-    c.tested(T.Str);
-    if (c.kind !== T.Str) this.fail(EDGE_LABEL, c.kind === T.MdStr ? MARKDOWN_HINT : undefined);
+    c.tested(EXPECTED.EDGE_LABEL_KINDS);
+    const markdown = c.kind === T.MdStr;
+    if (!markdown) {
+      if (c.kind !== T.LinkLabel) this.fail(EDGE_LABEL);
+      c.next();
+      c.tested(T.Str);
+      if (c.kind !== T.Str) this.fail(EDGE_LABEL);
+    }
     const label = this.raw(c.next());
     c.tested(T.Link);
     if (c.kind !== T.Link) this.fail(EDGE_END);
     const close = c.next();
-    return { link: this.raw(close), label, range: { start, end: this.tightEnd(close) } };
+    const range = { start, end: this.tightEnd(close) };
+    return { link: this.raw(close), label, ...(markdown ? { markdown } : {}), range };
   }
 
   /**
@@ -775,6 +794,7 @@ class BlockParser {
       id: parts.name,
       type: shapeType(parts.typeStr),
       label: parts.label,
+      ...(parts.markdown ? { markdown: parts.markdown } : {}),
       span,
       directions: parts.directions,
     };

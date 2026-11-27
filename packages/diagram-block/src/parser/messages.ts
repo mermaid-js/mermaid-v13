@@ -71,7 +71,6 @@ const SIZE_HINT =
   'a span such as `:2` goes right after the first block of a statement or of a composite header';
 const LINK_HINT = 'an edge goes between two blocks, as in `a --> b`';
 const STRING_HINT = 'a quoted text goes inside a shape, as in `a["text"]`';
-export const MARKDOWN_HINT = 'block diagrams take no markdown strings: write `"text"`';
 const ACC_HINT = 'block diagrams have no `accTitle` or `accDescr`';
 const RESERVED_HINT = 'this word is reserved and starts no statement';
 export const DEFAULT_HINT = 'block diagrams have no `DEFAULT` class: use another name';
@@ -98,9 +97,8 @@ export function hintFor(k: number): string | undefined {
     case T.LinkLabel:
       return LINK_HINT;
     case T.Str:
-      return STRING_HINT;
     case T.MdStr:
-      return MARKDOWN_HINT;
+      return STRING_HINT;
     case T.AccTitle:
     case T.AccTitleValue:
     case T.AccDescr:

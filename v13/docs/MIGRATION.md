@@ -2897,7 +2897,7 @@ then `g.architecture-groups` with each group's `rect.node-bkg`; labels in
 - **Syntax** is v12's (the grammar is in [syntax/block.md](./syntax/block.md)): line breaks
   separate nothing, ids take `;`, `,`, `.`, `|`, `%`, `#` and Unicode, labels are quoted, and
   every error is reported, not only the first, with messages in words (R-PARSE-4). What v12
-  rejected is still rejected, except `style` (below).
+  rejected is still rejected, except `style` and markdown strings (below).
 - **Edge chains** (D442): `a --> b --> c` declares `a`, `b` and `c` and draws both edges. v12
   dropped `a`, `b` and the first edge and drew a block `undefined`.
 - **`class` before its block** (D442) gives the block the class, and the block is drawn. v12
@@ -2916,6 +2916,13 @@ then `g.architecture-groups` with each group's `rect.node-bkg`; labels in
 - **`style`** (D443) applies after every statement, so `style a …` before `a` and
   `style a,b …` work; ids that never appear get one `BLOCK_STYLE_UNKNOWN` warning. v12 threw a
   TypeError and rejected the diagram.
+- **Markdown strings** (D736): a block's label, a block arrow's and an edge's take
+  `` "`**bold** _italic_`" ``, drawn as markdown without its wrapper, as in flowchart. v12's
+  grammar rejected a markdown string with a parse error, so no v12 diagram holds one. Any other
+  label is plain, as in v12: `**x**`, `_x_` and a code span are drawn as written, the drawn tags
+  (`<b>`, `<i>`, `<sub>`, …) and `<br>` draw. A written `\n` breaks the line (D734), where v12
+  drew it as written. A label in bare backticks, `` a[`x`] ``, is not quoted and stays a parse
+  error. `legacyMarkdown` changes nothing here: v12 read markdown in no block label.
 - **Degenerate sizes** (D445). `columns 0` lays out as `columns auto` and a span `:0` as `:1`,
   with one `BLOCK_SIZE_INVALID` warning (v12 threw or drew NaN). Spans are capped at 1,000
   columns and `space:n` at 100,000 cells, with one `BLOCK_TRUNCATED` warning; v12 kept larger
@@ -2963,7 +2970,7 @@ each a `g.node` (`node <classes or default> flowchart-label`) holding its shape 
 | Root `id="<render id>"`, `role="graphics-document document"`, a `<style>` scoped by the id (shape, edge, label and palette rules) | No root `id`; `class="mermaid mermaid-block"`, `role="img"`, `aria-roledescription="block"` (kept), `data-mermaid-version`. No `<style>` (except `theme: 'auto'`'s variables-only sheet): fills, strokes and widths are presentation attributes reading `var(--_x)` aliases on the root `style` | R-SEC-2, R-THEME-3 |
 | `<defs>` with `<marker>`s (point, circle, cross) referenced by `marker-start`/`marker-end`, and for `look: neo` a gradient and a drop-shadow `<filter>` | Arrowheads drawn inline after their edge (`path.marker`, `circle.marker`); the drop shadow is the theme's `dropShadow` as a `filter` attribute; the gradient is core's one scoped `<linearGradient>` (`<id>-gradient`), on outlines only | DESIGN §7.1, D182 |
 | Ids on every block (`<render id>-<id>`) and edge (`<render id>-<k>-<a>-<b>`) | No ids: `data-id` (the block's id, the edge's `<k>-<a>-<b>`) on each `g.node`, edge `path`, `g.label` and `g.edgeLabel`; `data-ast` on each `g.node` and edge `path` only | R-ARCH-6, R-PARSE-8, pitfall 12 |
-| Labels: `g.label` > `foreignObject` > HTML `span` | `g.label` > `text`/`tspan` from core's label layout; markdown strings stay rejected (syntax) | R-SEC-2 |
+| Labels: `g.label` > `foreignObject` > HTML `span` | `g.label` > `text`/`tspan` from core's label layout; a markdown string draws its bold and italic as `tspan`s (D736) | R-SEC-2 |
 | Every block wrote a `g.label`, an unlabelled composite's empty (`labelHelper`) | An unlabelled composite has no `g.label` | Nothing invisible is drawn |
 | A composite's label at its centre | In its band above the grid (`padding`, then the label) | D444 |
 | A block arrow's polygon `label-container`, as a leaf polygon's | `label-container block-arrow`, so a hand-drawn drawer and a stylesheet can tell the two apart | D447 |
