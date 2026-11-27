@@ -38,7 +38,7 @@ import {
 } from '../layout/layout.ts';
 import type { C4BaseKind, C4ElementKind } from '../model.ts';
 import type { C4ShapeId } from '../layout/types.ts';
-import { fieldText, joinTexts, type C4Text } from '../label-text.ts';
+import { fieldText, fixedText, joinTexts, type C4Field, type C4Text } from '../label-text.ts';
 import type { C4BetaElement, C4BetaModel, C4BetaRelation } from './model.ts';
 import { cellGraph } from './cells.ts';
 import { legendEntries, measureLegend, type BetaLegend } from './legend.ts';
@@ -139,12 +139,12 @@ export function stereotypeOf(
 ): C4Text {
   const name = shown ? STEREOTYPES[element.kind] : undefined;
   const techn = technologyOf(element);
-  if (name === undefined) return techn ? joinTexts(['[', techn, ']']) : { text: '' };
-  return techn ? joinTexts([`[${name}: `, techn, ']']) : { text: `[${name}]` };
+  if (name === undefined) return techn ? joinTexts(['[', techn, ']']) : fixedText('');
+  return techn ? joinTexts([`[${name}: `, techn, ']']) : fixedText(`[${name}]`);
 }
 
 /** An element's or a relation's technology as drawn; none when it is empty. */
-function technologyOf(item: Pick<C4BetaElement, 'technology' | 'markdown'>): C4Text | undefined {
+function technologyOf(item: Pick<C4BetaElement, 'technology' | 'markdown'>): C4Field | undefined {
   const techn = fieldText(item, 'technology', item.technology);
   return techn?.text ? techn : undefined;
 }
@@ -155,7 +155,7 @@ function headerType(
 ): C4Text | undefined {
   const techn = technologyOf(element);
   const instances = fieldText(element, 'instances', element.instances);
-  const parts: (C4Text | string)[] = techn ? ['[', techn, ']'] : [];
+  const parts: (C4Field | string)[] = techn ? ['[', techn, ']'] : [];
   if (instances?.text) parts.push(...(techn ? [' x'] : ['x']), instances);
   return parts.length > 0 ? joinTexts(parts) : undefined;
 }
@@ -353,11 +353,11 @@ function setupOf(ctx: C4BetaLayoutContext, units: UnitProfile | undefined): Setu
   const measuring: Measuring = {
     config,
     fonts,
-    measure: textMeasure(
-      size ? cellPxMeasurer(ctx.measurer, size) : ctx.measurer,
-      ctx.inline,
-      ctx.config
-    ),
+    measure: textMeasure(size ? cellPxMeasurer(ctx.measurer, size) : ctx.measurer, {
+      config: ctx.config,
+      inline: ctx.inline,
+      warn,
+    }),
     room: size ? cellRoom(room, size) : room,
     stereotypeShown: c4betaStereotypeShown(ctx.config),
     personWrapWidth: c4betaPersonWrappingWidth(ctx.config),

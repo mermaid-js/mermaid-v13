@@ -18,7 +18,7 @@ import {
   relationTechnText,
   stereotypeText,
 } from './layout/index.ts';
-import { fieldText, type C4Text } from './label-text.ts';
+import { fieldText, writtenText, type C4Text } from './label-text.ts';
 import type { C4Layout } from './layout/types.ts';
 import type { C4Model } from './model.ts';
 import { detectC4, parseC4 } from './parser/index.ts';
@@ -63,7 +63,7 @@ function c4BetaLabels(model: C4BetaModel): string[] {
 /** The texts that are not empty. */
 const texts = (all: readonly (C4Text | string | undefined)[]): string[] =>
   all
-    .map((t) => (typeof t === 'string' ? t : t?.text))
+    .map((t) => (typeof t === 'string' || t === undefined ? t : writtenText(t)))
     .filter((t): t is string => t !== undefined && t.trim() !== '');
 
 /**

@@ -10,7 +10,7 @@ import type { C4Model, C4Relation } from '../model.ts';
 import type { Measure, Measured } from './layout.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { LabelRoom } from './room.ts';
-import { fieldText, joinTexts, type C4Text } from '../label-text.ts';
+import { fieldText, fixedText, joinTexts, type C4Text } from '../label-text.ts';
 import type { Place, Stagger } from './pairs.ts';
 import { crosses, lineOf, type Route, type Work } from './route.ts';
 import { hitRect } from './shapes.ts';
@@ -334,7 +334,7 @@ export const tagEndClear = (): number => M.arrow + M.tagClear + M.tagSlack;
 
 /** The step between two tagged lines side by side: a one-line tag's height and a `besideGap` either side. */
 export function tagStepOf({ measure, fonts, labelRoom }: LabelSetup): number {
-  const line = measure('X', fonts.message, Infinity);
+  const line = measure(fixedText('X'), fonts.message, Infinity);
   return line ? line.text.height + labelRoom.y + 2 * M.besideGap : 0;
 }
 

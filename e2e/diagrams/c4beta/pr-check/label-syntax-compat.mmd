@@ -1,11 +1,13 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd (spec #1368, #1400): the
-  same c4-beta source with `legacyMarkdown: true`. No c4-beta label kind read
-  markdown in v12, so the compatibility mode changes nothing and the
-  picture is expected to equal the default one.
+  label-syntax.mmd with `markdownAlwaysOn: true` (#1368, #1400): every
+  c4-beta label is markdown, so the plain `**bold** _ital_` rows draw bold
+  and italic, the code-span row draws inline code, and the picture
+  differs from label-syntax.mmd. A line's fixed words (`[Container: `,
+  `[`, `]`) stay as written. Tags draw and a written `\n` breaks as in
+  the default mode.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 c4-beta deployment
 title "`title **bold** _ital_`"

@@ -10,13 +10,13 @@
 // cspell:ignore kepano
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  labelSource,
   layoutLabel,
   Style,
   type FontKey,
   type Measurer,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { unionRects } from '@mermaid-js/shared/layout';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
@@ -50,7 +50,14 @@ import {
   tagStepOf,
   type LabelSpot,
 } from './labels.ts';
-import { fieldText, joinTexts, type C4Text } from '../label-text.ts';
+import {
+  fieldText,
+  fixedText,
+  joinTexts,
+  readText,
+  type C4Field,
+  type C4Text,
+} from '../label-text.ts';
 import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
 import {
   labelBlockers,
@@ -94,7 +101,7 @@ const STEREOTYPES: Readonly<Record<C4Family, string>> = {
 export function stereotypeText(element: Pick<C4Element, 'kind' | 'techn' | 'markdown'>): C4Text {
   const name = STEREOTYPES[kindParts(element.kind).family];
   const techn = fieldText(element, 'techn', element.techn);
-  return techn?.text ? joinTexts([`[${name}: `, techn, ']']) : { text: `[${name}]` };
+  return techn?.text ? joinTexts([`[${name}: `, techn, ']']) : fixedText(`[${name}]`);
 }
 
 /** A boundary's `[type]` line, when it has a type (v12 `drawInsideBoundary`). */
@@ -106,9 +113,9 @@ export function boundaryTypeText(
 }
 
 /** An element's or a boundary's label and description, as drawn. */
-export const labelText = (item: Pick<C4Element, 'label' | 'markdown'>): C4Text | undefined =>
+export const labelText = (item: Pick<C4Element, 'label' | 'markdown'>): C4Field | undefined =>
   fieldText(item, 'label', item.label);
-export const descrText = (item: Pick<C4Element, 'descr' | 'markdown'>): C4Text | undefined =>
+export const descrText = (item: Pick<C4Element, 'descr' | 'markdown'>): C4Field | undefined =>
   fieldText(item, 'descr', item.descr);
 
 export { relationLabelText, relationTechnText } from './labels.ts';
@@ -134,7 +141,10 @@ export function placed(m: Measured, x: number, y: number): PlacedLabel {
   };
 }
 
-/** Measures a text in a font, wrapped at `maxWidth`; none for an empty text. */
+/**
+ * Measures a text in a font, wrapped at `maxWidth`; none for an empty text. A string is a user's
+ * label written as it is (the title).
+ */
 export type Measure = (
   text: C4Text | string | undefined,
   font: FontKey,
@@ -143,20 +153,23 @@ export type Measure = (
 ) => Measured | undefined;
 
 /**
- * The one way C4 text is measured, for both syntaxes: through core's label handler (spec #1368;
- * no C4 text read markdown in v12, so no kind is `v12Markdown`), whole words kept, inline spans
- * boxed.
+ * The one way C4 text is measured, for both syntaxes: each label through core's label handler
+ * (#1368; `readLabel` gives the render its `MARKDOWN_NOT_READ` warning), fixed words as written,
+ * whole words kept, inline spans boxed.
  */
 export function textMeasure(
   measurer: Measurer,
-  inlineSpans: C4LayoutContext['inline'],
-  config: C4LayoutContext['config']
+  ctx: Pick<C4LayoutContext, 'config' | 'inline'> & {
+    readonly warn: NonNullable<C4LayoutContext['warn']>;
+  }
 ): Measure {
-  const inline = inlineSpans ? { inline: inlineSpans } : {};
+  const inline = ctx.inline ? { inline: ctx.inline } : {};
+  const read = (field: C4Field) =>
+    readLabel(field.text, { markdown: field.markdown === true }, ctx);
   return (written, font, maxWidth, style = 0) => {
-    const { text, markdown } = typeof written === 'string' ? { text: written } : (written ?? {});
-    if (text === undefined || text.trim() === '') return undefined;
-    const source = labelSource(text, { markdown: markdown === true, v12Markdown: false }, config);
+    if (written === undefined) return undefined;
+    const source = readText(typeof written === 'string' ? { text: written } : written, read);
+    if (source.text.trim() === '') return undefined;
     return {
       text: layoutLabel(source.text, font, maxWidth, measurer, {
         ...inline,
@@ -225,7 +238,7 @@ function setupOf(ctx: C4LayoutContext): Setup {
     family,
     room,
     fonts: c4Fonts(ctx.config, family, warn),
-    measure: textMeasure(measurer, ctx.inline, ctx.config),
+    measure: textMeasure(measurer, { config: ctx.config, inline: ctx.inline, warn }),
   };
 }
 

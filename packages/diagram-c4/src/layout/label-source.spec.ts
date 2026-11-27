@@ -10,11 +10,11 @@ import type { C4Layout, PlacedLabel } from './types.ts';
 
 /**
  * Markdown strings and plain text in every C4 label kind (spec #1368, #1400), through the
- * layout's seam on parsed sources, in the default mode and with `legacyMarkdown`: markdown only
- * in a quoted markdown string, which the parser marks as it strips the quotes; bare backticks,
- * `**x**` and a code span in plain text drawn as written; tags drawn and a written `\n` breaking
- * in every kind, markdown string or not. No C4 text read markdown in v12, so `legacyMarkdown`
- * changes nothing.
+ * layout's seam on parsed sources. In the default mode markdown is read only in a quoted
+ * markdown string, which the parser marks as it strips the quotes; bare backticks, `**x**` and a
+ * code span in plain text are drawn as written. With `markdownAlwaysOn` every label is markdown,
+ * while the fixed words of a line (`[Container: `, a step number) stay as written. Tags draw and
+ * a written `\n` breaks in every kind, in both modes.
  */
 let theme: Theme;
 beforeAll(async () => {
@@ -49,18 +49,23 @@ function texts(layout: C4Layout): Map<string, PlacedLabel> {
   return out;
 }
 
-const legacy = (legacyMarkdown: boolean) => (legacyMarkdown ? { legacyMarkdown: true } : {});
+/** The integrator config of a mode: the default, `markdownAlwaysOn` globally, or in a section. */
+type Mode = boolean | 'section';
+const modeConfig = (mode: Mode, section: string): Record<string, unknown> => {
+  if (mode === 'section') return { [section]: { markdownAlwaysOn: true } };
+  return mode ? { markdownAlwaysOn: true } : {};
+};
 
-function layC4(src: string, legacyMarkdown = false): Map<string, PlacedLabel> {
-  const parsed = parsedC4(src, legacy(legacyMarkdown));
+function layC4(src: string, mode: Mode = false): Map<string, PlacedLabel> {
+  const parsed = parsedC4(src, modeConfig(mode, 'c4'));
   expect(parsed.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   return texts(layoutC4(parsed.model, c4TestContext(parsed.config, theme)));
 }
 
-function layBeta(src: string, legacyMarkdown = false): Map<string, PlacedLabel> {
+function layBeta(src: string, mode: Mode = false): Map<string, PlacedLabel> {
   const { model, diagnostics } = parseC4Beta(src);
   expect(diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
-  const config = c4TestConfig(undefined, legacy(legacyMarkdown), true);
+  const config = c4TestConfig(undefined, modeConfig(mode, 'c4beta'), true);
   return texts(layoutC4Beta(model, c4TestContext(config, theme)));
 }
 
@@ -105,7 +110,7 @@ deploymentNode n ${w('node')} ${w('ndescr')} ${w('ntech')} instances ${w('inst')
 c --> s : ${w('rel')} ${w('rtech')}
 `;
 
-describe.each([false, true])('C4 labels, legacyMarkdown %s', (compat) => {
+describe.each([false, true])('C4 labels, markdownAlwaysOn %s', (compat) => {
   it('reads a quoted markdown string as markdown in every kind, over the kind’s own style', () => {
     const at = layC4(
       C4((k) => `"\`${k} **bold** _ital_\`"`),
@@ -135,31 +140,34 @@ describe.each([false, true])('C4 labels, legacyMarkdown %s', (compat) => {
     ]);
   });
 
-  it('draws plain `**x**`, bare backticks and a code span as written in every kind', () => {
-    const quoted = layC4(
-      C4((k) => `"${k} **bold** _ital_"`),
-      compat
-    );
-    expect(runs(quoted.get('c.name')?.text)).toEqual(plain('label', B));
-    expect(runs(quoted.get('c.descr')?.text)).toEqual(plain('descr'));
-    expect(text(quoted.get('c.type'))).toEqual(['[Container: techn **bold** _ital_]']);
-    expect(text(quoted.get('b.type'))).toEqual(['[btype **bold** _ital_]']);
-    expect(runs(quoted.get('c-s.label')?.text)).toEqual(plain('rel'));
-    expect(text(quoted.get('title'))).toEqual(['"title **bold** _ital_"']);
-    // Bare backticks: the parser marks only a quoted markdown string.
-    const bare = layC4(
-      C4((k) => `\`${k} **bold**\``),
-      compat
-    );
-    for (const name of ['c.name', 'c.descr', 'b.label', 'c-s.label', 'c-s.techn', 'title']) {
-      expect(text(bare.get(name)).join(''), name).toMatch(/`\w+ \*\*bold\*\*`/);
+  it.skipIf(compat)(
+    'draws plain `**x**`, bare backticks and a code span as written in every kind',
+    () => {
+      const quoted = layC4(
+        C4((k) => `"${k} **bold** _ital_"`),
+        compat
+      );
+      expect(runs(quoted.get('c.name')?.text)).toEqual(plain('label', B));
+      expect(runs(quoted.get('c.descr')?.text)).toEqual(plain('descr'));
+      expect(text(quoted.get('c.type'))).toEqual(['[Container: techn **bold** _ital_]']);
+      expect(text(quoted.get('b.type'))).toEqual(['[btype **bold** _ital_]']);
+      expect(runs(quoted.get('c-s.label')?.text)).toEqual(plain('rel'));
+      expect(text(quoted.get('title'))).toEqual(['"title **bold** _ital_"']);
+      // Bare backticks: the parser marks only a quoted markdown string.
+      const bare = layC4(
+        C4((k) => `\`${k} **bold**\``),
+        compat
+      );
+      for (const name of ['c.name', 'c.descr', 'b.label', 'c-s.label', 'c-s.techn', 'title']) {
+        expect(text(bare.get(name)).join(''), name).toMatch(/`\w+ \*\*bold\*\*`/);
+      }
+      const span = layC4(
+        C4((k) => `"${k} a \`code\` b"`),
+        compat
+      );
+      expect(text(span.get('c.descr'))).toEqual(['descr a `code` b']);
     }
-    const span = layC4(
-      C4((k) => `"${k} a \`code\` b"`),
-      compat
-    );
-    expect(text(span.get('c.descr'))).toEqual(['descr a `code` b']);
-  });
+  );
 
   it('draws tags and breaks at a written \\n in every kind, markdown string or not', () => {
     const tags = layC4(
@@ -192,33 +200,39 @@ describe.each([false, true])('C4 labels, legacyMarkdown %s', (compat) => {
     expect(text(nl.get('c-s.techn'))).toEqual(['[rtech one', 'two]']);
   });
 
-  it('keeps a plain field plain on a line a markdown string shares (C4Dynamic’s number)', () => {
-    const at = layC4(
-      'C4Dynamic\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "`**x** _y_`")\nRel(b, a, "**x**")',
-      compat
-    );
-    expect(runs(at.get('a-b.label')?.text)).toEqual([
-      [
-        ['1: ', 0],
-        ['x', B],
-        [' ', 0],
-        ['y', I],
-      ],
-    ]);
-    expect(text(at.get('b-a.label'))).toEqual(['2: **x**']);
-  });
+  it.skipIf(compat)(
+    'keeps a plain field plain on a line a markdown string shares (C4Dynamic’s number)',
+    () => {
+      const at = layC4(
+        'C4Dynamic\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "`**x** _y_`")\nRel(b, a, "**x**")',
+        compat
+      );
+      expect(runs(at.get('a-b.label')?.text)).toEqual([
+        [
+          ['1: ', 0],
+          ['x', B],
+          [' ', 0],
+          ['y', I],
+        ],
+      ]);
+      expect(text(at.get('b-a.label'))).toEqual(['2: **x**']);
+    }
+  );
 
-  it('reads a named argument written as a markdown string as markdown, and the last statement’s mark wins', () => {
-    const at = layC4(
-      'C4Context\nPerson(a, "A", $descr="`**d**`")\nSystem(s, "`**s**`")\nSystem(s, "**s**")',
-      compat
-    );
-    expect(runs(at.get('a.descr')?.text)).toEqual([[['d', B]]]);
-    expect(text(at.get('s.name'))).toEqual(['**s**']);
-  });
+  it.skipIf(compat)(
+    'reads a named argument written as a markdown string as markdown, and the last statement’s mark wins',
+    () => {
+      const at = layC4(
+        'C4Context\nPerson(a, "A", $descr="`**d**`")\nSystem(s, "`**s**`")\nSystem(s, "**s**")',
+        compat
+      );
+      expect(runs(at.get('a.descr')?.text)).toEqual([[['d', B]]]);
+      expect(text(at.get('s.name'))).toEqual(['**s**']);
+    }
+  );
 });
 
-describe.each([false, true])('c4-beta labels, legacyMarkdown %s', (compat) => {
+describe.each([false, true])('c4-beta labels, markdownAlwaysOn %s', (compat) => {
   it('reads a quoted markdown string as markdown in every kind', () => {
     const at = layBeta(
       BETA((k) => `"\`${k} **bold** _ital_\`"`),
@@ -235,7 +249,7 @@ describe.each([false, true])('c4-beta labels, legacyMarkdown %s', (compat) => {
     expect(runs(at.get('c-s.techn')?.text)[0]?.[1]).toEqual(['bold', I | B]);
   });
 
-  it('draws plain `**x**` as written, and tags', () => {
+  it.skipIf(compat)('draws plain `**x**` as written, and tags', () => {
     const at = layBeta(
       BETA((k) => `"${k} **bold** _ital_"`),
       compat
@@ -281,16 +295,82 @@ describe.each([false, true])('c4-beta labels, legacyMarkdown %s', (compat) => {
   });
 });
 
+describe.each([true, 'section'] as const)(
+  'markdownAlwaysOn (%s): every label is markdown',
+  (mode) => {
+    it('reads plain `**x** _y_` as markdown in every C4 kind, over the kind’s own style', () => {
+      const at = layC4(
+        C4((k) => `"${k} **bold** _ital_"`),
+        mode
+      );
+      expect(runs(at.get('c.name')?.text)).toEqual(md('label', B));
+      expect(runs(at.get('c.descr')?.text)).toEqual(md('descr'));
+      expect(runs(at.get('b.label')?.text)).toEqual(md('boundary', B));
+      expect(runs(at.get('c-s.label')?.text)).toEqual(md('rel'));
+      // A line's fixed words stay as written; its field is markdown.
+      expect(runs(at.get('c.type')?.text)).toEqual([
+        [
+          ['[Container: techn ', 0],
+          ['bold', B],
+          [' ', 0],
+          ['ital', I],
+          [']', 0],
+        ],
+      ]);
+      expect(text(at.get('b.type'))).toEqual(['[btype bold ital]']);
+      expect(runs(at.get('c-s.techn')?.text)).toEqual([
+        [
+          ['[rtech ', I],
+          ['bold', I | B],
+          [' ital]', I],
+        ],
+      ]);
+      // The title line keeps its quotes, which markdown draws.
+      expect(text(at.get('title'))).toEqual(['"title bold ital"']);
+      const bare = layC4(
+        C4((k) => `\`${k} code\``),
+        mode
+      );
+      expect(runs(bare.get('c.descr')?.text)).toEqual([[['descr code', Style.Mono]]]);
+    });
+
+    it('keeps a step number as written, and reads the label after it', () => {
+      const at = layC4('C4Dynamic\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "**x** _y_")', mode);
+      expect(runs(at.get('a-b.label')?.text)).toEqual([
+        [
+          ['1: ', 0],
+          ['x', B],
+          [' ', 0],
+          ['y', I],
+        ],
+      ]);
+    });
+
+    it('reads plain `**x** _y_` as markdown in every c4-beta kind', () => {
+      const at = layBeta(
+        BETA((k) => `"${k} **bold** _ital_"`),
+        mode
+      );
+      expect(runs(at.get('c.name')?.text)).toEqual(md('label', B));
+      expect(runs(at.get('c.descr')?.text)).toEqual(md('descr'));
+      expect(text(at.get('c.type'))).toEqual(['[Container: techn bold ital]']);
+      expect(runs(at.get('n.label')?.text)).toEqual(md('node', B));
+      expect(runs(at.get('n.descr')?.text)).toEqual(md('ndescr'));
+      expect(text(at.get('n.type'))).toEqual(['[ntech bold ital] xinst bold ital']);
+      expect(runs(at.get('c-s.label')?.text)).toEqual(md('rel', B));
+      expect(runs(at.get('c-s.techn')?.text)[0]?.[1]).toEqual(['bold', I | B]);
+    });
+  }
+);
+
 describe('the rendered SVG', () => {
   it('draws a markdown string’s emphasis and no backticks, and plain `**x**` as written', async () => {
     const src = 'C4Context\nPerson(a, "**plain** label", "`**md** descr`")\nPerson(b, `**bare**`)';
-    for (const config of [{}, { legacyMarkdown: true }]) {
-      const { svg } = await renderC4ForTest(src, { config });
-      expect(svg).toMatch(/font-weight="bold"[^>]*>md<\/tspan>/);
-      expect(svg).not.toContain('`**md**');
-      expect(svg).toContain('**plain** label');
-      expect(svg).toContain('`**bare**`');
-    }
+    const { svg } = await renderC4ForTest(src);
+    expect(svg).toMatch(/font-weight="bold"[^>]*>md<\/tspan>/);
+    expect(svg).not.toContain('`**md**');
+    expect(svg).toContain('**plain** label');
+    expect(svg).toContain('`**bare**`');
   });
 
   it('does the same for c4-beta', async () => {
@@ -299,36 +379,4 @@ describe('the rendered SVG', () => {
     expect(svg).not.toContain('`**md**');
     expect(svg).toContain('**plain** descr');
   });
-
-  // The label fixtures and their compatibility-mode twins (`legacyMarkdown: true`): no C4 text
-  // read markdown in v12, so each pair draws the same SVG.
-  const LABEL_FIXTURES = (
-    import.meta as ImportMeta & {
-      glob: (
-        pattern: string,
-        options: { query: '?raw'; import: 'default'; eager: true }
-      ) => Readonly<Record<string, string>>;
-    }
-  ).glob('../../../../e2e/diagrams/{c4,c4beta}/pr-check/label-syntax*.mmd', {
-    query: '?raw',
-    import: 'default',
-    eager: true,
-  });
-
-  it.each([
-    ['c4', renderC4ForTest],
-    ['c4beta', renderC4BetaForTest],
-  ] as const)(
-    'draws %s’s label-syntax fixture and its compat twin alike',
-    async (folder, render) => {
-      const at = (name: string) => {
-        const src = LABEL_FIXTURES[`../../../../e2e/diagrams/${folder}/pr-check/${name}.mmd`];
-        if (src === undefined) throw new Error(`no ${folder}/${name}.mmd`);
-        return render(src);
-      };
-      const base = await at('label-syntax');
-      const compat = await at('label-syntax-compat');
-      expect(compat.svg).toBe(base.svg);
-    }
-  );
 });

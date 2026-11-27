@@ -20,6 +20,7 @@ import type { AstId } from '@mermaid-js/core/parser-kit';
 import { Style } from '@mermaid-js/core/text';
 import type { C4Fonts } from '../config.ts';
 import { placed, type Measure, type Measured } from '../layout/layout.ts';
+import { fixedText } from '../label-text.ts';
 import type { C4LegendLayout, C4LegendRow } from '../layout/types.ts';
 import { isExternal, type C4ElementKind } from '../model.ts';
 import { C4_BETA_METRICS as B } from './metrics.ts';
@@ -128,9 +129,9 @@ export function measureLegend(
   fonts: C4Fonts,
   measure: Measure
 ): BetaLegend | undefined {
-  const title = leftAligned(measure(TITLE, fonts.boundary, Infinity, Style.Bold));
+  const title = leftAligned(measure(fixedText(TITLE), fonts.boundary, Infinity, Style.Bold));
   const rows = entries.flatMap((entry) => {
-    const label = leftAligned(measure(entry.label, fonts.message, Infinity));
+    const label = leftAligned(measure(fixedText(entry.label), fonts.message, Infinity));
     return label ? [{ entry, label }] : [];
   });
   if (!title || rows.length === 0) return undefined;
