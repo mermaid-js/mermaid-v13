@@ -151,6 +151,41 @@ describe('structure (spec #424 Renderer)', () => {
   });
 });
 
+describe('accTitle and accDescr (D742)', () => {
+  const cards = (svg: string) => byClass(svg, 'g', 'node').map((c) => c['data-ast']);
+  const columns = (svg: string) => byClass(svg, 'g', 'cluster').map((c) => c['data-ast']);
+
+  it('writes <title> and <desc> with aria-labelledby and aria-describedby, and draws no card', async () => {
+    const { svg } = await renderKanbanForTest(
+      'kanban\n  accTitle: My board\n  accDescr: Board description\n  a[Col]\n    b[Card]'
+    );
+    const root = elements(svg, 'svg')[0] ?? {};
+    expect(root['aria-labelledby']).toMatch(/-title$/);
+    expect(root['aria-describedby']).toMatch(/-desc$/);
+    expect(svg).toContain(`<title id="${root['aria-labelledby']}">My board</title>`);
+    expect(svg).toContain(`<desc id="${root['aria-describedby']}">Board description</desc>`);
+    expect(columns(svg)).toEqual(['n:a']);
+    expect(cards(svg)).toEqual(['n:b']);
+    expect(svg).not.toContain('accTitle');
+  });
+
+  it('reads the block form, between columns and at any indent', async () => {
+    const { svg } = await renderKanbanForTest(
+      'kanban\n  a\n    b\naccTitle: T\n      accDescr {\n        One\n        two\n      }\n  c\n    d'
+    );
+    expect(svg).toMatch(/<title [^>]*>T<\/title>/);
+    expect(svg).toMatch(/<desc [^>]*>One\ntwo<\/desc>/);
+    expect(columns(svg)).toEqual(['n:a', 'n:c']);
+    expect(cards(svg)).toEqual(['n:b', 'n:d']);
+  });
+
+  it('writes neither without them, and keeps `accTitle[x]` a column', async () => {
+    const { svg } = await renderKanbanForTest('kanban\n  accTitle[x]\n    b');
+    expect(svg).not.toMatch(/<title|<desc|aria-labelledby|aria-describedby/);
+    expect(columns(svg)).toEqual(['n:accTitle']);
+  });
+});
+
 describe('colours (v12 styles.ts, D374)', () => {
   /** khroma: lighten(#ff0000, 10) is hsl(0, 100%, 60%), darken(#ff0000, 10) hsl(0, 100%, 40%). */
   const RED = '#ff0000';
@@ -166,10 +201,16 @@ describe('colours (v12 styles.ts, D374)', () => {
     expect(await column('default', { cScale2: RED })).toBe(LIGHTER);
     expect(await column('neo', { cScale2: RED })).toBe(LIGHTER);
     expect(await column('redux', { cScale2: RED })).toBe(LIGHTER);
-    expect(await column('dark', { cScale2: RED })).toBe(DARKER);
-    // neo-dark, which v12 left light (D183), darkens: the trait, not the name.
+    // neo-dark and redux-dark, which v12 left light (D183), darken: the trait, not the name.
     expect(await column('neo-dark', { cScale2: RED })).toBe(DARKER);
+    expect(await column('redux-dark', { cScale2: RED })).toBe(DARKER);
+    expect(await column('redux-dark-color', { cScale2: RED })).toBe(DARKER);
     expect(await column('default', { cScale2: RED, darkMode: true })).toBe(DARKER);
+  });
+
+  it('lightens under theme: dark, as v12 does, even with darkMode (D741)', async () => {
+    expect(await column('dark', { cScale2: RED })).toBe(LIGHTER);
+    expect(await column('dark', { cScale2: RED, darkMode: true })).toBe(LIGHTER);
   });
 
   it("gives column k slot (k + 1) mod 12, so the eleventh and later columns aren't black", async () => {

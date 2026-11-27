@@ -281,6 +281,35 @@ describe('warnings (D82, D478, pitfall 22)', () => {
     expect((await draw(H + 'A')).warnings).toEqual([]);
   });
 
+  describe('curve (D760): text lines are always square', () => {
+    const curve = async (config: Record<string, unknown>) =>
+      dropped((await draw(H + 'A --> B', { config })).warnings);
+
+    it('warns once for usecase.curve', async () => {
+      expect(await curve({ usecase: { curve: 'basis' } })).toEqual([['ASCII_DROPPED', 'curve']]);
+    });
+
+    it('warns once for the top-level curve', async () => {
+      expect(await curve({ curve: 'basis' })).toEqual([['ASCII_DROPPED', 'curve']]);
+    });
+
+    it('warns once when both are set', async () => {
+      expect(await curve({ curve: 'basis', usecase: { curve: 'linear' } })).toEqual([
+        ['ASCII_DROPPED', 'curve'],
+      ]);
+    });
+
+    it('does not warn when no curve is set, or for flowchart.curve', async () => {
+      expect(await curve({})).toEqual([]);
+      expect(await curve({ flowchart: { curve: 'basis' } })).toEqual([]);
+    });
+
+    it('words the warning like the others', async () => {
+      const { warnings } = await draw(H + 'A --> B', { config: { curve: 'basis' } });
+      expect(warnings[0]!.message).toContain('edge curves');
+    });
+  });
+
   it('reads a numeric string as its number: diagramPadding "20" is the default, not dropped', async () => {
     const { warnings } = await draw(H + 'A', { config: { usecase: { diagramPadding: '20' } } });
     expect(warnings).toEqual([]);

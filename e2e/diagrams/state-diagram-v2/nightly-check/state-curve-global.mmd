@@ -1,0 +1,15 @@
+---
+description: >-
+  The global `curve` key (D733, #1324) draws every transition when `state.curve` is unset:
+  straight segments here (`linear`), where the default draws curves. `flowchart.curve` does not
+  apply to state.
+config:
+  curve: linear
+---
+stateDiagram-v2
+  [*] --> A
+  A --> B
+  A --> C
+  B --> D
+  C --> D
+  D --> [*]

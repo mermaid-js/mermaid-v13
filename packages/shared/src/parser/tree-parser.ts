@@ -94,10 +94,11 @@ export function treeGrammar<Lexed extends { readonly tokens: TokenStream }>(
   spec: TreeGrammarSpec<Lexed>
 ): TreeGrammar<Lexed> {
   const k = spec.kinds;
+  const acc = k.acc ? [k.AccTitle, k.AccDescr] : [];
   return {
     ...spec,
-    statementKinds: [k.SpaceList, k.NodeId, k.NodeDStart, k.Icon, k.Class, k.SpaceLine],
-    afterIndentKinds: [k.NodeId, k.NodeDStart, k.Icon, k.Class],
+    statementKinds: [k.SpaceList, k.NodeId, k.NodeDStart, k.Icon, k.Class, k.SpaceLine, ...acc],
+    afterIndentKinds: [k.NodeId, k.NodeDStart, k.Icon, k.Class, ...acc],
     stopKinds: [Kind.Newline, k.Eof, k.SpaceLine],
   };
 }
@@ -554,9 +555,8 @@ export abstract class TreeParser<
       const indent = this.raw(j).length;
       c.tested(this.grammar.afterIndentKinds);
       const n = c.kind;
-      if (this.isNodeStart(n)) this.node(indent);
-      else if (n === k.Icon || n === k.Class) this.decoration();
-      else if (n === k.SpaceList && this.beside(c.pos, -1, k.ClassEnd) >= 0) {
+      if (this.content(n, indent)) return;
+      if (n === k.SpaceList && this.beside(c.pos, -1, k.ClassEnd) >= 0) {
         // A bare `:::` took the line break: one error, and the next line is still read.
         this.report(lineBreak(), BARE_CLASS_HINT);
         this.lineEnded = true;
@@ -568,9 +568,29 @@ export abstract class TreeParser<
       this.afterBlank = true;
       return;
     }
-    if (this.isNodeStart(kind)) this.node(0);
+    if (!this.content(kind, 0)) this.badStatement();
+  }
+
+  /**
+   * What a line holds after its indent (`indent` wide), at a token of `kind`: a node, a
+   * decoration, or (only a diagram with them lexes one) an `accTitle` or `accDescr` statement.
+   * Whether it was one of them, and so read.
+   */
+  private content(kind: number, indent: number): boolean {
+    const { k } = this;
+    if (this.isNodeStart(kind)) this.node(indent);
     else if (kind === k.Icon || kind === k.Class) this.decoration();
-    else this.badStatement();
+    else if (kind === k.AccTitle || kind === k.AccDescr) this.accessibility();
+    else return false;
+    return true;
+  }
+
+  /**
+   * An `accTitle` or `accDescr` statement at the cursor, at any indent: a diagram that has them
+   * reads its value; this default only steps over the token.
+   */
+  protected accessibility(): void {
+    this.c.next();
   }
 
   private badStatement(): never {

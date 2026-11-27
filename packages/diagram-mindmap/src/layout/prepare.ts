@@ -21,7 +21,10 @@ import {
 } from '@mermaid-js/shared/shapes/outline';
 import { NUMERIC } from '@mermaid-js/shared/config/readers';
 
-/** A config value the layout can't honour (pitfall 22): it lays out with the default instead. */
+/**
+ * A config value the layout can't honour (pitfall 22): it lays out with the default instead, or,
+ * for a `maxNodeWidth` outside its range, with the nearest limit (D769).
+ */
 export const MINDMAP_CONFIG_IGNORED = 'MINDMAP_CONFIG_IGNORED';
 
 /** Where a node's `::icon()` goes (D297): a `slot` square centred at `at`, the glyph inside it. */
@@ -112,6 +115,24 @@ function lengthOf(
       path,
     });
   return fallback;
+}
+
+/**
+ * `mindmap.maxNodeWidth` (D769): a number above 0 (or a whole numeric string) is clamped to the
+ * range 120 to 1200, with one warning when that changes it; anything else is `lengthOf`'s.
+ */
+function wrapWidthOf(ctx: MindmapLayoutContext, value: unknown): number {
+  const path = 'mindmap.maxNodeWidth';
+  const width = lengthOf(ctx, value, MINDMAP_METRICS.maxNodeWidth, path, true);
+  const { min, max } = MINDMAP_METRICS.maxNodeWidthRange;
+  const clamped = Math.min(Math.max(width, min), max);
+  if (clamped !== width)
+    ctx.warn({
+      code: MINDMAP_CONFIG_IGNORED,
+      message: `Adjusted ${path}: ${width} is outside ${min} to ${max}; using ${clamped}`,
+      path,
+    });
+  return clamped;
 }
 
 interface Build {
@@ -280,13 +301,7 @@ export function prepareMindmap(model: MindmapModel, ctx: MindmapLayoutContext): 
   const conf = ctx.config.mindmap ?? {};
   const px = (v: number, axis: 'x' | 'y'): number => fromPx(units, v, axis);
   const padding = lengthOf(ctx, conf.padding, MINDMAP_METRICS.padding, 'mindmap.padding', false);
-  const maxWidth = lengthOf(
-    ctx,
-    conf.maxNodeWidth,
-    MINDMAP_METRICS.maxNodeWidth,
-    'mindmap.maxNodeWidth',
-    true
-  );
+  const maxWidth = wrapWidthOf(ctx, conf.maxNodeWidth);
   const b: Build = {
     ctx,
     font: {

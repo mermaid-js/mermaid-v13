@@ -1,0 +1,18 @@
+---
+description: >-
+  `state.curve` (D733, #1325) draws every transition with right angles: `step` here, where the
+  default draws curves. The note's dashed connector follows it; the self-transition on D stays
+  rounded.
+config:
+  state:
+    curve: step
+---
+stateDiagram-v2
+  [*] --> A
+  A --> B
+  A --> C
+  B --> D
+  C --> D
+  D --> D : retry
+  D --> [*]
+  note right of A : a note

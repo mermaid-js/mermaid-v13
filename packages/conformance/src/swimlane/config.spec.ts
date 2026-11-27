@@ -95,6 +95,150 @@ describe('swimlane.* keys on their fixtures (D534)', () => {
   });
 });
 
+describe('swimlane edge curves (D733, #1377)', () => {
+  // `line-hops-off` sets `flowchart.curve: linear` and no hops, so only the curve moves paths.
+  const text = fixture('line-hops-off');
+  const section = '  flowchart:\n    curve: linear\n';
+  /** `text` with its `flowchart.curve` replaced by the config lines `lines` (top level). */
+  const configured = (lines: string): string => {
+    expect(text).toContain(section);
+    return text.replace(section, lines);
+  };
+  const paths = async (source: string) => {
+    const { tree, warnings } = await draw(source);
+    expect(warnings).toEqual([]);
+    return edgePaths(tree);
+  };
+
+  // On the swimlane engine's square routes, `step` draws as `linear`; `rounded` adds arcs.
+  it('draws swimlane.curve over flowchart.curve', async () => {
+    const swimlaneRounded = flip(text, 'lineHops: false', 'lineHops: false\n    curve: rounded');
+    const drawn = await paths(swimlaneRounded);
+    expect(drawn).toEqual(await paths(flip(text, 'curve: linear', 'curve: rounded')));
+    expect(drawn).not.toEqual(await paths(text));
+  });
+
+  it('draws the global curve when neither section sets one, and rounded when nothing does', async () => {
+    expect(await paths(configured('  curve: linear\n'))).toEqual(await paths(text));
+    const rounded = await paths(flip(text, 'curve: linear', 'curve: rounded'));
+    expect(await paths(configured(''))).toEqual(rounded);
+    expect(rounded).not.toEqual(await paths(text));
+  });
+
+  it('draws flowchart.curve over the global curve', async () => {
+    const rounded = '  flowchart:\n    curve: rounded\n';
+    const drawn = await paths(configured(`  curve: linear\n${rounded}`));
+    expect(drawn).toEqual(await paths(configured(rounded)));
+    expect(drawn).not.toEqual(await paths(text));
+  });
+});
+
+describe('swimlane.curve is swimlane-beta’s own key, from any source (D761, #1377)', () => {
+  // `line-hops-off`'s diagram without its front matter. Its square routes keep the curves
+  // apart: `linear` has corners, `rounded` arcs, `basis` cubics.
+  const body = fixture('line-hops-off').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
+  const flowchartBody = body.replace(/^swimlane-beta TD/, 'flowchart TD');
+  /** `diagram` with `config` as its front matter (YAML takes JSON), hops off. */
+  const source = (diagram: string, config: Record<string, unknown> = {}): string => {
+    const swimlane = { lineHops: false, ...(config.swimlane as object | undefined) };
+    return `---\nconfig: ${JSON.stringify({ ...config, swimlane })}\n---\n${diagram}`;
+  };
+  async function paths(text: string, init: Record<string, unknown> = {}) {
+    const m = createMermaid();
+    m.initialize({ deterministic: true, ...init });
+    const r = await m.render('s', text);
+    expect(r.warnings).toEqual([]);
+    return edgePaths(parseSvg(r.svg));
+  }
+  const curve = (name: string) => ({ curve: name });
+  // The three looks, each from front matter alone.
+  const look = async (diagram: string, config: Record<string, unknown> = {}) =>
+    paths(source(diagram, config));
+
+  describe('swimlane-beta', () => {
+    expect(body).toMatch(/^swimlane-beta TD/);
+
+    it('draws an initialize() swimlane.curve over a front-matter flowchart.curve', async () => {
+      const drawn = await paths(source(body, { flowchart: curve('linear') }), {
+        swimlane: curve('basis'),
+      });
+      expect(drawn).toEqual(await look(body, { swimlane: curve('basis') }));
+      expect(drawn).not.toEqual(await look(body, { flowchart: curve('linear') }));
+    });
+
+    it('draws an initialize() swimlane.curve over a directive flowchart.curve', async () => {
+      const directive = `%%{init: {"flowchart": {"curve": "linear"}}}%%\n`;
+      const drawn = await paths(source(directive + body), { swimlane: curve('basis') });
+      expect(drawn).toEqual(await look(body, { swimlane: curve('basis') }));
+    });
+
+    it('draws a front-matter swimlane.curve over an initialize() flowchart.curve', async () => {
+      const drawn = await paths(source(body, { swimlane: curve('basis') }), {
+        flowchart: curve('linear'),
+      });
+      expect(drawn).toEqual(await look(body, { swimlane: curve('basis') }));
+      expect(drawn).not.toEqual(await look(body, { flowchart: curve('linear') }));
+    });
+
+    it('falls to flowchart.curve, then curve, then rounded when swimlane.curve is unset', async () => {
+      const linear = await look(body, { flowchart: curve('linear') });
+      const basis = await look(body, curve('basis'));
+      const rounded = await look(body);
+      expect(new Set([linear, basis, rounded].map((p) => p.join('|'))).size).toBe(3);
+      expect(await paths(source(body, curve('basis')), { flowchart: curve('linear') })).toEqual(
+        linear
+      );
+      expect(await paths(source(body), curve('basis'))).toEqual(basis);
+      expect(rounded).toEqual(await look(body, curve('rounded')));
+    });
+
+    it('keeps a per-edge curve above swimlane.curve', async () => {
+      const styled = `${body.trimEnd()}\n  linkStyle default interpolate linear\n`;
+      const drawn = await paths(source(styled), { swimlane: curve('basis') });
+      expect(drawn).toEqual(await look(body, { flowchart: curve('linear') }));
+    });
+  });
+
+  describe('a flowchart with layout: swimlane ignores swimlane.curve', () => {
+    const flow = (config: Record<string, unknown> = {}) =>
+      source(flowchartBody, { layout: 'swimlane', ...config });
+
+    it('set in front matter', async () => {
+      const rounded = await paths(flow());
+      expect(await paths(flow({ swimlane: curve('basis') }))).toEqual(rounded);
+      const linear = await paths(flow({ flowchart: curve('linear') }));
+      expect(linear).not.toEqual(rounded);
+      expect(await paths(flow({ swimlane: curve('basis'), flowchart: curve('linear') }))).toEqual(
+        linear
+      );
+      expect(await paths(flow({ swimlane: curve('basis'), ...curve('linear') }))).toEqual(linear);
+    });
+
+    it('set in initialize()', async () => {
+      const rounded = await paths(flow());
+      expect(await paths(flow(), { swimlane: curve('basis') })).toEqual(rounded);
+      const linear = await paths(flow({ flowchart: curve('linear') }));
+      expect(await paths(flow(curve('linear')), { swimlane: curve('basis') })).toEqual(linear);
+    });
+  });
+
+  it('drops a set swimlane.curve from text output only for swimlane-beta', async () => {
+    const dropped = async (diagram: string, init: Record<string, unknown>) => {
+      const m = createMermaid();
+      m.initialize({ deterministic: true, ...init });
+      const r = await m.render('s', diagram, { format: 'ascii' });
+      return r.warnings.filter((w) => w.code === 'ASCII_DROPPED' && w.feature === 'curve');
+    };
+    const tiny = 'A --> B';
+    expect(await dropped(`swimlane-beta TD\n${tiny}`, { swimlane: curve('basis') })).toHaveLength(
+      1
+    );
+    expect(await dropped(`swimlane-beta TD\n${tiny}`, {})).toEqual([]);
+    const lanes = `---\nconfig:\n  layout: swimlane\n---\nflowchart TD\n${tiny}`;
+    expect(await dropped(lanes, { swimlane: curve('basis') })).toEqual([]);
+  });
+});
+
 describe('layout: swimlane on another graph type (D535)', () => {
   it('lays a class diagram out with its namespaces as lanes', async () => {
     const text = read('class-diagram/pr-check/layout-swimlane-namespaces.mmd');
