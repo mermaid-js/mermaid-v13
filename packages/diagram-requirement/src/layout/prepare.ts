@@ -120,6 +120,7 @@ export interface RequirementPrepared {
   readonly title?: MeasuredLabel;
 }
 
+/** A curve name's kind, for the text output's check that the curve it drops is not square (pitfall 22). */
 export const requirementCurve = curveKind;
 
 type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
