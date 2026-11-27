@@ -49,6 +49,7 @@ describe('packet layout invariants on parser-produced fixtures', () => {
           config: { packet: { ...section, ...o } } as unknown as ResolvedConfig,
           measurer: tableMeasurer,
           theme,
+          warn: () => {},
         });
         const v = packetLayoutViolations(model, layout);
         if (v.length > 0)

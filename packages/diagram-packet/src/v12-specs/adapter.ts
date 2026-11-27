@@ -164,6 +164,7 @@ export const renderer = {
       measurer: tableMeasurer,
       idPrefix: 'packet-diagram',
       version,
+      warn: () => undefined,
     };
     const w = treeWriter();
     renderPacket(model, layoutPacket(model, ctx), ctx, w);

@@ -132,7 +132,7 @@ describe('parsePacket', () => {
     ]);
   });
 
-  it('marks a label written as a markdown string, which keeps its backticks as in v12 (D734)', () => {
+  it('marks a label written as a markdown string, which keeps its backticks as in v12 (#1368)', () => {
     const { model } = parsePacket(
       'packet\n0: "`**a**`"\n1: \'`b`\'\n2: "**c** *d*"\n3: "`e` f"\n4: "`g`h`"'
     );

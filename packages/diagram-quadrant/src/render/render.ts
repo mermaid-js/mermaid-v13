@@ -13,7 +13,8 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import { openSvgRoot } from '@mermaid-js/shared/svg/document';
-import { labelSource, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import type { QuadrantModel } from '../model.ts';
 import type { QuadrantLayout, QuadrantTextAnchor } from '../layout/types.ts';
 import { paints, type Paints } from './paint.ts';
@@ -66,12 +67,8 @@ export function renderQuadrant(
     if (!p) {
       const font: FontKey = { family, size: at.fontSize, weight: FONT_WEIGHT };
       // No wrap width: labels break only where they say so (D225).
-      // A markdown string the parser unwrapped is marked; the title keeps its quotes (D734).
-      const source = labelSource(
-        at.label.text,
-        { markdown: at.label.markdown, v12Markdown: false },
-        ctx.config
-      );
+      // A markdown string the parser unwrapped is marked; the title keeps its quotes (#1368).
+      const source = readLabel(at.label.text, { markdown: at.label.markdown }, ctx);
       const label = layoutLabel(source.text, font, Infinity, ctx.measurer, {
         ...source,
         ...(ctx.inline ? { inline: ctx.inline } : {}),

@@ -37,6 +37,7 @@ function lay(
     config: { packet } as unknown as ResolvedConfig,
     measurer,
     theme: createTheme(spec, { diagram: plugin.theme, ...(themeVariables && { themeVariables }) }),
+    warn: () => {},
   });
 }
 

@@ -10,10 +10,15 @@
  * (D342), and the viewBox no longer clips a title or label that runs past it (D344).
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  type FontKey,
+  type LabelSource,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import { packetConfig } from '../config.ts';
 import { packetLabelSource } from '../label-source.ts';
-import type { PacketField, PacketModel, PacketPiece } from '../model.ts';
+import type { PacketModel, PacketPiece } from '../model.ts';
 import { FIT_STEPS, NORMAL_WEIGHT, PACKET_METRICS as m } from './metrics.ts';
 import type {
   BitNumber,
@@ -26,7 +31,7 @@ import type {
 import { RectUnion } from '@mermaid-js/shared/layout';
 
 /** What the layout reads from the render context. */
-export type PacketLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
+export type PacketLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme' | 'warn'> &
   Partial<Pick<RenderContext, 'inline'>>;
 
 /** Lays out a packet diagram in px. */
@@ -49,19 +54,19 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
   };
   const strokeWidth = ctx.theme.number('packetBlockStrokeWidth');
   const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure = (label: string | PacketField, f: FontKey): MeasuredLabel => {
-    const source = packetLabelSource(label, ctx.config);
-    return layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, ...inline });
-  };
+  const measure = (source: LabelSource, f: FontKey): MeasuredLabel =>
+    layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, ...inline });
+  // Each label is read once: a field split over rows is measured once per piece.
+  const sources = model.fields.map((f) => packetLabelSource(f, ctx));
   const { ascent, descent } = ctx.measurer.metrics(fonts.byte);
 
   /**
    * A label in a piece `width` wide and `rowHeight` tall, shrunk to fit both down to the
    * bit-number size (D343; the height since #774, for labels of several `<br>` lines).
    */
-  const fitted = (field: PacketField, width: number): { text: MeasuredLabel; font: FontKey } => {
+  const fitted = (source: LabelSource, width: number): { text: MeasuredLabel; font: FontKey } => {
     let f = fonts.label;
-    let t = measure(field, f);
+    let t = measure(source, f);
     const min = Math.min(fonts.label.size, fonts.byte.size);
     const over = (l: MeasuredLabel): boolean => l.width > width || l.height > rowHeight;
     // Scale by the larger overflow; a measurer need not scale with the size, so the last step is
@@ -70,7 +75,7 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
       const share = Math.min(Math.max(width, 0) / t.width, Math.max(rowHeight, 0) / t.height);
       const scaled = f.size * share;
       f = font(i < FIT_STEPS ? Math.max(min, scaled) : min);
-      t = measure(field, f);
+      t = measure(source, f);
     }
     return { text: t, font: f };
   };
@@ -105,7 +110,7 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
     const x = column * bitWidth + m.margin;
     const width = Math.max(0, bits * bitWidth - paddingX);
     const box: Rect = { x, y: rowY, width, height: rowHeight };
-    const label = fitted(f, width);
+    const label = fitted(sources[p.field]!, width);
     const cx = x + width / 2;
     const cy = rowY + rowHeight / 2;
     const placed: PlacedLabel = {
@@ -153,7 +158,7 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
   // one place a measurement moves something (output changes only where v12 overlapped).
   let title: PlacedLabel | undefined;
   if (model.title) {
-    const text = measure(model.title, fonts.title);
+    const text = measure(packetLabelSource(model.title, ctx), fonts.title);
     const bottom = rows.length > 0 ? rows[rows.length - 1]!.y + rowHeight : -Infinity;
     const y = Math.max(height - pitch / 2 - text.lineHeight / 2, bottom);
     title = {

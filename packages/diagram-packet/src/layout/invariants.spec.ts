@@ -17,6 +17,7 @@ const lay = ({ model, config = {} }: Fixture, packet = {}): PacketLayout =>
     config: { packet: { ...config, ...packet } } as unknown as ResolvedConfig,
     measurer: tableMeasurer,
     theme: createTheme(spec, { diagram: plugin.theme }),
+    warn: () => {},
   });
 
 const ORDERS = [{}, { bitOrder: 'descending' }, { showBits: false }] as const;

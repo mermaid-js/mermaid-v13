@@ -1,10 +1,12 @@
 ---
 description: >-
-  Compatibility-mode twin of label-syntax.mmd (D734, #1397): the same quadrant labels with
-  legacyMarkdown set. No quadrant label kind read markdown in v12, so the picture is expected to
-  equal the default one: only a quoted markdown string is markdown, tags draw and `\n` breaks.
+  Twin of label-syntax.mmd with markdownAlwaysOn (#1368, #1397): every quadrant label is
+  markdown, so the plain `**bold** _ital_` rows draw bold and italic and the code-span row draws
+  inline code, unlike label-syntax.mmd. A markdown string, tags and a written `\n` draw as in
+  the default mode. A tag in unquoted axis, quadrant or point text is a parse
+  error in v12, so tags are written in quotes.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 quadrantChart
   title "`title **bold** _ital_`"

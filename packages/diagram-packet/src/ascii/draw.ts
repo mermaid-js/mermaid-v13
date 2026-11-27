@@ -14,10 +14,10 @@ import type { CellPadding } from '@mermaid-js/core/layout';
 import {
   layoutLabel,
   type InlineSpans,
-  type LabelConfig,
   type LabelOptions,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import type { MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { packetLabelSource } from '../label-source.ts';
 import type { PacketField, PacketModel, PacketPiece } from '../model.ts';
 import { cut, emphasised, wrapTitle } from '@mermaid-js/shared/ascii';
@@ -34,8 +34,9 @@ export interface DrawOptions {
   /** `ascii.maxWidth`: a longer title wraps to it (or to the drawing, when that is wider). */
   readonly maxWidth?: number;
   readonly inline?: InlineSpans;
-  /** The render's resolved config, for the label handler (D734). */
-  readonly config: LabelConfig;
+  /** The render's config and warnings, for the label handler (#1368). */
+  readonly config: MarkdownWarningContext['config'];
+  readonly warn: MarkdownWarningContext['warn'];
 }
 
 /** What text cannot show of the bold and italic it was given. */
@@ -91,8 +92,13 @@ export function drawPacket(model: PacketModel, options: DrawOptions): Drawn {
   // Core's glyph sets have no ellipsis; `~` keeps the `ascii` charset pure ASCII.
   const mark = glyphs.name === 'unicode' ? '…' : '~';
   const labelOptions: LabelOptions = options.inline ? { inline: options.inline } : {};
+  const reading: MarkdownWarningContext = {
+    config: options.config,
+    warn: options.warn,
+    ...(options.inline ? { inline: options.inline } : {}),
+  };
   const measure = (label: string | PacketField): MeasuredLabel => {
-    const source = packetLabelSource(label, options.config);
+    const source = packetLabelSource(label, reading);
     return layoutLabel(source.text, FONT, Infinity, cellMeasurer, { ...source, ...labelOptions });
   };
   const labels = model.fields.map(measure);
