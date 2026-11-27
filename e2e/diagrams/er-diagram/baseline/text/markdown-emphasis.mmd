@@ -1,11 +1,11 @@
 ---
 description: >-
-  Markdown emphasis in every ER label kind, as v12 formats it (#754, D565):
-  entity name, alias, attribute type, name and comment, relationship label and
-  subgraph title; an underscore inside a word stays. v13 reads it so with
-  legacyMarkdown: true (#1368); by default only a markdown string reads markdown.
+  Markdown emphasis in every ER label kind with markdownAlwaysOn: true, which
+  draws every label as markdown (#1368): entity name, alias, attribute type,
+  name and comment, relationship label and subgraph title; an underscore inside
+  a word stays. By default only a markdown string reads markdown.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 erDiagram
   "This **is** _Markdown_" {

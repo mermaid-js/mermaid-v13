@@ -1,10 +1,11 @@
 ---
 description: >-
-  label-syntax.mmd with legacyMarkdown: true (#1368): every ER label kind reads
-  plain **bold** _ital_ as emphasis again, as v12 did; every other way is drawn
-  as in label-syntax.mmd.
+  label-syntax.mmd with markdownAlwaysOn: true (#1368), which draws every label
+  as markdown: in every ER label kind the plain **bold** _ital_ rows draw bold
+  and italic and the code-span row draws inline code, so the picture differs
+  from label-syntax.mmd. Markdown strings, tags and \n draw as there.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 erDiagram
   P1["alias **bold** _ital_"] {

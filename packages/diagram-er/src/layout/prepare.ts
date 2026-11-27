@@ -9,8 +9,8 @@ import { erConfigDefaults } from '../generated/config-defaults.ts';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import { labelSource, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import { warnMarkdownOutside } from '@mermaid-js/core/text/markdown-warning';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import type {
   ErAttribute,
   ErEntity,
@@ -111,14 +111,8 @@ export const genericType = (input: string): string => parseGenericTypes(input);
  */
 export const typeLabel = (input: string): string => parseGenericTypes(input, REFERENCES);
 
-/**
- * Every ER label kind is one v12 read as Markdown without a markdown string: v12 passed each
- * label through `createText` with Markdown on (D565). So every kind has the v12 profile
- * `v12Markdown` (#1368): in the default mode only a markdown string is read as Markdown.
- */
-const PLAIN = { v12Markdown: true } as const;
-/** A label the parser marked as a markdown string (`"`…`"`). */
-const MARKDOWN_STRING = { markdown: true, v12Markdown: true } as const;
+/** A label the parser marked as a markdown string (`"`…`"`), given without its backticks. */
+const MARKDOWN_STRING = { markdown: true } as const;
 
 interface Measure {
   readonly font: FontKey;
@@ -190,10 +184,9 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     rule: units.id === 'cell' ? 1 : 0,
     label: (text, f, max, bits = 0, markdown = false) => {
       // A marked label holds its markdown string as v12 kept it, in its backticks.
-      const written = markdown ? text.slice(1, -1) : text;
-      const kind = markdown ? MARKDOWN_STRING : PLAIN;
-      const source = labelSource(written, kind, ctx.config);
-      warnMarkdownOutside(written, kind, ctx);
+      const source = markdown
+        ? readLabel(text.slice(1, -1), MARKDOWN_STRING, ctx)
+        : readLabel(text, undefined, ctx);
       return layoutLabel(source.text, f, max, measurer, {
         ...source,
         style: bits,

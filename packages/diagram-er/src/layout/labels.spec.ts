@@ -1,5 +1,5 @@
 // How each ER label kind reads what is written (#1368, D731): Markdown only in a markdown
-// string, and plain `**b** _i_` as v12 drew it only with `legacyMarkdown`.
+// string, and in every label with `markdownAlwaysOn`.
 import type { Warning } from '@mermaid-js/core';
 import { describe, expect, it } from 'vitest';
 import { pxProfile } from '@mermaid-js/core/layout';
@@ -13,7 +13,11 @@ import { layoutEr, type ErRenderContext } from './layout.ts';
 import type { ErPrepared } from './prepare.ts';
 
 const theme = createTheme(await loadTheme('redux'), { diagram: er.theme });
-const LEGACY: MermaidConfig = { legacyMarkdown: true };
+/** The setting, globally and through the ER section: both draw every label as markdown. */
+const ALWAYS: Record<string, MermaidConfig> = {
+  global: { markdownAlwaysOn: true },
+  er: { er: { markdownAlwaysOn: true } },
+};
 
 /** The ER views of `src`, and the warnings the layout gave. */
 function prepared(src: string, init?: MermaidConfig): { er: ErPrepared; warnings: Warning[] } {
@@ -21,7 +25,8 @@ function prepared(src: string, init?: MermaidConfig): { er: ErPrepared; warnings
   expect(diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   const warnings: Warning[] = [];
   const ctx: ErRenderContext = {
-    config: resolveConfig(CORE_DEFAULTS, init),
+    // As a render resolves it: the ER section's `markdownAlwaysOn` lands on the top level.
+    config: resolveConfig(CORE_DEFAULTS, init, undefined, [], undefined, { section: 'er' }),
     measurer: tableMeasurer,
     units: pxProfile,
     theme,
@@ -122,31 +127,49 @@ describe('ER labels in the default mode', () => {
   });
 });
 
-describe('ER labels with legacyMarkdown', () => {
-  it('draws plain **b** _i_ as emphasis, as v12 did, in every label kind', () => {
+describe.each(Object.entries(ALWAYS))('ER labels with markdownAlwaysOn (%s)', (_, on) => {
+  it('draws plain **b** _i_ as bold and italic in every label kind', () => {
     expect(
       kinds(
         every((k) => `"${k} **b** _i_"`),
-        LEGACY
+        on
       )
     ).toEqual(each((k) => [`${k} <B>b</B> <I>i</I>`]));
   });
 
-  it('reads everything else as the default mode does', () => {
+  it('reads a code span in a plain label as inline code', () => {
+    expect(
+      kinds(
+        every((k) => `"${k} a \`code\` b"`),
+        on
+      )
+    ).toEqual(each((k) => [`${k} a code b`]));
+  });
+
+  it('draws attribute type and name cells as markdown too', () => {
+    const src = 'erDiagram\n  E {\n    **t** _n_\n  }\n';
+    const cells = (init?: MermaidConfig) =>
+      prepared(src, init).er.entities[0]!.rows[0]!.cells.slice(0, 2).map(drawn);
+    expect(cells(on)).toEqual([['<B>t</B>'], ['<I>n</I>']]);
+    expect(cells()).toEqual([['**t**'], ['_n_']]);
+  });
+
+  it('reads markdown strings, tags and \\n as the default mode does', () => {
     for (const form of [
       (k: string) => `"\`${k} **b** _i_\`"`,
-      (k: string) => `"${k} a \`code\` b"`,
       (k: string) => `"${k} <b>b</b><br>H<sub>2</sub>O"`,
     ]) {
-      expect(kinds(every(form), LEGACY)).toEqual(kinds(every(form)));
+      expect(kinds(every(form), on)).toEqual(kinds(every(form)));
     }
+    const { er: view } = prepared('erDiagram\n  E ||--o{ F : "r one\\ntwo"\n', on);
+    expect(drawn(view.edges[0]!.label)).toEqual(['r one', 'two']);
   });
 
   it('gives no warning', () => {
     expect(
       prepared(
         every((k) => `"${k} **b** _i_"`),
-        LEGACY
+        on
       ).warnings
     ).toEqual([]);
   });
