@@ -10,8 +10,9 @@
  * `title + 20 + a`, with `a` half the taller of ticket and assignee (0 without either: checked
  * on a v12 render); the priority bar 2 in from the left, top and bottom. Changed: the margin is
  * `kanban.padding` (D378), `W` has a least value (`MIN_SECTION_WIDTH`), the bounds are what is
- * drawn (D224), and a ticket and assignee that do not fit side by side are stacked, the card
- * growing to hold both (`STACKED_META_ROW`, D647). In cells (the text output, #466) the lengths
+ * drawn (D224), a ticket and assignee that do not fit side by side are stacked, the card
+ * growing to hold both (`STACKED_META_ROW`, D647), card and column text wraps `labelInset` in
+ * from both sides of its box (D764), and a word wider than the wrap breaks (D765). In cells (the text output, #466) the lengths
  * are `KANBAN_CELL_METRICS` and the ticket row is a row of its own (`CELL_META_ROW`).
  */
 import type { Warning } from '@mermaid-js/core';
@@ -65,9 +66,9 @@ interface Env {
   readonly padding: number;
   readonly font: FontKey;
   /**
-   * Lays out `text` wrapped at `wrap`; undefined when there is no text. In px a word wider than
-   * `wrap` stays whole and overflows, as in v12 (spec #424); in cells it is split, as the text
-   * output draws a label inside its box.
+   * Lays out `text` wrapped at `wrap`; undefined when there is no text. A word wider than `wrap`
+   * is split between characters, in px as in cells, so it stays inside its box (D765; v12 let it
+   * overflow).
    */
   measure(text: string | undefined, wrap: number): MeasuredLabel | undefined;
 }
@@ -75,7 +76,7 @@ interface Env {
 /**
  * `W` in the render's units: the config's, at least what leaves card labels `minWrap` to wrap
  * at. In px that least is `MIN_SECTION_WIDTH`, which `configLengths` already raised to; in
- * cells it is wider than 26 px converts to, so a raise there is its own `KANBAN_CONFIG_IGNORED`
+ * cells it is wider than 36 px converts to, so a raise there is its own `KANBAN_CONFIG_IGNORED`
  * in place of `configLengths`' one (pitfall 22: one warning per render, naming what is drawn).
  */
 function sectionWidthOf(
@@ -113,7 +114,6 @@ function envOf(ctx: KanbanLayoutContext): Env {
     size: ctx.theme.number('fontSize'),
     weight: FONT_WEIGHT,
   };
-  const keepWords = ctx.units.id !== 'cell';
   return {
     lengths,
     meta,
@@ -125,7 +125,6 @@ function envOf(ctx: KanbanLayoutContext): Env {
       const { text: source, markup } = markdownString(text);
       const label = layoutLabel(source, font, wrap, ctx.measurer, {
         markup,
-        keepWords,
         ...(ctx.inline ? { inline: ctx.inline } : {}),
       });
       return label.lines.length === 0 ? undefined : label;
@@ -160,7 +159,8 @@ function cardOf(
   const width = env.sectionWidth - lengths.cardInset;
   const left = centre - width / 2;
   // Side by side, the ticket starts and the assignee ends `labelInset` in from the card's edges;
-  // when the two widths fill that row they no longer fit and are stacked (D647).
+  // when the two widths fill that row, which is the wrap (D764), they no longer fit and are
+  // stacked (D647).
   const stacked =
     ticket !== undefined &&
     assignee !== undefined &&
