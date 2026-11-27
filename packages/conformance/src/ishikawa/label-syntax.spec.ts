@@ -18,6 +18,10 @@ const SOURCE = readFileSync(
   join(REPO_ROOT, 'e2e/diagrams/ishikawa/pr-check/label-syntax.mmd'),
   'utf8'
 );
+const COMPAT = readFileSync(
+  join(REPO_ROOT, 'e2e/diagrams/ishikawa/pr-check/label-syntax-compat.mmd'),
+  'utf8'
+);
 
 function api(config: InitializeConfig = {}): Mermaid {
   const m = createMermaid();
@@ -106,5 +110,9 @@ describe('ishikawa label syntax (#1368)', () => {
     const text = async (config: InitializeConfig): Promise<string> =>
       (await api(config).render('m', SOURCE, { format: 'ascii' })).text;
     expect(await text({ legacyMarkdown: true })).toBe(await text({}));
+  });
+
+  it('draws the compatibility-mode twin fixture as the default one', async () => {
+    expect((await api().render('m', COMPAT)).svg).toBe((await api().render('m', SOURCE)).svg);
   });
 });
