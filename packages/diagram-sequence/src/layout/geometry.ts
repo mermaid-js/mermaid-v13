@@ -178,7 +178,7 @@ class XPass {
         : Math.max(span + 2 * m.wrapPadding, m.wrapWidth);
     const font = this.env.fonts.message;
     const keep = wrap && inside && !m.cells;
-    const label = this.env.measure(this.env.messageText(s), font, max, keep);
+    const label = this.env.measure(s.text, font, max, keep, this.env.messageFrame(s));
     const all = [fromLeft, fromRight, toLeft, toRight];
     const own = wrap ? 0 : label.width + 2 * m.wrapPadding;
     return {

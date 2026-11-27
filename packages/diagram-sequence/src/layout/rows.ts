@@ -527,7 +527,7 @@ export class Rows {
     // v12 skips a title that is empty once read (`loop </style>`), rather than drawing `[]`.
     const read = this.env.measure(label, this.env.fonts.message, Infinity);
     if (read.lines.every((line) => line.every((run) => run.text.trim() === ''))) return undefined;
-    return this.env.measure(`[${label}]`, this.env.fonts.message, max);
+    return this.env.measure(label, this.env.fonts.message, max, false, (text) => `[${text}]`);
   }
 
   private fragment(s: SequenceFragment): void {

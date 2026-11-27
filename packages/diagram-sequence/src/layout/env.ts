@@ -5,7 +5,13 @@
 import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
 import { checkStyle } from '@mermaid-js/core/svg';
-import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  fontSizePx,
+  labelSource,
+  layoutLabel,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import {
   ARROW_HEADS,
   type ArrowHead,
@@ -80,10 +86,10 @@ export interface Env {
   /** The sequence number of each numbered message (v12 `autonumber`, `showSequenceNumbers`). */
   readonly numbers: ReadonlyMap<SequenceMessage, number>;
   /**
-   * The text a message's label is measured and drawn from: its own, and in cells its sequence
-   * number in front (`1. Hello`), which SVG draws in a badge on the line instead.
+   * What a message's label adds around its text, read: in cells its sequence number in front
+   * (`1. Hello`), which SVG draws in a badge on the line instead.
    */
-  messageText(s: SequenceMessage): string;
+  messageFrame(s: SequenceMessage): Frame | undefined;
   readonly columns: ReadonlyMap<string, Column>;
   /** Participant ids in declaration order, hidden ones included: v12's neighbours. */
   readonly order: readonly string[];
@@ -92,11 +98,22 @@ export interface Env {
   /** The render's warning sink. */
   readonly warn: SequenceLayoutContext['warn'];
   /**
-   * `text` laid out in `font`, wrapped at `max`. With `keepWords`, a word wider than `max` stays
-   * whole on a line of its own instead of breaking between characters.
+   * The label written as `text` laid out in `font`, wrapped at `max`. With `keepWords`, a word
+   * wider than `max` stays whole on a line of its own instead of breaking between characters.
+   * `frame` adds the layout's own text around the label once it is read (a fragment title's
+   * brackets, a message's number in cells).
    */
-  measure(text: string, font: FontKey, max: number, keepWords?: boolean): MeasuredLabel;
+  measure(
+    text: string,
+    font: FontKey,
+    max: number,
+    keepWords?: boolean,
+    frame?: Frame
+  ): MeasuredLabel;
 }
+
+/** Text the layout adds around a label's text once the label is read. */
+export type Frame = (text: string) => string;
 
 const kindsWhere = (
   test: (h: (typeof ARROW_HEADS)[ArrowKind]) => boolean
@@ -213,18 +230,21 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
     mirror: seq.mirrorActors !== false,
     rightAngles: !m.cells && seq.rightAngles === true,
     numbers,
-    messageText: (s) => {
+    messageFrame: (s) => {
       const n = m.cells ? numbers.get(s) : undefined;
-      if (n === undefined) return s.text;
-      return s.text === '' ? `${n}.` : `${n}. ${s.text}`;
+      if (n === undefined) return undefined;
+      return (text) => (text === '' ? `${n}.` : `${n}. ${text}`);
     },
     order: participants.map((p) => p.id),
     index: new Map(participants.map((p, i) => [p.id, i])),
     warn: (w) => ctx.warn(w),
-    measure: (text, font, max, keepWords = false) => {
-      // v12 sequence broke a label at `<br>` only: a written `\n` is text (#763, D564).
-      const label = layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, {
-        backslashBreak: false,
+    measure: (text, font, max, keepWords = false, frame) => {
+      // The label handler (#1368): markdown only in a quoted markdown string, and a written `\n`
+      // breaks the line, as `<br>` does. No sequence label read markdown in v12.
+      const source = labelSource(text, { v12Markdown: false }, ctx.config);
+      const read = frame ? frame(source.text) : source.text;
+      const label = layoutLabel(read, font, max > 0 ? max : 1, ctx.measurer, {
+        ...source,
         inline: ctx.inline,
         keepWords,
       });

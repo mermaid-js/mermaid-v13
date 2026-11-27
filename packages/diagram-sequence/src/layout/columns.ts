@@ -109,8 +109,8 @@ function gapsWidened(env: Env, s: SequenceStatement): Gap[] {
   const wrap = s.wrap ?? env.autoWrap;
   const font = s.kind === 'note' ? env.fonts.note : env.fonts.message;
   const max = wrap ? m.wrapWidth - 2 * m.wrapPadding : Infinity;
-  const text = s.kind === 'message' ? env.messageText(s) : s.text;
-  const w = env.measure(text, font, max).width + 2 * m.wrapPadding;
+  const frame = s.kind === 'message' ? env.messageFrame(s) : undefined;
+  const w = env.measure(s.text, font, max, false, frame).width + 2 * m.wrapPadding;
   if (s.kind === 'note') return noteGaps(env, s, w);
   if (from === nextOf(env, to)) return [[to, w]];
   if (from === prevOf(env, to)) return [[from, w]];
