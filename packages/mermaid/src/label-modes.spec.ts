@@ -68,7 +68,8 @@ describe('label modes per diagram type (#763, D564)', () => {
     ]);
   });
 
-  it('class: emphasis in every label but cardinalities, list markers and backticks as written', async () => {
+  // The fixture sets `legacyMarkdown: true`: v12's reading of plain labels (#1368, #1389).
+  it('class with legacyMarkdown: emphasis in every label but cardinalities, list markers and backticks as written', async () => {
     const texts = await render(
       'class-diagram/baseline/text/list-markers-backticks-and-entities.mmd'
     );
@@ -79,9 +80,27 @@ describe('label modes per diagram type (#763, D564)', () => {
       '<b>An important class</b>',
       '+run() : `fast`',
       '<b>B</b>',
-      '- a note item\\nunknown #bogus; stays, : draws',
+      '- a note item / unknown #bogus; stays, : draws',
       '`code` in a note',
     ]);
+  });
+
+  it('class: plain markdown drawn as written, markdown strings read, \\n breaks (#1389)', async () => {
+    const { svg, warnings } = await corpusLabels(readFileSync).svgOf(
+      'class-diagram/pr-check/label-syntax.mmd'
+    );
+    expect(warnings.map((w) => w.code)).toEqual(['MARKDOWN_NOT_READ']);
+    const texts = drawnRuns(svg);
+    for (const kind of ['relation', 'note', 'namespace'])
+      expect(texts).toContain(`${kind} **bold** _ital_`);
+    expect(texts).toContain('+member **bold** _ital_');
+    expect(texts).toContain('<b>class **bold** _ital_</b>');
+    for (const kind of ['relation', 'note', 'namespace'])
+      expect(texts).toContain(`${kind} <b>bold</b> <i>ital</i>`);
+    expect(texts).toContain('+member <b>bold</b> <i>ital</i>');
+    expect(texts).toContain('<b>class bold </b><b><i>ital</i></b>');
+    for (const kind of ['relation', 'note', 'namespace', '+member'])
+      expect(texts).toContain(`${kind} one / two`);
   });
 
   it('sequence: a written backslash-n stays text, <br> breaks the line', async () => {
