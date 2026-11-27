@@ -22,7 +22,7 @@ export const ALLOWED_TAGS: readonly string[] = (
 ).split(' ');
 
 const ALLOWED = new Set(ALLOWED_TAGS);
-// The sanitizer drops these with what they hold, as v12 and core (D566) do.
+// The sanitizer drops these with what they hold, as v12 does. Core draws them as text (#1440).
 const DROPPED = new Set(['script', 'style']);
 
 const RE_TAG = /<\/?([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
