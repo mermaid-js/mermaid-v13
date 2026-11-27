@@ -123,7 +123,7 @@ describe('usecase render properties over the parsed corpus', () => {
       const handlers = c.tree.find((n, t) => t.getAttr(n, 'onerror') !== undefined);
       expect(handlers, c.id).toEqual([]);
       // A tag core does not draw is shown as text, escaped, as v12 escaped plain labels (only
-      // the drawn tags are read, D735); the accessible name keeps it too.
+      // the drawn tags are read, #1398); the accessible name keeps it too.
       expect(c.rendered.svg, c.id).toContain('&lt;img src=x');
       expect(c.rendered.svg, c.id).toContain(
         'aria-label="use case &lt;img src=x onerror=alert(1)&gt;"'

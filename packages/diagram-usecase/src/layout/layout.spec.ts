@@ -7,6 +7,7 @@ import { parseUsecase } from '../parser/index.ts';
 import { usecaseLayoutProblems } from './invariants.ts';
 import { layoutUsecase, type UsecaseLayout, type UsecaseLayoutContext } from './layout.ts';
 import { DRAWN_TAGS } from './prepare.ts';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 
 let theme: Theme | undefined;
 
@@ -262,7 +263,7 @@ describe('plain and Markdown labels', () => {
     return by;
   }
 
-  // Every label kind, each way it can be written (D735, spec #1368).
+  // Every label kind, each way it can be written (#1368, #1398).
   const KINDS = [
     'systemBoundary B["boundary <b>b</b>"]\n  actor A("actor <b>b</b>")\n  U("usecase <b>b</b>")\n  S[square <b>b</b>]\nend',
     'A -- "edge <b>b</b>" --> U',
@@ -270,7 +271,7 @@ describe('plain and Markdown labels', () => {
   ];
   const every = (body: string) => `usecase-beta\n${KINDS.join('\n')}\n${body}`;
 
-  it('draws the tags of a plain label in every label kind, and decodes its entities (D735)', async () => {
+  it('draws the tags of a plain label in every label kind, and decodes its entities (#1398)', async () => {
     const by = await labels(every(''));
     const bold = (kind: string) => [
       [
@@ -326,26 +327,62 @@ describe('plain and Markdown labels', () => {
         ['i', Style.Italic],
       ],
     ]);
-    // Bare backticks are no markdown string (D733): drawn as written.
+    // Bare backticks are no markdown string (#1368): drawn as written.
     expect(text(by.get('R')!)).toEqual(['`**r**`']);
     expect(text(by.get('C')!)).toEqual(['a `c` b']);
     expect(text(by.get('N')!)).toEqual(['one', 'two']);
     expect(runs(by.get('M')!)).toEqual([[['m', Style.Bold]], [['two', 0]]]);
   });
 
-  it('draws every label the same with legacyMarkdown: no usecase label kind read v12 markdown', async () => {
-    const src = every(
-      'P("**p** _i_")\nQ("`**q**`")\nR(`**r**`)\nN("one\\ntwo")\nP -- "**e**" --> Q'
-    );
-    const plain = await labels(src);
-    const legacy = await labels(src, { legacyMarkdown: true });
-    expect([...legacy.keys()]).toEqual([...plain.keys()]);
-    for (const [id, label] of plain) expect(runs(legacy.get(id)!), id).toEqual(runs(label));
+  // Every label kind with a plain `**b** _i_`.
+  const MARKED = [
+    'systemBoundary B["boundary **b** _i_"]\n  actor A("actor **b** _i_")\n  U("usecase **b** _i_")\n  S[square **b** _i_]\nend',
+    'A -- "edge **b** _i_" --> U',
+    'note for U "note **b** _i_"',
+  ].join('\n');
+
+  it('reads every label kind as markdown with markdownAlwaysOn, and gives no warning', async () => {
+    const { out, warnings } = await lay(`usecase-beta\n${MARKED}`, {}, { markdownAlwaysOn: true });
+    const p = out.usecase!;
+    const all = [
+      ...[...p.nodes.values()].map((v) => (v.kind === 'json' ? v.title : v.label)),
+      ...p.boundaries.map((b) => b.label),
+      ...p.edges.flatMap((e) => (e.kind === 'relation' && e.label ? [e.label] : [])),
+    ];
+    expect(all).toHaveLength(6);
+    for (const label of all) {
+      const [kind] = text(label)[0]!.split(' ');
+      expect(runs(label), kind).toEqual([
+        [
+          [`${kind} `, 0],
+          ['b', Style.Bold],
+          [' ', 0],
+          ['i', Style.Italic],
+        ],
+      ]);
+    }
+    expect(warnings).toEqual([]);
   });
 
-  it('keeps stereotypes, include and extend and JSON cells as written', async () => {
+  it('draws a markdown string, tags and a written \\n the same with markdownAlwaysOn', async () => {
+    const src = every('Q("`**q**`")\nN("one\\ntwo")\nQ -- "<i>e</i>" --> N');
+    const plain = await labels(src);
+    const always = await labels(src, { markdownAlwaysOn: true });
+    expect([...always.keys()]).toEqual([...plain.keys()]);
+    for (const [id, label] of plain) expect(runs(always.get(id)!), id).toEqual(runs(label));
+  });
+
+  it('warns once, MARKDOWN_NOT_READ, for plain labels with emphasis marks; never for a markdown string', async () => {
+    expect((await lay(`usecase-beta\n${MARKED}`)).warnings).toContain(MARKDOWN_NOT_READ.code);
+    const quoted = 'usecase-beta\nactor A("`**a**`")\nU("`_u_`")\nA -- "`**e**`" --> U';
+    expect((await lay(quoted)).warnings).toEqual([]);
+  });
+
+  it('keeps stereotypes, include and extend and JSON cells as written, with markdownAlwaysOn too', async () => {
     const { out } = await lay(
-      'usecase-beta\nactor A <<s<b>b</b>&amp;>>\nU\nV\nU ..> : include V\njson J@{ "<b>k</b>": "<i>v</i> &amp;" }'
+      'usecase-beta\nactor A <<s<b>b</b>&amp;>>\nU\nV\nU ..> : include V\njson J@{ "<b>k</b>": "<i>v</i> &amp; **x**" }',
+      {},
+      { markdownAlwaysOn: true }
     );
     const p = out.usecase!;
     const actor = p.nodes.get('actor:A')!;
@@ -353,7 +390,7 @@ describe('plain and Markdown labels', () => {
     if (actor.kind !== 'actor' || !json) throw new Error('kind');
     expect(text(actor.stereotype!)).toEqual(['«s<b>b</b>&amp;»']);
     expect(text(json.rows[0]!.key)).toEqual(['<b>k</b>']);
-    expect(text(json.rows[0]!.value)).toEqual(['<i>v</i> &amp;']);
+    expect(text(json.rows[0]!.value).join(' ')).toBe('<i>v</i> &amp; **x**');
     const edge = p.edges.find((e) => e.kind === 'relation');
     expect(edge && text(edge.label!)).toEqual(['«include»']);
   });

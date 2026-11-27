@@ -1,12 +1,13 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd: the same usecase labels
-  (actor, round and square use case, note, association edge label, boundary
-  title, each written the six ways) with legacyMarkdown set (D734, spec #1368).
-  No usecase label kind read markdown outside a markdown string in v12, so the
-  picture equals the default one. Boundary titles stay on one line, as there.
+  The markdownAlwaysOn twin of label-syntax.mmd: the same usecase labels (actor,
+  round and square use case, note, association edge label, boundary title, each
+  written the six ways) with markdownAlwaysOn set (#1368, #1398). Every label
+  is then markdown: the plain **bold** _ital_ rows draw bold and italic and the
+  code-span row draws inline code, so the picture differs from label-syntax.mmd.
+  Bare backticks are a code span here. Tags and the written break draw as there.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 usecase-beta
   direction LR

@@ -20,6 +20,7 @@ import {
   type LabelSource,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { USECASE_STYLE_IGNORED } from '../codes.ts';
 import {
   FONT_WEIGHT,
@@ -254,7 +255,7 @@ interface Measure {
   font(font: FontKey, style: CheckedStyle): FontKey;
   /**
    * Measures `text` in `font` (already styled, see `font`), wrapped at `max`: a label of `type`
-   * as {@link readLabel} reads it, or, with no `type`, a text drawn as written.
+   * as {@link usecaseLabelSource} reads it, or, with no `type`, a text drawn as written.
    */
   label(
     text: string,
@@ -318,19 +319,21 @@ const drawnTagsOnly = (text: string): string =>
       )
     : text;
 
+/** The handler's options for a label of `type`: the parser's mark for a markdown string. */
+const optionsOf = (type: UsecaseLabelType) => ({ markdown: type === 'markdown' });
+
 /**
- * How an actor, use case, note, boundary or association label is read (D735): core's label
- * handler, with the parser's mark for a markdown string. Markdown is read only there; in every
- * label the drawn tags ({@link DRAWN_TAGS}) draw, any other tag shows as written, entities
- * decode and a written `\n` breaks the line. v12 read no markdown in a plain usecase label, so
- * no kind has a v12 profile (`v12Markdown`).
+ * How an actor, use case, note, boundary or association label is read (#1368, #1398): core's
+ * label handler, with the parser's mark for a markdown string. Markdown is read only there, or in
+ * every label with `markdownAlwaysOn`; in every label the drawn tags ({@link DRAWN_TAGS}) draw,
+ * any other tag shows as written, entities decode and a written `\n` breaks the line. No warning:
+ * the layout's read ({@link measureFor}) gives that; this one is for the accessible names.
  */
-export const readLabel = (
+export const usecaseLabelSource = (
   text: string,
   type: UsecaseLabelType,
   config: ResolvedConfig
-): LabelSource =>
-  labelSource(drawnTagsOnly(text), { markdown: type === 'markdown', v12Markdown: false }, config);
+): LabelSource => labelSource(drawnTagsOnly(text), optionsOf(type), config);
 
 /**
  * A text drawn as written: a stereotype, an include or extend label, a JSON table's id or cell,
@@ -363,7 +366,10 @@ function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
       return { ...font, weight };
     },
     label(text, font, max, style, type) {
-      const source = type ? readLabel(text, type, ctx.config) : { text: asWritten(text) };
+      // The label read, with the render's markdown warning (once per render).
+      const source = type
+        ? readLabel(drawnTagsOnly(text), optionsOf(type), ctx)
+        : { text: asWritten(text) };
       return layoutLabel(source.text, font, max, ctx.measurer, {
         ...source,
         style: styleBits(style),

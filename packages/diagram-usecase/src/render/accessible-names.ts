@@ -3,11 +3,11 @@
  * them (`usecaseRenderer.ts:46-84`), such as "business hollow actor Customer, stereotype Human",
  * "use case Login", "Note for Login: …", "Payload: region: eu; …", "package system boundary
  * Shop" and "include from Login to Pay". A label is named by the words it draws, a line at a
- * time: without its tags, Markdown markers and character references (D735).
+ * time: without its tags, Markdown markers and character references (#1398).
  */
 import { layoutLabel, type FontKey } from '@mermaid-js/core/text';
 import {
-  readLabel,
+  usecaseLabelSource,
   type ActorView,
   type BoundaryView,
   type JsonTableView,
@@ -25,13 +25,13 @@ export type Speak = (text: string, type: UsecaseLabelType) => string;
 const FONT: FontKey = { family: 'sans-serif', size: 16, weight: 400 };
 
 /**
- * Reads labels as the layout does ({@link readLabel}) and lays them out unwrapped, so a name has
+ * Reads labels as the layout does ({@link usecaseLabelSource}) and lays them out unwrapped, so a name has
  * the lines the label was written with. A Markdown line's words are joined by one space, as
  * v12's `markdownToLines` gave them.
  */
 export function speaker(ctx: Pick<UsecaseRenderContext, 'config' | 'measurer'>): Speak {
   return (text, type) => {
-    const source = readLabel(text, type, ctx.config);
+    const source = usecaseLabelSource(text, type, ctx.config);
     const { lines } = layoutLabel(source.text, FONT, Infinity, ctx.measurer, source);
     return lines
       .map((runs) => {

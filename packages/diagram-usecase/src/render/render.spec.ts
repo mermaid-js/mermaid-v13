@@ -194,7 +194,7 @@ describe('the front-matter title (D472)', () => {
 });
 
 describe('labels', () => {
-  it('shows a tag it does not draw as text, and writes no element for it (D471, D735)', async () => {
+  it('shows a tag it does not draw as text, and writes no element for it (D471, #1398)', async () => {
     const { svg } = await render('pr-check/small-representative-visual-snapshot');
     // The decoded `Hostile("<img …>")` of D471: the tag's text, escaped (wrapped over two lines),
     // and no element.
@@ -205,7 +205,7 @@ describe('labels', () => {
     expect(name).toBe('use case <img src=x onerror=alert(1)>');
   });
 
-  it('draws tags and a written \\n in every label kind, and markdown only in a markdown string (D735)', async () => {
+  it('draws tags and a written \\n in every label kind, and markdown only in a markdown string (#1398)', async () => {
     const { svg, layout } = await render('pr-check/label-syntax');
     // Each line as laid out (a long label also wraps), and the runs as drawn.
     const label = (id: string) => {
@@ -230,14 +230,20 @@ describe('labels', () => {
     expect(svg).not.toMatch(/&lt;b&gt;|\\n/);
   });
 
-  it('draws the same with legacyMarkdown: no usecase label kind read v12 markdown (D734)', async () => {
-    const { svg } = await render('pr-check/label-syntax');
-    const legacy = await render('pr-check/label-syntax', { config: { legacyMarkdown: true } });
-    expect(legacy.svg).toBe(svg);
-    // The compatibility-mode twin sets the key in its front matter.
-    const twin = await render('pr-check/label-syntax-compat');
-    expect(twin.config.legacyMarkdown).toBe(true);
-    expect(twin.svg).toBe(svg);
+  it('reads every label as markdown in the markdownAlwaysOn twin of label-syntax.mmd', async () => {
+    const { svg, warnings } = await render('pr-check/label-syntax-compat');
+    // The plain row (way 1) now draws bold, as the markdown string row (way 2) does.
+    for (const id of ['A1', 'U1', 'S1', 'note-0'])
+      expect(inside(svg, 'node', id), id).toMatch(/font-weight="bold"[^>]*>bold</);
+    expect(inside(svg, 'node', 'U1')).toMatch(/font-style="italic"[^>]*>ital</);
+    for (const id of ['A1', 'U1', 'S1', 'note-0'])
+      expect(
+        texts(inside(svg, 'node', id))
+          .map((t) => t.text)
+          .join(''),
+        id
+      ).not.toContain('**');
+    expect(warnings.map((w) => w.code)).not.toContain('MARKDOWN_NOT_READ');
   });
 
   it('draws a stereotype as a first line «s» above the label, for actors and use cases', async () => {
@@ -423,7 +429,7 @@ describe('accessible names (v12 usecaseRenderer.spec.ts)', () => {
       expect(g.role).toBe('img');
   });
 
-  it('names a label by the words it draws: no tags, markers or written breaks (D735)', async () => {
+  it('names a label by the words it draws: no tags, markers or written breaks (#1398)', async () => {
     const { svg } = await render('pr-check/label-syntax');
     const name = (id: string) => elements(svg, 'g').find((e) => e['data-id'] === id)!['aria-label'];
     expect(name('A5')).toBe('actor actor bold ital\nnext H2O');
