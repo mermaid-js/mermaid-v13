@@ -190,5 +190,13 @@
     "reason": "accTitle and accDescr (D742): v13 reads `accTitle: x` and `accDescr: y` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and drew each line as a column (MIGRATION 220-kanban, #1300).",
     "owner": "D742",
     "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-layout/long-words",
+    "inputHash": "sha256:616b561e370a3c53",
+    "kind": "model",
+    "reason": "A layout difference, not a parse one: a word wider than its wrap (a column title, card title, ticket or assignee) is split between characters, so no text crosses its column's or card's right edge, where v12 kept it whole and let it overflow (D765, amends D372). Source: `e2e/diagrams/kanban/nightly-check/long-words.mmd`, whose hash this is; its models agree, so the parity runner never observes this entry. `packages/diagram-kanban/src/layout/layout.spec.ts` and the layout invariants (`kanbanLayoutViolations`, swept by `packages/conformance/src/kanban/layout-corpus.spec.ts`) check it (MIGRATION 220-kanban, #1304).",
+    "owner": "D765",
+    "since": "2026-11-27"
   }
 ]
