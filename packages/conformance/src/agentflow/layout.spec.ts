@@ -8,6 +8,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { layered, pxProfile, validateLayout, type LayoutEngine } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
 import { tableMeasurer } from '@mermaid-js/core/text';
+import { MARKDOWN_NOT_READ, markdownOutside } from '@mermaid-js/core/text/markdown-warning';
 import type { Theme } from '@mermaid-js/core/theme';
 import { layoutAgentflow, type AgentflowModel } from '@mermaid-js/diagram-agentflow';
 import {
@@ -48,6 +49,22 @@ const ENGINES: readonly [string, () => LayoutEngine][] = [
   ['compass', () => compass],
 ];
 
+/**
+ * Whether a label of `f` is plain and holds an emphasis pair, so its render warns
+ * `MARKDOWN_NOT_READ` (#1368, #1396); its labels as the layout reads them, with the parser's mark.
+ */
+function warnsMarkdown(f: Fixture): boolean {
+  const { vertices, edges, flows } = f.model;
+  const labels = [
+    ...vertices.map((v) => [v.text, v.labelType] as const),
+    ...edges.map((e) => [e.text, e.labelType] as const),
+    ...flows.map((g) => [g.title, g.labelType] as const),
+  ];
+  return labels.some(([text, type]) =>
+    markdownOutside(text, { markdown: type === 'markdown' }, f.config)
+  );
+}
+
 async function laidOut(f: Fixture, engine: LayoutEngine) {
   const warnings: string[] = [];
   const layout = layoutAgentflow(f.model, {
@@ -86,8 +103,14 @@ describe('agentflow layout over parser-produced fixtures', () => {
         const { layout, warnings } = await laidOut(f, engine);
         expect(validateLayout(layout.agentflow.graph, layout), f.id).toEqual([]);
         expect(agentflowLayoutProblems(f.model, layout), f.id).toEqual([]);
+        // The one content warning: markdown outside a markdown string, exactly where a label
+        // holds some (#1396). Without the API's once-per-render filter it comes once per label.
+        const markdown = warnings.filter((w) => w === MARKDOWN_NOT_READ.code);
+        expect(markdown.length > 0, f.id).toBe(warnsMarkdown(f));
         expect(
-          warnings.filter((w) => w !== 'STYLE_UNSAFE' && w !== 'STYLE_INVALID'),
+          warnings.filter(
+            (w) => w !== 'STYLE_UNSAFE' && w !== 'STYLE_INVALID' && w !== MARKDOWN_NOT_READ.code
+          ),
           f.id
         ).toEqual([]);
       }

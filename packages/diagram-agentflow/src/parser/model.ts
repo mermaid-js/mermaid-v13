@@ -541,15 +541,20 @@ export class AgentflowBuilder extends FlowBuilderBase<
 
   /**
    * v12 `addConnector`: a connector record, which replaces a vertex of the same id (in its
-   * place); its title is the id unless one is given. Returns the id.
+   * place); its title is the id unless one is given. Returns the id. Unlike v12, a title written
+   * as a markdown string keeps its `labelType`, so it is read as markdown (#1368, #1396).
    */
-  addConnector(name: string, title: string, ast: AstId, at: Range): string {
+  addConnector(name: string, title: AgentflowLabel | undefined, ast: AstId, at: Range): string {
     const id = name.trim();
     if (!id) return '';
-    const t = title.trim();
+    const t = (title?.text ?? '').trim();
+    const labelType: LabelType = title && t.length > 0 ? title.type : 'text';
     const existing = this.vertices.get(id);
     if (existing?.connector) {
-      if (t.length > 0) existing.text = t;
+      if (t.length > 0) {
+        existing.text = t;
+        existing.labelType = labelType;
+      }
       return id;
     }
     if (existing) {
@@ -560,7 +565,7 @@ export class AgentflowBuilder extends FlowBuilderBase<
       id,
       ast,
       text: t.length > 0 ? t : id,
-      labelType: 'text',
+      labelType,
       kind: 'connector',
       shape: 'rounded',
       connector: true,
