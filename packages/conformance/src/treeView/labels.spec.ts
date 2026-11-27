@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { treeViewCorpus } from './corpus.ts';
 import { treeViewApi } from './render-api.ts';
 
 // Node labels follow the label rule (#1368, T23), through the public `render()`: markdown only
@@ -43,5 +44,15 @@ describe('treeView node labels (#1368)', () => {
 
   it('draws the same with legacyMarkdown', async () => {
     expect(await render({ legacyMarkdown: true })).toBe(await render());
+  });
+
+  it('draws label-syntax-compat.mmd as label-syntax.mmd', async () => {
+    const corpus = await treeViewCorpus();
+    const svgOf = async (name: string): Promise<string> => {
+      const item = corpus.find((c) => c.id.endsWith(`pr-check/${name}.mmd`));
+      expect(item, name).toBeDefined();
+      return (await (await treeViewApi()).render('m', item!.source)).svg;
+    };
+    expect(await svgOf('label-syntax-compat')).toBe(await svgOf('label-syntax'));
   });
 });

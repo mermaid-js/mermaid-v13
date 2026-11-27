@@ -1,0 +1,29 @@
+---
+description: >-
+  The compatibility-mode twin of label-syntax.mmd, with legacyMarkdown set. A
+  tree view has no label kind where v12 read markdown, so it draws exactly as
+  the default one: markdown only in a quoted markdown string, tags draw, a
+  written \n breaks the line; the rest as written (#1368).
+config:
+  legacyMarkdown: true
+---
+treeView-beta
+  plain/
+    unquoted **bold** _ital_
+    "quoted **bold** _ital_"
+  "`md dir **bold** _ital_`/"
+    "`quoted md **bold** _ital_`"
+    '`single md **bold** _ital_`'
+  backticks/
+    `bare **bold** _ital_`
+    code a `code` b
+  tags <b>bold</b> <i>ital</i>/
+    unquoted <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    "quoted <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  breaks/
+    unquoted one\ntwo
+    "quoted one\ntwo"
+    "`md **one**\ntwo`"
+  names/
+    my_file_name.spec.ts
+    __init__.py
