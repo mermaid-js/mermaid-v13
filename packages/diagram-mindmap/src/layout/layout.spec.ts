@@ -78,13 +78,44 @@ describe('shape sizes at default config (v12 formulas, padding 10)', () => {
 });
 
 describe('labels', () => {
-  it('wrap at mindmap.maxNodeWidth in every shape (D287)', async () => {
+  it("wrap at an author's mindmap.maxNodeWidth in every shape (D287, D744)", async () => {
     const config = { mindmap: { maxNodeWidth: 50 } };
     for (const shape of ['default', 'rect', 'rounded', 'hexagon', 'circle'] as const) {
       const n = await only('aaaa bbbb cccc', shape, config);
       expect([n.label.width, n.label.height], shape).toEqual([40, 60]);
     }
-    expect((await only('aaaa bbbb cccc', 'rect')).label.width).toBe(140);
+    const wide = { mindmap: { maxNodeWidth: 150 } };
+    for (const shape of ['rect', 'rounded', 'hexagon'] as const) {
+      const n = await only('aaaa bbbb cccc dddd', shape, wide);
+      expect([n.label.width, n.label.height], shape).toEqual([140, 40]);
+    }
+  });
+
+  // v12 gave square, rounded and hexagon nodes no width, so their labels wrapped at
+  // `flowchart.wrappingWidth` (120); every other shape wrapped at `maxNodeWidth` (200).
+  it('wrap square, rounded and hexagon at 120 and the rest at 200 when maxNodeWidth is unset (v12, D744)', async () => {
+    const label = 'aaaa bbbb cccc dddd'; // 190 px on one line
+    for (const shape of ['rect', 'rounded', 'hexagon'] as const) {
+      const n = await only(label, shape);
+      expect([n.label.width, n.label.height], shape).toEqual([90, 40]);
+    }
+    for (const shape of ['default', 'circle', 'cloud', 'bang'] as const) {
+      const n = await only(label, shape);
+      expect([n.label.width, n.label.height], shape).toEqual([190, 20]);
+    }
+  });
+
+  it('wrap a plain node drawn rounded (the redux family) at 120, as v12 did', async () => {
+    const ctx = contextFor(tree, await themeNamed('redux-color'));
+    const n = layoutMindmap(fixtureModel([{ label: 'aaaa bbbb cccc dddd', depth: 0 }]), ctx).mindmap
+      .nodes[0]!;
+    expect(n.shape).toBe('rounded');
+    expect([n.label.width, n.label.height]).toEqual([90, 40]);
+  });
+
+  it('count a maxNodeWidth equal to the generated default, 200, as unset (D124 style, D744)', async () => {
+    const n = await only('aaaa bbbb cccc dddd', 'rect', { mindmap: { maxNodeWidth: 200 } });
+    expect([n.label.width, n.label.height]).toEqual([90, 40]);
   });
 
   it('are markdown: `**x**` is bold, line breaks start lines', async () => {
