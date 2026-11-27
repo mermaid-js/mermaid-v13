@@ -22,11 +22,11 @@ import type { RenderContext } from '@mermaid-js/core';
 import {
   decodeEntities,
   layoutLabel,
-  markdownString,
   type FontKey,
   type MeasuredLabel,
   type Measurer,
 } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import {
   railroadConfig,
@@ -114,6 +114,7 @@ export function layoutRailroad(
   const place = new Placer(options, m, measurer, text, ruleName, {
     ...(cells ?? { guard: pxGuard }),
     ...(ctx.inline ? { inline: ctx.inline } : {}),
+    labels: { config: ctx.config, warn: ctx.warn ?? ignore, inline: ctx.inline },
   });
   const rules: RailroadRuleLayout[] = [];
   let y = options.padding;
@@ -137,6 +138,9 @@ export function layoutRailroad(
 
 /** The size of a laid-out expression, before its parent places it. */
 type Sized = Omit<RailroadExpressionLayout, 'x' | 'y'>;
+
+/** A warning nobody takes: a layout called without `warn`. */
+const ignore = (): void => undefined;
 
 /** Places `e` at (`x`, `y`) in its parent. */
 const at = (e: Sized, x: number, y: number): RailroadExpressionLayout => ({ ...e, x, y });
@@ -185,11 +189,12 @@ class Placer {
     private readonly ruleFont: FontKey,
     /**
      * The main-line rule, and the rows below a rule's definition in cells (px: `2 × padding`);
-     * the render's `inline`, which collects the tags a special drops (`HTML_DROPPED`).
+     * the render's `inline`, for its warnings and whole-label provider; what core's label
+     * handler reads (`labels`).
      */
     private readonly cells: Pick<RailroadCellOptions, 'guard'> &
       Partial<RailroadCellOptions> &
-      Pick<RenderContext, 'inline'>
+      Pick<RenderContext, 'inline'> & { readonly labels: MarkdownWarningContext }
   ) {
     this.lineHeight = measurer.metrics(font).lineHeight;
   }
@@ -327,9 +332,10 @@ class Placer {
   }
 
   /**
-   * A special, `? text ?` in a dashed box (L473-499). Its text follows the label rule (D710):
-   * `<br>`, the drawn tags and character references, and Markdown only in a markdown string;
-   * any other tag is dropped and named in `HTML_DROPPED`. A text that draws formatting is laid
+   * A special, `? text ?` in a dashed box (L473-499). Its text is read by core's label handler
+   * (#1368): `<br>`, a written `\n`, the drawn tags and character references, and Markdown only
+   * in a quoted markdown string or with `markdownAlwaysOn`; any other tag is drawn as written
+   * (#1440). A text that draws formatting is laid
    * out in lines and its box sized from them (in px; the text output draws its plain text). Any
    * other is drawn as one string, the label's text. A plain text with no `<`, which holds no tag,
    * is drawn as before: as written, its entities decoded. The SVG draws a special on one line,
@@ -338,16 +344,16 @@ class Placer {
    */
   private special(node: RailroadSpecial): Sized {
     if (node.literal) return this.leaf(node, `? ${oneLine(node.text)} ?`, 0, this.m.specialDash);
-    const { text: source, markup } = markdownString(node.text);
-    const written = `? ${source} ?`;
+    const source = readLabel(node.text, undefined, this.cells.labels);
+    const written = `? ${source.text} ?`;
     const inline = tagsOnly(this.cells.inline);
     const label = layoutLabel(oneLine(written), this.font, Infinity, this.measurer, {
-      markup,
+      ...source,
       ...(inline ? { inline } : {}),
     });
     const dash = this.m.specialDash;
     const formatted = isFormatted(label);
-    const asWritten = !formatted && markup === 'plain' && !source.includes('<');
+    const asWritten = !formatted && source.markup === 'plain' && !source.text.includes('<');
     const text = asWritten ? decodeEntities(written) : plainText(label);
     const drawn = formatted && !this.cells.measurer ? { text, label } : { text };
     return this.leaf(node, written, 0, dash, drawn);

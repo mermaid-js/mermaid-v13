@@ -70,7 +70,7 @@ describe('timelines through the public API (#315)', () => {
 
 /** The SVG of `text` with `config` in an init directive, and its warnings. */
 describe('timeline label markup through the public API (D710, D711)', () => {
-  it('draws the label tags and markdown strings, and warns once for other HTML', async () => {
+  it('draws the label tags and markdown strings, and other tags as text (#1440)', async () => {
     const src = [
       'timeline',
       '  2002 : <b>bold</b> and <i>italic</i> : <span>x</span>',
@@ -82,7 +82,8 @@ describe('timeline label markup through the public API (D710, D711)', () => {
     expect(result.svg).toContain('<tspan font-style="italic">italic</tspan>');
     expect(result.svg).not.toContain('&lt;b&gt;');
     expect(result.svg).not.toContain('**md**');
-    expect(result.warnings.map((w) => w.code)).toEqual(['HTML_DROPPED']);
+    expect(result.svg).toContain('&lt;span&gt;x&lt;/span&gt;');
+    expect(result.warnings).toEqual([]);
     assertInert(result.svg);
   });
 });

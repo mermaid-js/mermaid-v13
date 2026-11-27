@@ -16,13 +16,8 @@ import {
   foldedTypeText,
 } from '@mermaid-js/core/svg/folded';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import {
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
-import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveResolver, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
@@ -41,6 +36,7 @@ import {
 } from './shapes.ts';
 import { themePads, type Frame } from '@mermaid-js/shared/shapes/kit';
 import { titlePositions } from './title-position.ts';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 
 export interface NodeView {
   id: string;
@@ -166,19 +162,17 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
-    // `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
-    label: (text, markdown, f, max, bits = 0) =>
-      layoutLabel(
-        text,
-        f,
-        markdown && ctx.config.markdownAutoWrap === false ? Infinity : max,
-        measurer,
-        {
-          markdown,
-          style: bits,
-          inline,
-        }
-      ),
+    // Read by core's label handler (#1368), which also warns of markdown outside a markdown
+    // string. `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
+    label: (text, markdown, f, max, bits = 0) => {
+      const source = readLabel(text, { markdown }, ctx);
+      const unwrapped = source.markup === 'markdown' && ctx.config.markdownAutoWrap === false;
+      return layoutLabel(source.text, f, unwrapped ? Infinity : max, measurer, {
+        ...source,
+        style: bits,
+        inline,
+      });
+    },
     curveOf: curveResolver(ctx.config.curve, FLOWCHART_CURVE, (w) => ctx.warn(w)),
     styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), ctx.warn),
   };
@@ -271,31 +265,15 @@ function nodeViews(
       turnBar(view, nest, m.cells);
     }
   }
-  // Under the swimlane engine a top-level subgraph is a lane (`ctx.layoutPart`, render.ts).
-  const lanes = typeof m.ctx.layoutPart === 'function';
+  // A subgraph's title, a swimlane's lane title included, is read by the label handler as every
+  // other flowchart label (#1368).
   for (const view of groups) {
+    const sg = subgraphs.get(view.id)!;
     const [f, bits] = textStyle(view.style, m.font);
-    const [title, md] = groupTitle(subgraphs.get(view.id)!, lanes, view.parent);
-    view.label = m.label(title, md, f, Infinity, bits);
+    view.label = m.label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
   }
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
-}
-
-/**
- * A group's title and whether it is markdown. A lane title reads a markdown string with or
- * without quotes (D710); the parser strips only the quoted form's wrapper, so the bare form is
- * read here. A subgraph title keeps flowchart's reading.
- */
-function groupTitle(
-  sg: FlowModelSubgraph,
-  lanes: boolean,
-  parent: string | undefined
-): [string, boolean] {
-  if (sg.labelType === 'markdown' || !lanes || parent !== undefined)
-    return [sg.title, sg.labelType === 'markdown'];
-  const { text, markup } = markdownString(sg.title);
-  return [text, markup === 'markdown'];
 }
 
 /** A size's label shift sideways, none when it has no `dx`. */

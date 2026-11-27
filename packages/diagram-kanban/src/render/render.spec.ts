@@ -334,7 +334,9 @@ describe('label markup (D710, D712)', () => {
 
   it('draws <br>, the tags and entities in plain labels of every kind', async () => {
     const { svg } = await renderKanbanForTest(
-      "kanban\n  todo[To<br>do]\n    a[<b>bold</b> &amp; <i>it</i>]@{ ticket: '<u>T</u>', assigned: '`**md**`' }\n"
+      'kanban\n  todo[To<br>do]\n' +
+        "    a[<b>bold</b> &amp; <i>it</i>]@{ ticket: '<u>T</u>', assigned: '\"`**md**`\"' }\n" +
+        "    b[Card]@{ assigned: '`**bare**`' }\n"
     );
     expect(textOf(svg, 'n:todo').match(/<tspan[^>]* x=/g)).toHaveLength(2);
     const card = svg.slice(svg.indexOf('data-ast="n:a"'));
@@ -343,6 +345,8 @@ describe('label markup (D710, D712)', () => {
     expect(card).toMatch(/text-decoration="underline"[^>]*>T</);
     expect(card).toMatch(/font-weight="bold"[^>]*>md</);
     expect(card).not.toContain('**md**');
+    // Bare backticks are no markdown string: drawn as written (#1368).
+    expect(svg).toContain('`**bare**`');
   });
 
   it('draws a ticket in <b> bold and an assignee in <i> italic, without their tags', async () => {

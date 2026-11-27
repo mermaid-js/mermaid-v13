@@ -1,7 +1,7 @@
 /**
  * One label rule across types (D710, spec #1333 T9, #1230): each type's label-markup fixture is
  * rendered through `render()`, and its labels are read back from the SVG. A `<br>` gives a label
- * of two lines, a `<b>` a bold run, and a markdown string (a whole label in backticks) a bold run
+ * of two lines, a `<b>` a bold run, and a markdown string (`"`…`"`) a bold run
  * with no backtick left; `**x**` without backticks and railroad's terminals are drawn exactly as
  * written. Each case lists only what its fixture holds, as drawn text: the sources are the
  * fixtures.
@@ -62,11 +62,15 @@ const CASES: Readonly<Record<string, Case>> = {
     file: 'kanban/nightly-check/plain-vs-markdown.mmd',
     br: [['First', 'second & bold it']],
     tag: [['First\nsecond & bold it', 'bold']],
-    md: [
-      ['bold card', 'bold'],
-      ['md', 'md'],
+    md: [['bold card', 'bold']],
+    // Bare backticks are no markdown string (#1368, #1407).
+    literal: [
+      'Use `npm ci` first',
+      '- not a list',
+      '1. not a list either',
+      '**stars** stay',
+      '`**md**`',
     ],
-    literal: ['Use `npm ci` first', '- not a list', '1. not a list either', '**stars** stay'],
   },
   railroad: {
     file: 'railroad/nightly-check/label-markup.mmd',
@@ -76,7 +80,6 @@ const CASES: Readonly<Record<string, Case>> = {
       ['? bold and italic ?', 'bold'],
       ['? a < b & c, <b> ?', '<b>'],
     ],
-    md: [['? bold and italic ?', 'bold']],
     // Terminals stay as written, a tag and a typed entity included (D710, amending D563), and
     // so does `**x**` in a special sequence. The fixture writes its entities without `;`, which
     // the e2e page (`asHostText`) passes on unchanged.
@@ -87,17 +90,17 @@ const CASES: Readonly<Record<string, Case>> = {
       '`**md**`',
       '<i>&lt x&gt</i> &amp &#60',
       '? **stays literal** ?',
+      // A special in bare backticks is no markdown string (#1368, #1407).
+      '? `**bold** and *italic*` ?',
     ],
   },
   swimlane: {
     file: 'swimlanes/nightly-check/lane-title-markdown.mmd',
     br: [['two', 'lines bold & it']],
     tag: [['two\nlines bold & it', 'bold']],
-    md: [
-      ['Italic bold lane', 'bold'],
-      ['Bare lane', 'Bare'],
-    ],
-    literal: ['**Bold** lane'],
+    md: [['Italic bold lane', 'bold']],
+    // Bare backticks are no markdown string (#1368, #1407).
+    literal: ['**Bold** lane', '`**Bare** lane`'],
   },
   timeline: {
     file: 'timeline/nightly-check/label-markup.mmd',

@@ -45,13 +45,3 @@ export const toWarning = (w: Warning, fragments: readonly ConfigFragment[]): War
 
 /** A draw's context as the API builds it: the render's inline spans are always there. */
 export type DrawContext = RenderContext & Required<Pick<RenderContext, 'inline'>>;
-
-/** Warns once, as `HTML_DROPPED`, of the tags the labels of `ctx`'s draw lost (D566). */
-export function warnHtmlDropped(ctx: DrawContext): void {
-  const tags = [...ctx.inline.dropped];
-  if (tags[0])
-    ctx.warn({
-      code: 'HTML_DROPPED',
-      message: `Labels do not draw <${tags.join('>, <')}>.${tags.includes('a') ? ' For a link, use click id "url".' : ''}`,
-    });
-}

@@ -2,20 +2,21 @@
  * `KanbanModel` → `KanbanLayoutInput` (spec #424 T3): the drawn part of T2's model. Columns in
  * source order with their cards by position (D373); labels, tickets and assignees as the model
  * holds them (entities as written, core's label layout decodes them), a label the model marks
- * as a markdown string wrapped in backticks again so the layout reads it as one (D712);
+ * as a markdown string with its `markdown` mark, so the layout reads it as one (D712, #1368);
  * `priority` only when it was a YAML string (`priorityKind: 'other'` draws no bar,
  * D375). Icons, classes and a column's metadata are not drawn (D376).
  */
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanLayoutCard, KanbanLayoutInput } from './input.ts';
 
-/** The item's label by the label rule: a markdown string keeps its backticks (D710, D712). */
-const labelOf = (item: KanbanItem): string => (item.markdown ? `\`${item.label}\`` : item.label);
+/** The item's label, and its mark when it was written as a markdown string (D712). */
+const labelOf = (item: KanbanItem): { title: string; markdown?: true } =>
+  item.markdown ? { title: item.label, markdown: true } : { title: item.label };
 
 function cardOf(item: KanbanItem): KanbanLayoutCard {
   return {
     ast: item.ast,
-    title: labelOf(item),
+    ...labelOf(item),
     ...(item.ticket === undefined ? {} : { ticket: item.ticket }),
     ...(item.assigned === undefined ? {} : { assigned: item.assigned }),
     ...(item.priority !== undefined && item.priorityKind !== 'other'
@@ -34,7 +35,7 @@ export function kanbanLayoutInput(model: KanbanModel): KanbanLayoutInput {
       const card = model.items[k];
       if (card) cards.push(cardOf(card));
     }
-    columns.push({ ast: item.ast, title: labelOf(item), cards });
+    columns.push({ ast: item.ast, ...labelOf(item), cards });
   }
   return { columns };
 }

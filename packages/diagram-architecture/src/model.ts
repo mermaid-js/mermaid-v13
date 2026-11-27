@@ -24,6 +24,10 @@ export interface ArchitectureService {
   readonly iconText?: string;
   /** The `[…]` label after v12's conversion (trimmed, one pair of quotes off); absent when none. */
   readonly title?: string;
+  /** Set when `title` was written as a quoted markdown string, `["`…`"]` (#1368). */
+  readonly titleMarkdown?: true;
+  /** Set when `iconText` was written as a markdown string, `"`…`"` (#1368). */
+  readonly iconTextMarkdown?: true;
   /** The group it is in; absent when none. */
   readonly in?: string;
   /** `service:<id>`: the AST id of the declaration that registered it (pitfall 9, D508). */
@@ -43,6 +47,8 @@ export interface ArchitectureGroup {
   readonly id: string;
   readonly icon?: string;
   readonly title?: string;
+  /** Set when `title` was written as a quoted markdown string, `["`…`"]` (#1368). */
+  readonly titleMarkdown?: true;
   /** The parent group, declared before it. */
   readonly in?: string;
   /** `group:<id>`. */
@@ -66,6 +72,8 @@ export interface ArchitectureEdge {
   readonly rhsGroup: boolean;
   /** The `-[label]-` label, converted as a service's; absent for `--`. */
   readonly title?: string;
+  /** Set when `title` was written as a quoted markdown string, `-["`…`"]-` (#1368). */
+  readonly titleMarkdown?: true;
   /** `edge:<lhs>-><rhs>`, a repeat of the pair `@2`, … (D508). */
   readonly astId: AstId;
 }

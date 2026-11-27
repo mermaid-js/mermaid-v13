@@ -19,9 +19,9 @@ const DETECT = /^\s*kanban/;
 
 /**
  * Every text the layout hands to core's label layout (D176), as written: read off
- * `kanbanLayoutInput`, so it is the drawn titles, tickets and assignees, a markdown string still
- * in its backticks (D712), as pie lists its labels. Its readers, the math and icons extensions,
- * look for `$$` and `fa:fa-` inside a label, which the wrapper does not change.
+ * `kanbanLayoutInput`, so it is the drawn titles, tickets and assignees, a markdown string
+ * without its wrapper (D712). Its readers, the math and icons extensions, look for `$$` and
+ * `fa:fa-` inside a label, which the wrapper does not change.
  */
 function kanbanLabels(model: KanbanModel): string[] {
   const out: string[] = [];

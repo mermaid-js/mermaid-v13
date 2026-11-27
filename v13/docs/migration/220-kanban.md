@@ -47,12 +47,16 @@
   assignee, a word wider than its wrap is split between characters, so no text crosses its
   column's or card's right edge. v12 let it overflow, and so did v13 until now; the text output
   already split it.
-- **Markdown only in markdown strings** (D710, D712). v12 read every label as Markdown, so
-  `**bold**` and `*italic*` drew bold and italic without backticks. Now only a label wholly in
-  backticks (`` ["`**bold** card`"] ``, `` assigned: '`**md**`' ``) is read as Markdown; in any
-  other label `**bold**` is drawn as written. Wrap the label in `` "`…`" `` to keep the old
-  look. Inline code and list syntax (``Use `npm ci` first``, `- not a list`, `1. step`) are
-  drawn as written, as v12 drew them; earlier v13 builds drew them as code and list items.
+- **Markdown only in markdown strings** (D712, #1368, #1407). v12 read every label as Markdown,
+  so `**bold**` and `*italic*` drew bold and italic without backticks. Now only a quoted
+  markdown string (`` ["`**bold** card`"] ``, `` assigned: '"`**md**`"' ``) is read as Markdown;
+  in any other label `**bold**` and bare backticks (`` [`**bold** card`] ``) are drawn as
+  written, and the render gives one `MARKDOWN_NOT_READ` warning. A written `\n` breaks the line
+  in every label. Wrap the label in `` "`…`" ``, or set `markdownAlwaysOn: true` (global or
+  `kanban.markdownAlwaysOn`), which draws every column, card, ticket and assignee as Markdown, to
+  keep the old look. Inline code and list syntax (``Use `npm ci` first``, `- not a list`,
+  `1. step`) are drawn as written, as v12 drew them; earlier v13 builds drew them as code and
+  list items.
 - **Metadata v12 parsed but never drew is still not drawn** (D376), with no warning: an item's
   icon (`::icon()` or `@{ icon }`), and a column's `ticket`, `assigned` and `priority`. It stays
   in the model and the AST.

@@ -15,7 +15,6 @@ import type { Point } from '@mermaid-js/core/layout';
 import { scale, transforms, translate, writeFragment, type SvgWriter } from '@mermaid-js/core/svg';
 import {
   layoutLabel,
-  markdownString,
   type BoxRun,
   type FontKey,
   type MeasuredLabel,
@@ -23,6 +22,7 @@ import {
   type SvgFragment,
 } from '@mermaid-js/core/text';
 import { WARNING_NAMES } from '../codes.ts';
+import { readArchitectureLabel } from '../label.ts';
 import type { ArchitectureSizes } from '../layout/metrics.ts';
 import { ART_SIZE, BUILTIN_PACK, WHITE, builtinIcons } from './builtins.ts';
 import type { ArchitectureRenderContext } from './context.ts';
@@ -144,15 +144,19 @@ function lineBottoms(label: MeasuredLabel): number[] {
  */
 export function fitTextIcon(
   text: string,
+  markdown: true | undefined,
   sizes: ArchitectureSizes,
   font: FontKey,
   ctx: ArchitectureRenderContext
 ): MeasuredLabel | undefined {
   const room = sizes.iconSize - 2 * sizes.iconTextMargin;
   if (!(room > 0)) return undefined;
-  // A markdown string is laid out as markdown without its wrapper, any other text plain (D710).
-  const { text: source, markup } = markdownString(text);
-  const label = layoutLabel(source, font, room, ctx.measurer, { markup, inline: ctx.inline });
+  // Read by core's label handler (#1368), as every other architecture label.
+  const source = readArchitectureLabel(text, markdown, ctx);
+  const label = layoutLabel(source.text, font, room, ctx.measurer, {
+    ...source,
+    inline: ctx.inline,
+  });
   const bottoms = lineBottoms(label);
   let most = 0;
   while (most < bottoms.length && bottoms[most]! <= room) most++;

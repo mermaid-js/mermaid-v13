@@ -67,7 +67,9 @@ describe('boxes and track', () => {
   it('draws a special’s tags and markdown string as plain text, a terminal as written (D710)', async () => {
     expect(
       await text(
-        ir('r = sequence(terminal("<b>t</b>"), special("<b>a</b><br>b"), special("`**c**`"));')
+        ir(
+          'r = sequence(terminal("<b>t</b>"), special("<b>a</b><br>b"), special("\\"`**c**`\\""));'
+        )
       )
     ).toBe(
       lines(

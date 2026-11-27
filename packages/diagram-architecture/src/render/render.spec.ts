@@ -445,7 +445,8 @@ describe('label markup (D710, spec #1333 T4)', () => {
     expect(textWith(svg, 'Bold')).toMatch(/font-style="italic">it</);
     expect(textWith(svg, 'literal')).toMatch(/>\*\*literal\*\*<\/tspan><tspan[^>]*>\*stars\*</);
     expect(textWith(svg, 'literal')).not.toContain('font-weight');
-    expect(codes({ warnings })).toEqual([]);
+    // The literal markdown gives the render its one MARKDOWN_NOT_READ (#1368).
+    expect(codes({ warnings })).toEqual(['MARKDOWN_NOT_READ']);
   });
 });
 

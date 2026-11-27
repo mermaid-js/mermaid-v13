@@ -1,0 +1,16 @@
+---
+description: >-
+  The railroad label kind, a special sequence (? … ?), written the six ways
+  of spec #1368: plain markdown, a quoted markdown string, bare backticks,
+  a code span in plain text, the common tags and a written \n. Only the
+  quoted markdown string reads markdown; the bare backticks and the code
+  span are drawn as written, the tags draw and \n breaks the line. The
+  terminals beside them are grammar tokens and stay as written (D710).
+---
+railroad-ebnf-beta
+plain = "**t**" , ? special **bold** _ital_ ? ;
+quoted = "`t`" , ? "`special **bold** _ital_`" ? ;
+bare = "<b>t</b>" , ? `special **bold** _ital_` ? ;
+code = "t" , ? special a `code` b ? ;
+tags = "t" , ? special <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O ? ;
+newline = "t" , ? special one\ntwo ? ;

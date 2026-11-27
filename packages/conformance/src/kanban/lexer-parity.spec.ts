@@ -111,8 +111,8 @@ describe('kanban lexer parity with mermaid@12 (jison)', () => {
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture, every harvested spec and syntax-page string and every case reaches
     // the lexer: 30 restored e2e fixtures and 23 baselines (#459), #837's attribute quotes,
-    // D647's ticket-row pair, D742's acc statements, and D765's long words.
-    expect(e2e).toBe(59);
+    // D647's ticket-row pair, D742's acc statements, D765's long words, and #1407's label-syntax pair.
+    expect(e2e).toBe(61);
     expect(specs).toBe(32);
     expect(cases).toBe(136);
     expect(accDiffs).toEqual([]);

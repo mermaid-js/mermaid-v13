@@ -1,5 +1,5 @@
 // A class generic named like an HTML tag is drawn as written (#756, D619): through the public
-// seam, in a title and in a member, with no HTML_DROPPED warning.
+// seam, in a title and in a member, with no warning.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawn } from './testing/labels.ts';
@@ -23,7 +23,7 @@ describe('class generics named like HTML tags (#756, D619)', () => {
     );
   });
 
-  it('raises no warning, HTML_DROPPED included', async () => {
+  it('raises no warning', async () => {
     const { warnings } = await svgOf(FIXTURE);
     expect(warnings).toEqual([]);
   });

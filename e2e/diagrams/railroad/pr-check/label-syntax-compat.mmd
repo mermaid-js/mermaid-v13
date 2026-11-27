@@ -1,0 +1,18 @@
+---
+description: >-
+  The markdownAlwaysOn twin of label-syntax.mmd: the same special
+  sequences with the setting on, so every special is markdown. The plain
+  **bold** _ital_ special draws bold and italic, the bare backticks and the
+  code span draw inline code; tags, \n and the quoted markdown string draw
+  as in the default picture, which this one differs from. The terminals
+  stay as written in both (D710).
+config:
+  markdownAlwaysOn: true
+---
+railroad-ebnf-beta
+plain = "**t**" , ? special **bold** _ital_ ? ;
+quoted = "`t`" , ? "`special **bold** _ital_`" ? ;
+bare = "<b>t</b>" , ? `special **bold** _ital_` ? ;
+code = "t" , ? special a `code` b ? ;
+tags = "t" , ? special <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O ? ;
+newline = "t" , ? special one\ntwo ? ;

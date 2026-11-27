@@ -29,14 +29,10 @@ import {
   type Side,
   type Size,
 } from '@mermaid-js/core/layout';
-import {
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { configLengths } from '@mermaid-js/shared/config/readers';
 import { ARCHITECTURE_CONFIG_IGNORED, ARCHITECTURE_SETTINGS_IGNORED } from '../codes.ts';
+import { readArchitectureLabel } from '../label.ts';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
@@ -184,18 +180,25 @@ export function prepareArchitecture(
   const sizes = sizesOf(ctx, font);
   warnIgnoredSettings(ctx);
   const { iconSize, padding, anchorY, labelGap } = sizes;
-  // A markdown string is laid out as markdown without its wrapper; any other label is plain
-  // (D710, a break with v12, whose `createText` read markdown in every label).
-  const measure = (text: string | undefined, maxWidth: number): MeasuredLabel | undefined => {
+  // Read by core's label handler (#1368): a markdown string as markdown, any other label plain
+  // unless `markdownAlwaysOn` is set (a break with v12, whose `createText` read markdown in every
+  // label).
+  const measure = (
+    { title: text, titleMarkdown }: { title?: string; titleMarkdown?: true },
+    maxWidth: number
+  ): MeasuredLabel | undefined => {
     if (text === undefined || text.trim() === '') return undefined;
-    const { text: source, markup } = markdownString(text);
-    return layoutLabel(source, font, maxWidth, ctx.measurer, { markup, inline: ctx.inline });
+    const source = readArchitectureLabel(text, titleMarkdown, ctx);
+    return layoutLabel(source.text, font, maxWidth, ctx.measurer, {
+      ...source,
+      inline: ctx.inline,
+    });
   };
 
   const nodes: ArchitectureNodeView[] = [];
   const layoutNodes: LayoutNode[] = [];
   for (const [index, s] of model.services.entries()) {
-    const label = measure(s.title, sizes.labelWidth);
+    const label = measure(s, sizes.labelWidth);
     const width = Math.max(iconSize, label?.width ?? 0);
     const height = iconSize + (label ? labelGap + label.height : 0);
     nodes.push({ id: s.id, kind: 'service', index, ...(label ? { label } : {}) });
@@ -223,7 +226,7 @@ export function prepareArchitecture(
   const groups: ArchitectureGroupView[] = [];
   const layoutGroups: LayoutGroup[] = [];
   for (const [index, g] of model.groups.entries()) {
-    const label = measure(g.title, Infinity);
+    const label = measure(g, Infinity);
     const title = titleOf(g.icon !== undefined, label, sizes);
     groups.push({ id: g.id, index, ...(label ? { label } : {}), ...(title ? { title } : {}) });
     layoutGroups.push({
@@ -237,7 +240,7 @@ export function prepareArchitecture(
   const edges: ArchitectureEdgeView[] = [];
   const layoutEdges: LayoutEdge[] = [];
   for (const [index, e] of model.edges.entries()) {
-    const label = measure(e.title, Infinity);
+    const label = measure(e, Infinity);
     edges.push({ id: e.astId, index, ...(label ? { label } : {}) });
     layoutEdges.push({
       id: e.astId,

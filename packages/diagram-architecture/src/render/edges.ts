@@ -22,15 +22,11 @@
  *   unwrapped where `compass` placed it.
  */
 import type { LayoutModelEdge, LayoutModelNode, Point, Side } from '@mermaid-js/core/layout';
-import {
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { ARCHITECTURE_METRICS, type ArchitectureSizes } from '../layout/metrics.ts';
 import type { ArchitectureEdge, ArchitectureSide } from '../model.ts';
 import type { ArchitectureRenderContext } from './context.ts';
+import { readArchitectureLabel } from '../label.ts';
 
 /** The engine's ports as v12's sides. */
 const SIDE_OF: Readonly<Record<Side, ArchitectureSide>> = {
@@ -308,10 +304,10 @@ function placeLabel(
   const dy = Math.abs(start.y - end.y);
   const axis = axisOf(lhs, rhs);
   const wrap = wrapWidth(axis, dx, dy);
-  // A markdown string is laid out as markdown without its wrapper, any other label plain (D710).
-  const { text, markup } = markdownString(edge.title!);
-  const box = layoutLabel(text, font, wrap > 0 ? wrap : Infinity, ctx.measurer, {
-    markup,
+  // Read by core's label handler (#1368), as every other architecture label.
+  const source = readArchitectureLabel(edge.title!, edge.titleMarkdown, ctx);
+  const box = layoutLabel(source.text, font, wrap > 0 ? wrap : Infinity, ctx.measurer, {
+    ...source,
     inline: ctx.inline,
   });
   if (box.lines.length === 0) return undefined;
