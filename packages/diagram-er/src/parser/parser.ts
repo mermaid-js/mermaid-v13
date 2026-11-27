@@ -42,8 +42,16 @@ import type {
 import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
 import { lex } from './lexer.ts';
 import type { LexResult } from './lexer.ts';
-import { attributeId, ErBuilder } from './model.ts';
-import type { ErAttribute, ErCardinality, ErDirection, ErDocItem, ErModel } from './model.ts';
+import { attributeId, ErBuilder, isMarkdownString } from './model.ts';
+import type {
+  EntityMarks,
+  ErAttribute,
+  ErCardinality,
+  ErDirection,
+  ErDocItem,
+  ErModel,
+  ErRelationship,
+} from './model.ts';
 import { T } from './tokens.ts';
 
 /**
@@ -180,6 +188,8 @@ interface Frame {
   /** Undefined when the header failed: its `end` still closes it, nothing reaches the model. */
   name: string | undefined;
   title: string;
+  /** The title was a markdown string. */
+  titleMarkdown?: boolean;
   items: ErDocItem[];
   span: StatementSpan;
   outer: ErStatementNode[];
@@ -189,6 +199,8 @@ interface Frame {
 interface Name {
   name: string;
   range: Range;
+  /** A quoted name that was a markdown string (`"`…`"`); `name` keeps its backticks. */
+  markdown?: boolean;
 }
 
 /** Parse an ER diagram. Never throws: problems are error diagnostics. */
@@ -551,7 +563,10 @@ class ErParser {
   private entityName(): Name {
     const kind = this.c.kind;
     const n = this.take(ENTITY_NAME);
-    if (kind === T.EntityName) n.name = n.name.replace(/"/g, '');
+    if (kind === T.EntityName) {
+      n.markdown = isMarkdownString(n.name);
+      n.name = n.name.replace(/"/g, '');
+    }
     return n;
   }
 
@@ -603,15 +618,18 @@ class ErParser {
       if (c.at(T.StyleSeparator)) classes = this.classList(node);
       const attributes =
         this.in(AFTER_ALIAS) && c.at(T.BlockStart) ? this.attributes(node) : undefined;
-      this.endEntity(node, alias.name, attributes, classes);
+      this.endEntity(node, alias.name, attributes, classes, {
+        name: a.markdown,
+        alias: alias.markdown,
+      });
       return;
     }
     let classesA: string[] | undefined;
     if (c.at(T.StyleSeparator)) classesA = this.classList(node);
     this.c.tested(classesA ? AFTER_CLASSES : AFTER_ENTITY);
-    if (CARDINALITY.includes(c.kind)) return this.relationship(node, classesA);
+    if (CARDINALITY.includes(c.kind)) return this.relationship(node, classesA, a.markdown);
     const attributes = c.at(T.BlockStart) ? this.attributes(node) : undefined;
-    this.endEntity(node, '', attributes, classesA);
+    this.endEntity(node, '', attributes, classesA, { name: a.markdown });
   }
 
   /** The current token is the last of `node`. */
@@ -623,10 +641,11 @@ class ErParser {
     node: ErEntityNode,
     alias: string,
     attributes: ErAttribute[] | undefined,
-    classes: string[] | undefined
+    classes: string[] | undefined,
+    marks: EntityMarks
   ): void {
     const { db } = this;
-    db.addEntity(node.name, nodeId(node.name), node.nameRange, alias);
+    db.addEntity(node.name, nodeId(node.name), node.nameRange, alias, marks);
     if (attributes) db.addAttributes(node.name, attributes);
     if (classes) db.setClass([node.name], classes);
     this.items?.push(node.name);
@@ -640,7 +659,11 @@ class ErParser {
     return CARDINALITIES[k] as ErCardinality;
   }
 
-  private relationship(a: ErEntityNode, classesA: string[] | undefined): void {
+  private relationship(
+    a: ErEntityNode,
+    classesA: string[] | undefined,
+    aMarkdown: boolean | undefined
+  ): void {
     const { c, db } = this;
     this.hint = RELATIONSHIP_HINT;
     const relStart = c.start;
@@ -658,19 +681,18 @@ class ErParser {
     const role = this.take(ROLE, LABEL);
     const label = roleKind === T.UnicodeText ? role.name : role.name.replace(/"/g, '');
     const range = this.span(a.range.start, role.range);
-    db.addEntity(a.name, nodeId(a.name), a.nameRange);
-    db.addEntity(b.name, nodeId(b.name), b.nameRange);
+    db.addEntity(a.name, nodeId(a.name), a.nameRange, '', { name: aMarkdown });
+    db.addEntity(b.name, nodeId(b.name), b.nameRange, '', { name: bName.markdown });
     const id = this.st.ids.edge(a.name, b.name);
-    db.addRelationship(
-      {
-        id,
-        from: { name: a.name, subgraph: db.isSubgraph(a.name), cardinality: cardA },
-        to: { name: b.name, subgraph: db.isSubgraph(b.name), cardinality: cardB },
-        identifying,
-        label,
-      },
-      range
-    );
+    const rel: ErRelationship = {
+      id,
+      from: { name: a.name, subgraph: db.isSubgraph(a.name), cardinality: cardA },
+      to: { name: b.name, subgraph: db.isSubgraph(b.name), cardinality: cardB },
+      identifying,
+      label,
+    };
+    if (isMarkdownString(role.name)) rel.labelMarkdown = true;
+    db.addRelationship(rel, range);
     if (classesA) db.setClass([a.name], classesA);
     if (classesB) db.setClass([b.name], classesB);
     this.items?.push(a.name, b.name);
@@ -723,15 +745,19 @@ class ErParser {
       }
       if (keys.length > 0 && c.at(T.AttributeKey)) this.fail([T.Char], KEY_COMMA);
       let comment = '';
+      let commentMarkdown = false;
       if (c.at(T.AttributeComment)) {
         const cm = this.take([T.AttributeComment]);
         comment = cm.name.replace(/"/g, '');
+        commentMarkdown = isMarkdownString(cm.name);
         last = cm.range;
       }
       const n = (seen.get(name.name) ?? 0) + 1;
       seen.set(name.name, n);
       const id = attributeId(node.name, name.name, n);
-      out.push({ id, type, name: name.name, keys, comment });
+      const attribute: ErAttribute = { id, type, name: name.name, keys, comment };
+      if (commentMarkdown) attribute.commentMarkdown = true;
+      out.push(attribute);
       nodes.push({
         id,
         type: 'Attribute',
@@ -852,17 +878,21 @@ class ErParser {
       node.name = id.name.trim();
       node.nameRange = id.range;
       let title = id.name;
+      let titleMarkdown = id.markdown === true;
       if (c.at(T.Sqs)) {
         c.next();
-        const parts = [this.entityName().name];
-        while (this.in(ENTITY_NAME)) parts.push(this.entityName().name);
+        const parts = [this.entityName()];
+        while (this.in(ENTITY_NAME)) parts.push(this.entityName());
         this.take([T.Sqe]);
-        title = parts.join(' ');
+        title = parts.map((p) => p.name).join(' ');
+        // A title of several names is a markdown string only when it is one.
+        titleMarkdown = parts.length === 1 && parts[0]!.markdown === true;
         node.title = title;
       }
       this.take(SEPARATOR);
       frame.name = node.name;
       frame.title = title;
+      frame.titleMarkdown = titleMarkdown;
       st.symbol(node.name, 'subgraph', id.range, 'def');
     } finally {
       node.id =
@@ -879,7 +909,7 @@ class ErParser {
     this.items = f.outerItems;
     this.body.push(f.node);
     if (f.name === undefined) return;
-    this.db.addSubgraph(f.node.id, f.name, f.title, f.items);
+    this.db.addSubgraph(f.node.id, f.name, f.title, f.items, f.titleMarkdown);
     this.items?.push(f.name);
   }
 }

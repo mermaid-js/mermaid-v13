@@ -25,14 +25,20 @@ export interface ErAttribute {
   keys: string[];
   /** The `"…"` comment without its quotes; `''` for none. */
   comment: string;
+  /** The comment was a markdown string, `"`…`"`: `comment` holds it with its backticks. */
+  commentMarkdown?: true;
 }
 
 export interface ErEntity {
   /** `n:<name>`: the AST id of the entity's first mention. */
   id: AstId;
   name: string;
+  /** The name was a markdown string, `"`…`"`: `name` holds it with its backticks. */
+  nameMarkdown?: true;
   /** `A[alias]`: the displayed name; `''` for none. The first alias given wins. */
   alias: string;
+  /** The alias was a markdown string, `"`…`"`: `alias` holds it with its backticks. */
+  aliasMarkdown?: true;
   /** Attributes from every `{ … }` block of the entity, in source order. */
   attributes: ErAttribute[];
   /** Class names from `:::` and `class`, in order (v12's `cssClasses` without `default`). */
@@ -61,6 +67,8 @@ export interface ErRelationship {
   /** `--` / `to` (solid line) rather than `..`, `.-`, `-.`, `optionally to` (dashed). */
   identifying: boolean;
   label: string;
+  /** The label was a markdown string, `"`…`"`: `label` holds it with its backticks. */
+  labelMarkdown?: true;
 }
 
 export interface ErSubgraph {
@@ -70,6 +78,8 @@ export interface ErSubgraph {
   name: string;
   /** `[title]`, else the id; trimmed. */
   title: string;
+  /** The title was a markdown string, `"`…`"`: `title` holds it with its backticks. */
+  titleMarkdown?: true;
   /**
    * Entities and subgraphs directly inside it, in v12's order, each in at most one subgraph
    * (the first to close takes it).
@@ -106,6 +116,22 @@ export interface ErModel {
   warnings: Diagnostic[];
 }
 
+/**
+ * A label written as a markdown string, `"`…`"` (#1368). v12 dropped the quotes and kept the
+ * backticks, so the model holds the label as v12 did and marks it; the layout reads the text
+ * between the backticks as markdown.
+ */
+const RE_MARKDOWN_STRING = /^"`[^`]*`"$/;
+
+/** Whether `token`, as written, is a markdown string (see {@link RE_MARKDOWN_STRING}). */
+export const isMarkdownString = (token: string): boolean => RE_MARKDOWN_STRING.test(token);
+
+/** Which of an entity's labels were markdown strings. */
+export interface EntityMarks {
+  readonly name?: boolean;
+  readonly alias?: boolean;
+}
+
 /** What one statement contributes to the body of the subgraph around it (v12's `$$`). */
 export type ErDocItem = string | { dir: ErDirection };
 
@@ -139,7 +165,13 @@ export class ErBuilder {
 
   constructor(private readonly options: ErBuilderOptions) {}
 
-  addEntity(name: string, id: AstId, range: Range, alias = ''): ErEntity | undefined {
+  addEntity(
+    name: string,
+    id: AstId,
+    range: Range,
+    alias = '',
+    marks: EntityMarks = {}
+  ): ErEntity | undefined {
     let e = this.entities.get(name);
     if (!e) {
       if (this.entities.size + 1 > this.options.maxNodes) {
@@ -147,8 +179,13 @@ export class ErBuilder {
         return undefined;
       }
       e = { id, name, alias, attributes: [], classes: [], styles: [] };
+      if (marks.name) e.nameMarkdown = true;
+      if (alias && marks.alias) e.aliasMarkdown = true;
       this.entities.set(name, e);
-    } else if (!e.alias && alias) e.alias = alias;
+    } else if (!e.alias && alias) {
+      e.alias = alias;
+      if (marks.alias) e.aliasMarkdown = true;
+    }
     return e;
   }
 
@@ -207,7 +244,13 @@ export class ErBuilder {
   }
 
   /** v12 `addSubGraph`: members from the body's items, deduplicated, each taken once. */
-  addSubgraph(id: AstId, name: string, title: string, items: readonly ErDocItem[]): void {
+  addSubgraph(
+    id: AstId,
+    name: string,
+    title: string,
+    items: readonly ErDocItem[],
+    titleMarkdown = false
+  ): void {
     const seen = new Set<string>();
     const members: string[] = [];
     let direction: ErDirection | undefined;
@@ -224,6 +267,7 @@ export class ErBuilder {
     for (const m of members) this.taken.add(m);
     const sg: ErSubgraph = { id, name, title: title.trim(), members, classes: [], styles: [] };
     if (direction) sg.direction = direction;
+    if (titleMarkdown) sg.titleMarkdown = true;
     this.subgraphs.push(sg);
     this.subgraphById.set(name, sg);
   }

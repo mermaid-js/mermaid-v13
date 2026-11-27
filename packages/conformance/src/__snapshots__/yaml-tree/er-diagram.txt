@@ -18,7 +18,7 @@ e2e/diagrams/er-diagram/baseline/styles.mmd 1 1d228c54c4f49418
 e2e/diagrams/er-diagram/baseline/subgraphs.mmd 1 6918388ab987072f
 e2e/diagrams/er-diagram/baseline/tables.mmd 1 be3715008774a6a4
 e2e/diagrams/er-diagram/baseline/text/entity-names.mmd 1 d06ff3484fb1439c
-e2e/diagrams/er-diagram/baseline/text/markdown-emphasis.mmd 1 bb461acfdca6680d
+e2e/diagrams/er-diagram/baseline/text/markdown-emphasis.mmd 1 fad2d991007288f1
 e2e/diagrams/er-diagram/baseline/theme-dark.mmd 1 79dbc491bc563f1d
 e2e/diagrams/er-diagram/baseline/themes/base-dark-primary.mmd 1 ef5ab4f898fc918e
 e2e/diagrams/er-diagram/baseline/themes/default-tertiary-label.mmd 1 1ae181ec6b66d6f7
@@ -57,6 +57,8 @@ e2e/diagrams/er-diagram/nightly-check/should-render-subgraphs-with-direction-ove
 e2e/diagrams/er-diagram/nightly-check/should-render-subgraphs-with-explicit-id-and-title.mmd 1 4fa8d772ec1a19bd
 e2e/diagrams/er-diagram/nightly-check/should-render-subgraphs-with-quoted-ids.mmd 1 d44cbd70174f7fb8
 e2e/diagrams/er-diagram/pr-check/1433-should-render-a-simple-er-diagram-with-a-title.mmd 1 7940a4035e200ceb
+e2e/diagrams/er-diagram/pr-check/label-syntax-compat.mmd 1 2e6b441add11ddf3
+e2e/diagrams/er-diagram/pr-check/label-syntax.mmd 1 f71136ed5ed902b4
 e2e/diagrams/er-diagram/pr-check/math-should-render-tex-in-every-er-label.mmd 1 86683fdb06074dde
 e2e/diagrams/er-diagram/pr-check/should-render-a-cyclical-er-diagram.mmd 1 9ed03e0fe6f29470
 e2e/diagrams/er-diagram/pr-check/should-render-a-not-so-simple-er-diagram.mmd 1 ade952ef34dbd33c
