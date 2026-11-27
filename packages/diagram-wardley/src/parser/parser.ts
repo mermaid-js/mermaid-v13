@@ -618,12 +618,8 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     this.tested(AFTER_TO);
     if (this.kind() === T.LinkPort) node.toPort = this.displayed(this.i++);
     this.tested(node.toPort ? AFTER_TO_PORT : AFTER_TO);
-    if (this.kind() === T.LinkLabel) {
-      node.linkLabel = linkLabelValue(this.displayed(this.i));
-      node.drawnLabel = { text: linkLabelValue(this.cooked(this.i++)) };
-    }
-    const arrowLabel = arrow === undefined ? undefined : arrowFlow(this.cooked(arrow)).label;
-    if (arrowLabel !== undefined) node.drawnLabel = { text: arrowLabel };
+    if (this.kind() === T.LinkLabel) node.linkLabel = linkLabelValue(this.displayed(this.i++));
+    this.drawnLinkLabel(node, arrow);
     node.range.end = this.end();
     if (node.linkLabel !== undefined) this.eol();
     else this.eol(node.toPort ? AFTER_TO_PORT : AFTER_TO);
@@ -631,6 +627,18 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     this.refer(node.to);
     node.id = this.id(linkName(from.value, node.to.value));
     this.done(node, 'link');
+  }
+
+  /**
+   * A link's drawn label as the label rule reads it: the arrow's `+'…'`, else the `; label`
+   * (the token just read), as `normalise` picks the label.
+   */
+  private drawnLinkLabel(node: WardleyLinkNode, arrow: number | undefined): void {
+    const fromArrow = arrow === undefined ? undefined : arrowFlow(this.cooked(arrow)).label;
+    const label =
+      fromArrow ??
+      (node.linkLabel === undefined ? undefined : linkLabelValue(this.cooked(this.i - 1)));
+    if (label !== undefined) node.drawnLabel = { text: label };
   }
 
   /** `Evolve: "evolve" Name WARDLEY_NUMBER EOL` */

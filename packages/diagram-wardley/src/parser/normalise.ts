@@ -194,6 +194,16 @@ export function arrowFlow(arrow: string | undefined): { flow?: WardleyFlow; labe
   return { label };
 }
 
+type Title = Pick<WardleyModel, 'title' | 'drawnTitle' | 'titleAstId'>;
+
+/** The last non-empty in-text title, else the front-matter one (D218), else none. */
+function titleOf({ title, titleAstId, drawnTitle, frontMatterTitle }: Parsed): Title {
+  if (title !== '')
+    return { title, drawnTitle: drawnTitle ?? { text: title }, ...(titleAstId && { titleAstId }) };
+  if (frontMatterTitle) return { title: frontMatterTitle, drawnTitle: { text: frontMatterTitle } };
+  return {};
+}
+
 /** A name as the label rule reads it, its value trimmed as the stage label trims it. */
 const trimmed = (name: WardleyName): WardleyLabel =>
   name.drawn.markdown ? name.drawn : { text: name.drawn.text.trim() };
@@ -264,7 +274,6 @@ class Populate {
     const links = read.map((r) => r.link);
     this.flush();
 
-    const { title, titleAstId, drawnTitle, frontMatterTitle } = this.parsed;
     const model: Omit<WardleyModel, 'warnings'> = {
       nodes: Object.freeze([...this.nodes.values()].map(freezeNode)),
       links: Object.freeze(links),
@@ -280,16 +289,7 @@ class Populate {
       accTitle: this.parsed.accTitle,
       accDescr: this.parsed.accDescr,
     };
-    if (title !== '')
-      return {
-        ...model,
-        title,
-        drawnTitle: drawnTitle ?? { text: title },
-        ...(titleAstId && { titleAstId }),
-      };
-    if (frontMatterTitle)
-      return { ...model, title: frontMatterTitle, drawnTitle: { text: frontMatterTitle } };
-    return model;
+    return { ...model, ...titleOf(this.parsed) };
   }
 
   // ---- values ---------------------------------------------------------------------------

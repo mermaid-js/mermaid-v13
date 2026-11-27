@@ -463,7 +463,7 @@ function linksOf(
       ...(forward ? { end: head(to, u, metrics.head.link) } : {}),
     };
     let label: PlacedText | undefined;
-    if (link.label) {
+    if (link.drawn?.text) {
       const off = metrics.link.labelOffset;
       const at = {
         x: (source.x + target.x) / 2 + u.y * off,
@@ -472,7 +472,7 @@ function linksOf(
       let rotate = (Math.atan2(dy, dx) * HALF_TURN) / Math.PI;
       if (rotate > metrics.link.flipAngle || rotate < -metrics.link.flipAngle) rotate += HALF_TURN;
       label = env.type.place({
-        text: link.drawn ?? { text: link.label },
+        text: link.drawn,
         font: env.type.fonts.link,
         at,
         anchor: 'middle',
