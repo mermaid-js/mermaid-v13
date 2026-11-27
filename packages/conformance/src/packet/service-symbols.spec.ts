@@ -35,9 +35,10 @@ import { packetAdapter } from './v13.ts';
  * `language` entry, #462).
  */
 
-/** v12 field labels written otherwise than their name in the corpus (skipped above). The three
- * newest are `label-syntax.mmd`'s `"field one\ntwo"` (#1397), plain, CRLF and commented. */
-const ESCAPED = 52;
+/** v12 field labels written otherwise than their name in the corpus (skipped above). The six
+ * newest are `"field one\ntwo"` in `label-syntax.mmd` and its compatibility twin (#1397), each
+ * plain, with CRLF and commented. */
+const ESCAPED = 55;
 
 const service = createLanguageService();
 await service.preload({ types: ['packet'] });

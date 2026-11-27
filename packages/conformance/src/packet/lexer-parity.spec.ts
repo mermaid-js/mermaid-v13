@@ -154,7 +154,7 @@ describe('packet lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =>
       `packet lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     // Every e2e fixture reaches the packet lexer.
-    expect(e2e).toBe(29);
+    expect(e2e).toBe(30);
     expect(compared).toBe(items.length - NOT_LEXED.length);
     expect(diffs).toEqual([]);
   }, 120_000);

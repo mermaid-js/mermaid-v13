@@ -13,10 +13,9 @@ import { createMermaid, type InitializeConfig, type Mermaid } from 'mermaid';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 
-const SOURCE = readFileSync(
-  join(REPO_ROOT, 'e2e/diagrams/packet/pr-check/label-syntax.mmd'),
-  'utf8'
-);
+const fixture = (name: string): string =>
+  readFileSync(join(REPO_ROOT, 'e2e/diagrams/packet/pr-check', name), 'utf8');
+const SOURCE = fixture('label-syntax.mmd');
 
 function api(config: InitializeConfig = {}): Mermaid {
   const m = createMermaid();
@@ -80,6 +79,9 @@ describe('packet label syntax (D734)', () => {
     const svg = async (config: InitializeConfig): Promise<string> =>
       (await api(config).render('m', SOURCE)).svg;
     expect(await svg({ legacyMarkdown: true })).toBe(await svg({}));
+    // The compatibility-mode twin sets the key in its front matter.
+    const compat = await api().render('m', fixture('label-syntax-compat.mmd'));
+    expect(compat.svg).toBe(await svg({}));
     const text = async (config: InitializeConfig): Promise<string> =>
       (await api(config).render('m', SOURCE, { format: 'ascii' })).text;
     expect(await text({ legacyMarkdown: true })).toBe(await text({}));

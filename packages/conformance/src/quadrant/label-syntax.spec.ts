@@ -12,15 +12,14 @@ import { createMermaid, type InitializeConfig } from 'mermaid';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 
-const SOURCE = readFileSync(
-  join(REPO_ROOT, 'e2e/diagrams/quadrant-chart/pr-check/label-syntax.mmd'),
-  'utf8'
-);
+const fixture = (name: string): string =>
+  readFileSync(join(REPO_ROOT, 'e2e/diagrams/quadrant-chart/pr-check', name), 'utf8');
+const SOURCE = fixture('label-syntax.mmd');
 
-async function render(config: InitializeConfig = {}): Promise<string> {
+async function render(config: InitializeConfig = {}, source = SOURCE): Promise<string> {
   const m = createMermaid();
   m.initialize({ deterministic: true, ...config });
-  return (await m.render('m', SOURCE)).svg;
+  return (await m.render('m', source)).svg;
 }
 
 const own = (tree: SvgView, n: SvgElement): string =>
@@ -81,5 +80,7 @@ describe('quadrant label syntax (D734)', () => {
 
   it('draws the same with legacyMarkdown: no quadrant label kind read markdown in v12', async () => {
     expect(await render({ legacyMarkdown: true })).toBe(await render());
+    // The compatibility-mode twin sets the key in its front matter.
+    expect(await render({}, fixture('label-syntax-compat.mmd'))).toBe(await render());
   });
 });
