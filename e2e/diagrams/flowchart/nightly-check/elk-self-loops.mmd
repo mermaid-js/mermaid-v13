@@ -1,0 +1,12 @@
+---
+description: >-
+  Self-loops under ELK (#1233, D719): each loop reaches the engine's loop length
+  out from its node before it turns, and the labelled one keeps its label clear
+  of the loop.
+config:
+  layout: elk
+---
+flowchart TD
+  A[Start] --> A
+  A --> B[Retry]
+  B -->|again| B

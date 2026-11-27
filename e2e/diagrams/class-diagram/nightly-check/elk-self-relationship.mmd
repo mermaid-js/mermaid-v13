@@ -1,0 +1,14 @@
+---
+description: >-
+  A labelled self-relationship under ELK (#1233, D719): the loop reaches the
+  engine's loop length out from the class before it turns, with the arrowhead
+  and the label clear of each other.
+config:
+  layout: elk
+---
+classDiagram
+  class Node {
+    +value int
+    +next() Node
+  }
+  Node --> Node : next

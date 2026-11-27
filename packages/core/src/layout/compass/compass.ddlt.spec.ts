@@ -112,6 +112,29 @@ describe('compass: DDLT checks on generated graphs', () => {
     60_000
   );
 
+  it.each(FIXTURES)('%s keeps routes with two or more bends off other nodes (D720)', (_, graph) => {
+    const m = compass(graph);
+    const crossed: string[] = [];
+    for (const e of graph.edges) {
+      const p = m.edges.get(e.id)!.points;
+      if (p.length < 4) continue;
+      for (let k = 1; k < p.length; k++) {
+        const [u, v] = [p[k - 1]!, p[k]!];
+        for (const [id, n] of m.nodes) {
+          if (id === e.source || id === e.target) continue;
+          if (
+            Math.min(u.x, v.x) < n.x + n.width / 2 &&
+            n.x - n.width / 2 < Math.max(u.x, v.x) &&
+            Math.min(u.y, v.y) < n.y + n.height / 2 &&
+            n.y - n.height / 2 < Math.max(u.y, v.y)
+          )
+            crossed.push(`${e.id} run ${k - 1} x ${id}`);
+        }
+      }
+    }
+    expect(crossed).toEqual([]);
+  });
+
   it.each(FIXTURES)('%s lays out the same twice', (_, graph) => {
     const copy = JSON.parse(JSON.stringify(graph)) as LayoutGraph;
     expect(plain(compass(copy))).toBe(plain(compass(graph)));

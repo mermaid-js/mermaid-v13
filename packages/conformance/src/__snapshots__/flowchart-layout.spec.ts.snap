@@ -231,6 +231,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/nightly-check/elk-container-algorithms/elk-box-layout-with-edges.mmd": 0,
   "flowchart/nightly-check/elk-container-algorithms/elk-rectpacking-layout-with-edges.mmd": 0,
   "flowchart/nightly-check/elk-container-algorithms/elk-subgraph-with-box-algorithm.mmd": 0,
+  "flowchart/nightly-check/elk-self-loops.mmd": 0,
   "flowchart/nightly-check/elk-stress-radial/elk-radial-keeps-a-gap.mmd": 0,
   "flowchart/nightly-check/elk-stress-radial/elk-stress-keeps-a-gap.mmd": 0,
   "flowchart/nightly-check/embedded/987-unmentioned-node.mmd": 0,

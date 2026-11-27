@@ -40,6 +40,9 @@
  *
  * Titles (#683): a run ELK routes through a group's title moves beside it (`titles.ts`).
  *
+ * Self-loops (D719): ELK layered gives a self-loop the reach `LayoutGraph.metrics.loop` asks
+ * for, as `layered` does (D77), with its two ends spread along the side (`loopRoom`).
+ *
  * The group tree must be a tree: a group inside itself is refused (`checkTree`, #688), since the
  * walks up the tree would never end.
  *
@@ -59,7 +62,7 @@ import type {
   RoutePoint,
   Side,
 } from '@mermaid-js/core/layout';
-import { layered as layeredEngine } from '@mermaid-js/core/layout';
+import { layered as layeredEngine, pxProfile } from '@mermaid-js/core/layout';
 import { boxExit } from '@mermaid-js/core/layout/box-exit';
 
 import type {
@@ -75,7 +78,7 @@ import { offHead } from './heads.ts';
 import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
 import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
 import { crowdedEnds, LAST_LEG, type Pinned } from './spread.ts';
-import { projectLabelOntoStraightenedRun, straightenEdgeTerminals } from './straighten.ts';
+import { movable, straightenRoutes } from './straighten.ts';
 import { slideOffTitles, type SlideEdge, type SlideNode } from './titles.ts';
 import { layoutSync } from './sync.ts';
 import { ROOT, findCommonAncestor, orderNestedEdgeEnds, type Tree } from './tree.ts';
@@ -404,6 +407,31 @@ function edgeLengthOptions(algorithm: ElkAlgorithm, length: number): LayoutOptio
 const FIRST_PASS: Again = { grow: new Map(), pins: new Map() };
 
 /**
+ * Self-loops under ELK layered (D719). ELK runs a loop 10 out from its node (its
+ * `spacing.nodeSelfLoop`), less than an ER mark takes, so each node or group with a self-loop
+ * gets the graph's `loop` there, and `loopGap` between the loop and its label, as `layered`
+ * draws them (D77). ELK reads both from the node's individual spacing, whose entries it splits
+ * on `;,;`. Its loop ends sit on the sides across the flow, which are `north` and `south` in
+ * ELK's own frame whatever the direction; `JUSTIFIED` spreads them to the corner margins
+ * (`PORTS_SURROUNDING`) rather than a third of the side apart, so a mark at each end has room.
+ * Nodes with no self-loop, and the algorithms other than layered, are left as they are.
+ */
+function loopRoom(graph: LayoutGraph, nodes: Map<string, ElkNode>, layered: boolean): void {
+  if (!layered) return;
+  const { loop, loopGap } = graph.metrics ?? pxProfile.engine;
+  const looped = new Set(graph.edges.filter((e) => e.source === e.target).map((e) => e.source));
+  for (const id of looped) {
+    const n = nodes.get(id)!;
+    n.layoutOptions = {
+      ...n.layoutOptions,
+      'elk.spacing.individual': `spacing.nodeSelfLoop:${loop};,;spacing.edgeLabel:${loopGap}`,
+      'elk.portAlignment.north': 'JUSTIFIED',
+      'elk.portAlignment.south': 'JUSTIFIED',
+    };
+  }
+}
+
+/**
  * Builds the ELK graph for `graph` with the `elk` config section `elk` (none: every key unset,
  * the `default` preset). Each edge sits in its ends' innermost common container. A second pass
  * gets what the first found (`again`).
@@ -523,6 +551,7 @@ export function toElkGraph(
 
   // Sides (D503): what each ELK edge leaves from and enters, a port where the end names a side.
   const elkEnds = sidePorts(graph, nodes, endSides(graph, tree, layered, flowOf), flags, pins);
+  loopRoom(graph, nodes, layered);
 
   const edges = new Map<string, ElkExtendedEdge>();
   for (const index of orderNestedEdgeEnds(ends, tree)) {
@@ -696,22 +725,27 @@ function elkLabel(built: Built, edgeId: string, kind: keyof typeof LABEL_KINDS):
 type Routes = Map<string, { points: Point[]; placedByElk: boolean }>;
 
 /**
- * straightenEdges (on by default): the step at an edge's ends goes, both ports stay. Rewrites
- * `routes`; returns where each main label ELK placed on a run that moved went with it.
+ * straightenEdges (`jogs`, on by default): the step at an edge's ends goes, both ports stay. And
+ * a box too small for ELK's corner margins moves onto its ends (D722). Rewrites `routes` and
+ * `rects`; returns where each main label ELK placed on a run that moved went with it.
  */
-function straighten(graph: LayoutGraph, built: Built, routes: Routes): Map<string, Point> {
-  const labelMoved = new Map<string, Point>();
+function straighten(
+  graph: LayoutGraph,
+  built: Built,
+  routes: Routes,
+  rects: Map<string, Rect>,
+  jogs: boolean
+): Map<string, Point> {
   const items = graph.edges.map((e) => {
     const { points, placedByElk } = routes.get(e.id)!;
     const c = placedByElk && e.label ? elkLabel(built, e.id, 'label') : undefined;
-    return { id: e.id, points, ...(c && e.label ? { ...c, label: true, ...e.label } : {}) };
+    const fixed = !placedByElk || e.source === e.target;
+    return { ...e, fixed, points, ...(c && e.label ? { ...c, label: true, ...e.label } : {}) };
   });
-  for (const { edge, runs } of straightenEdgeTerminals(items, graph.spacing.edge)) {
-    routes.get(edge.id)!.points = edge.points;
-    if (edge.x === undefined || edge.y === undefined) continue;
-    const moved = projectLabelOntoStraightenedRun({ x: edge.x, y: edge.y }, runs);
-    if (moved) labelMoved.set(edge.id, moved);
-  }
+  const free = (id: string) => movable(built.nodes.get(id)!);
+  const o = { jogs, labelGap: graph.spacing.edge, boxes: rects, free, corner: CORNER };
+  const labelMoved = straightenRoutes(items, o);
+  for (const edge of items) routes.get(edge.id)!.points = edge.points;
   return labelMoved;
 }
 
@@ -868,8 +902,7 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
     routes.set(e.id, { points, placedByElk: routed && built.layered });
   }
 
-  const labelMoved =
-    elk.straightenEdges === false ? new Map<string, Point>() : straighten(graph, built, routes);
+  const labelMoved = straighten(graph, built, routes, rects, elk.straightenEdges !== false);
   offTitles(graph, built, rects, routes, labelMoved);
 
   const { dx, dy, width, height } = extent(

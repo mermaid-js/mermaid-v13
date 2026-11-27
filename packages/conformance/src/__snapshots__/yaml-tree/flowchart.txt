@@ -222,6 +222,7 @@ e2e/diagrams/flowchart/nightly-check/dagre/wrapping-long-text-with-a-new-line.mm
 e2e/diagrams/flowchart/nightly-check/elk-container-algorithms/elk-box-layout-with-edges.mmd 1 b4ed89facda2f669
 e2e/diagrams/flowchart/nightly-check/elk-container-algorithms/elk-rectpacking-layout-with-edges.mmd 1 d7519a1f5aab4a71
 e2e/diagrams/flowchart/nightly-check/elk-container-algorithms/elk-subgraph-with-box-algorithm.mmd 4 41c97c8fe654d1b8
+e2e/diagrams/flowchart/nightly-check/elk-self-loops.mmd 1 d01a2e903eb7b068
 e2e/diagrams/flowchart/nightly-check/elk-stress-radial/elk-radial-keeps-a-gap.mmd 1 14e54cb23a499ae5
 e2e/diagrams/flowchart/nightly-check/elk-stress-radial/elk-stress-keeps-a-gap.mmd 1 3cfb7873c4a2ad23
 e2e/diagrams/flowchart/nightly-check/embedded/987-unmentioned-node.mmd 1 46eef9d45edd129b
