@@ -1,0 +1,14 @@
+---
+description: >-
+  Label syntax (D734, #1397): each packet label kind written as plain markdown markers, a
+  quoted markdown string, bare backticks, a code span in plain text, tags and a written `\n`.
+  Only a quoted markdown string, the title's included, is markdown; tags draw and `\n` breaks
+  everywhere. Field labels are always quoted, so they have no bare-backtick form.
+---
+packet
+  title "`title **bold** _ital_`"
+  0-31: "field **bold** _ital_"
+  32-63: "`field **bold** _ital_`"
+  64-95: "field a `code` b"
+  96-127: "field <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  128-159: "field one\ntwo"

@@ -14,10 +14,12 @@ import type { CellPadding } from '@mermaid-js/core/layout';
 import {
   layoutLabel,
   type InlineSpans,
+  type LabelConfig,
   type LabelOptions,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
-import type { PacketModel, PacketPiece } from '../model.ts';
+import { packetLabelSource } from '../label-source.ts';
+import type { PacketField, PacketModel, PacketPiece } from '../model.ts';
 import { cut, emphasised, wrapTitle } from '@mermaid-js/shared/ascii';
 
 /** Columns a bit takes; a piece of `n` bits is `COLUMNS * n + 1` wide, borders included. */
@@ -32,6 +34,8 @@ export interface DrawOptions {
   /** `ascii.maxWidth`: a longer title wraps to it (or to the drawing, when that is wider). */
   readonly maxWidth?: number;
   readonly inline?: InlineSpans;
+  /** The render's resolved config, for the label handler (D734). */
+  readonly config: LabelConfig;
 }
 
 /** What text cannot show of the bold and italic it was given. */
@@ -87,9 +91,11 @@ export function drawPacket(model: PacketModel, options: DrawOptions): Drawn {
   // Core's glyph sets have no ellipsis; `~` keeps the `ascii` charset pure ASCII.
   const mark = glyphs.name === 'unicode' ? '…' : '~';
   const labelOptions: LabelOptions = options.inline ? { inline: options.inline } : {};
-  const measure = (text: string): MeasuredLabel =>
-    layoutLabel(text, FONT, Infinity, cellMeasurer, labelOptions);
-  const labels = model.fields.map((f) => measure(f.label));
+  const measure = (label: string | PacketField): MeasuredLabel => {
+    const source = packetLabelSource(label, options.config);
+    return layoutLabel(source.text, FONT, Infinity, cellMeasurer, { ...source, ...labelOptions });
+  };
+  const labels = model.fields.map(measure);
   const title = model.title ? measure(model.title) : undefined;
   const emphasis: Emphasis = {
     fields: labels.flatMap((l, i) => (emphasised(l) ? [i] : [])),

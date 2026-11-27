@@ -132,6 +132,19 @@ describe('parsePacket', () => {
     ]);
   });
 
+  it('marks a label written as a markdown string, which keeps its backticks as in v12 (D734)', () => {
+    const { model } = parsePacket(
+      'packet\n0: "`**a**`"\n1: \'`b`\'\n2: "**c** *d*"\n3: "`e` f"\n4: "`g`h`"'
+    );
+    expect(model.fields.map((f) => [f.label, f.markdown])).toEqual([
+      ['`**a**`', true],
+      ['`b`', true],
+      ['**c** *d*', undefined],
+      ['`e` f', undefined],
+      ['`g`h`', undefined],
+    ]);
+  });
+
   it('reads title, accTitle and accDescr as v12 did', () => {
     const { model } = parsePacket(
       'packet\naccTitle:  a   b \naccDescr {\n  a   b\n\n  c \n}\ntitle  x   y \n0: "a"'

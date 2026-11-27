@@ -20,6 +20,7 @@ e2e/diagrams/packet/baseline/themes/redux.mmd 1 e8ccd391f5189c90
 e2e/diagrams/packet/nightly-check/label-four-lines-overflows.mmd 1 c5c411eee5091747
 e2e/diagrams/packet/nightly-check/label-three-lines-shrinks.mmd 1 143989cdc0386271
 e2e/diagrams/packet/nightly-check/label-two-lines-fits.mmd 1 6a1fab4abb58de1c
+e2e/diagrams/packet/pr-check/label-syntax.mmd 1 b96f5351378fd27c
 e2e/diagrams/packet/pr-check/should-render-a-complex-packet-diagram-with-showbits-false.mmd 1 021ba81ba3ba29a9
 e2e/diagrams/packet/pr-check/should-render-a-complex-packet-diagram.mmd 1 b17757d0103c6843
 e2e/diagrams/packet/pr-check/should-render-a-packet-diagram-with-descending-bit-order.mmd 1 40b7d792898a9591

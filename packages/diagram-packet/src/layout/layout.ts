@@ -12,7 +12,8 @@
 import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { packetConfig } from '../config.ts';
-import type { PacketModel, PacketPiece } from '../model.ts';
+import { packetLabelSource } from '../label-source.ts';
+import type { PacketField, PacketModel, PacketPiece } from '../model.ts';
 import { FIT_STEPS, NORMAL_WEIGHT, PACKET_METRICS as m } from './metrics.ts';
 import type {
   BitNumber,
@@ -48,17 +49,19 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
   };
   const strokeWidth = ctx.theme.number('packetBlockStrokeWidth');
   const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure = (text: string, f: FontKey): MeasuredLabel =>
-    layoutLabel(text, f, Infinity, ctx.measurer, inline);
+  const measure = (label: string | PacketField, f: FontKey): MeasuredLabel => {
+    const source = packetLabelSource(label, ctx.config);
+    return layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, ...inline });
+  };
   const { ascent, descent } = ctx.measurer.metrics(fonts.byte);
 
   /**
    * A label in a piece `width` wide and `rowHeight` tall, shrunk to fit both down to the
    * bit-number size (D343; the height since #774, for labels of several `<br>` lines).
    */
-  const fitted = (text: string, width: number): { text: MeasuredLabel; font: FontKey } => {
+  const fitted = (field: PacketField, width: number): { text: MeasuredLabel; font: FontKey } => {
     let f = fonts.label;
-    let t = measure(text, f);
+    let t = measure(field, f);
     const min = Math.min(fonts.label.size, fonts.byte.size);
     const over = (l: MeasuredLabel): boolean => l.width > width || l.height > rowHeight;
     // Scale by the larger overflow; a measurer need not scale with the size, so the last step is
@@ -67,7 +70,7 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
       const share = Math.min(Math.max(width, 0) / t.width, Math.max(rowHeight, 0) / t.height);
       const scaled = f.size * share;
       f = font(i < FIT_STEPS ? Math.max(min, scaled) : min);
-      t = measure(text, f);
+      t = measure(field, f);
     }
     return { text: t, font: f };
   };
@@ -102,7 +105,7 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
     const x = column * bitWidth + m.margin;
     const width = Math.max(0, bits * bitWidth - paddingX);
     const box: Rect = { x, y: rowY, width, height: rowHeight };
-    const label = fitted(f.label, width);
+    const label = fitted(f, width);
     const cx = x + width / 2;
     const cy = rowY + rowHeight / 2;
     const placed: PlacedLabel = {

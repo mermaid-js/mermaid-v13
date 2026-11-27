@@ -19,6 +19,15 @@ e2e fixture, the v12 spec strings and the syntax page; grammar in
   ([Packet SVG structure](#packet-svg-structure) gives its size at the default limits).
 - **Labels and the title (D343, D344)** go through core's label layout and shrink to fit, and the
   bounding box covers them ([Packet SVG structure](#packet-svg-structure)).
+- **Markdown strings, tags and `\n` in labels (D734).** v12 drew a field label and the title as
+  written. In v13 a quoted markdown string (`` "`**bold** text`" ``, also in single quotes for a
+  field) renders as markdown without its backticks, in a field label and in the title, in SVG
+  and in the text output (which shows the words without the emphasis and warns
+  `ASCII_DROPPED`). Any other label is plain: `**x**`, `_x_` and backticks are drawn as written,
+  `<b>`, `<i>`, `<sub>` and the other common tags draw, `<br>` breaks, and a written `\n` in the
+  title breaks the line too (v12 showed it). `legacyMarkdown` changes nothing: v12 read markdown
+  in no packet label. The model marks a field written as a markdown string (`markdown: true`);
+  its `label` keeps the backticks, as v12's DB did.
 - **Source mapping (D345).** Each field is the AST node `field:<start>-<end>`, from the range it
   resolves to, so its id survives a label edit; a `+N` field's id moves when an earlier field
   changes width.

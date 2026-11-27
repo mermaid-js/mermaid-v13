@@ -36,6 +36,7 @@ export function ascii(model: PacketModel, _layout: unknown, ctx: PacketAsciiCont
     descending: bitOrder === 'descending',
     ...(maxWidth !== undefined ? { maxWidth } : {}),
     ...(ctx.inline ? { inline: ctx.inline } : {}),
+    config: ctx.config,
   });
   for (const w of asciiWarnings(model, drawn.emphasis, ctx.ast)) ctx.warn(w);
   return drawn.text;
