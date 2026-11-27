@@ -25,6 +25,7 @@ export {
   ARCHITECTURE_PARENT_NOT_GROUP,
   ARCHITECTURE_PLACEMENT_IGNORED,
   ARCHITECTURE_SELF_PARENT,
+  ARCHITECTURE_SETTINGS_IGNORED,
   ARCHITECTURE_UNKNOWN_ID,
   ARCHITECTURE_UNKNOWN_PARENT,
 } from './codes.ts';
@@ -42,6 +43,7 @@ export type { ArchitectureLayoutContext } from './layout/context.ts';
 export {
   ARCHITECTURE_METRICS,
   architectureSizes,
+  type ArchitectureLabelFont,
   type ArchitectureSizes,
 } from './layout/metrics.ts';
 export type { ArchitectureParseOptions, ArchitectureParseResult } from './parser/index.ts';

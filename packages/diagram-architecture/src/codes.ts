@@ -42,6 +42,13 @@ export const ARCHITECTURE_GROUP_EDGE_UNGROUPED = 'ARCHITECTURE_GROUP_EDGE_UNGROU
  */
 export const ARCHITECTURE_CONFIG_IGNORED = 'ARCHITECTURE_CONFIG_IGNORED';
 /**
+ * Warning (#1222, D763): the `architecture` section sets a key v13 reads nowhere: one of the six
+ * fcose settings (`randomize`, `nodeSeparation`, `idealEdgeLengthMultiplier`, `edgeElasticity`,
+ * `numIter`, `seed`, D328), `fontSize` (D507) or `useWidth`. None has a default, so a key the
+ * section holds is one the author set, at whatever value. One per render, naming every set key.
+ */
+export const ARCHITECTURE_SETTINGS_IGNORED = 'ARCHITECTURE_SETTINGS_IGNORED';
+/**
  * Warning (#614, GAPS T3): an arrowhead (`iconSize / 6`) longer than the end segment it sits on,
  * on any edge: `compass`'s gap between nodes is fixed, so a large `architecture.iconSize` would
  * run a head past its segment. Each head is capped to its own end segment (to half of it on a
