@@ -12,8 +12,8 @@
   of its own when they do not fit side by side. The priority is the card's left edge: heavy
   for `Very High` and `High`, dashed for `Low` and `Very Low`; in the `ascii` charset a tag on
   the card's top border (`[!!]`, `[!]`, `[-]`, `[--]`) tells the four apart. `:::` classes, bold and
-  italic text and ticket links are dropped with one `ASCII_DROPPED` warning each (`style`,
-  `emphasis`, `link`); a board wider than `ascii.maxWidth` is not folded and adds
+  italic text, ticket links and `accTitle`/`accDescr` are dropped with one `ASCII_DROPPED`
+  warning each (`style`, `emphasis`, `link`, `accessibility`); a board wider than `ascii.maxWidth` is not folded and adds
   `ASCII_TOO_WIDE` ([ASCII output](./ascii.md#kanban-boards)).
 - **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
   spec and docs examples, and the grammar is in [syntax/kanban.md](./syntax/kanban.md). Every
@@ -23,6 +23,13 @@
   the word `kanban` in any case. Errors v12 raised as a `TypeError` or not at all are now
   diagnostics with a range: an `::icon()` or `:::` line before any item, shape data that is
   empty or `null` (`@{ }`), and a `shape` that is not a lower-case string (`shape: 5`).
+- **`accTitle` and `accDescr`** (D742): `accTitle: …`, `accDescr: …` and `accDescr { … }`, on a
+  line of their own at any indent, before or between columns, set the SVG's `<title>` and
+  `<desc>` (with `aria-labelledby` and `aria-describedby`), as in the other types, and draw
+  nothing. v12's kanban had no such statements: it drew each line as a column or card, and
+  rejected the `{` of the block form. A later statement replaces an earlier one. `accTitle[x]`,
+  or `accTitle` without a `:`, is still an item. The text output drops them with an
+  `ASCII_DROPPED` warning (`accessibility`).
 - **Columns that share an id** (D373): v12 listed the cards of every column with that id under
   each of them, so two `docs` columns both drew both columns' cards. A card now belongs to the
   column it follows. Repeated ids are allowed for columns and cards alike.
@@ -56,10 +63,14 @@
   ([Kanban SVG structure](#kanban-svg-structure)). The ticket and assignee follow the label
   rule, so a tag the ticket draws as formatting is left out of its link: `<b>T-1</b>` draws a
   bold `T-1` and links to `…T-1`, where v12 put the tags in the URL (D712).
-- **Column colours** (D374) come from the `cScale` palette in every theme, lightened by 10 or
-  darkened under a dark theme, and cycle through the twelve slots, so v12's black columns past
-  the tenth are gone and `neo-dark` darkens where v12 left it light
+- **Column colours** (D374, D741) come from the `cScale` palette in every theme, lightened by
+  10, or darkened under `themeVariables.darkMode` and in `neo-dark`, `redux-dark` and
+  `redux-dark-color`. They cycle through the twelve slots, so v12's black columns past the tenth
+  are gone, and those three dark themes darken where v12 left them light
   ([Kanban SVG structure](#kanban-svg-structure)).
+- **`theme: dark` with `themeVariables.darkMode: true`** (D741): the columns lighten, as under
+  `theme: dark` alone, where v12 darkened them. The dark theme's columns follow v12's `dark`,
+  which never set `darkMode`; an author's `darkMode` darkens only a light theme.
 - **Config** (D378). The `kanban` section is honoured with v12's defaults: `sectionWidth` (200),
   `padding` (8), `ticketBaseUrl` (empty, so no links) and `useMaxWidth` (true); `kanban.theme`
   wins over the top-level `theme` for kanban boards. v12's kanban read three `mindmap` keys:

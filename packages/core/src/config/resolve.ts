@@ -59,11 +59,12 @@ export interface ResolveConfigOptions {
   readonly warn?: (warning: ConfigWarning) => void;
   /**
    * The config section of the diagram being rendered (e.g. `flowchart`), for the
-   * diagram-scoped `theme` and `layout`. Defaults to the single top-level key
+   * diagram-scoped `theme`, `layout` and `markdownAlwaysOn`. Defaults to the single top-level key
    * of `pluginDefaults`, when it has exactly one. A type that reads its own section on top of
    * its plugin's gives both, highest first (`['swimlane', 'flowchart']`, D534): in each source
    * the first section's key wins over the second's, over the top-level one, and a key both
-   * sections have takes that value in both.
+   * sections have takes that value in both. `curve` is not chained (D761): each section keeps
+   * its own.
    */
   readonly section?: string | readonly string[];
   /**
@@ -76,7 +77,17 @@ export interface ResolveConfigOptions {
 /** Never copied from any source: they would reach `Object.prototype` on assignment. */
 const POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-const APPEARANCE_KEYS = ['theme', 'layout'];
+/**
+ * The keys a diagram section may set over the top-level one (v12's `theme` and `layout`, and
+ * `markdownAlwaysOn`, D734), each with the type a value must have to count. They are resolved
+ * onto the top level, so a stage reads one key whatever section set it.
+ */
+const APPEARANCE: Readonly<Record<string, string>> = {
+  theme: 'string',
+  layout: 'string',
+  markdownAlwaysOn: 'boolean',
+};
+const APPEARANCE_KEYS = Object.keys(APPEARANCE);
 
 const ignore = (): void => undefined;
 
@@ -184,10 +195,12 @@ export function resolveSite(
   const section = options.section ?? soleKey(plugin);
   // A chained type (D534) resolves every key all its sections' schemas have (`theme`, `layout`,
   // `useMaxWidth`, `useWidth`), each written into every section, so only where the schema has it.
+  // Not `curve` (D761): `swimlane.curve` is a diagram-specific key, not a layout-specific one,
+  // so the diagram reads each section's own value and orders them itself.
   const sections = [section ?? []].flat();
   const keys = sections[1]
-    ? Object.keys(Object(tree[sections[0]!]) as object).filter((k) =>
-        sections.every((s) => k in Object(tree[s]))
+    ? Object.keys(Object(tree[sections[0]!]) as object).filter(
+        (k) => k !== 'curve' && sections.every((s) => k in Object(tree[s]))
       )
     : APPEARANCE_KEYS;
   const layers = {
@@ -322,7 +335,8 @@ function lookStripper(warn: (w: ConfigWarning) => void, already = false) {
 }
 
 /**
- * v12 `resolveAppearance`: `theme` and `layout` land on the top level, highest first:
+ * v12 `resolveAppearance`: `theme` and `layout` (and `markdownAlwaysOn`, which the label
+ * handler reads at the top level only) land on the top level, highest first:
  * diagram text, `initialize()`, the diagram's default, the global default. Within a layer
  * the diagram-scoped value beats the global one. (v12 also passed over unknown theme names;
  * that check belongs with the theme registry, core/theme.)
@@ -333,7 +347,7 @@ function resolveAppearance(
   { sections, keys }: Pick<ResolvedSite, 'keys' | 'sections'>
 ) {
   for (const key of keys) {
-    const top = APPEARANCE_KEYS.includes(key);
+    const top = APPEARANCE[key];
     const value = appearanceOf(layers, sections, key, top);
     if (value === undefined) continue;
     if (top) config[key] = value;
@@ -356,14 +370,14 @@ function appearanceOf(
   layers: readonly Plain[],
   sections: readonly string[],
   key: string,
-  top: boolean
+  top: string | undefined
 ): unknown {
   for (const layer of layers) {
     for (const s of sections) {
       const v = scopedOf(layer, s)?.[key];
-      if (top ? typeof v === 'string' : v !== undefined) return v;
+      if (top ? typeof v === top : v !== undefined) return v;
     }
-    if (top && typeof layer[key] === 'string') return layer[key];
+    if (top && typeof layer[key] === top) return layer[key];
   }
   return undefined;
 }
