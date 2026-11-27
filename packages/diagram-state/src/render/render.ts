@@ -305,7 +305,7 @@ function drawComposite({ w, layout, ctx, paint, titlePad }: Scene, g: StateGroup
   const left = box.x - box.width / 2;
   const top = box.y - box.height / 2;
   const bottom = top + box.height;
-  // The body starts halfway between the title and the content below it.
+  // The body starts `titlePad / 4` below the title, `groupPad` above the content (D732).
   const band = Math.min(bottom, box.title.y + g.label.height / 2 + titlePad / 4);
   w.open('g', {
     class:

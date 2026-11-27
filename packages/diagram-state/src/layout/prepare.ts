@@ -471,7 +471,10 @@ function layoutGraph(
       return node;
     }),
     groups: groups.map((g): LayoutGroup => {
-      const group: LayoutGroup = { id: g.id, padding: groupPadding(g, regionsOf, mixed, b) };
+      const group: LayoutGroup = {
+        id: g.id,
+        padding: groupPadding(g, regionsOf, mixed, b, units.grid !== undefined),
+      };
       if (g.label.height > 0) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
       const d = groupDir.get(g.id);
@@ -495,15 +498,25 @@ function layoutGraph(
  * to the regions, so the region frames tile it and the dividers run border to border. A region
  * has no title. A composite that also holds plain children (`mixed`: an earlier opening put
  * states in it directly) keeps its padding, so those children do not touch its border.
+ *
+ * Above a titled composite's content is its title strip (D732): the title `titlePad / 2` below
+ * the frame's top (`layoutState` seats it there), the strip line `titlePad / 4` below the title,
+ * then `groupPad` to the first child, as on the other three sides. Regions start at the strip
+ * line and bring their own `groupPad`. On the grid the title is on the border row and no strip
+ * is drawn, so the padding there is `titlePad` alone.
  */
 function groupPadding(
   g: StateGroupView,
   regionsOf: ReadonlyMap<string, readonly string[]>,
   mixed: ReadonlySet<string>,
-  b: UnitProfile['builder']
+  b: UnitProfile['builder'],
+  grid: boolean
 ): LayoutGroup['padding'] {
-  const top = g.label.height > 0 ? b.titlePad : b.groupPad;
-  if (!g.region && regionsOf.has(g.id) && !mixed.has(g.id))
-    return { top, right: 0, bottom: 0, left: 0 };
+  const split = !g.region && regionsOf.has(g.id) && !mixed.has(g.id);
+  // Half of `titlePad` above the title, a quarter of it between the title and the strip line.
+  const half = b.titlePad / 2;
+  const strip = grid ? b.titlePad : half + half / 2 + (split ? 0 : b.groupPad);
+  const top = g.label.height > 0 ? strip : b.groupPad;
+  if (split) return { top, right: 0, bottom: 0, left: 0 };
   return { top, right: b.groupPad, bottom: b.groupPad, left: b.groupPad };
 }

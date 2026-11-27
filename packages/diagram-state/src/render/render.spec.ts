@@ -202,6 +202,31 @@ describe('state render: composites and concurrency regions', () => {
     expect(body(outer)).not.toBe(body(inner));
   });
 
+  it('draws the title strip line 4 px below the title and 20 px above the first child (D732)', async () => {
+    const { tree, layout } = await renderForTest(
+      'stateDiagram-v2\n  state Outer {\n    [*] --> Inner\n    state Inner {\n      [*] --> X\n    }\n  }'
+    );
+    const rect = (g: SvgNode, cls: string) => {
+      const r = tree.children(g).find((c) => classOf(tree, c) === cls)!;
+      return { y: Number(tree.getAttr(r, 'y')), x: Number(tree.getAttr(r, 'x')) };
+    };
+    const top = (id: string) => {
+      const b = layout.nodes.get(id) ?? layout.groups.get(id)!;
+      return b.y - b.height / 2;
+    };
+    for (const [id, first] of [
+      ['Outer', 'Outer_start'],
+      ['Inner', 'Inner_start'],
+    ] as const) {
+      const g = one(tree, `s:${id}`);
+      const band = rect(g, 'inner').y;
+      const title = layout.groups.get(id)!.title.y + layout.state.views.get(id)!.label.height / 2;
+      expect(band - title, id).toBeCloseTo(4);
+      expect(top(first) - band, id).toBeCloseTo(20);
+      expect(band - rect(g, 'outer').y, id).toBeGreaterThan(8);
+    }
+  });
+
   it('draws regions and dashed dividers from the layout, one fewer divider than regions', async () => {
     const { tree, layout } = await renderForTest(
       'stateDiagram-v2\n  state Active {\n    [*] --> A\n    --\n    [*] --> B\n    --\n    [*] --> C\n  }'

@@ -220,6 +220,88 @@ describe('state graph builder', () => {
     });
   });
 
+  describe('the room below a composite title equals its other padding (D732, #1301, #1307)', () => {
+    // The renderer draws the title strip's line `titlePad / 4` (4 px) below the title.
+    const strip = (layout: CompleteStateLayout, id: string): number =>
+      layout.groups.get(id)!.title.y + layout.state.views.get(id)!.label.height / 2 + 4;
+    const box = (layout: CompleteStateLayout, id: string) => {
+      const b = layout.nodes.get(id) ?? layout.groups.get(id)!;
+      return {
+        top: b.y - b.height / 2,
+        bottom: b.y + b.height / 2,
+        left: b.x - b.width / 2,
+        right: b.x + b.width / 2,
+      };
+    };
+    /** The gaps between frame `id` (with `line` as its top) and its nearest children. */
+    const gaps = (
+      graph: LayoutGraph,
+      layout: CompleteStateLayout,
+      id: string,
+      line = strip(layout, id)
+    ) => {
+      const kids = [...graph.nodes, ...graph.groups]
+        .filter((n) => n.parent === id)
+        .map((n) => box(layout, n.id));
+      const frame = box(layout, id);
+      return {
+        top: Math.min(...kids.map((k) => k.top)) - line,
+        left: Math.min(...kids.map((k) => k.left)) - frame.left,
+        right: frame.right - Math.max(...kids.map((k) => k.right)),
+        bottom: frame.bottom - Math.max(...kids.map((k) => k.bottom)),
+      };
+    };
+    const even = { top: 20, left: 20, right: 20, bottom: 20 };
+    const near = (g: Record<string, number>) =>
+      Object.fromEntries(Object.entries(g).map(([k, v]) => [k, Math.round(v)]));
+
+    it('keeps 20 px below the strip of a composite holding one state (#1301)', () => {
+      const { graph, layout } = run('stateDiagram\n  state Parent {\n  C\n  }\n');
+      expect(near(gaps(graph, layout, 'Parent'))).toEqual(even);
+    });
+
+    it('keeps 20 px between the strip and a start dot (#1307)', () => {
+      const { graph, layout } = run(
+        'stateDiagram-v2\n  Idle --> Ringing : press\n  state "Ringing" as Ringing {\n    [*] --> Loud\n    Loud : loud\n  }\n'
+      );
+      expect(near(gaps(graph, layout, 'Ringing'))).toEqual(even);
+    });
+
+    it('keeps the title 8 px below the top of the frame', () => {
+      const { layout } = run('stateDiagram\n  state Parent {\n  C\n  }\n');
+      const title = layout.groups.get('Parent')!.title.y;
+      const label = layout.state.views.get('Parent')!.label.height;
+      expect(title - label / 2 - box(layout, 'Parent').top).toBeCloseTo(8);
+    });
+
+    it('keeps the room even at every nesting level', () => {
+      const { graph, layout } = run(
+        'stateDiagram-v2\n  state Outer {\n    [*] --> Mid\n    state Mid {\n      [*] --> Inner\n      state Inner {\n        [*] --> X\n        X --> Y\n      }\n    }\n  }\n'
+      );
+      for (const id of ['Outer', 'Mid', 'Inner'])
+        expect(near(gaps(graph, layout, id)), id).toEqual(even);
+    });
+
+    it('starts the regions and their dividers at the strip line', () => {
+      const { graph, layout } = run(
+        'stateDiagram-v2\n  state Conc {\n    [*] --> A\n    --\n    [*] --> B\n  }\n'
+      );
+      const line = strip(layout, 'Conc');
+      for (const r of ['Conc:region1', 'Conc:region2']) {
+        expect(box(layout, r).top).toBeCloseTo(line);
+        expect(near(gaps(graph, layout, r, line)), r).toEqual(even);
+      }
+      expect(layout.dividers).toHaveLength(1);
+      expect(layout.dividers[0]!.y1).toBeCloseTo(line);
+      expect(layout.dividers[0]!.y2).toBeCloseTo(box(layout, 'Conc').bottom);
+    });
+
+    it('leaves the cell layout as it was: the title on the border row, no strip', () => {
+      const { graph } = run('stateDiagram\n  state Parent {\n  C\n  }\n', { units: cellProfile() });
+      expect(group(graph, 'Parent')!.padding).toEqual({ top: 0, right: 1, bottom: 1, left: 1 });
+    });
+  });
+
   it('takes spacing from state config in px', () => {
     const { graph } = run('stateDiagram-v2\n  A --> B\n', {
       config: { state: { nodeSpacing: 80, rankSpacing: 90 } },
