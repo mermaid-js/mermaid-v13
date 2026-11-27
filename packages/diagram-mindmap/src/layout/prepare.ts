@@ -117,8 +117,8 @@ function lengthOf(
 interface Build {
   readonly ctx: MindmapLayoutContext;
   readonly font: FontKey;
-  /** Wrap width, units, by shape: `narrow` shapes wrap narrower while the author sets none (D744). */
-  readonly wrap: { readonly wide: number; readonly narrow: number };
+  /** Wrap width, units. */
+  readonly wrap: number;
   /** `mindmap.padding`, px, and in units across and down. */
   readonly paddingPx: number;
   readonly padding: Point;
@@ -230,13 +230,12 @@ function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView
   // Bullets and inline code are read in a markdown string only (D564).
   const [shown, mode] =
     node.markdown === true ? [node.label, { markup: 'markdown' as const }] : v12Label(node.label);
-  const shape = node.shape === 'default' && b.rounded ? 'rounded' : node.shape;
-  const wrap = MINDMAP_METRICS.shapes[shape].narrow === true ? b.wrap.narrow : b.wrap.wide;
-  const label = layoutLabel(shown, b.font, wrap, b.ctx.measurer, {
+  const label = layoutLabel(shown, b.font, b.wrap, b.ctx.measurer, {
     ...mode,
     inline: b.ctx.inline,
     keepWords: b.ctx.units.id !== 'cell',
   });
+  const shape = node.shape === 'default' && b.rounded ? 'rounded' : node.shape;
   const f = frameOf(b, shape, label, node.icon && iconText(b, node.icon.text));
   const base = {
     id: node.ast,
@@ -288,10 +287,6 @@ export function prepareMindmap(model: MindmapModel, ctx: MindmapLayoutContext): 
     'mindmap.maxNodeWidth',
     true
   );
-  // As D124: a value equal to the generated default counts as unset, since the resolved config
-  // always carries it. Unset, square, rounded and hexagon wrap at v12's 120 (D744).
-  const authorSet = maxWidth !== MINDMAP_METRICS.maxNodeWidth;
-  const wrapAt = (w: number): number => Math.max(px(w, 'x'), MINDMAP_METRICS.minWrap);
   const b: Build = {
     ctx,
     font: {
@@ -299,10 +294,7 @@ export function prepareMindmap(model: MindmapModel, ctx: MindmapLayoutContext): 
       size: ctx.theme.number('fontSize'),
       weight: MINDMAP_METRICS.fontWeight,
     },
-    wrap: {
-      wide: wrapAt(maxWidth),
-      narrow: wrapAt(authorSet ? maxWidth : MINDMAP_METRICS.narrowWrap),
-    },
+    wrap: Math.max(px(maxWidth, 'x'), MINDMAP_METRICS.minWrap),
     paddingPx: padding,
     padding: { x: px(padding, 'x'), y: px(padding, 'y') },
     rounded: ctx.theme.value('mindmapRoundedNodes') === 'true',

@@ -38,8 +38,7 @@ describe.each([
     expect(drawn.some((s) => s.includes(' and `code`'))).toBe(true);
     // A requirement's name is bold as a whole.
     expect(drawn.some((s) => s.endsWith('i:italic'))).toBe(true);
-    // The span may wrap over two lines (mindmap's square nodes wrap at 120 px, D744).
-    expect(drawn.join(' ')).toContain('`**not bold**`');
+    expect(drawn.some((s) => s.includes('`**not bold**`'))).toBe(true);
     expect(drawn.some((s) => s.includes('`x_1`'))).toBe(true);
     // The character references the label reader adds are drawn as the characters.
     expect(svg).not.toMatch(/&amp;#(42|95);|&#(42|95);/);
