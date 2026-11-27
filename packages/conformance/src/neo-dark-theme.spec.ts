@@ -64,7 +64,9 @@ const DARK_WHY = 'D183: derived with the dark rules; v12 never set darkMode';
 /** Each difference from v12 neo-dark, with the decision that makes it. */
 const DIFFERENCES: Readonly<Record<string, string>> = {
   xyChartDataLabelColor:
-    'D333(b): v12 neo-dark sets no xyChart.dataLabelColor (its DB drew theme-default’s); v13 takes primaryTextColor',
+    'D333(b), D749: v12 neo-dark sets no xyChart.dataLabelColor (its DB drew theme-default’s #131300); v13 sets #131300, unless primaryTextColor reads on the first bar colour',
+  xyChartDataLabelOutsideColor:
+    'D749: v12 has no variable; it drew labels outside the bars in dataLabelColor; v13 takes primaryTextColor',
   ...Object.fromEntries(DARK_DERIVED.map((n) => [n, DARK_WHY])),
   strokeWidth: 'D183: 2, as in neo; v12 neo-dark drew with 1',
   quadrantPointFill:

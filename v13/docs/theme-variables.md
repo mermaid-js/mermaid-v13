@@ -602,7 +602,8 @@ A theme with a palette (a non-empty `borderColorArray`: redux-color, redux-dark-
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `xyChartBackgroundColor` | `xyChart.backgroundColor` | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `xyChartTitleColor` | `xyChart.titleColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
-| `xyChartDataLabelColor` | `xyChart.dataLabelColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `xyChartDataLabelColor` | `xyChart.dataLabelColor` | color | `#28253d` | `#28253d` | `#131300` | `#131300` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#131300` |
+| `xyChartDataLabelOutsideColor` | `xyChart.dataLabelOutsideColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
 | `xyChartLegendTextColor` | `xyChart.legendTextColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
 | `xyChartXAxisTitleColor` | `xyChart.xAxisTitleColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
 | `xyChartXAxisLabelColor` | `xyChart.xAxisLabelColor` | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |

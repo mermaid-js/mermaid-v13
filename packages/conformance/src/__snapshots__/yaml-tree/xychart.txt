@@ -5,9 +5,9 @@ e2e/diagrams/xychart/baseline/text/labels.mmd 1 c2ca95637ed2005d
 e2e/diagrams/xychart/baseline/theme-variables/palette-array.mmd 1 8d5bfeab5b6e83a8
 e2e/diagrams/xychart/baseline/theme-variables/xychart-variables.mmd 1 02a681637ceb386c
 e2e/diagrams/xychart/baseline/themes/default.mmd 1 a9a466eeb376007c
-e2e/diagrams/xychart/baseline/themes/neo-dark.mmd 1 18c305f3b9cf0ae0
+e2e/diagrams/xychart/baseline/themes/neo-dark.mmd 1 c0907a28bd06c64a
 e2e/diagrams/xychart/baseline/themes/neo.mmd 1 4caee259f2ddc258
-e2e/diagrams/xychart/baseline/themes/redux-dark.mmd 1 810370c53b6dad1e
+e2e/diagrams/xychart/baseline/themes/redux-dark.mmd 1 0a4e699a99139d7e
 e2e/diagrams/xychart/baseline/themes/redux.mmd 1 3357b6b8b276fa69
 e2e/diagrams/xychart/nightly-check/correct-distances-between-data-points.mmd 1 985d1ec19732aa58
 e2e/diagrams/xychart/nightly-check/data-labels-auto-range-horizontal.mmd 1 abfd5fbefd00716a
