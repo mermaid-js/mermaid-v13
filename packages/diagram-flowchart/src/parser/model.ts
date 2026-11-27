@@ -118,6 +118,11 @@ export interface FlowModel {
   callbacks: FlowCallback[];
   /** The front-matter `title`, drawn above the diagram (D652); absent when there is none. */
   title?: string;
+  /**
+   * `true` for a `swimlane-beta` diagram, whose own `swimlane.curve` applies over
+   * `flowchart.curve` (D761); absent for a flowchart, even with `layout: swimlane`.
+   */
+  swimlane?: true;
   accTitle: string;
   accDescr: string;
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */

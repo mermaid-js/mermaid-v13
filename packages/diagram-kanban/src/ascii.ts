@@ -44,6 +44,6 @@ export function ascii(model: KanbanModel, layout: KanbanLayout, ctx: TextRenderC
   const items = new Map(model.items.map((item) => [item.ast, item]));
   const priority = priorityWarning(laid.cards.flatMap((c) => items.get(c.ast) ?? []));
   if (priority) ctx.warn(priority);
-  for (const w of asciiWarnings(model, laid, ctx)) ctx.warn(w);
+  for (const w of asciiWarnings(model, laid, ctx, ctx.ast)) ctx.warn(w);
   return drawKanban(laid, glyphs);
 }

@@ -37,8 +37,8 @@ const isStepped = (kind: string): kind is 'step' | 'stepBefore' | 'stepAfter' =>
   kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
 
 /**
- * The curve an unknown name is drawn with: `flowchart.curve`'s default (the schema's, pinned to
- * it by a spec in diagram-flowchart), which class and requirement also take when it is unset.
+ * The curve an unknown name is drawn with: flowchart's default curve (in its code, pinned to it
+ * by a spec in diagram-flowchart), which class and requirement also take when nothing is set.
  */
 export const DEFAULT_CURVE = 'rounded' satisfies CurveKind;
 
@@ -69,6 +69,26 @@ export function curveReporter(
       seen.add(curve);
       warn(w);
     });
+}
+
+/**
+ * The curve resolver for one render (D733): called with a type's own curve names, strongest
+ * first (a per-edge curve, then `<type>.curve`, …), it draws the first that is set, else
+ * `global` (the top-level `curve` key), else `fallback`, the type's default. The config keys
+ * have no schema defaults, so an unset key is `undefined`. A name goes through
+ * {@link curveReporter}: an unknown one is drawn with {@link DEFAULT_CURVE} and warns
+ * `CURVE_UNKNOWN` once per render (D602, D681).
+ */
+export function curveResolver(
+  global: string | undefined,
+  fallback: CurveKind,
+  warn: (warning: Warning) => void
+): (...own: readonly (string | undefined)[]) => CurveKind {
+  const kindOf = curveReporter(warn);
+  return (...own) => {
+    const name = own.find((c) => c !== undefined) ?? global;
+    return name === undefined ? fallback : kindOf(name);
+  };
 }
 
 /** How the layout engine routes edges drawn with this curve: right angles but for two. */

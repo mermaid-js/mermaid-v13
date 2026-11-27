@@ -3,6 +3,7 @@
   themeVariables property (object) 2:11-2:13 "th" -> "themeVariables: "
   layout property (string) 2:11-2:13 "th" -> "layout: "
   lineHops property (boolean | string) 2:11-2:13 "th" -> "lineHops: "
+  curve property (string) 2:11-2:13 "th" -> "curve: "
   ascii property (object) 2:11-2:13 "th" -> "ascii: "
   fontFamily property (string) 2:11-2:13 "th" -> "fontFamily: "
   altFontFamily property (string) 2:11-2:13 "th" -> "altFontFamily: "
