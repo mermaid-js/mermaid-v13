@@ -528,12 +528,10 @@ function oldLayoutLabel(
   const lines: Run[][] = [];
   const indents: number[] = [];
   const widths: number[] = [];
-  const tags: Tags = { bold: 0, italic: 0, dropped: options.inline?.dropped };
-  // `<script>` and `<style>` lose what they hold, as in v12 (D566); `inline` drops the tags.
-  const shown = (markdown ? src : text).replace(RE_SCRIPT, '$1$2').replace(RE_STYLE, '$1$2');
+  const tags: Tags = { bold: 0, italic: 0 };
   for (const { source, bullet } of markdown
-    ? markdownLines(shown)
-    : plainLines(shown, options.backslashBreak)) {
+    ? markdownLines(src)
+    : plainLines(text, options.backslashBreak)) {
     const pieces = tidy(inline(source, base, tags, markup, spans?.boxes));
     let indent = 0;
     let hang = 0;
@@ -690,43 +688,23 @@ function markdownLines(text: string): SourceLine[] {
   return out;
 }
 
-const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
-// A `<script>` or `<style>` start tag, recognised as `RE_TAG` does, with what the element holds:
-// up to its end tag, which stays for `inline` to drop. With no end tag the element holds nothing
-// and the rest of the label is matched as group 2, so that it is kept and scanned once.
-const RE_SCRIPT = /(<script(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/script(?:\s[^<>]*)?\/?>)|([^]*))/gi;
-const RE_STYLE = /(<style(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/style(?:\s[^<>]*)?\/?>)|([^]*))/gi;
-// HTML elements whose tags are dropped, text kept (R-TEXT-3), and reported as `HTML_DROPPED`
-// unless they are bold or italic (D566). Anything else shaped like a tag, such as the type in
-// List<T>, is text.
-const HTML_TAGS = new Set(
-  (
-    'a abbr address article aside audio b bdi bdo big blockquote body br button caption center cite code col ' +
-    'colgroup data dd del details dfn dialog div dl dt em embed fieldset figcaption figure font footer form h1 h2 ' +
-    'h3 h4 h5 h6 head header hr html i iframe img input ins kbd label legend li link main map mark meta meter nav ' +
-    'noscript object ol optgroup option output p picture pre progress q rp rt ruby s samp script section select ' +
-    'small source span strike strong style sub summary sup table tbody td template textarea tfoot th thead time ' +
-    'title tr track tt u ul var video wbr'
-  ).split(' ')
-);
+// The tags read as tags: bold, italic and a `<br>` not made a break. Any other text shaped like
+// a tag is drawn as written (#1440).
+const RE_TAG = /<(\/?)(br|b|strong|i|em)(?:\s[^<>]*)?\/?>/iy;
 
 /** Open `<b>`/`<strong>` and `<i>`/`<em>` tags. HTML tags stay open across line breaks. */
 interface Tags {
   bold: number;
   italic: number;
-  /** Where the names of the other tags go: the render's `InlineSpans.dropped`. */
-  dropped: Set<string> | undefined;
 }
 
 const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
 const RE_WORD = /\w/;
 
-/** The HTML subset tag that starts at `i`, or undefined. */
-function tagAt(source: string, i: number): RegExpExecArray | undefined {
+/** The read tag that starts at `i`, or null. */
+function tagAt(source: string, i: number): RegExpExecArray | null {
   RE_TAG.lastIndex = i;
-  const m = RE_TAG.exec(source);
-  const tag = m?.[2]?.toLowerCase();
-  return m && tag !== undefined && HTML_TAGS.has(tag) ? m : undefined;
+  return RE_TAG.exec(source);
 }
 
 /**
@@ -794,7 +772,6 @@ function inline(
   const count = (tag: string, step: number): void => {
     if (tag === 'b' || tag === 'strong') tags.bold = Math.max(0, tags.bold + step);
     else if (tag === 'i' || tag === 'em') tags.italic = Math.max(0, tags.italic + step);
-    else tags.dropped?.add(tag);
     restyle();
   };
   let i = 0;

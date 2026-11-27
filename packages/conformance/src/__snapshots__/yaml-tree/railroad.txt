@@ -33,7 +33,7 @@ e2e/diagrams/railroad/nightly-check/ir-empty-diagram.mmd 1 6b701bf96fab9668
 e2e/diagrams/railroad/nightly-check/ir-railroad-config.mmd 1 4ac55e5430e30310
 e2e/diagrams/railroad/nightly-check/ir-specials-quotes-and-escapes.mmd 1 6262d930fea737f3
 e2e/diagrams/railroad/nightly-check/ir-title-and-accessibility.mmd 1 273fcbfa583afa04
-e2e/diagrams/railroad/nightly-check/label-markup.mmd 1 d09168cceb5a8db4
+e2e/diagrams/railroad/nightly-check/label-markup.mmd 1 154b6bc253626b9a
 e2e/diagrams/railroad/nightly-check/peg-base-theme.mmd 1 9c0c67b390783c92
 e2e/diagrams/railroad/nightly-check/peg-comments-and-titles.mmd 1 8e52e4cad02591b5
 e2e/diagrams/railroad/nightly-check/peg-empty-diagram.mmd 1 941d40bef39ec28c
