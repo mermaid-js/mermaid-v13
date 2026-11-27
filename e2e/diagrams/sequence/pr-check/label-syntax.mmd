@@ -3,12 +3,12 @@ description: >-
   Every sequence label kind written six ways (#1368, #1400): plain **bold**
   _ital_, a quoted markdown string, bare backticks, a code span in plain text,
   tags, and a written \n. Only the markdown string is drawn as markdown; tags
-  draw and \n breaks the line everywhere. The title is a markdown string; a
+  draw and \n breaks the line everywhere. The title is written plain; a
   participant name written without an alias cannot hold tags (it stops at <).
   Block titles take one or two of the six ways per keyword.
 ---
 sequenceDiagram
-  title "`title **bold** _ital_`"
+  title title **bold** _ital_
   participant P1 as alias **bold** _ital_
   participant P2 as "`alias **bold** _ital_`"
   participant P3 as `alias **bold** _ital_`

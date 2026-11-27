@@ -1,8 +1,7 @@
 /**
  * How each sequence label kind reads what is written (#1368, #1400): markdown only in a quoted
  * markdown string, tags draw, bare backticks and plain `**x**` are text, and a written `\n`
- * breaks the line. No sequence label kind read markdown in v12, so `legacyMarkdown` changes
- * nothing.
+ * breaks the line. With `markdownAlwaysOn` every label is markdown: plain markers draw too.
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -143,7 +142,7 @@ const each = (expected: (kind: string) => string[]): Record<string, string[]> =>
 
 const MODES = [
   ['default mode', {}],
-  ['legacyMarkdown', { legacyMarkdown: true }],
+  ['markdownAlwaysOn', { markdownAlwaysOn: true }],
 ] as const;
 
 describe.each(MODES)('sequence label kinds, %s', (_, config) => {
@@ -153,33 +152,6 @@ describe.each(MODES)('sequence label kinds, %s', (_, config) => {
       config
     );
     expect(labels(layout)).toEqual(each((k) => [`${k} <b>bold</b> <i>ital</i>`]));
-  });
-
-  it('draw bare backticks as written', () => {
-    const layout = lay(
-      source((k) => `\`${k} **bold** _ital_\``),
-      config
-    );
-    expect(labels(layout)).toEqual(each((k) => [`\`${k} **bold** _ital_\``]));
-  });
-
-  it('draw plain markdown markers and a code span as written', () => {
-    expect(
-      labels(
-        lay(
-          source((k) => `${k} **bold** _ital_`),
-          config
-        )
-      )
-    ).toEqual(each((k) => [`${k} **bold** _ital_`]));
-    expect(
-      labels(
-        lay(
-          source((k) => `${k} a \`code\` b`),
-          config
-        )
-      )
-    ).toEqual(each((k) => [`${k} a \`code\` b`]));
   });
 
   it('draw tags', () => {
@@ -209,6 +181,58 @@ describe.each(MODES)('sequence label kinds, %s', (_, config) => {
         )
       )
     ).toEqual(each((k) => [`${k} <b>one</b>`, 'two']));
+  });
+});
+
+describe('sequence label kinds, default mode only', () => {
+  it('draw bare backticks as written', () => {
+    const layout = lay(source((k) => `\`${k} **bold** _ital_\``));
+    expect(labels(layout)).toEqual(each((k) => [`\`${k} **bold** _ital_\``]));
+  });
+
+  it('draw plain markdown markers and a code span as written', () => {
+    expect(labels(lay(source((k) => `${k} **bold** _ital_`)))).toEqual(
+      each((k) => [`${k} **bold** _ital_`])
+    );
+    expect(labels(lay(source((k) => `${k} a \`code\` b`)))).toEqual(
+      each((k) => [`${k} a \`code\` b`])
+    );
+  });
+});
+
+describe('sequence label kinds, markdownAlwaysOn', () => {
+  const on = { markdownAlwaysOn: true };
+
+  it('draw plain markdown markers as bold and italic in every kind', () => {
+    expect(
+      labels(
+        lay(
+          source((k) => `${k} **bold** _ital_`),
+          on
+        )
+      )
+    ).toEqual(each((k) => [`${k} <b>bold</b> <i>ital</i>`]));
+  });
+
+  it('draw a code span as inline code, without its backticks', () => {
+    const layout = lay(
+      source((k) => `${k} a \`code\` b`),
+      on
+    );
+    const mono = layout.messages[0]!.label!.text.lines[0]!.find((r) => r.text === 'code');
+    expect(mono?.style).toBe(Style.Mono);
+    expect(labels(layout)).toEqual(each((k) => [`${k} a code b`]));
+  });
+
+  it('keeps the brackets around a block title and the number in cells as text', () => {
+    const layout = lay(
+      'sequenceDiagram\n  autonumber\n  A->>B: **b** x\n  loop **l**\n    B->>A: - item\n  end',
+      on,
+      true
+    );
+    expect(shown(layout.messages[0]!.label!.text)).toEqual(['1. <b>b</b> x']);
+    expect(shown(layout.messages[1]!.label!.text)).toEqual(['2. - item']);
+    expect(shown(layout.fragments[0]!.title!.text)).toEqual(['[<b>l</b>]']);
   });
 });
 

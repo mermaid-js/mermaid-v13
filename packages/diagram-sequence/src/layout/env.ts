@@ -5,13 +5,8 @@
 import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
 import { checkStyle } from '@mermaid-js/core/svg';
-import {
-  fontSizePx,
-  labelSource,
-  layoutLabel,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import {
   ARROW_HEADS,
   type ArrowHead,
@@ -239,9 +234,10 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
     index: new Map(participants.map((p, i) => [p.id, i])),
     warn: (w) => ctx.warn(w),
     measure: (text, font, max, keepWords = false, frame) => {
-      // The label handler (#1368): markdown only in a quoted markdown string, and a written `\n`
-      // breaks the line, as `<br>` does. No sequence label read markdown in v12.
-      const source = labelSource(text, { v12Markdown: false }, ctx.config);
+      // The label handler (#1368): markdown only in a quoted markdown string, or in every label
+      // with `markdownAlwaysOn`; a written `\n` breaks the line, as `<br>` does. A plain label
+      // with an emphasis pair gives the render its one `MARKDOWN_NOT_READ`.
+      const source = readLabel(text, undefined, ctx);
       const read = frame ? frame(source.text) : source.text;
       const label = layoutLabel(read, font, max > 0 ? max : 1, ctx.measurer, {
         ...source,
