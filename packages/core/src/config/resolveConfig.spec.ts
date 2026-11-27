@@ -495,7 +495,7 @@ describe('CORE_DEFAULTS', () => {
       theme: 'redux-color',
       layout: 'layered',
       lineHops: false, // new in v13, shared by every edge-drawing diagram (D537), off by default (D689)
-      legacyMarkdown: false, // new in v13: v12's markdown reading of plain labels, off (D734)
+      markdownAlwaysOn: false, // new in v13: every label read as markdown, off (D734)
       // Core's own swimlane engine: its section's defaults resolve in core (D533, D537).
       swimlane: {
         useMaxWidth: true,
