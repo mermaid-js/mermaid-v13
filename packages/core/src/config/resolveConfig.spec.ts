@@ -495,7 +495,7 @@ describe('CORE_DEFAULTS', () => {
       theme: 'redux-color',
       layout: 'layered',
       lineHops: false, // new in v13, shared by every edge-drawing diagram (D537), off by default (D689)
-      legacyMarkdown: false, // new in v13: v12's markdown reading of plain labels, off (D734)
+      markdownAlwaysOn: false, // new in v13: every label read as markdown, off (D734)
       // Core's own swimlane engine: its section's defaults resolve in core (D533, D537).
       swimlane: {
         useMaxWidth: true,
@@ -512,5 +512,26 @@ describe('CORE_DEFAULTS', () => {
       look: undefined, // removed, no default (D153)
       handDrawnSeed: undefined, // the hand-drawn plugin's own key (D303)
     });
+  });
+});
+
+describe('chained sections (D534) leave curve to each section (D761)', () => {
+  const chained = (initialize: MermaidConfig, frontMatter: ConfigInput) =>
+    resolveConfig(CORE_DEFAULTS, initialize, frontMatter, [], undefined, {
+      section: ['swimlane', 'flowchart'],
+    });
+
+  it('keeps each section its own curve, from whichever source sets it', () => {
+    const config = chained({ swimlane: { curve: 'basis' } }, { flowchart: { curve: 'linear' } });
+    expect(config.swimlane?.curve).toBe('basis');
+    expect(config.flowchart?.curve).toBe('linear');
+    const unset = chained({}, { flowchart: { curve: 'linear' } });
+    expect(unset.swimlane?.curve).toBeUndefined();
+  });
+
+  it('still chains the keys both sections have', () => {
+    const config = chained({ swimlane: { useMaxWidth: false } }, { flowchart: { theme: 'dark' } });
+    expect(config.flowchart?.useMaxWidth).toBe(false);
+    expect(config.swimlane?.theme).toBe('dark');
   });
 });

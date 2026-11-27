@@ -8,6 +8,7 @@ import { parseRequirement } from '../index.ts';
 import type { RequirementModel } from '../model.ts';
 import { layoutRequirement, type RequirementLayout } from './layout.ts';
 import type { RequirementRenderContext } from './context.ts';
+import { REQUIREMENT_CURVE } from './curve.ts';
 import { theme as table } from '../theme/table.ts';
 
 const themed = async (name: string, themeVariables?: Record<string, unknown>): Promise<Theme> =>
@@ -32,14 +33,15 @@ function lay(
   src: string | RequirementModel,
   init?: MermaidConfig,
   measurer: Measurer = tableMeasurer,
-  t: Theme = theme
+  t: Theme = theme,
+  warn: RequirementRenderContext['warn'] = () => {}
 ): { graph: LayoutGraph; layout: RequirementLayout } {
   let graph: LayoutGraph | undefined;
   const ctx: RequirementRenderContext = {
     config: resolveConfig(CORE_DEFAULTS, init),
     measurer,
     theme: t,
-    warn: () => {},
+    warn,
     layout: (g) => layered((graph = g)),
   };
   const layout = layoutRequirement(typeof src === 'string' ? modelOf(src) : src, ctx);
@@ -238,15 +240,51 @@ describe('the graph', () => {
     expect(lay('requirementDiagram\nrequirement a {\n}\n').graph.direction).toBe('TB');
   });
 
-  it('routes as flowchart.curve draws: right angles unless linear or a curve', () => {
+  it('names the default curve, rounded right angles (D733)', () => {
+    expect(REQUIREMENT_CURVE).toBe('rounded');
+  });
+
+  it('routes as requirement.curve draws: right angles unless linear or a curve', () => {
     const src = 'requirementDiagram\nrequirement a {\n}\n';
     expect(lay(src).graph.routing).toBe('stepped');
-    expect(lay(src, { flowchart: { curve: 'linear' } }).graph.routing).toBe('straight');
-    expect(lay(src, { flowchart: { curve: 'basis' } }).graph.routing).toBe('curved');
-    expect(lay(src, { flowchart: { curve: 'step' } }).layout.requirement!.curve).toBe('step');
-    // An unknown name is drawn as an unset one (D681).
-    const bogus = { flowchart: { curve: 'bogus' } } as unknown as MermaidConfig;
-    expect(lay(src, bogus).layout.requirement!.curve).toBe(lay(src).layout.requirement!.curve);
+    expect(lay(src).layout.requirement!.curve).toBe(REQUIREMENT_CURVE);
+    expect(lay(src, { requirement: { curve: 'linear' } }).graph.routing).toBe('straight');
+    expect(lay(src, { requirement: { curve: 'basis' } }).graph.routing).toBe('curved');
+    const step = lay(src, { requirement: { curve: 'step' } });
+    expect(step.layout.requirement!.curve).toBe('step');
+  });
+
+  it('draws requirement.curve over the top-level curve, and that over the default (D733)', () => {
+    const src = 'requirementDiagram\nrequirement a {\n}\n';
+    const both = lay(src, { curve: 'basis', requirement: { curve: 'linear' } });
+    expect([both.layout.requirement!.curve, both.graph.routing]).toEqual(['linear', 'straight']);
+    const global = lay(src, { curve: 'linear' });
+    expect([global.layout.requirement!.curve, global.graph.routing]).toEqual([
+      'linear',
+      'straight',
+    ]);
+  });
+
+  it('is not changed by flowchart.curve (D733)', () => {
+    const src = 'requirementDiagram\nrequirement a {\n}\n';
+    const plain = lay(src);
+    const flowchart = lay(src, { flowchart: { curve: 'linear' } });
+    expect(flowchart.layout.requirement!.curve).toBe(plain.layout.requirement!.curve);
+    expect(flowchart.graph.routing).toBe(plain.graph.routing);
+  });
+
+  it('draws an unknown curve name as the default and warns CURVE_UNKNOWN once (D681)', () => {
+    const src = 'requirementDiagram\nrequirement a {\n}\n';
+    const plain = lay(src);
+    for (const config of [{ requirement: { curve: 'bogus' } }, { curve: 'bogus' }]) {
+      const codes: string[] = [];
+      const bogus = lay(src, config as unknown as MermaidConfig, tableMeasurer, theme, (w) =>
+        codes.push(w.code)
+      );
+      expect(bogus.layout.requirement!.curve).toBe(plain.layout.requirement!.curve);
+      expect(bogus.graph.routing).toBe(plain.graph.routing);
+      expect(codes.filter((c) => c === 'CURVE_UNKNOWN')).toHaveLength(1);
+    }
   });
 
   it('sizes self-loops and port pitch for the markers', () => {

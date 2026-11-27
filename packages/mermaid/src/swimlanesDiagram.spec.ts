@@ -130,8 +130,8 @@ describe('swimlane-beta registration (D534, D535)', () => {
     const plain = await m.prepare(SWIMLANE);
     expect(plain.config.swimlane?.ignoreCrossLaneEdges).toBe(true);
     // Flowchart's own defaults stay in its section, not in swimlane's.
-    expect(plain.config.flowchart?.curve).toBe('rounded');
-    expect((plain.config.swimlane as Record<string, unknown> | undefined)?.curve).toBeUndefined();
+    expect(plain.config.flowchart?.padding).toBe(15);
+    expect((plain.config.swimlane as Record<string, unknown> | undefined)?.padding).toBeUndefined();
     const keyed = `---\nconfig:\n  flowchart:\n    nodeSpacing: 120\n  swimlane:\n    automaticLaneOrdering: true\n---\n${SWIMLANE}`;
     const both = await m.prepare(keyed);
     expect(both.config.flowchart?.nodeSpacing).toBe(120);
@@ -229,7 +229,9 @@ describe('swimlane-beta registration (D534, D535)', () => {
       const tuning = await init('{"automaticLaneOrdering": true, "curve": "linear"}');
       expect(tuning.warnings).toEqual([]);
       expect(tuning.config.swimlane?.automaticLaneOrdering).toBe(true);
-      expect(tuning.config.flowchart?.curve).toBe('linear');
+      // `curve` is not chained between the sections (D761): it stays swimlane's own.
+      expect(tuning.config.swimlane?.curve).toBe('linear');
+      expect(tuning.config.flowchart?.curve).toBeUndefined();
       // Through parse() too, which returns the text's own config.
       const parsed = await m.parse(`%%{init: {"config": {"nodeSpacing": 99}}}%%\n${SWIMLANE}`);
       expect(parsed.config).toEqual({ flowchart: { nodeSpacing: 99 } });

@@ -305,7 +305,7 @@ function drawComposite({ w, layout, ctx, paint, titlePad }: Scene, g: StateGroup
   const left = box.x - box.width / 2;
   const top = box.y - box.height / 2;
   const bottom = top + box.height;
-  // The body starts halfway between the title and the content below it.
+  // The body starts `titlePad / 4` below the title, `groupPad` above the content (D732).
   const band = Math.min(bottom, box.title.y + g.label.height / 2 + titlePad / 4);
   w.open('g', {
     class:
@@ -398,7 +398,7 @@ function drawRegion({ w, layout, paint }: Scene, g: StateGroupView): void {
  * A transition: its path and a point arrowhead. A note's connector is dashed, with no
  * arrowhead and no `data-ast` (the note element carries the note's AST id, R-PARSE-8).
  */
-function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
+function drawEdge({ w, layout, s, paint }: Scene, e: StateEdgeView): void {
   const route = layout.edges.get(e.id);
   w.open('g', {
     class: e.note
@@ -411,7 +411,7 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
     const path = routePath(
       w,
       route.points,
-      e.source === e.target ? 'rounded' : 'curved',
+      e.source === e.target ? 'rounded' : s.curve,
       0,
       e.note ? 0 : markerTrim('arrow_point', paint.head)
     );

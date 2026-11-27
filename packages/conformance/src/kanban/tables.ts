@@ -7,6 +7,10 @@ export const jison = {
   kanban: {
     probe: 'kanban\n  a',
     e2e: ['kanban'],
+    lexErrors: {
+      'kanban/baseline/accessibility/acc-title-descr.mmd':
+        "D742: v12's kanban lexer has no `accDescr { … }` and stops at its `{`; v13 reads it as the board's description",
+    },
     harvest: {
       dir: `${V12_DIAGRAMS}/kanban`,
       docs: 'kanban.md',
