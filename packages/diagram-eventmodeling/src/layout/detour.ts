@@ -18,6 +18,7 @@
  * Relations that clear every box keep their segment, and so does one no detour fits. Every
  * lookup reads only the boxes, columns and runs near the relation, so the layout stays linear.
  */
+import { clipSegment } from '@mermaid-js/shared/layout/segment-clip';
 import { EVENTMODELING_METRICS as M } from './metrics.ts';
 import type {
   EventModelBoxLayout,
@@ -39,26 +40,17 @@ type Span = readonly [number, number];
 
 /**
  * The segment from `p` to `q` passes through the inside of `r` shrunk by `inset` on each side
- * (Liang–Barsky clipping; a negative `inset` grows it) for more than `min` of its length.
+ * (a negative `inset` grows it) for more than `min` of its length.
  */
 export function segmentEnters(p: Point, q: Point, r: Rect, inset: number, min = 0): boolean {
-  let t0 = 0;
-  let t1 = 1;
-  const dx = q.x - p.x;
-  const dy = q.y - p.y;
-  const sides: [number, number][] = [
-    [-dx, p.x - (r.x + inset)],
-    [dx, r.x + r.width - inset - p.x],
-    [-dy, p.y - (r.y + inset)],
-    [dy, r.y + r.height - inset - p.y],
-  ];
-  for (const [d, room] of sides) {
-    if (d === 0) {
-      if (room < 0) return false;
-    } else if (d < 0) t0 = Math.max(t0, room / d);
-    else t1 = Math.min(t1, room / d);
-  }
-  return t1 - t0 > min;
+  const inner = {
+    x0: r.x + inset,
+    y0: r.y + inset,
+    x1: r.x + r.width - inset,
+    y1: r.y + r.height - inset,
+  };
+  const part = clipSegment(p, { x: q.x - p.x, y: q.y - p.y }, inner);
+  return part !== undefined && part[1] - part[0] > min;
 }
 
 /** A run across the gap below lane `gap`, `level` steps off the gap's middle. */

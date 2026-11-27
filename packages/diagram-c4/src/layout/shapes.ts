@@ -24,6 +24,7 @@ import {
   queueRx,
   type PadXY,
 } from '@mermaid-js/shared/shapes/kit';
+import { clipSegment } from '@mermaid-js/shared/layout/segment-clip';
 import { kindParts, type C4Element } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { C4ShapeId, Point, Rect } from './types.ts';
@@ -289,31 +290,8 @@ export const sidesOf = (r: Rect): Sides => ({
 });
 
 /** How far along the segment from `p` by `d` it first meets the rectangle; Infinity when it misses. */
-export function hitRect(
-  { x0, y0, x1, y1 }: Sides,
-  { x: px, y: py }: Point,
-  { x: dx, y: dy }: Point
-): number {
-  let enter = 0;
-  let leave = 1;
-  if (dx === 0) {
-    if (px < x0 || px > x1) return Infinity;
-  } else {
-    const a = (x0 - px) / dx;
-    const b = (x1 - px) / dx;
-    enter = Math.max(enter, Math.min(a, b));
-    leave = Math.min(leave, Math.max(a, b));
-  }
-  if (dy === 0) {
-    if (py < y0 || py > y1) return Infinity;
-  } else {
-    const a = (y0 - py) / dy;
-    const b = (y1 - py) / dy;
-    enter = Math.max(enter, Math.min(a, b));
-    leave = Math.min(leave, Math.max(a, b));
-  }
-  return enter <= leave ? enter : Infinity;
-}
+export const hitRect = (box: Sides, p: Point, d: Point): number =>
+  clipSegment(p, d, box)?.[0] ?? Infinity;
 
 function hitEllipse(
   p: Extract<Piece, { kind: 'ellipse' }>,
