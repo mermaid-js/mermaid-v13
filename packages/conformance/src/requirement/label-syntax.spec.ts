@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { createMermaid } from 'mermaid';
 
 /**
@@ -53,7 +54,7 @@ describe('requirement labels (#1368)', () => {
     expect(drawn(r.svg)).toContain('**strong** name');
     expect(drawn(r.svg)).toContain('Text: **bold** _ital_');
     expect(notRead(r.warnings)).toHaveLength(1);
-    expect(notRead(r.warnings)[0]!.message).toContain('markdownAlwaysOn: true');
+    expect(notRead(r.warnings)[0]).toMatchObject(MARKDOWN_NOT_READ);
   });
 
   it('with markdownAlwaysOn, globally or for requirement, reads every label kind as markdown', async () => {
