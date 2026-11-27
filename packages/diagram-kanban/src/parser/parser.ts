@@ -36,6 +36,7 @@ import { inKindSet, Kind, kindSet } from '@mermaid-js/core/parser-kit';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { holesIn, treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
+import { accDescrValue, accTitleValue } from '@mermaid-js/shared/parser/common-values';
 import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type {
   PreprocessResult,
@@ -47,7 +48,13 @@ import type {
 } from '@mermaid-js/core/preprocess';
 import * as codes from '../codes.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
-import type { KanbanData, KanbanDecoration, KanbanDocument, KanbanItemNode } from './ast.ts';
+import type {
+  KanbanData,
+  KanbanDecoration,
+  KanbanDocument,
+  KanbanItemNode,
+  KanbanStatementNode,
+} from './ast.ts';
 import { KINDS, lex } from './lexer.ts';
 import { checkNodeLimit } from './limits.ts';
 import type { Lexed } from './lexer.ts';
@@ -181,7 +188,10 @@ interface ItemParts {
 class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
   /** How many `assigned` values of each name were read: the first is the definition. */
   private readonly assignees = new Map<string, number>();
-  private readonly children: KanbanItemNode[] = [];
+  private readonly children: KanbanStatementNode[] = [];
+  /** The last `accTitle` and `accDescr` values (D742). */
+  private accTitle = '';
+  private accDescr = '';
   private readonly items: OpenItem[] = [];
   private readonly columns: { item: number; cards: number[] }[] = [];
   /**
@@ -212,7 +222,12 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
     if (this.columnSpan) this.st.endStatement(this.columnSpan, this.src.length);
     // A misplaced indent is reported when the item after it is read: keep source order.
     this.st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
-    const model = { items: this.items, columns: this.columns };
+    const model = {
+      items: this.items,
+      columns: this.columns,
+      accTitle: this.accTitle,
+      accDescr: this.accDescr,
+    };
     return this.finish(model, this.children, this.options);
   }
 
@@ -584,6 +599,40 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
     let end = at;
     while (end > span.range.end && !isLineBreak(this.src.charCodeAt(end - 1))) end--;
     this.st.endStatement(span, Math.max(end, span.range.end));
+  }
+
+  /**
+   * `accTitle: …`, `accDescr: …` or `accDescr { … }` (D742): sets the title or description,
+   * the last one written winning, and adds no item. An `accDescr {` with no `}` ran to the end
+   * of the text: reported, and nothing is set.
+   */
+  protected override accessibility(): void {
+    const { c } = this;
+    const title = c.kind === T.AccTitle;
+    const j = c.next();
+    const kind = title ? 'accTitle' : 'accDescr';
+    // The keyword as the value readers find it: the lexer reads it without regard to case.
+    const image = kind + this.raw(j).slice(kind.length);
+    const range = this.range(j);
+    if (!title && !image.endsWith('}') && /^accDescr[\t ]*\{/.test(image)) {
+      this.st.diagnostics.error(
+        'UNCLOSED_DESCRIPTION',
+        `Unclosed description: the \`accDescr {\` at line ${this.lineOf(range.start)} has no closing \`}\`. Add \`}\` after the description.`,
+        { start: range.start, end: range.start + 'accDescr'.length }
+      );
+      throw STOP;
+    }
+    const text = title ? accTitleValue(image) : accDescrValue(image);
+    this.children.push({
+      id: this.st.ids.statement(kind),
+      type: title ? 'AccTitle' : 'AccDescr',
+      range,
+      text,
+    });
+    // A board-wide statement: at the top level, not in the column span open around it.
+    if (!this.st.lean) this.st.statements.push({ kind, range });
+    if (title) this.accTitle = text;
+    else this.accDescr = text;
   }
 
   /** `ICON` or `CLASS`: v12 `decorateNode`, on the last item in source order. */
