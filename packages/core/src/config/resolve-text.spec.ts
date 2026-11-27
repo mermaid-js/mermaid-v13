@@ -18,7 +18,12 @@ import {
 
 type Plain = Record<string, unknown>;
 const POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-const APPEARANCE_KEYS = ['theme', 'layout'];
+// The keys a section may set over the top level, with the type a value must have (resolve.ts).
+const APPEARANCE: Readonly<Record<string, string>> = {
+  theme: 'string',
+  layout: 'string',
+  markdownAlwaysOn: 'boolean',
+};
 const isPlainObject = (value: unknown): value is Plain =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -67,13 +72,13 @@ function oldResolveAppearance(
     return isPlainObject(value) ? value : undefined;
   };
   for (const key of keys) {
-    const top = APPEARANCE_KEYS.includes(key);
+    const top = APPEARANCE[key];
     const value = layers
       .flatMap((layer) => [
         ...sections.map((s) => scopedOf(layer, s)?.[key]),
         top ? layer[key] : undefined,
       ])
-      .find((v) => (top ? typeof v === 'string' : v !== undefined));
+      .find((v) => (top ? typeof v === top : v !== undefined));
     if (value === undefined) continue;
     if (top) config[key] = value;
     for (const s of sections) {
