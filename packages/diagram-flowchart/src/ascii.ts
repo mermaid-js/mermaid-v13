@@ -54,7 +54,7 @@ export function ascii(model: FlowModel, layout: FlowLayout, ctx: FlowAsciiContex
   const flow = laid.flow!;
   const glyphs = glyphsFor(ctx);
   const { routes, unresolved } = repairRoutes(flow.graph, laid);
-  // The curve config sets (D733, D749): a swimlane-beta's `swimlane.curve`, then
+  // The curve config sets (D733, D761): a swimlane-beta's `swimlane.curve`, then
   // `flowchart.curve`, else `curve`.
   const curve = configCurve(model, ctx.config) ?? ctx.config.curve;
   for (const w of asciiWarnings(model, flow, glyphs, ctx.ast, curve)) ctx.warn(w);

@@ -17,7 +17,7 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   `swimlane.*` (in each source; a later source, front matter or a directive, still outranks
   `initialize()`). So `flowchart.layout: elk` or `flowchart.theme` moves a swimlane diagram
   unless `swimlane.layout` / `swimlane.theme` is set too, and a key both sections have
-  (`theme`, `layout`, `useMaxWidth`, `useWidth`, but not `curve`, D749) resolves the same way
+  (`theme`, `layout`, `useMaxWidth`, `useWidth`, but not `curve`, D761) resolves the same way
   in both. An `%%{init: {"config": …}}%%` key goes to `swimlane` when it is one of swimlane's
   own keys (`theme`, `layout`, `useMaxWidth`, `lineHops`, `curve` and the three below), else
   to `flowchart` (v12 sent all of it to `swimlane`). `flowchart.*` keys (spacing, curve, labels, padding) apply as
@@ -33,7 +33,7 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   is set, from any source: an `initialize()` `swimlane.curve` beats a front-matter
   `flowchart.curve`. Config does not copy `curve` between the two sections, as it does the
   keys both have. A flowchart drawn with `layout: swimlane` ignores `swimlane.curve`: it is the
-  diagram's key, not the layout's (D749).
+  diagram's key, not the layout's (D761).
 - **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
   (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
   then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned

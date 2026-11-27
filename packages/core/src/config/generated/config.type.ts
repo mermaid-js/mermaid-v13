@@ -113,10 +113,10 @@ lineHops?: (false | true | "arc" | "gap")
  * `usecase.curve`, `eventmodeling.curve`) when set, then this key when
  * set, then the type's default (`rounded` for flowchart, swimlane, class,
  * requirement and agentflow; S-curves for state and usecase; today's
- * routes for eventmodeling). Other diagram types take no curve (D748).
+ * routes for eventmodeling). Other diagram types take no curve (D760).
  * A swimlane diagram (`swimlane-beta`) reads `swimlane.curve`, then
  * `flowchart.curve`, before this key; a flowchart with `layout:
- * swimlane` reads only `flowchart.curve` (D749).
+ * swimlane` reads only `flowchart.curve` (D761).
  * 
  */
 curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
@@ -492,7 +492,7 @@ lineHops?: (boolean | ("arc" | "gap"))
  * `linkStyle … interpolate`), then this key when set in any config
  * source (front matter, a directive or `initialize()`), then
  * `flowchart.curve` when set, then the top-level `curve` when set,
- * then `rounded` (D749). It is the diagram's key, not the layout's: a
+ * then `rounded` (D761). It is the diagram's key, not the layout's: a
  * flowchart drawn with `layout: swimlane` ignores it.
  * 
  */
@@ -2545,7 +2545,7 @@ useMaxWidth?: boolean
 padding?: number
 /**
  * How the relations between frames are drawn between their route
- * points (D733, D748).
+ * points (D733, D760).
  * 
  * Unset keeps today's look: straight lines between lanes and along a
  * lane, and right-angled routes under a row, each ending in an

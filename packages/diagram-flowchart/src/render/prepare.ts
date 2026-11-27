@@ -410,7 +410,7 @@ function edgeViews(
       start,
       end,
       // The edge's own curve, then the diagram's: a swimlane-beta's `swimlane.curve`, then
-      // `flowchart.curve` (D749), then the global `curve`.
+      // `flowchart.curve` (D761), then the global `curve`.
       curve: m.curveOf(e.interpolate, model.defaultInterpolate, configCurve(model, m.ctx.config)),
     });
   }

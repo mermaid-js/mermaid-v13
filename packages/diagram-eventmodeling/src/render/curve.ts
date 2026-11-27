@@ -1,4 +1,4 @@
-// How event modeling draws a frame relation under a curve key (D733, D748). The curve is, strongest
+// How event modeling draws a frame relation under a curve key (D733, D760). The curve is, strongest
 // first, `eventmodeling.curve`, then the top-level `curve`. Neither is a `CurveKind` default:
 // with nothing set the relation is drawn as before, from the layout's own points and head, so
 // there is no curve for `routePath` to take. A curve set draws the relation with the shared
@@ -32,7 +32,7 @@ export function relationCurve(
   return curveResolver(config.curve, DEFAULT_CURVE, warn)(own);
 }
 
-/** Whether a relation is drawn from its own points whatever the curve: the self loop (D748). */
+/** Whether a relation is drawn from its own points whatever the curve: the self loop (D760). */
 export const keepsItsRoute = (r: EventModelRelationLayout): boolean => r.route === 'self';
 
 /** The layout's points as route points: `axis` is the direction of the leg that ends there. */

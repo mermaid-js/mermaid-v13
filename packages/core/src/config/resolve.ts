@@ -63,7 +63,7 @@ export interface ResolveConfigOptions {
    * of `pluginDefaults`, when it has exactly one. A type that reads its own section on top of
    * its plugin's gives both, highest first (`['swimlane', 'flowchart']`, D534): in each source
    * the first section's key wins over the second's, over the top-level one, and a key both
-   * sections have takes that value in both. `curve` is not chained (D749): each section keeps
+   * sections have takes that value in both. `curve` is not chained (D761): each section keeps
    * its own.
    */
   readonly section?: string | readonly string[];
@@ -185,7 +185,7 @@ export function resolveSite(
   const section = options.section ?? soleKey(plugin);
   // A chained type (D534) resolves every key all its sections' schemas have (`theme`, `layout`,
   // `useMaxWidth`, `useWidth`), each written into every section, so only where the schema has it.
-  // Not `curve` (D749): `swimlane.curve` is a diagram-specific key, not a layout-specific one,
+  // Not `curve` (D761): `swimlane.curve` is a diagram-specific key, not a layout-specific one,
   // so the diagram reads each section's own value and orders them itself.
   const sections = [section ?? []].flat();
   const keys = sections[1]

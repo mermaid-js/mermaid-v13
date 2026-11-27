@@ -4,7 +4,7 @@ import { eventmodelingConfigDefaults } from '../generated/config-defaults.ts';
 import { eventmodeling } from '../plugin.ts';
 import { relationCurve } from './curve.ts';
 
-// `eventmodeling.curve` > `curve` > today's look (D733, D748, #1380). Today's look is not a
+// `eventmodeling.curve` > `curve` > today's look (D733, D760, #1380). Today's look is not a
 // `CurveKind`: with neither key set the layout's own points are drawn as before.
 const render = createSourceHarness(eventmodeling);
 
@@ -59,7 +59,7 @@ function polyline(d: string): [number, number][] {
   ]);
 }
 
-describe('eventmodeling relation curve (D733, D748, #1380)', () => {
+describe('eventmodeling relation curve (D733, D760, #1380)', () => {
   it('has no default curve kind: the schema gives eventmodeling.curve none', () => {
     expect(eventmodelingConfigDefaults).not.toHaveProperty('curve');
     expect(relationCurve({}, () => undefined)).toBeUndefined();

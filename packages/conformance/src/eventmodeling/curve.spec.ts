@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createMermaid } from 'mermaid';
 import { REPO_ROOT } from '../index.ts';
 
-// `eventmodeling.curve` > `curve` > today's look (D733, D748, #1380), through
+// `eventmodeling.curve` > `curve` > today's look (D733, D760, #1380), through
 // `createMermaid().render()`. The fixture sets `curve: linear` and `eventmodeling.curve: basis`.
 const FIXTURE = join(REPO_ROOT, 'e2e/diagrams/eventmodeling/nightly-check/curve-key.mmd');
 const CONFIG = 'config:\n  curve: linear\n  eventmodeling:\n    curve: basis\n';
@@ -20,7 +20,7 @@ async function render(config: string = CONFIG) {
   return { lines, warnings: warnings.filter((w) => w.code !== 'EVENTMODELING_INVALID_SOURCE') };
 }
 
-describe('eventmodeling curve config precedence (D733, D748, #1380)', () => {
+describe('eventmodeling curve config precedence (D733, D760, #1380)', () => {
   it('draws eventmodeling.curve over the top-level curve', async () => {
     const both = await render();
     const own = await render('config:\n  eventmodeling:\n    curve: basis\n');

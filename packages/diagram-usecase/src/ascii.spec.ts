@@ -281,7 +281,7 @@ describe('warnings (D82, D478, pitfall 22)', () => {
     expect((await draw(H + 'A')).warnings).toEqual([]);
   });
 
-  describe('curve (D748): text lines are always square', () => {
+  describe('curve (D760): text lines are always square', () => {
     const curve = async (config: Record<string, unknown>) =>
       dropped((await draw(H + 'A --> B', { config })).warnings);
 

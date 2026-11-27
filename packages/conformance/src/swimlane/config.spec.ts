@@ -133,7 +133,7 @@ describe('swimlane edge curves (D733, #1377)', () => {
   });
 });
 
-describe('swimlane.curve is swimlane-beta’s own key, from any source (D749, #1377)', () => {
+describe('swimlane.curve is swimlane-beta’s own key, from any source (D761, #1377)', () => {
   // `line-hops-off`'s diagram without its front matter. Its square routes keep the curves
   // apart: `linear` has corners, `rounded` arcs, `basis` cubics.
   const body = fixture('line-hops-off').replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');

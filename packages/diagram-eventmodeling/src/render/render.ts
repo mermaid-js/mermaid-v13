@@ -124,7 +124,7 @@ function drawBox(
 
 /**
  * A relation (`renderD3Relation`): the line, fill `none`, stroke `emRelationStroke` 1 wide, and
- * v12's marker as an inline polygon in `emArrowhead`. With a curve set (D748) the line is drawn
+ * v12's marker as an inline polygon in `emArrowhead`. With a curve set (D760) the line is drawn
  * by the shared `routePath` and the head follows the end of that path; a self relation, and
  * every relation with no curve set, is drawn from the layout's points and head.
  */

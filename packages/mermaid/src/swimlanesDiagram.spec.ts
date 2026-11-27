@@ -229,7 +229,7 @@ describe('swimlane-beta registration (D534, D535)', () => {
       const tuning = await init('{"automaticLaneOrdering": true, "curve": "linear"}');
       expect(tuning.warnings).toEqual([]);
       expect(tuning.config.swimlane?.automaticLaneOrdering).toBe(true);
-      // `curve` is not chained between the sections (D749): it stays swimlane's own.
+      // `curve` is not chained between the sections (D761): it stays swimlane's own.
       expect(tuning.config.swimlane?.curve).toBe('linear');
       expect(tuning.config.flowchart?.curve).toBeUndefined();
       // Through parse() too, which returns the text's own config.

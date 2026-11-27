@@ -887,7 +887,7 @@ export const configSchema: ConfigSchema = {
     },
     "curve": {
       "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
-      "description": "How edges are drawn between their route points, for every diagram type\nthat draws edges and has a `curve` key of its own (D733). Unset by\ndefault: each type then draws its own default curve.\n\nPrecedence, per type: a per-edge curve where the type has one, then\nthe type's own key (`flowchart.curve`, `swimlane.curve`,\n`class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,\n`usecase.curve`, `eventmodeling.curve`) when set, then this key when\nset, then the type's default (`rounded` for flowchart, swimlane, class,\nrequirement and agentflow; S-curves for state and usecase; today's\nroutes for eventmodeling). Other diagram types take no curve (D748).\nA swimlane diagram (`swimlane-beta`) reads `swimlane.curve`, then\n`flowchart.curve`, before this key; a flowchart with `layout:\nswimlane` reads only `flowchart.curve` (D749).\n",
+      "description": "How edges are drawn between their route points, for every diagram type\nthat draws edges and has a `curve` key of its own (D733). Unset by\ndefault: each type then draws its own default curve.\n\nPrecedence, per type: a per-edge curve where the type has one, then\nthe type's own key (`flowchart.curve`, `swimlane.curve`,\n`class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,\n`usecase.curve`, `eventmodeling.curve`) when set, then this key when\nset, then the type's default (`rounded` for flowchart, swimlane, class,\nrequirement and agentflow; S-curves for state and usecase; today's\nroutes for eventmodeling). Other diagram types take no curve (D760).\nA swimlane diagram (`swimlane-beta`) reads `swimlane.curve`, then\n`flowchart.curve`, before this key; a flowchart with `layout:\nswimlane` reads only `flowchart.curve` (D761).\n",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
@@ -6091,7 +6091,7 @@ export const configSchema: ConfigSchema = {
         },
         "curve": {
           "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
-          "description": "How swimlane edges are drawn between their route points (D733).\n\nDefaults to `rounded`, as flowchart's. Precedence in a\n`swimlane-beta` diagram: a per-edge curve (`curve:` on an edge,\n`linkStyle … interpolate`), then this key when set in any config\nsource (front matter, a directive or `initialize()`), then\n`flowchart.curve` when set, then the top-level `curve` when set,\nthen `rounded` (D749). It is the diagram's key, not the layout's: a\nflowchart drawn with `layout: swimlane` ignores it.\n",
+          "description": "How swimlane edges are drawn between their route points (D733).\n\nDefaults to `rounded`, as flowchart's. Precedence in a\n`swimlane-beta` diagram: a per-edge curve (`curve:` on an edge,\n`linkStyle … interpolate`), then this key when set in any config\nsource (front matter, a directive or `initialize()`), then\n`flowchart.curve` when set, then the top-level `curve` when set,\nthen `rounded` (D761). It is the diagram's key, not the layout's: a\nflowchart drawn with `layout: swimlane` ignores it.\n",
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
@@ -6970,11 +6970,11 @@ export const configSchema: ConfigSchema = {
         },
         "curve": {
           "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
-          "description": "How the relations between frames are drawn between their route\npoints (D733, D748).\n\nUnset keeps today's look: straight lines between lanes and along a\nlane, and right-angled routes under a row, each ending in an\narrowhead. Precedence: this key when set, then the top-level `curve`\nwhen set, then today's look. With a curve set, the relations are\ndrawn with that curve and each arrowhead follows the end of its\nline. A relation from a frame to itself stays as it is.\n",
+          "description": "How the relations between frames are drawn between their route\npoints (D733, D760).\n\nUnset keeps today's look: straight lines between lanes and along a\nlane, and right-angled routes under a row, each ending in an\narrowhead. Precedence: this key when set, then the top-level `curve`\nwhen set, then today's look. With a curve set, the relations are\ndrawn with that curve and each arrowhead follows the end of its\nline. A relation from a frame to itself stays as it is.\n",
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "New in v13 (D733, D748, #1380): v12's event modeling drew fixed straight lines and read no curve key. Unset, the output is unchanged. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+            "reason": "New in v13 (D733, D760, #1380): v12's event modeling drew fixed straight lines and read no curve key. Unset, the output is unchanged. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
           }
         },
         "rowHeight": {

@@ -97,7 +97,7 @@ function nodeFeatures(prepared: UsecasePrepared, add: Add): void {
  * The warnings for one drawing: the features without a text form, one per kind (D82). `ast`
  * adds the statements' ids (`style:1`, `classDef:1`, `accTitle:1`, …); the config is the one
  * the layout resolved (`prepared.config`), whose rejected values already warned. `curve` is
- * the `usecase.curve` or `curve` the config sets: text lines are always square (D748).
+ * the `usecase.curve` or `curve` the config sets: text lines are always square (D760).
  */
 export function asciiWarnings(
   model: UsecaseModel,

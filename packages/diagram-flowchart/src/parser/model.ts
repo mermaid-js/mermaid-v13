@@ -120,7 +120,7 @@ export interface FlowModel {
   title?: string;
   /**
    * `true` for a `swimlane-beta` diagram, whose own `swimlane.curve` applies over
-   * `flowchart.curve` (D749); absent for a flowchart, even with `layout: swimlane`.
+   * `flowchart.curve` (D761); absent for a flowchart, even with `layout: swimlane`.
    */
   swimlane?: true;
   accTitle: string;

@@ -560,7 +560,7 @@ User──┐
 - Dropped, one `ASCII_DROPPED` warning per kind: `style` (`style`, `classDef`, `class`),
   `emphasis`, `glyph` (business marks, icons and the hollow and awesome figures, drawn as the
   plain figure and boxes), `animation`, `curve` (`usecase.curve` or `curve`: text lines are
-  always square, D748), `config` (the `usecase` fonts, `colorScheme`,
+  always square, D760), `config` (the `usecase` fonts, `colorScheme`,
   `useMaxWidth` and `diagramPadding` set off their defaults) and `accessibility`.
 
 ## Agentflow diagrams

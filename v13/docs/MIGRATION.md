@@ -1368,7 +1368,7 @@ them keep working.
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
 | `nodeSpacing`/`rankSpacing` below the arrowhead: a subgraph level used its parent's `nodesep` and `ranksep + 25`, so frames were never drawn as tight as asked | Spacing is literal, except a rank gap is never smaller than an arrowhead plus its 6 px lead (13 px classic, 19.5 px neo), so the edge between two subgraphs stays visible | D601, #399 |
 | Icon shape frames (`form` `square`, `rounded`, `circle`): the glyph plus `flowchart.padding` (63 px around a 48 px icon), rounded corners 5; a circle as wide as the glyph's diagonal plus 40, about 108 px | The glyph plus half of `flowchart.padding` (55.5 px), rounded corners 5; a circle as wide as the glyph's diagonal plus half of `flowchart.padding`, about 75 px. The label sits 8 px from the frame, as in v12 | Tighter frames (D685, #1150) |
-| `flowchart.curve` was the only curve key, and the resolved config (`getConfig()`) showed its default | A top-level `curve` sets the curve of every diagram type that draws edges, and `swimlane.curve` that of a swimlane diagram. A flowchart takes a per-edge curve, then `flowchart.curve`, then `curve`, then `rounded`; a swimlane diagram takes `swimlane.curve`, set in any source, before `flowchart.curve`, and a flowchart with `layout: swimlane` ignores `swimlane.curve` (D749). `rounded` is now a default in code, so `getConfig()`, the config reference and the editor hover show no default for `flowchart.curve`. Drawing with nothing set is unchanged | One `curve` for every type, and a key without a default is unset only when the author did not set it (D733, #1377) |
+| `flowchart.curve` was the only curve key, and the resolved config (`getConfig()`) showed its default | A top-level `curve` sets the curve of every diagram type that draws edges, and `swimlane.curve` that of a swimlane diagram. A flowchart takes a per-edge curve, then `flowchart.curve`, then `curve`, then `rounded`; a swimlane diagram takes `swimlane.curve`, set in any source, before `flowchart.curve`, and a flowchart with `layout: swimlane` ignores `swimlane.curve` (D761). `rounded` is now a default in code, so `getConfig()`, the config reference and the editor hover show no default for `flowchart.curve`. Drawing with nothing set is unchanged | One `curve` for every type, and a key without a default is unset only when the author did not set it (D733, #1377) |
 
 ## Sequence SVG structure
 
@@ -3130,7 +3130,7 @@ relations) are kept.
 | Lane labels as HTML-less `<text>` at (30, `y + 30`) in the page's colour | `<text>` start-anchored at the same point, bold, filled `emTextColor` | D527 |
 | Text at v12's 16 px | Text in `emTextColor` at the theme's `fontSize` | D527 |
 | A self relation drew a straight line through its box | A 4-point path under the box's bottom right corner, as is a relation under its row (one that skips boxes of its lane); every other relation is `M…L…`, as v12, ending at its head's tip | D521, D659 |
-| Relations were always straight lines, or right-angled routes under a row; no curve key | Unset, the same lines and heads, byte for byte. The new `eventmodeling.curve`, then the new top-level `curve`, draw every relation between frames with `flowchart.curve`'s names (`linear`, `step`, `rounded`, `basis`, …): the line stops at the head's base and the head follows the end of the drawn line. A relation from a frame to itself keeps its loop whatever the curve. An unknown name draws `rounded` with one `CURVE_UNKNOWN` warning. Event modeling has no text output | D733, D748 |
+| Relations were always straight lines, or right-angled routes under a row; no curve key | Unset, the same lines and heads, byte for byte. The new `eventmodeling.curve`, then the new top-level `curve`, draw every relation between frames with `flowchart.curve`'s names (`linear`, `step`, `rounded`, `basis`, …): the line stops at the head's base and the head follows the end of the drawn line. A relation from a frame to itself keeps its loop whatever the curve. An unknown name draws `rounded` with one `CURVE_UNKNOWN` warning. Event modeling has no text output | D733, D760 |
 | No source mapping | `data-id` on every element; `data-ast` on each `g.em-box` (`frame:<id>`) and each `path.em-relation` drawn for a `->>` (`relation:<source>-><target>`, the first `->>` of that source). A source repeated in one frame (`->> 01 ->> 01`) draws one path; the AST nodes of its repeats (`relation:01->02@2`, …) are not drawn. Lanes (`lane:<index>`) and inferred relations carry `data-id` only | R-PARSE-8, D528 |
 | `rgb(250,250,250)`, `rgb(240,240,240)` and `white` paints | The same colours as hex | |
 | `look: neo` and the redux themes: the same model as the classic themes | The same: event modeling differs between families by colour only | D227 |
@@ -3154,7 +3154,7 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   `swimlane.*` (in each source; a later source, front matter or a directive, still outranks
   `initialize()`). So `flowchart.layout: elk` or `flowchart.theme` moves a swimlane diagram
   unless `swimlane.layout` / `swimlane.theme` is set too, and a key both sections have
-  (`theme`, `layout`, `useMaxWidth`, `useWidth`, but not `curve`, D749) resolves the same way
+  (`theme`, `layout`, `useMaxWidth`, `useWidth`, but not `curve`, D761) resolves the same way
   in both. An `%%{init: {"config": …}}%%` key goes to `swimlane` when it is one of swimlane's
   own keys (`theme`, `layout`, `useMaxWidth`, `lineHops`, `curve` and the three below), else
   to `flowchart` (v12 sent all of it to `swimlane`). `flowchart.*` keys (spacing, curve, labels, padding) apply as
@@ -3170,7 +3170,7 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   is set, from any source: an `initialize()` `swimlane.curve` beats a front-matter
   `flowchart.curve`. Config does not copy `curve` between the two sections, as it does the
   keys both have. A flowchart drawn with `layout: swimlane` ignores `swimlane.curve`: it is the
-  diagram's key, not the layout's (D749).
+  diagram's key, not the layout's (D761).
 - **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
   (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
   then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned
@@ -3584,7 +3584,7 @@ changes (spec #517):
 | A `usecase` length, font or `colorScheme` of the wrong type reached the renderer as it was (`wrappingWidth: "wide"`, `actorFontSize: -1`) | A length is a number or a numeric string, from the schema's minimum up to 10000; a weight one of the schema's; a family one the style check allows; `colorScheme` `role` or `rotate`. Anything else draws with the default and one `USECASE_CONFIG_IGNORED` warning per key | Pitfall 22 |
 | A styled `font-size` (`classDef`, `style`) in `vw`, `vh`, `0` or 10000px and up was drawn as given | Measured and drawn at the element's default size, with one `USECASE_STYLE_IGNORED` warning per value: the layout measures every label before drawing it | Pitfalls 16, 22 |
 | `usecase.theme` (default `redux-color`) chose the theme when no other layer set one | The same: honoured with v12's default; a `theme` from `initialize()` or the text wins over it, and `usecase.theme` over the top-level `theme` within a layer | P2 |
-| Relationship and note lines were always drawn as one fixed curve; no curve key | Unset, the same S-curves. The new `usecase.curve`, then the new top-level `curve`, set them with `flowchart.curve`'s names (`linear`, `step`, `rounded`, …), and the layout routes the lines to match; a line from a node to itself stays rounded, and text output keeps its right angles and warns `ASCII_DROPPED` (curve) once when a curve is set (D748). An unknown name draws `rounded` with one `CURVE_UNKNOWN` warning | D733, D748 |
+| Relationship and note lines were always drawn as one fixed curve; no curve key | Unset, the same S-curves. The new `usecase.curve`, then the new top-level `curve`, set them with `flowchart.curve`'s names (`linear`, `step`, `rounded`, …), and the layout routes the lines to match; a line from a node to itself stays rounded, and text output keeps its right angles and warns `ASCII_DROPPED` (curve) once when a curve is set (D760). An unknown name draws `rounded` with one `CURVE_UNKNOWN` warning | D733, D760 |
 | No text output | `format: 'ascii'` draws the diagram as text ([ASCII output](ascii.md#usecase-diagrams)): actors as a figure, use cases as `( label )`, boundaries as frames | D320, D478 |
 
 ## Usecase SVG structure

@@ -514,7 +514,7 @@ describe('CORE_DEFAULTS', () => {
   });
 });
 
-describe('chained sections (D534) leave curve to each section (D749)', () => {
+describe('chained sections (D534) leave curve to each section (D761)', () => {
   const chained = (initialize: MermaidConfig, frontMatter: ConfigInput) =>
     resolveConfig(CORE_DEFAULTS, initialize, frontMatter, [], undefined, {
       section: ['swimlane', 'flowchart'],
