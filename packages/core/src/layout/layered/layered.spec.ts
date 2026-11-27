@@ -370,6 +370,19 @@ describe('layered: a self-loop takes room on its own side only (#1173)', () => {
     expect(found).toEqual([]);
   });
 
+  // Of the four placements the narrowest is kept, measured by how far each node's room reaches
+  // on each side. Reading the left reach on the right side keeps the same width here but moves
+  // the nodes, so their places are pinned.
+  it('measures the four placements by the left and right reach of each room', () => {
+    const m = layered(randomGraph(8));
+    const at = (id: string): [number, number] => [m.nodes.get(id)!.x, m.nodes.get(id)!.y];
+    expect([at('n0'), at('n1'), at('n2')]).toEqual([
+      [102.25, 23],
+      [145, 132.5],
+      [93, 225],
+    ]);
+  });
+
   // Two cases the seeded graphs do not reach: in LR, a node whose loops reach unevenly beside a
   // lone node, which the snap of bends moves; in TB, a node with two loops beside a group whose
   // ends are held, which the pull towards held ends moves.

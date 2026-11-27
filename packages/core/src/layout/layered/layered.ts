@@ -851,7 +851,13 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
     return gridRow ? gridRow(r, count, onTrack) : trackAt(r, count, onTrack);
   };
 
-  let [minX, maxX] = extentOf(xs, LEFT, RIGHT, n);
+  // How far the rooms of the nodes reach each way.
+  let minX = Infinity;
+  let maxX = -Infinity;
+  for (let i = 0; i < n; i++) {
+    if (xs[i]! - LEFT[i]! < minX) minX = xs[i]! - LEFT[i]!;
+    if (xs[i]! + RIGHT[i]! > maxX) maxX = xs[i]! + RIGHT[i]!;
+  }
   if (hooks) {
     minX = hooks.floor(minX);
     maxX = hooks.ceil(maxX);
@@ -2627,29 +2633,6 @@ function reachOf(
   return [left, right];
 }
 
-// How far across the flow the rooms of the first `n` nodes at `xs` reach each way.
-function extentOf(
-  xs: Float64Array,
-  LEFT: Float64Array,
-  RIGHT: Float64Array,
-  n: number
-): [number, number] {
-  let lo = Infinity;
-  let hi = -Infinity;
-  for (let i = 0; i < n; i++) {
-    if (xs[i]! - LEFT[i]! < lo) lo = xs[i]! - LEFT[i]!;
-    if (xs[i]! + RIGHT[i]! > hi) hi = xs[i]! + RIGHT[i]!;
-  }
-  return [lo, hi];
-}
-
-// The room each node, bend or port takes across the flow towards `side` (`halfRoom`), by index.
-function gapsOf(g: Graph, opt: LayeredOptions, side: number): Float64Array {
-  const gap = f64(g.n);
-  for (let i = 0; i < g.n; i++) gap[i] = halfRoom(g, opt, i, side);
-  return gap;
-}
-
 // The room a node, bend or port takes across the flow from its middle towards `side` (-1 left, 1
 // right), with its share of the gap beside it. A port on a group's border is a point that an
 // edge passes through, and needs no more than a bend.
@@ -2762,8 +2745,12 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   } = g;
   const segments = EF.length;
   // The room each node takes towards its left and right neighbour.
-  const gapL = gapsOf(g, opt, -1);
-  const gapR = gapsOf(g, opt, 1);
+  const gapL = f64(n);
+  const gapR = f64(n);
+  for (let i = 0; i < n; i++) {
+    gapL[i] = halfRoom(g, opt, i, -1);
+    gapR[i] = halfRoom(g, opt, i, 1);
+  }
 
   // The neighbours are in left-to-right order (`sortNeighbours`), so the medians are read off
   // directly.
@@ -2915,7 +2902,14 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   const mins: number[] = [];
   const maxs: number[] = [];
   for (let k = 0; k < 4; k++) {
-    const [lo, hi] = extentOf(results[k]!, LEFT, RIGHT, n);
+    // How far the rooms of this placement reach each way.
+    const placed = results[k]!;
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let i = 0; i < n; i++) {
+      if (placed[i]! - LEFT[i]! < lo) lo = placed[i]! - LEFT[i]!;
+      if (placed[i]! + RIGHT[i]! > hi) hi = placed[i]! + RIGHT[i]!;
+    }
     mins.push(lo);
     maxs.push(hi);
     if (hi - lo < bestWidth) {
