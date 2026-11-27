@@ -43,15 +43,77 @@
         }
       }
     },
+    "phase-acc": {
+      "begin": "\\G(?!(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)accDescr[\\t ]*\\{))",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)accTitle[\\t ]*:[^\\n\\u2028\\u2029]*)|(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)accDescr[\\t ]*:[^\\n\\u2028\\u2029]*)|(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)accDescr[\\t ]*\\{)",
+      "patterns": [
+        {
+          "include": "#mode-acc"
+        }
+      ],
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-kanban"
+        },
+        "2": {
+          "name": "keyword.control.mermaid-kanban"
+        }
+      }
+    },
+    "switch-10": {
+      "begin": "(?i)accDescr[\\t ]*\\{",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)[^}]*\\})",
+      "patterns": [
+        {
+          "include": "#mode-accBlock"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-kanban"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-kanban"
+        }
+      }
+    },
     "rule-6": {
+      "begin": "(?i)(?<=^|\\n)[\\t ]+(?=accTitle[\\t ]*:|accDescr[\\t ]*[:{])",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-acc"
+        },
+        {
+          "include": "#switch-10"
+        }
+      ]
+    },
+    "rule-7": {
+      "begin": "(?i)(?<=^|\\n)(?=accTitle[\\t ]*:|accDescr[\\t ]*[:{])",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-acc"
+        },
+        {
+          "include": "#switch-10"
+        }
+      ]
+    },
+    "rule-13": {
       "match": "(?i)\\s*%%.*",
       "name": "comment.line.mermaid-kanban"
     },
-    "rule-7": {
+    "rule-14": {
       "match": "(?i)kanban\\b",
       "name": "keyword.control.mermaid-kanban"
     },
-    "rule-8": {
+    "rule-15": {
       "begin": "(?i):::",
       "end": "((?i).+)|((?i)\\n)",
       "patterns": [
@@ -70,7 +132,7 @@
         }
       }
     },
-    "rule-11": {
+    "rule-18": {
       "begin": "(?i)::icon\\(",
       "end": "((?i)\\))",
       "patterns": [
@@ -89,13 +151,13 @@
         }
       }
     },
-    "rule-12": {
+    "rule-19": {
       "match": "(?i)[\\s]+[\\n]"
     },
-    "rule-13": {
+    "rule-20": {
       "match": "(?i)[\\n]+"
     },
-    "rule-16": {
+    "rule-23": {
       "begin": "(?i)-\\)",
       "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
       "patterns": [
@@ -135,7 +197,7 @@
         }
       }
     },
-    "rule-17": {
+    "rule-24": {
       "begin": "(?i)\\(-",
       "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
       "patterns": [
@@ -175,7 +237,7 @@
         }
       }
     },
-    "rule-18": {
+    "rule-25": {
       "begin": "(?i)\\)\\)",
       "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
       "patterns": [
@@ -215,7 +277,7 @@
         }
       }
     },
-    "rule-19": {
+    "rule-26": {
       "begin": "(?i)\\)",
       "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
       "patterns": [
@@ -255,7 +317,7 @@
         }
       }
     },
-    "rule-20": {
+    "rule-27": {
       "begin": "(?i)\\(\\(",
       "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
       "patterns": [
@@ -295,7 +357,7 @@
         }
       }
     },
-    "rule-21": {
+    "rule-28": {
       "begin": "(?i)\\{\\{",
       "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
       "patterns": [
@@ -335,7 +397,7 @@
         }
       }
     },
-    "rule-22": {
+    "rule-29": {
       "begin": "(?i)\\(",
       "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
       "patterns": [
@@ -375,7 +437,7 @@
         }
       }
     },
-    "rule-23": {
+    "rule-30": {
       "begin": "(?i)\\[",
       "end": "((?i)[\\)]\\))|((?i)[\\)])|((?i)[\\]])|((?i)\\}\\})|((?i)\\(-)|((?i)-\\))|((?i)\\(\\()|((?i)\\()",
       "patterns": [
@@ -415,10 +477,10 @@
         }
       }
     },
-    "rule-24": {
+    "rule-31": {
       "match": "(?i)[\\s]+"
     },
-    "rule-25": {
+    "rule-32": {
       "match": "(?i)[^\\(\\[\\n\\)\\{\\}@]+",
       "name": "variable.other.mermaid-kanban"
     },
@@ -440,22 +502,13 @@
           "include": "#rule-7"
         },
         {
-          "include": "#rule-8"
-        },
-        {
-          "include": "#rule-11"
-        },
-        {
-          "include": "#rule-12"
-        },
-        {
           "include": "#rule-13"
         },
         {
-          "include": "#rule-16"
+          "include": "#rule-14"
         },
         {
-          "include": "#rule-17"
+          "include": "#rule-15"
         },
         {
           "include": "#rule-18"
@@ -467,12 +520,6 @@
           "include": "#rule-20"
         },
         {
-          "include": "#rule-21"
-        },
-        {
-          "include": "#rule-22"
-        },
-        {
           "include": "#rule-23"
         },
         {
@@ -480,6 +527,54 @@
         },
         {
           "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        }
+      ]
+    },
+    "mode-acc": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-12": {
+      "match": "(?i)[^}]+",
+      "name": "keyword.control.mermaid-kanban"
+    },
+    "mode-accBlock": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-12"
         }
       ]
     },
@@ -493,7 +588,7 @@
         }
       ]
     },
-    "rule-14": {
+    "rule-21": {
       "match": "(?i)[^\\)]+",
       "name": "string.quoted.mermaid-kanban"
     },
@@ -506,11 +601,11 @@
           "include": "#trivia-1"
         },
         {
-          "include": "#rule-14"
+          "include": "#rule-21"
         }
       ]
     },
-    "rule-27": {
+    "rule-34": {
       "begin": "(?i)[\"][`]",
       "end": "((?i)[`][\"])",
       "patterns": [
@@ -529,7 +624,7 @@
         }
       }
     },
-    "rule-30": {
+    "rule-37": {
       "begin": "(?i)[\"]",
       "end": "((?i)[\"])",
       "patterns": [
@@ -548,11 +643,11 @@
         }
       }
     },
-    "rule-41": {
+    "rule-48": {
       "match": "(?i)[^\\)\\]\\(\\}]+",
       "name": "string.quoted.mermaid-kanban"
     },
-    "rule-42": {
+    "rule-49": {
       "match": "(?i).+(?!\\(\\()",
       "name": "string.quoted.mermaid-kanban"
     },
@@ -565,20 +660,20 @@
           "include": "#trivia-1"
         },
         {
-          "include": "#rule-27"
+          "include": "#rule-34"
         },
         {
-          "include": "#rule-30"
+          "include": "#rule-37"
         },
         {
-          "include": "#rule-41"
+          "include": "#rule-48"
         },
         {
-          "include": "#rule-42"
+          "include": "#rule-49"
         }
       ]
     },
-    "rule-31": {
+    "rule-38": {
       "match": "(?i)(?:<\\w+\\b(?:[^<>\"=]|=(?!\")|=\"[^<>\"]*\")*>|[^\"])+",
       "name": "string.quoted.mermaid-kanban"
     },
@@ -591,11 +686,11 @@
           "include": "#trivia-1"
         },
         {
-          "include": "#rule-31"
+          "include": "#rule-38"
         }
       ]
     },
-    "rule-28": {
+    "rule-35": {
       "match": "(?i)(?:<\\w+\\b(?:[^<>\"`=]|=(?!\")|=\"[^<>\"`]*\")*>|[^`\"])+",
       "name": "string.quoted.mermaid-kanban"
     },
@@ -608,7 +703,7 @@
           "include": "#trivia-1"
         },
         {
-          "include": "#rule-28"
+          "include": "#rule-35"
         }
       ]
     },

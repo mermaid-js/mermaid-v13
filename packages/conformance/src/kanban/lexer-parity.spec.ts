@@ -4,6 +4,7 @@ import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { kanbanGateCorpus, VARIANTS } from './corpus.ts';
+import { cutAtAcc } from './acc-divergence.ts';
 
 /**
  * Lexer-parity gate (parser-method §1, #451): the v13 kanban lexer emits the same terminals,
@@ -40,6 +41,10 @@ import { kanbanGateCorpus, VARIANTS } from './corpus.ts';
  * reads the run the same way; a run left open at the end took the appended `\n` too, so the
  * oracle has nothing to clip and the v13 text ends in `<br/>` as well.
  *
+ * One divergence (D742, `cutAtAcc`): v13's acc statements, which v12 lexed as items. Both
+ * streams are compared up to the first of them, where v12's token must be that item's
+ * `NODE_ID`.
+ *
  * Sources v12 never lexed as a kanban (`oracle.tokens` is undefined: the detector
  * `/^\s*kanban/` is case-sensitive) are skipped; the test bounds which.
  */
@@ -65,6 +70,7 @@ describe('kanban lexer parity with mermaid@12 (jison)', () => {
     const items = await kanbanGateCorpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     const skipped: string[] = [];
+    const accDiffs: string[] = [];
     let compared = 0;
     let e2e = 0;
     let specs = 0;
@@ -81,8 +87,12 @@ describe('kanban lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('v12-')) specs++;
         if (item.id.startsWith('kanban-cases/')) cases++;
       }
-      const expected = v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
-      const actual = v13Tokens(item.source);
+      const cut = cutAtAcc(
+        v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]),
+        v13Tokens(item.source)
+      );
+      if (cut.problem) accDiffs.push(`${item.id}: ${cut.problem}`);
+      const { v12: expected, ours: actual } = cut;
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;
       while (JSON.stringify(expected[at]) === JSON.stringify(actual[at])) at++;
@@ -96,10 +106,11 @@ describe('kanban lexer parity with mermaid@12 (jison)', () => {
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture, every harvested spec and syntax-page string and every case reaches
     // the lexer: 30 restored e2e fixtures and 23 baselines (#459), #837's attribute quotes,
-    // and D647's ticket-row pair.
-    expect(e2e).toBe(57);
+    // D647's ticket-row pair, and D742's acc statements.
+    expect(e2e).toBe(58);
     expect(specs).toBe(32);
     expect(cases).toBe(136);
+    expect(accDiffs).toEqual([]);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
       diffs.map((d) => `${d.id} @${d.at}\n  v12 ${show(d.v12)}\n  v13 ${show(d.v13)}`)

@@ -12,8 +12,8 @@
   of its own when they do not fit side by side. The priority is the card's left edge: heavy
   for `Very High` and `High`, dashed for `Low` and `Very Low`; in the `ascii` charset a tag on
   the card's top border (`[!!]`, `[!]`, `[-]`, `[--]`) tells the four apart. `:::` classes, bold and
-  italic text and ticket links are dropped with one `ASCII_DROPPED` warning each (`style`,
-  `emphasis`, `link`); a board wider than `ascii.maxWidth` is not folded and adds
+  italic text, ticket links and `accTitle`/`accDescr` are dropped with one `ASCII_DROPPED`
+  warning each (`style`, `emphasis`, `link`, `accessibility`); a board wider than `ascii.maxWidth` is not folded and adds
   `ASCII_TOO_WIDE` ([ASCII output](./ascii.md#kanban-boards)).
 - **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
   spec and docs examples, and the grammar is in [syntax/kanban.md](./syntax/kanban.md). Every
@@ -23,6 +23,13 @@
   the word `kanban` in any case. Errors v12 raised as a `TypeError` or not at all are now
   diagnostics with a range: an `::icon()` or `:::` line before any item, shape data that is
   empty or `null` (`@{ }`), and a `shape` that is not a lower-case string (`shape: 5`).
+- **`accTitle` and `accDescr`** (D742): `accTitle: …`, `accDescr: …` and `accDescr { … }`, on a
+  line of their own at any indent, before or between columns, set the SVG's `<title>` and
+  `<desc>` (with `aria-labelledby` and `aria-describedby`), as in the other types, and draw
+  nothing. v12's kanban had no such statements: it drew each line as a column or card, and
+  rejected the `{` of the block form. A later statement replaces an earlier one. `accTitle[x]`,
+  or `accTitle` without a `:`, is still an item. The text output drops them with an
+  `ASCII_DROPPED` warning (`accessibility`).
 - **Columns that share an id** (D373): v12 listed the cards of every column with that id under
   each of them, so two `docs` columns both drew both columns' cards. A card now belongs to the
   column it follows. Repeated ids are allowed for columns and cards alike.

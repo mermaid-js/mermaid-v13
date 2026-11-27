@@ -299,7 +299,7 @@ describe('kanban parser: AST', () => {
     const src = 'kanban\n  docs\n    a\n  docs\n    [ Todo ]\n    a@{ ticket: X }';
     const last = r.ast.children[4];
     expect(src.slice(last?.range.start, last?.range.end)).toBe('a@{ ticket: X }');
-    expect(last?.data?.text).toBe(' ticket: X ');
+    expect(last?.type === 'Item' && last.data?.text).toBe(' ticket: X ');
   });
 
   it('spans each column over its cards and decorations, to the line before the next column', () => {
@@ -345,5 +345,79 @@ describe('kanban parser: the node limit (R-SEC-5, #459)', () => {
   it("defaults to core's maxNodes", () => {
     const many = 'kanban\n' + Array.from({ length: 10_001 }, (_, i) => `  c${i}`).join('\n');
     expect(limitErrors(many)).toEqual([`NODE_LIMIT ${many.indexOf('c10000')}`]);
+  });
+});
+
+describe('kanban parser: accTitle and accDescr (D742)', () => {
+  it('sets the title and description and makes no item of them', () => {
+    const r = parseKanban(
+      'kanban\n  accTitle: My  board\n  accDescr: Board description\n  a[Col]\n    b[Card]'
+    );
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(r.model.accTitle).toBe('My board');
+    expect(r.model.accDescr).toBe('Board description');
+    expect(r.model.items.map((i) => [i.id, i.isColumn])).toEqual([
+      ['a', true],
+      ['b', false],
+    ]);
+    expect(r.ast.children.map((n) => [n.type, n.id])).toEqual([
+      ['AccTitle', 'accTitle:1'],
+      ['AccDescr', 'accDescr:1'],
+      ['Item', 'n:a'],
+      ['Item', 'n:b'],
+    ]);
+  });
+
+  it('reads the block form over lines, and acc text holding shape and data characters', () => {
+    const m = model(
+      'kanban\naccTitle: a [b] (c) @{ d } }e{\n  a\n    accDescr {\n      One [x]\n      (two) @{ y\n    }\n    b'
+    );
+    expect(m.accTitle).toBe('a [b] (c) @{ d } }e{');
+    // As in the other types, the first `}` ends the block.
+    expect(m.accDescr).toBe('One [x]\n(two) @{ y');
+    expect(m.items.map((i) => [i.id, i.isColumn])).toEqual([
+      ['a', true],
+      ['b', false],
+    ]);
+  });
+
+  it('takes them between columns and at any indent, without changing the column level', () => {
+    const m = model('kanban\n  a\n    b\naccTitle: t\n      accDescr: d\n  c\n    e');
+    expect(m.columns.map((c) => m.items[c.item]?.id)).toEqual(['a', 'c']);
+    expect(m.items.map((i) => i.level)).toEqual([2, 4, 2, 4]);
+    expect([m.accTitle, m.accDescr]).toEqual(['t', 'd']);
+    // Before any item, an acc line sets no column level either.
+    expect(model('kanban\naccTitle: t\n  a\n    b').items.map((i) => i.isColumn)).toEqual([
+      true,
+      false,
+    ]);
+  });
+
+  it('keeps the last of repeated statements, as other types do; empty values set empty', () => {
+    const m = model('kanban\n  accTitle: one\n  accTitle: two\n  accDescr: x\n  accDescr:\n  a');
+    expect([m.accTitle, m.accDescr]).toEqual(['two', '']);
+    expect(model('kanban\n  a').accTitle).toBe('');
+  });
+
+  it('keeps `accTitle[x]` and a bare `accDescr` items, as v12', () => {
+    const m = model('kanban\n  accTitle[x]\n    accDescr');
+    expect(m.items.map((i) => [i.id, i.label, i.isColumn])).toEqual([
+      ['accTitle', 'x', true],
+      ['accDescr', 'accDescr', false],
+    ]);
+    expect(m.accTitle).toBe('');
+  });
+
+  it('reads the keywords without regard to case, as the lexer reads `kanban`', () => {
+    const m = model('kanban\n  ACCTITLE: t\n  AccDescr {\n    d\n  }\n  a');
+    expect([m.accTitle, m.accDescr, m.items.length]).toEqual(['t', 'd', 1]);
+  });
+
+  it('reports an `accDescr {` with no `}`', () => {
+    expect(errors('kanban\n  a\n  accDescr {\n  b')).toEqual(['UNCLOSED_DESCRIPTION']);
+  });
+
+  it('reports text after a block description on its line', () => {
+    expect(errors('kanban\n  accDescr { x } b\n  a')).toEqual(['UNEXPECTED']);
   });
 });

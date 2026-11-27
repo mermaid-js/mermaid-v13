@@ -1,6 +1,6 @@
 /**
- * Kanban hover (DESIGN §4.5, D93): `kanban`, `::icon(` and `:::` their one-line doc from the
- * grammar file (`generated/docs.ts`); a `@{ … }` key its doc (`tables.ts`); an item (its id,
+ * Kanban hover (DESIGN §4.5, D93): `kanban`, `::icon(`, `:::`, `accTitle` and `accDescr` (D742)
+ * their one-line doc from the grammar file (`generated/docs.ts`); a `@{ … }` key its doc (`tables.ts`); an item (its id,
  * delimiters or text) whether it is a column or a card, with what its data sets; a class and an
  * assignee their use. Never a preview.
  */
@@ -24,6 +24,9 @@ const ITEM_TOKENS = new Set<number>([
   T.MdStringStart,
   T.MdStringEnd,
 ]);
+
+/** The length of `accTitle` and of `accDescr`. */
+const ACC_KEYWORD = 8;
 
 /** One line: the first, cut at 40 characters. */
 function short(text: string): string {
@@ -97,8 +100,10 @@ export function kanbanHover(at: HoverTarget, doc: DocumentView<KanbanDocument>):
   const { start, end } = t.range;
   const docText = kanbanDocs[t.kind];
   if (docText !== undefined) {
-    const word = doc.text.slice(start, end);
-    return { range: span(start, end), contents: `**${code(word)}**\n\n${docText}` };
+    // An acc statement is one token: its keyword is what the doc names (D742).
+    const to = t.kind === T.AccTitle || t.kind === T.AccDescr ? start + ACC_KEYWORD : end;
+    const word = doc.text.slice(start, to);
+    return { range: span(start, to), contents: `**${code(word)}**\n\n${docText}` };
   }
   if (t.kind === T.ShapeData) {
     const key = keyAt(doc.text, start, end, at.offset);

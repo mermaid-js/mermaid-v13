@@ -94,10 +94,11 @@ export function treeGrammar<Lexed extends { readonly tokens: TokenStream }>(
   spec: TreeGrammarSpec<Lexed>
 ): TreeGrammar<Lexed> {
   const k = spec.kinds;
+  const acc = k.acc ? [k.AccTitle, k.AccDescr] : [];
   return {
     ...spec,
-    statementKinds: [k.SpaceList, k.NodeId, k.NodeDStart, k.Icon, k.Class, k.SpaceLine],
-    afterIndentKinds: [k.NodeId, k.NodeDStart, k.Icon, k.Class],
+    statementKinds: [k.SpaceList, k.NodeId, k.NodeDStart, k.Icon, k.Class, k.SpaceLine, ...acc],
+    afterIndentKinds: [k.NodeId, k.NodeDStart, k.Icon, k.Class, ...acc],
     stopKinds: [Kind.Newline, k.Eof, k.SpaceLine],
   };
 }
@@ -556,6 +557,7 @@ export abstract class TreeParser<
       const n = c.kind;
       if (this.isNodeStart(n)) this.node(indent);
       else if (n === k.Icon || n === k.Class) this.decoration();
+      else if (this.isAccessibility(n)) this.accessibility();
       else if (n === k.SpaceList && this.beside(c.pos, -1, k.ClassEnd) >= 0) {
         // A bare `:::` took the line break: one error, and the next line is still read.
         this.report(lineBreak(), BARE_CLASS_HINT);
@@ -570,7 +572,21 @@ export abstract class TreeParser<
     }
     if (this.isNodeStart(kind)) this.node(0);
     else if (kind === k.Icon || kind === k.Class) this.decoration();
+    else if (this.isAccessibility(kind)) this.accessibility();
     else this.badStatement();
+  }
+
+  /** `kind` is an `accTitle` or `accDescr` statement (only a diagram with them lexes one). */
+  private isAccessibility(kind: number): boolean {
+    return this.k.acc && (kind === this.k.AccTitle || kind === this.k.AccDescr);
+  }
+
+  /**
+   * An `accTitle` or `accDescr` statement at the cursor, at any indent: a diagram that has them
+   * reads its value; this default only steps over the token.
+   */
+  protected accessibility(): void {
+    this.c.next();
   }
 
   private badStatement(): never {
