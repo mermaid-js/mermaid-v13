@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CORE_DEFAULTS } from '../config/index.ts';
 import { resolveConfig } from '../config/resolve.ts';
 import { Style, labelSource, layoutLabel, tableMeasurer, type FontKey } from './index.ts';
+import { withoutEndBreaks } from './label-source.ts';
 import type { LabelConfig, LabelSourceOptions } from './label-source.ts';
 
 const arial: FontKey = { family: 'Arial', size: 10, weight: 400 };
@@ -220,5 +221,25 @@ describe('labelSource, markdownAlwaysOn (D734)', () => {
     it('reads another section’s value only for that diagram type', () => {
       expect(reads(resolve({ gantt: { markdownAlwaysOn: true } }))).toBe('plain');
     });
+  });
+});
+
+describe('withoutEndBreaks', () => {
+  it.each([
+    ['a<br>', 'a'],
+    ['a <br/> \n<BR />  ', 'a'],
+    ['<br>', ''],
+    ['  <br> ', ''],
+    ['', ''],
+    ['a<b>', 'a<b>'],
+    ['a<br>b', 'a<br>b'],
+    ['a <br', 'a <br'],
+    ['a>', 'a>'],
+    ['>', '>'],
+    ['<', '<'],
+    ['x<br>>', 'x<br>>'],
+    ['a\t\u0001', 'a'],
+  ])('%j gives %j', (text, out) => {
+    expect(withoutEndBreaks(text)).toBe(out);
   });
 });
