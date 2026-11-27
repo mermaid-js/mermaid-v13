@@ -40,12 +40,25 @@ export interface Level {
   edges: LevelEdge[];
   ports: PortEdge[];
   portOf: Map<number, PortEdge>;
-  routes: Map<number, number[]>;
+  // The level as the latest `place` laid it out in its box; its edges' routes across the level are
+  // made from it.
+  fit?: Frame;
   // Edges between the level's group and its own member (#405, #415): laid out only through
   // their ports, the one in this level in place of a route across it.
   own: LevelEdge[];
   x: number;
   y: number;
+}
+
+// What `place` needs of a level laid out in its box (`Fit` in compound-place.ts): the edges
+// `layered` routed, whose points are x, y pairs in the layout, and where the layout sits in the box.
+export interface Frame {
+  vertical: boolean;
+  flip: boolean;
+  size: LayeredResult;
+  offX: number;
+  offY: number;
+  ledges: LEdge[];
 }
 
 export interface Snapshot {
@@ -90,16 +103,19 @@ export function restore(
   return s.total;
 }
 
+// Appends the point (`x`, `y`) with axis `a` to `route`, unless it repeats the point the route
+// ends at: within 0.01 of it both ways.
+export function appendPoint(route: number[], x: number, y: number, a: number): void {
+  const len = route.length;
+  if (len >= 3 && Math.abs(route[len - 3]! - x) < 0.01 && Math.abs(route[len - 2]! - y) < 0.01)
+    return;
+  route.push(x, y, a);
+}
+
 // Appends `part`, offset by (`ox`, `oy`), to `route`, without repeating the point it ends at.
 export function appendRoute(route: number[], part: number[], ox: number, oy: number): void {
-  for (let i = 0; i < part.length; i += 3) {
-    const x = part[i]! + ox;
-    const y = part[i + 1]! + oy;
-    const len = route.length;
-    if (len >= 3 && Math.abs(route[len - 3]! - x) < 0.01 && Math.abs(route[len - 2]! - y) < 0.01)
-      continue;
-    route.push(x, y, part[i + 2]!);
-  }
+  for (let i = 0; i < part.length; i += 3)
+    appendPoint(route, part[i]! + ox, part[i + 1]! + oy, part[i + 2]!);
 }
 
 // A port in `level` where edge `e` crosses the border of `inner`, leaving it (`out`) or entering,

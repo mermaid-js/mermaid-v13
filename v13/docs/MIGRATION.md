@@ -1613,7 +1613,9 @@ Legend entries carry `data-id="a:<name>"` only.
   `redux-color` and `dark`); in `neo` and `neo-dark` only `cScaleLabel` counts (box text, and
   slot 11 for the axis and connectors). This follows v12's redux and neo timeline paint (D227,
   D257), but v12's default theme was `default`, so a v12 diagram that set them without a `theme`
-  needs `theme: 'default'` to keep its colours.
+  needs `theme: 'default'` to keep its colours. An override the active theme does not read raises
+  one `TIMELINE_PALETTE_IGNORED` warning per render, naming every such key and suggesting
+  `theme: 'default'`; the drawing does not change (D766).
 
 ## Mindmap
 
@@ -1647,12 +1649,14 @@ Legend entries carry `data-id="a:<name>"` only.
   `circlePadding` and `hexagonPaddingX` / `hexagonPaddingY` instead
   ([Theme geometry](#theme-geometry)). Square and rounded nodes keep their own paddings (v12's
   fixed 10 and 15 in the classic themes). v12 meant circles to have a fixed 10, but its check
-  never matched, so `padding` sized classic circles there too and does here. With `maxNodeWidth` unset, square, rounded and
-  hexagon labels wrap at 120 px, as v12's did at `flowchart.wrappingWidth`'s default, and every
-  other shape at 200 (D744); the redux family draws plain nodes rounded, so they wrap at 120 there
-  too. A `maxNodeWidth` the author sets wraps every shape (D287), where v12 kept square, rounded
-  and hexagon nodes at `flowchart.wrappingWidth`, which mindmap does not read. A `maxNodeWidth`
-  of exactly 200, the default, counts as unset. A `padding` below 0, a `maxNodeWidth` of 0 or less or a value that
+  never matched, so `padding` sized classic circles there too and does here. `maxNodeWidth` wraps every shape (D287, D769), at 200 unless set, and is clamped
+  to 120 to 1200 with a `MINDMAP_CONFIG_IGNORED` warning when it is outside that range.
+  **Deliberate divergence from v12.3:** square, rounded and hexagon nodes wrapped at
+  `flowchart.wrappingWidth` (120 by default) only because v12 drew them with the shared
+  flowchart shape code; v13 wraps them at `maxNodeWidth` like the other shapes, so a long label
+  in one of them wraps at 200 px, not 120, and the node is wider and shorter than in v12, and
+  mindmap never reads `flowchart.wrappingWidth`. A `padding` below 0, a
+  `maxNodeWidth` of 0 or less or a value that
   is not a number lays out with the default and warns `MINDMAP_CONFIG_IGNORED`; numeric strings
   (`"20"`, not `"20px"`) are read as numbers, as in v12. `useWidth` and `layoutAlgorithm` are ignored (v12 never
   read them), and `look` is ignored as everywhere (D153), except that `look: handDrawn` sketches
@@ -1675,7 +1679,7 @@ Legend entries carry `data-id="a:<name>"` only.
   drawn as written (D564, #763). A code span (``[`a **b**`]``) is drawn as written, backticks
   included, and bold and italic outside it are still read (D610, #836). Only a markdown string
   (`` "`…`" ``) has bullet lists and inline code, which v12 did not draw (D56). A written `\n`
-  is text. A word wider than the wrap width stays
+  is text. A word wider than `maxNodeWidth` stays
   whole and the node grows to hold it, as v12's HTML labels did (#649).
 - **The default shape per theme family** is a theme flag, not a theme-name check (D288): plain
   nodes are rounded in the redux family and drawn as v12's `defaultMindmapNode` elsewhere, flat
@@ -2018,7 +2022,7 @@ What changed in the gitGraph's SVG compared with v12's `gitGraphRenderer.ts` and
 | Commit labels and tags carried no id | The commit label's wrapper `<g>` (which keeps v12's rotation `transform`) and each tag's `polygon`, `circle` and `text` carry the commit's `data-id` | R-SVG-2; labels carry `data-id` only (pitfall 12) |
 | Colour classes from `calcColorIndex` with v12's moduli: bullets and arrows over 8 slots, branch labels over 12 in the redux themes, slot 0 skipped only in `redux-color` and `redux-dark-color` | `<n>` is the branch's one slot for every part (D267): its index mod 8, or, with a non-empty `borderColorArray`, slot 0 for the first branch and 1–7 round the rest, as v12's bullets | D267 |
 | Text set with d3 `.text()` after the DB's `&lt;`, `&gt;`, `&equals;`; branch names split on `\n` and `<br>` into `tspan.row` with `dy="1em"` | Each label is one `<text>` start-anchored where the layout measured it, in the font it measured; a branch name's lines are `<tspan x y>`. Ids, tags and names are drawn as written and escaped by the writer, a branch name breaks only on a newline, and `$$…$$` or `fa:` stays as written. Entity codes (`#35;`, `&amp;`) are decoded before the text is measured and drawn | D263, D268, D563 |
-| Colours from a `<style>` chosen by theme name (`REDUX_GEOMETRY_THEMES`, `COLOR_THEMES`, `NEO_THEMES`, `DARK_THEMES`, `NEO_COLOR_GEN_THEMES`) | The same colours from theme variables, read in every theme: the `git`, `gitInv` and `gitBranchLabel` palettes, `borderColorArray` when non-empty, the node colours (`nodeBorder`, `mainBkg`) where v12's neo and redux themes used them, the label variables, `primaryColor`, `textColor` and `commitLineColor`. The redux and neo differences are the flags `gitNodeColors` and `gitPaletteColors` and the bullet sizes `gitHighlightInnerSize`, `gitMergeRadius`, `gitReverseCrossSize` and `gitCherryPickDotRadius`, next to the layout's geometry variables ([Theme geometry](#theme-geometry)). A classic cherry-pick body is still unpainted (black), as in v12 | D152, D153 |
+| Colours from a `<style>` chosen by theme name (`REDUX_GEOMETRY_THEMES`, `COLOR_THEMES`, `NEO_THEMES`, `DARK_THEMES`, `NEO_COLOR_GEN_THEMES`) | The same colours from theme variables, read in every theme: the `git`, `gitInv` and `gitBranchLabel` palettes, `borderColorArray` when non-empty, the node colours (`nodeBorder`, `mainBkg`) where v12's neo and redux themes used them, the label variables, `primaryColor`, `textColor` and `commitLineColor`. The redux and neo differences are the flags `gitNodeColors` and `gitPaletteColors` and the bullet sizes `gitHighlightInnerSize`, `gitMergeRadius`, `gitReverseCrossSize` and `gitCherryPickDotRadius`, next to the layout's geometry variables ([Theme geometry](#theme-geometry)). A classic cherry-pick body takes `textColor`, as in v12, where the circle inherited the root `fill: textColor` rule (a classic theme's body was never unpainted); the node-colour families keep `nodeBorder` | D152, D153 |
 | `look: neo` gave branch label boxes `style="filter: …"` (a `<filter id="<id>-drop-shadow">` in the redux themes) and `data-look="neo"`; `useGradient` wrote `<linearGradient id="<id>-gradient">` whatever the look | The box takes the theme's `dropShadow` as a `filter` attribute wherever it is not `none`, whatever the look, and no `data-look`; the neo outline is core's gradient (`<prefix>-gradient`, written only when referred to). Tags take the shadow in the neo and redux themes, as v12's `.tag-label-bkg` did | D153, D182 |
 | Branch names and ids at `noteFontWeight` in the redux themes (CSS) | `font-weight` from the theme's `fontWeight`, which the layout measures with: the same weight in every v12 theme. An author's `noteFontWeight` is not read; set `fontWeight` | Measure in the font drawn (pitfall 16) |
 | The cherry-pick mark white, black in `dark`, `redux-dark`, `redux-dark-color` and `neo-dark` | The colour variable `gitCherryPickInk`: `#000000` set by those four themes, white where a theme sets none (so `darkMode: true` on a light theme stays white, as in v12); under `theme: 'auto'` it switches with the colour scheme | D152 |
@@ -2227,11 +2231,18 @@ Class lists are written with single spaces and no trailing blank.
   column it follows. Repeated ids are allowed for columns and cards alike.
 - **Labels** (D372) are SVG text from core's label layout, measured in the theme's font, instead
   of HTML in `<foreignObject>`: `<br>`, the drawn tags, entities, math and `fa:` icons work in
-  column titles, card titles, tickets and assignees. Column titles wrap at `sectionWidth` and card
-  labels 25 px inside it, as in v12; a single word wider than that stays whole and overflows the
-  column or card, as in v12 (earlier v13 builds split it between characters; the text output
-  still does, to keep it in its box). A raw line break inside a quoted label breaks the line,
-  as in v12, whose markdown labels turned it into a `<br>` (D641).
+  column titles, card titles, tickets and assignees. A raw line break inside a quoted label
+  breaks the line, as in v12, whose markdown labels turned it into a `<br>` (D641).
+- **Text keeps an inset on both sides** (D764). Card titles, tickets and assignees wrap 35 px
+  inside `sectionWidth` (165 px at the default 200), so every line ends 10 px inside the card's
+  right edge, as v12 drew it; v13 had wrapped them at `sectionWidth − 25`, which let a full line
+  run to the card's border. Column titles wrap 20 px inside `sectionWidth` and stay centred,
+  10 px from each side, where v12 wrapped them at `sectionWidth`, edge to edge. Cards with
+  wrapped text can wrap to one more line than before and grow with it.
+- **A word wider than the wrap breaks** (D765). In a column title, card title, ticket or
+  assignee, a word wider than its wrap is split between characters, so no text crosses its
+  column's or card's right edge. v12 let it overflow, and so did v13 until now; the text output
+  already split it.
 - **Markdown only in markdown strings** (D710, D712). v12 read every label as Markdown, so
   `**bold**` and `*italic*` drew bold and italic without backticks. Now only a label wholly in
   backticks (`` ["`**bold** card`"] ``, `` assigned: '`**md**`' ``) is read as Markdown; in any
@@ -2271,7 +2282,7 @@ Class lists are written with single spaces and no trailing blank.
   keys and none of the three `mindmap` keys, so the default margin round a board is 2 px
   tighter on each side, and a `mindmap` setting no longer changes a board. `sectionWidth: 0` is 200, as v12's `sectionWidth || 200`. Numeric
   strings (`"300"`, not `"300px"`) are read as numbers, as in v12. A `sectionWidth` above 0 and
-  below 26 is raised to 26, where v12 drew cards of negative width, and a value that is not a
+  below 36 is raised to 36 (D764), where v12 drew cards of negative width, and a value that is not a
   number from 0 to 10,000 lays out with the default; each warns `KANBAN_CONFIG_IGNORED`.
   `useWidth` is ignored (v12 never read it), and `look` is ignored as everywhere (D153), except
   that `look: handDrawn` sketches the board when `@mermaid-js/plugin-hand-drawn` is installed.
@@ -2296,7 +2307,7 @@ order. Every column and card carries `data-id` and `data-ast`, its item's AST id
 | Each column and card had `id="<render id>-<item id>"`, which a repeated id duplicated | No element id at all: kanban has no title or description statement, so not even `<render id>-title`/`-desc` | No colliding ids (R-A11Y-1) |
 | Column: `<g class="cluster <classes> section-<k>" id data-look>` with a `<rect>` (a rough `<path>` under `look: handDrawn`) and a `g.cluster-label` around a `<foreignObject>`; an unclassed column wrote the class `undefined` | `<g class="cluster section-<k>[ <classes>]" data-id data-ast>` with the `<rect>` and `<g class="cluster-label">` holding a `<text>` centred on the column; no `undefined` class, no `data-look` | One element per item maps it to its source (R-PARSE-8) |
 | Card: `<g class="node undefined" id>` (or `node <classes>`) with `<rect class="basic label-container __APA__">`, an unclassed priority `<line>` and three labels in `<foreignObject>`s, the ticket's inside `<a class="kanban-ticket-link">` | `<g class="node[ <classes>]" data-id data-ast>` with `<rect class="basic label-container">`, `<line class="kanban-priority">` when there is a bar, then `<g class="label">` for the title, the ticket (inside the link, when there is one) and the assignee, each holding a `<text>`: the title and ticket left-aligned 10 px in from the card's left edge, the assignee right-aligned (`text-anchor="end"`) 10 px in from its right edge; no `undefined`, no `__APA__` | Same |
-| Labels: markdown HTML in `<foreignObject>`, wrapped by the browser; a raw line break in a quoted label became a `<br>` and broke the line | `<text>`/`<tspan>` from core's label layout, for all four kinds: `<br>`, the drawn tags, entities, math and `fa:` icons work, and Markdown only in a label wholly in backticks (D712); titles wrap at the column width `W` (columns) and `W − 25` (cards, tickets and assignees); a raw line break in a quoted label breaks the line, as in v12 | R-TEXT-1, D372, D641, D712 |
+| Labels: markdown HTML in `<foreignObject>`, wrapped by the browser; a raw line break in a quoted label became a `<br>` and broke the line | `<text>`/`<tspan>` from core's label layout, for all four kinds: `<br>`, the drawn tags, entities, math and `fa:` icons work, and Markdown only in a label wholly in backticks (D712); titles wrap at `W − 20`, centred (columns), and `W − 35` (cards, tickets and assignees), 10 px inside each side, and a word wider than that breaks (D764, D765); a raw line break in a quoted label breaks the line, as in v12 | R-TEXT-1, D372, D641, D712, D764, D765 |
 | Ticket link: `xlink:href` set to `ticketBaseUrl.replace('#TICKET#', ticket)` (so `$&` in a ticket expanded to the match), `target="_blank"`, no check (only DOMPurify removed a `javascript:` URL); underlined by `.kanban-ticket-link` in the `<style>` | `<a class="kanban-ticket-link" href target="_blank" rel="noopener noreferrer" text-decoration="underline">`. The first `#TICKET#` is replaced with the ticket taken literally (`$&` stays `$&`), not percent-encoded, and the URL passes the link check (`securityLevel`, `linkSchemes`). A refused URL draws the ticket as plain text with one `URL_REFUSED` warning. No link without a ticket or a `ticketBaseUrl` | R-SEC-4, R-SEC-6, R-SVG-4, D377 |
 | Priority: a 4 px line in `red`, `orange`, `blue` or `lightblue` for `Very High`, `High`, `Low`, `Very Low` (exact case); `Medium`, any other value and a non-string drew the line with no stroke (invisible) | The same four colours, in every theme; anything else draws no line. One `KANBAN_PRIORITY` warning per render names each card value that is none of the four nor `Medium` (a non-string is never one of them), with the cards' AST ids. A column's priority is not drawn or checked | D375, D376 |
 | A card's ticket (left) and assignee (right) on one row under the title, whatever their widths: long ones were drawn over each other and ran past the card's bottom | The same row when they fit side by side. When their widths fill the row (the card's width less 10 px at each side), the assignee goes on a row of its own under the ticket, still right-aligned, and the card grows by both rows, the title 10 px below its top and the assignee 10 px above its bottom, as the text output does | D647 |
@@ -3180,8 +3191,9 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   keys both have. A flowchart drawn with `layout: swimlane` ignores `swimlane.curve`: it is the
   diagram's key, not the layout's (D761).
 - **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
-  (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
-  then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned
+  and `rect.swimlane-title`, both filled `clusterBkg` and stroked `clusterBorder`, then the
+  label. v12 wrote `fill="none"` on the body but its `.cluster rect` CSS filled it; v13 fills
+  it in every look, the default lane too, and the hand-drawn look hachures it (D768). The title band is on top for `TB` and `BT`, and on the left, its label turned
   to read upward, for `LR` and `RL`. **Fixed:** v12 turned only `LR`, so `RL` lanes got a top
   band over a left-reserved layout; in v13 `RL` matches `LR` (D536). The default lane (nodes
   outside every subgraph) has no label, `data-id="__swimlane_default__"` and the palette slot
@@ -3613,6 +3625,7 @@ order are kept: `g.clusters` (each `g.usecase-system-boundary.system-boundary-<t
 | Labels in `foreignObject` (HTML), and a stereotype folded into a use case's label as Markdown (`«s»<br/>label`) | SVG text laid out by core ([Labels and text](#labels-and-text)): `<br>`, entities, Markdown, math and icons work. A stereotype is a first `text.usecase-stereotype` line `«s»` above the label, for actors and use cases alike. A plain label's markup is still text, as v12 escaped it (`Hostile("<img …>")` draws the tag's text); only Markdown labels read the HTML subset | D225, R-SEC-2 |
 | The front-matter `title` was set, then wiped by `db.clear()` before `insertTitle` ran: never drawn | Drawn above the diagram as `text.usecaseDiagramTitleText` in the root's text colour, centred, the drawing moved down by its height and the diagram padding; it does not name the diagram (`accTitle` does) | D472, D133 |
 | `<defs>` with `<marker>` elements (`point`, `circle`, `cross`, `extension`) referenced by `marker-end` | Each marker is a `path.marker` in its relationship's group: v12's classic point, circle, cross and the generalization's hollow triangle (filled `mainBkg`), sized as v12's classic markers in every theme, in the line's colour (an author's `style` stroke included) | DESIGN §7.1, D227 |
+| Every arrowhead (`.marker`) was filled with `lineColor`, so an include or extend head differed from its line in a theme that colours the line (`redux-color`) | An include or extend head takes its line's colour (`usecaseIncludeLine`, `usecaseExtendLine`); an author's `style` stroke still wins; generalization and association heads stay in the edge line colour | D767, #1227 |
 | An invisible `rect.usecase-actor-outline` (`opacity: 0`) around each actor | Not written: the actor's group carries the name, the layout its box | Nothing invisible is drawn |
 | Animated relationships: `stroke-dasharray: 9,5` and the `dash` keyframes | The same dashes, caps and speeds, moved by an `<animate>` in the relationship's group: the keyframes need a `<style>` | R-SEC-2, D606, as the flowchart |
 | An icon actor drew Font Awesome's fallback glyph (`usecase-actor-icon-fallback`) for an unknown icon | The icons extension's glyph (D293) in the frame, else the frame alone with one `ICON_NOT_RENDERED` | D293, D299 |

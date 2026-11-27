@@ -217,14 +217,23 @@ export function tableMeasurerWith(
     return f;
   };
 
+  // The last font stack asked for and its face: a render measures most labels in one stack.
+  // Keyed on the stack's text, whose face this measurer's fixed `row` decides once and for all,
+  // so it always equals what `stacks` gives. It lives with the measurer and is never reset.
+  let lastStack: string | undefined;
+  let lastFace: Face | undefined;
+
   const faceFor = (stack: string): Face => {
+    if (stack === lastStack) return lastFace as Face;
     let f = stacks.get(stack);
-    if (f) return f;
-    for (const name of familyNames(stack)) if ((f = face(name))) break;
-    f ??= face(FALLBACK) as Face;
-    if (stacks.size >= 256) stacks.clear();
-    stacks.set(stack, f);
-    return f;
+    if (!f) {
+      for (const name of familyNames(stack)) if ((f = face(name))) break;
+      f ??= face(FALLBACK) as Face;
+      if (stacks.size >= 256) stacks.clear();
+      stacks.set(stack, f);
+    }
+    lastStack = stack;
+    return (lastFace = f);
   };
 
   const slice: Slice = (text, from, to, font, style) =>

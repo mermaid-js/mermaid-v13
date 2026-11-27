@@ -1751,7 +1751,8 @@ colorBy?: ("branch" | "depth")
  */
 padding?: number
 /**
- * The width in px at which node labels wrap.
+ * The width in px at which node labels wrap, in every node shape. Values below 120 or
+ * above 1200 are clamped to that range.
  * 
  */
 maxNodeWidth?: number

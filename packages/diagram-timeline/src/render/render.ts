@@ -17,12 +17,12 @@ import type {
   TimelineLine,
 } from '../layout/types.ts';
 import type { TimelineModel } from '../model.ts';
-import { paints, PALETTE_SLOTS, type BoxPaint, type Paints } from './paint.ts';
+import { paints, PALETTE_SLOTS, warnUnreadPalettes, type BoxPaint, type Paints } from './paint.ts';
 
 /** What the renderer reads from the render context. */
 export type TimelineRenderContext = Pick<
   RenderContext,
-  'config' | 'theme' | 'idPrefix' | 'version'
+  'config' | 'theme' | 'idPrefix' | 'version' | 'warn'
 >;
 
 interface Scene {
@@ -46,6 +46,7 @@ export function renderTimeline(
   w: SvgWriter
 ): void {
   const scene: Scene = { w, model, layout, ctx, paint: paints(ctx, layout.title !== undefined) };
+  warnUnreadPalettes(ctx);
   openRoot(scene);
   if (layout.direction === 'TD') drawAxis(scene);
   drawSections(scene);

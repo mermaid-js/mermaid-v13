@@ -21,13 +21,13 @@
  */
 import {
   checkColor,
-  checkCssColor,
   checkStyle,
   type Attrs,
   type Paint,
   type SafeColor,
 } from '@mermaid-js/core/svg';
 import { formatColor, parseColor, type Rgba } from '@mermaid-js/core/theme';
+import { authoredColours } from '@mermaid-js/shared/config/authored';
 import type { VennStyleProperties } from '../layout/index.ts';
 import { slotVar, VENN_SLOTS } from '../theme/slots.ts';
 import { isDark, shiftLightness } from './colour.ts';
@@ -116,12 +116,9 @@ export function vennPaints(ctx: VennRenderContext): VennPaints {
   // Which slots the author wrote: an author's `venn<k>` comes before the palette, as in v12,
   // whose themes filled only the slots still unset. `Theme` resolves an author's value but does
   // not say whose a value is, so this reads the config the theme was built from.
-  const authored = (ctx.config.themeVariables ?? {}) as Readonly<Record<string, unknown>>;
   // A value the theme dropped or an empty one is not written.
-  const isAuthored = (name: string): boolean => {
-    const v = authored[name];
-    return typeof v === 'string' && checkCssColor(v) !== undefined;
-  };
+  const authored = authoredColours(ctx.config);
+  const isAuthored = (name: string): boolean => authored.has(name);
   const palette = theme.palette('borderColorArray');
   const slotColour = (k: number): Colour | undefined => {
     const name = slotVar(k);

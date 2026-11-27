@@ -22,7 +22,7 @@ export interface UrlOptions {
   readonly warn?: Warn;
 }
 
-const DEFAULT_SCHEMES: readonly string[] = ['http', 'https', 'mailto'];
+export const DEFAULT_SCHEMES: readonly string[] = ['http', 'https', 'mailto'];
 const V12_LEVELS: ReadonlySet<string> = new Set(['antiscript', 'sandbox']);
 
 /**
@@ -71,14 +71,14 @@ const NAMED: Readonly<Record<string, string>> = {
 const RE_MERMAID_ENTITY = /#(?:([a-zA-Z]{2,8})|(\d{1,10}));/g;
 // `\n`, `\t`, `\r` written as backslash escapes, raw or percent-encoded.
 const RE_WS_ESCAPE = /(?:\\|%5[cC])(?:%(?:6[eE]|72|74)|[nrt])/g;
-const RE_SCHEME = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
-const RE_NETWORK_PATH = /^[\\/]{2}/;
+export const RE_SCHEME = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
+export const RE_NETWORK_PATH = /^[\\/]{2}/;
 
 function codePoint(n: number): string {
   return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : '';
 }
 
-function decodePercent(uri: string): string {
+export function decodePercent(uri: string): string {
   try {
     return decodeURIComponent(uri);
   } catch {

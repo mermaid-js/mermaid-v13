@@ -11,8 +11,24 @@ import {
 } from './allowlist.ts';
 import { num } from './escape.ts';
 
+/**
+ * `names` as a record without a prototype: exactly those strings read as `true`, and no name a
+ * prototype would give (`constructor`, `__proto__`, `toString`) reads as anything. Taken once; a
+ * later change to `names` does not reach it.
+ */
+export function recordOf(names: Iterable<string>): Readonly<Record<string, true | undefined>> {
+  const r = Object.create(null) as Record<string, true | undefined>;
+  for (const n of names) r[n] = true;
+  return r;
+}
+
+/** `WRITABLE_TAGS`, for a check with one property load. */
+const WRITABLE = recordOf(WRITABLE_TAGS);
+
 export function checkTag(tag: string): void {
-  if (!WRITABLE_TAGS.has(tag)) throw new TypeError(`<${tag}> is not an allowed SVG element`);
+  // Only a string: a key is converted to one, so `['g']` would read as `g`.
+  if (typeof tag !== 'string' || !WRITABLE[tag])
+    throw new TypeError(`<${tag}> is not an allowed SVG element`);
 }
 
 /**

@@ -30,12 +30,14 @@
   `circlePadding` and `hexagonPaddingX` / `hexagonPaddingY` instead
   ([Theme geometry](#theme-geometry)). Square and rounded nodes keep their own paddings (v12's
   fixed 10 and 15 in the classic themes). v12 meant circles to have a fixed 10, but its check
-  never matched, so `padding` sized classic circles there too and does here. With `maxNodeWidth` unset, square, rounded and
-  hexagon labels wrap at 120 px, as v12's did at `flowchart.wrappingWidth`'s default, and every
-  other shape at 200 (D744); the redux family draws plain nodes rounded, so they wrap at 120 there
-  too. A `maxNodeWidth` the author sets wraps every shape (D287), where v12 kept square, rounded
-  and hexagon nodes at `flowchart.wrappingWidth`, which mindmap does not read. A `maxNodeWidth`
-  of exactly 200, the default, counts as unset. A `padding` below 0, a `maxNodeWidth` of 0 or less or a value that
+  never matched, so `padding` sized classic circles there too and does here. `maxNodeWidth` wraps every shape (D287, D769), at 200 unless set, and is clamped
+  to 120 to 1200 with a `MINDMAP_CONFIG_IGNORED` warning when it is outside that range.
+  **Deliberate divergence from v12.3:** square, rounded and hexagon nodes wrapped at
+  `flowchart.wrappingWidth` (120 by default) only because v12 drew them with the shared
+  flowchart shape code; v13 wraps them at `maxNodeWidth` like the other shapes, so a long label
+  in one of them wraps at 200 px, not 120, and the node is wider and shorter than in v12, and
+  mindmap never reads `flowchart.wrappingWidth`. A `padding` below 0, a
+  `maxNodeWidth` of 0 or less or a value that
   is not a number lays out with the default and warns `MINDMAP_CONFIG_IGNORED`; numeric strings
   (`"20"`, not `"20px"`) are read as numbers, as in v12. `useWidth` and `layoutAlgorithm` are ignored (v12 never
   read them), and `look` is ignored as everywhere (D153), except that `look: handDrawn` sketches
@@ -58,7 +60,7 @@
   drawn as written (D564, #763). A code span (``[`a **b**`]``) is drawn as written, backticks
   included, and bold and italic outside it are still read (D610, #836). Only a markdown string
   (`` "`…`" ``) has bullet lists and inline code, which v12 did not draw (D56). A written `\n`
-  is text. A word wider than the wrap width stays
+  is text. A word wider than `maxNodeWidth` stays
   whole and the node grows to hold it, as v12's HTML labels did (#649).
 - **The default shape per theme family** is a theme flag, not a theme-name check (D288): plain
   nodes are rounded in the redux family and drawn as v12's `defaultMindmapNode` elsewhere, flat

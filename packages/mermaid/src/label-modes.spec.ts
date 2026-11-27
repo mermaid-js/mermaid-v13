@@ -17,9 +17,9 @@ describe('label modes per diagram type (#763, D564)', () => {
       '- 5 degrees',
       '* starred',
       '- quoted item',
-      '`The dog in **the** / hog`',
+      '`The dog in **the** hog`',
       'The dog in <b>the</b> hog',
-      'plain <b>bold</b> and / <i>italic</i>',
+      'plain <b>bold</b> and <i>italic</i>',
       '• one item / ◦ two items',
     ]);
   });
@@ -28,7 +28,7 @@ describe('label modes per diagram type (#763, D564)', () => {
     const texts = await render('mindmap/baseline/text/backtick-label-on-two-lines.mmd');
     expect(texts).toEqual([
       '`**Start** with / a second line`',
-      '`The dog in **the** / hog`',
+      '`The dog in **the** hog`',
       'The dog in <b>the</b> hog',
     ]);
   });

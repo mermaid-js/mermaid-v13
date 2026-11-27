@@ -437,9 +437,7 @@ export function checkStyle(
     const at = decl.indexOf(':');
     const prop = (at < 0 ? decl : decl.slice(0, at)).trim().toLowerCase();
     if (prop === '') continue;
-    const entry = Object.prototype.hasOwnProperty.call(PROPERTIES, prop)
-      ? PROPERTIES[prop]
-      : undefined;
+    const entry = Object.hasOwn(PROPERTIES, prop) ? PROPERTIES[prop] : undefined;
     if (entry === undefined || at < 0) {
       warn?.({
         code: 'STYLE_PROPERTY_DROPPED',

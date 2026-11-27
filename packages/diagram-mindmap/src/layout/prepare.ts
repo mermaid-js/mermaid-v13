@@ -21,7 +21,10 @@ import {
 } from '@mermaid-js/shared/shapes/outline';
 import { NUMERIC } from '@mermaid-js/shared/config/readers';
 
-/** A config value the layout can't honour (pitfall 22): it lays out with the default instead. */
+/**
+ * A config value the layout can't honour (pitfall 22): it lays out with the default instead, or,
+ * for a `maxNodeWidth` outside its range, with the nearest limit (D769).
+ */
 export const MINDMAP_CONFIG_IGNORED = 'MINDMAP_CONFIG_IGNORED';
 
 /** Where a node's `::icon()` goes (D297): a `slot` square centred at `at`, the glyph inside it. */
@@ -114,11 +117,29 @@ function lengthOf(
   return fallback;
 }
 
+/**
+ * `mindmap.maxNodeWidth` (D769): a number above 0 (or a whole numeric string) is clamped to the
+ * range 120 to 1200, with one warning when that changes it; anything else is `lengthOf`'s.
+ */
+function wrapWidthOf(ctx: MindmapLayoutContext, value: unknown): number {
+  const path = 'mindmap.maxNodeWidth';
+  const width = lengthOf(ctx, value, MINDMAP_METRICS.maxNodeWidth, path, true);
+  const { min, max } = MINDMAP_METRICS.maxNodeWidthRange;
+  const clamped = Math.min(Math.max(width, min), max);
+  if (clamped !== width)
+    ctx.warn({
+      code: MINDMAP_CONFIG_IGNORED,
+      message: `Adjusted ${path}: ${width} is outside ${min} to ${max}; using ${clamped}`,
+      path,
+    });
+  return clamped;
+}
+
 interface Build {
   readonly ctx: MindmapLayoutContext;
   readonly font: FontKey;
-  /** Wrap width, units, by shape: `narrow` shapes wrap narrower while the author sets none (D744). */
-  readonly wrap: { readonly wide: number; readonly narrow: number };
+  /** Wrap width, units. */
+  readonly wrap: number;
   /** `mindmap.padding`, px, and in units across and down. */
   readonly paddingPx: number;
   readonly padding: Point;
@@ -230,13 +251,12 @@ function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView
   // Bullets and inline code are read in a markdown string only (D564).
   const [shown, mode] =
     node.markdown === true ? [node.label, { markup: 'markdown' as const }] : v12Label(node.label);
-  const shape = node.shape === 'default' && b.rounded ? 'rounded' : node.shape;
-  const wrap = MINDMAP_METRICS.shapes[shape].narrow === true ? b.wrap.narrow : b.wrap.wide;
-  const label = layoutLabel(shown, b.font, wrap, b.ctx.measurer, {
+  const label = layoutLabel(shown, b.font, b.wrap, b.ctx.measurer, {
     ...mode,
     inline: b.ctx.inline,
     keepWords: b.ctx.units.id !== 'cell',
   });
+  const shape = node.shape === 'default' && b.rounded ? 'rounded' : node.shape;
   const f = frameOf(b, shape, label, node.icon && iconText(b, node.icon.text));
   const base = {
     id: node.ast,
@@ -281,17 +301,7 @@ export function prepareMindmap(model: MindmapModel, ctx: MindmapLayoutContext): 
   const conf = ctx.config.mindmap ?? {};
   const px = (v: number, axis: 'x' | 'y'): number => fromPx(units, v, axis);
   const padding = lengthOf(ctx, conf.padding, MINDMAP_METRICS.padding, 'mindmap.padding', false);
-  const maxWidth = lengthOf(
-    ctx,
-    conf.maxNodeWidth,
-    MINDMAP_METRICS.maxNodeWidth,
-    'mindmap.maxNodeWidth',
-    true
-  );
-  // As D124: a value equal to the generated default counts as unset, since the resolved config
-  // always carries it. Unset, square, rounded and hexagon wrap at v12's 120 (D744).
-  const authorSet = maxWidth !== MINDMAP_METRICS.maxNodeWidth;
-  const wrapAt = (w: number): number => Math.max(px(w, 'x'), MINDMAP_METRICS.minWrap);
+  const maxWidth = wrapWidthOf(ctx, conf.maxNodeWidth);
   const b: Build = {
     ctx,
     font: {
@@ -299,10 +309,7 @@ export function prepareMindmap(model: MindmapModel, ctx: MindmapLayoutContext): 
       size: ctx.theme.number('fontSize'),
       weight: MINDMAP_METRICS.fontWeight,
     },
-    wrap: {
-      wide: wrapAt(maxWidth),
-      narrow: wrapAt(authorSet ? maxWidth : MINDMAP_METRICS.narrowWrap),
-    },
+    wrap: Math.max(px(maxWidth, 'x'), MINDMAP_METRICS.minWrap),
     paddingPx: padding,
     padding: { x: px(padding, 'x'), y: px(padding, 'y') },
     rounded: ctx.theme.value('mindmapRoundedNodes') === 'true',
