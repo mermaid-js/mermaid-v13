@@ -136,3 +136,70 @@ describe('timeline render cost', () => {
     expect(big.count / 5000).toBeLessThan(40);
   }, 60_000);
 });
+
+describe('cScale overrides the active paint does not read (D766, #1326)', () => {
+  // The #1326 repro: `2002 : LinkedIn`, with the overrides and no theme.
+  const repro = fx.timeline([['2002', 'LinkedIn']]);
+  const render = (config: Record<string, unknown>) => renderForTest(repro, { config });
+  const ignored = (r: RenderedForTest) =>
+    r.warnings.filter((w) => w.code === 'TIMELINE_PALETTE_IGNORED');
+
+  it('warns once under the default theme, naming the keys, and draws as without them', async () => {
+    const set = await render({ themeVariables: { cScale0: '#ff0000', cScaleLabel0: '#ffffff' } });
+    const plain = await render({});
+    const [w, ...more] = ignored(set);
+    expect(more).toEqual([]);
+    expect(w?.message).toContain('cScale0');
+    expect(w?.message).toContain('cScaleLabel0');
+    expect(w?.message).toContain('theme: default');
+    expect(set.svg).toBe(plain.svg);
+    expect(ignored(plain)).toEqual([]);
+  });
+
+  it.each(['redux-dark', 'auto'])(
+    'warns under %s, whose paint reads no cScale palette',
+    async (theme) => {
+      const r = await render({ theme, themeVariables: { cScaleInv3: '#00ff00' } });
+      expect(ignored(r).map((w) => w.message)).toEqual([expect.stringContaining('cScaleInv3')]);
+    }
+  );
+
+  it('names only cScale and cScaleInv under neo, which reads cScaleLabel', async () => {
+    const both = await render({
+      theme: 'neo',
+      themeVariables: { cScale0: '#ff0000', cScaleLabel0: '#ffffff' },
+    });
+    const [w, ...more] = ignored(both);
+    expect(more).toEqual([]);
+    expect(w?.message).toContain('cScale0');
+    expect(w?.message).not.toContain('cScaleLabel0');
+    const label = await render({ theme: 'neo', themeVariables: { cScaleLabel0: '#ffffff' } });
+    expect(ignored(label)).toEqual([]);
+  });
+
+  it('does not warn under theme: default, which reads all three', async () => {
+    const r = await render({
+      theme: 'default',
+      themeVariables: { cScale0: '#ff0000', cScaleInv0: '#00ff00', cScaleLabel0: '#ffffff' },
+    });
+    expect(ignored(r)).toEqual([]);
+  });
+
+  it('raises a single warning for several keys, naming each', async () => {
+    const keys = ['cScale0', 'cScale5', 'cScaleInv2', 'cScaleLabel11'];
+    const r = await render({
+      theme: 'redux-color',
+      themeVariables: Object.fromEntries(keys.map((k) => [k, '#123456'])),
+    });
+    const [w, ...more] = ignored(r);
+    expect(more).toEqual([]);
+    for (const k of keys) expect(w?.message).toContain(k);
+  });
+
+  it('counts only numbered entries that hold a colour', async () => {
+    const r = await render({
+      themeVariables: { cScale12: '#ff0000', cScale05: '#ff0000', cScaleLabel1: '', cScale: [] },
+    });
+    expect(ignored(r)).toEqual([]);
+  });
+});

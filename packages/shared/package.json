@@ -146,6 +146,11 @@
       "types": "./dist/ascii/index.d.ts",
       "default": "./dist/ascii/index.js"
     },
+    "./config/authored": {
+      "mermaid-source": "./src/config/authored.ts",
+      "types": "./dist/config/authored.d.ts",
+      "default": "./dist/config/authored.js"
+    },
     "./config/readers": {
       "mermaid-source": "./src/config/readers.ts",
       "types": "./dist/config/readers.d.ts",

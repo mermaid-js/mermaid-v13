@@ -23,7 +23,7 @@ import { theme } from './theme/table.ts';
  * an icons extension should load (D505); `labels` every text label layout sees. `theme` is the
  * package's table over v12's five `arch*` variables (D331). The registry loads it from the
  * package's `mermaid` manifest (#618); `configDefaults` are the `architecture` section's generated
- * defaults (the six fcose keys and `fontSize` among them, which nothing reads: D328, D507).
+ * defaults (none of the ignored keys: D763).
  */
 export const architecture = {
   id: 'architecture',

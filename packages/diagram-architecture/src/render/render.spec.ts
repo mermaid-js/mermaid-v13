@@ -103,6 +103,27 @@ describe('structure (D508, v12 class names and order)', () => {
     expect(outline.fill).toBe('none');
   });
 
+  it("hangs a service label as v12's dy=1em: the first line's middle fontSize under the icon (D762)", async () => {
+    // The first baseline is iconSize + fontSize − lineHeight / 2 + ascent: 80 + 16 − 10 + 15.
+    const label = (svg: string) =>
+      Number(
+        /<g class="architecture-service-label" data-id="service:a"><text[^>]* y="([\d.]+)"/.exec(
+          svg
+        )![1]
+      );
+    const at = async (fontSize: string) =>
+      label(
+        (
+          await render('architecture-beta\n  service a(server)[A]', {
+            ...grid,
+            config: { themeVariables: { fontSize } },
+          })
+        ).svg
+      );
+    expect(await at('16px')).toBe(101);
+    expect(await at('20px')).toBe(105);
+  });
+
   it('honours architecture.useMaxWidth', async () => {
     const wide = await render(PAIR, grid);
     expect(wide.svg).toMatch(/<svg[^>]* width="100%"[^>]*style="max-width:/);
@@ -194,6 +215,17 @@ describe('icons (D505, D506)', () => {
     const lines = [...text.matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)].map((m) => m[1]);
     expect(lines).toEqual(['one two', 'three', 'four…']);
     expect(r.svg).not.toContain('foreignObject');
+  });
+
+  it('draws an empty text icon as no icon, and a text icon of only spaces as a text icon (v12 tested truthiness)', async () => {
+    const none = await render('architecture-beta\n  service d[Empty]\n', grid);
+    const empty = await render('architecture-beta\n  service d ""[Empty]\n', grid);
+    expect(none.svg).toContain('class="node-bkg"');
+    expect(empty.svg).toBe(none.svg);
+    expect(empty.svg).not.toContain('fill="#087ebf"');
+    const blank = await render('architecture-beta\n  service d " "[Empty]\n', grid);
+    expect(blank.svg).toContain('<rect width="80" height="80" fill="#087ebf" stroke-width="0"/>');
+    expect(blank.svg).not.toContain('class="node-bkg"');
   });
 
   it('breaks a word wider than the square, and cuts what does not fit', async () => {

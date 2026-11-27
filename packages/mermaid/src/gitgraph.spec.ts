@@ -214,9 +214,10 @@ describe('gitGraph theme variables (#374, D152, D266)', () => {
   });
 
   it('keeps the cherry-pick ink white under darkMode on a light theme, as v12', async () => {
+    // The dots only (r 2.75 in the classic themes); the body is textColor (#1287).
     const ink = (svg: string) => [
       ...new Set(
-        [...svg.matchAll(/commit-cherry-pick"[^>]* r="[^"]*" fill="([^"]*)"/g)].map((m) => m[1])
+        [...svg.matchAll(/commit-cherry-pick"[^>]* r="2\.75" fill="([^"]*)"/g)].map((m) => m[1])
       ),
     ];
     const light = await literal({ theme: 'default', themeVariables: { darkMode: true } });

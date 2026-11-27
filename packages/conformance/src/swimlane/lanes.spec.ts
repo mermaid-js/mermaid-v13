@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { swimlane } from '@mermaid-js/core/layout/swimlane';
+import { createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { createMermaid, type InitializeConfig } from 'mermaid';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
@@ -129,6 +130,47 @@ describe('lane title bands in all four directions (D536)', () => {
       // The deterministic measurer makes the long title about 237 wide: lane = title + 2 × 20.
       expect(await across(text)).toBeGreaterThan((await across(short)) + 30);
     }
+  });
+});
+
+describe('lane body fill (#1217, #1245, #1316, D768)', () => {
+  const rectFill = (tree: SvgView, lane: Lane, part: string) =>
+    tree.getAttr(tree.children(lane.el).find((k) => classesOf(tree, k).includes(part))!, 'fill');
+  const THEMES = [
+    'default',
+    'dark',
+    'forest',
+    'neutral',
+    'base',
+    'redux',
+    'redux-dark',
+    'neo',
+    'neo-dark',
+  ];
+
+  it.each(THEMES)('fills the body with the band colour, clusterBkg, in %s', async (name) => {
+    const clusterBkg = createTheme(await loadTheme(name as never), { cssVariables: false }).color(
+      'clusterBkg'
+    );
+    const { tree } = await draw(
+      'swimlane-beta LR\n  subgraph ThemeLane\n    A --> B\n  end\n  B --> C\n',
+      { theme: name, output: { cssVariables: false } } as InitializeConfig
+    );
+    const lanes = lanesOf(tree);
+    // The lane that holds C is the engine's default lane: filled too.
+    expect(lanes.map((l) => l.id).sort()).toEqual(['ThemeLane', '__swimlane_default__']);
+    for (const lane of lanes) {
+      expect(rectFill(tree, lane, 'swimlane-body'), lane.id).toBe(clusterBkg);
+      expect(rectFill(tree, lane, 'swimlane-title'), lane.id).toBe(clusterBkg);
+    }
+  });
+
+  it('fills the body in the custom-theme-variables fixture, as the band', async () => {
+    const { tree } = await draw(fixture('custom-theme-variables'));
+    const [lane] = lanesOf(tree);
+    const fill = rectFill(tree, lane!, 'swimlane-body');
+    expect(fill).not.toBe('none');
+    expect(fill).toBe(rectFill(tree, lane!, 'swimlane-title'));
   });
 });
 

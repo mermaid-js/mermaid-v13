@@ -250,7 +250,7 @@ function drawService(scene: Scene, v: ArchitectureNodeView): void {
   const corner = { x: 0, y: 0 };
   if (service.icon !== undefined) {
     if (drawIcon(w, ctx, service.icon, size, corner)) scene.unresolved.push(service.icon);
-  } else if (service.iconText !== undefined) {
+  } else if (service.iconText) {
     drawTextIcon(
       w,
       fitTextIcon(service.iconText, service.iconTextMarkdown, sizes, font, ctx),

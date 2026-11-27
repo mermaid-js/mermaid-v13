@@ -2,7 +2,8 @@
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: split out of `compound.ts` (D596): `place`, which lays every level out and
 // puts the results in the plane in phases, and the pass that reads port hints off the routes.
-// They share the `Compound` record. The algorithm is unchanged.
+// They share the `Compound` record. A level's routes go into the plane straight from its layout's
+// points, not through a map of routes in its box. The algorithm is unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
 import type { CNode } from './compound.ts';
@@ -17,17 +18,19 @@ import {
   type BandLevel,
 } from './compound-own.ts';
 import {
+  appendPoint,
   appendRoute,
   opposite,
   Side,
   startSide,
   type Compound,
+  type Frame,
   type Level,
   type PortEdge,
 } from './compound-state.ts';
 import { IN_LINE } from './crossings.ts';
 import type { GridHooks } from './grid.ts';
-import { orient, type LEdge, type LNode, type LayeredResult } from './layered.ts';
+import { orient, type LNode } from './layered.ts';
 
 const isVertical = (level: Level): boolean => level.dir === 'TB' || level.dir === 'BT';
 
@@ -70,15 +73,11 @@ function rankParents(c: Compound): void {
 }
 
 // One level laid out: its content and box, and where its content sits in the box.
-interface Fit {
+interface Fit extends Frame {
   level: Level;
   group: CNode | undefined;
-  vertical: boolean;
-  flip: boolean;
   lnodes: LNode[];
-  ledges: LEdge[];
   dummies: Int32Array;
-  size: LayeredResult;
   contentW: number;
   contentH: number;
   padTop: number;
@@ -88,9 +87,9 @@ interface Fit {
   offY: number;
 }
 
-const across = (f: Fit, ly: number): number => (f.flip ? f.size.height - ly : ly);
-const tx = (f: Fit, lx: number, ly: number): number => f.offX + (f.vertical ? lx : across(f, ly));
-const ty = (f: Fit, lx: number, ly: number): number => f.offY + (f.vertical ? across(f, ly) : lx);
+const across = (f: Frame, ly: number): number => (f.flip ? f.size.height - ly : ly);
+const tx = (f: Frame, lx: number, ly: number): number => f.offX + (f.vertical ? lx : across(f, ly));
+const ty = (f: Frame, lx: number, ly: number): number => f.offY + (f.vertical ? across(f, ly) : lx);
 
 // The route points (x, y, axis triples) of `points` (x, y pairs in the layout) in the level's box.
 function convert(f: Fit, points: number[]): number[] {
@@ -241,9 +240,9 @@ function placeInBox(c: Compound, f: Fit): void {
     nodes[item]!.x = tx(f, lnodes[i]!.x, lnodes[i]!.y);
     nodes[item]!.y = ty(f, lnodes[i]!.x, lnodes[i]!.y);
   });
+  level.fit = f;
   level.edges.forEach((le, i) => {
     const edge = ledges[i]!;
-    level.routes.set(le.e, convert(f, edge.points));
     const e = edges[le.e]!;
     if (e.labelW > 0) {
       e.labelX = tx(f, edge.labelX, edge.labelY);
@@ -302,14 +301,24 @@ function levelsAbove(c: Compound, level: Level, item: number): Level[] {
 }
 
 // An edge of `level` as one route in the plane: out of its source's groups, across the level, and
-// into its target's.
-function routeInPlane(c: Compound, level: Level, ei: number): void {
+// into its target's. Across the level it is the `points` `layered` found there, put in the level's
+// box and then in the plane point by point (as `convert` and `appendRoute` would, in the same
+// order), or for an edge between the level's group and its own member, the level's port.
+function routeInPlane(c: Compound, level: Level, ei: number, points?: number[]): void {
   const e = c.edges[ei]!;
   const route: number[] = [];
   for (const lv of levelsAbove(c, level, e.src))
     appendRoute(route, lv.portOf.get(ei * 2)!.route, lv.x, lv.y);
-  const own = level.portOf.get(ei * 2 + +(e.src === level.id));
-  appendRoute(route, level.routes.get(ei) ?? own!.route, level.x, level.y);
+  if (points) {
+    const f = level.fit!;
+    const axis = f.vertical ? 0 : 1;
+    for (let i = 0; i < points.length; i += 2) {
+      const lx = points[i]!;
+      const ly = points[i + 1]!;
+      appendPoint(route, tx(f, lx, ly) + level.x, ty(f, lx, ly) + level.y, axis);
+    }
+  } else
+    appendRoute(route, level.portOf.get(ei * 2 + +(e.src === level.id))!.route, level.x, level.y);
   const inward = levelsAbove(c, level, e.dst);
   for (let i = inward.length - 1; i >= 0; i--)
     appendRoute(route, inward[i]!.portOf.get(ei * 2 + 1)!.route, inward[i]!.x, inward[i]!.y);
@@ -327,8 +336,11 @@ export function place(c: Compound): void {
   rankParents(c);
   fitLevels(c);
   offsetLevels(c);
-  for (const level of c.order)
-    for (const le of [...level.edges, ...level.own]) routeInPlane(c, level, le.e);
+  for (const level of c.order) {
+    const { ledges } = level.fit!;
+    level.edges.forEach((le, i) => routeInPlane(c, level, le.e, ledges[i]!.points));
+    for (const le of level.own) routeInPlane(c, level, le.e);
+  }
 }
 
 // Where, in the group's box, the route of `port` goes on past the straight run out of the port,

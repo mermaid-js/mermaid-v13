@@ -72,6 +72,19 @@ describe('createTableMeasurer', () => {
     }
   });
 
+  it('gives each font stack its own face, whichever stack it measured last', () => {
+    const m = createTableMeasurer({ faces: [table('Acme', 500), table('Wide', 900)] });
+    const arial = tableMeasurer.width('abc', font('Arial'), 0);
+    const want: Record<string, number> = { Acme: 15, Wide: 27, Unknown: arial };
+    for (const family of ['Acme', 'Acme', 'Wide', 'Acme', 'Wide', 'Wide', 'Unknown', 'Acme'])
+      expect(m.width('abc', font(family), 0), family).toBe(want[family]);
+    // Past 256 stacks the measurer forgets them and starts again; each keeps its face.
+    for (let i = 0; i < 300; i++) expect(m.width('abc', font(`Unknown ${i}, Wide`), 0)).toBe(27);
+    expect(m.width('abc', font('Unknown 299, Wide'), 0)).toBe(27);
+    expect(m.width('abc', font('Acme'), 0)).toBe(15);
+    expect(m.metrics(font('Wide', 20))).toEqual({ ascent: 16, descent: 4, lineHeight: 22 });
+  });
+
   it('is the built-in table measurer without faces', () => {
     const m = createTableMeasurer();
     expect(m.id).toBe('table');

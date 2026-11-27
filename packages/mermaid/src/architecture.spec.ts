@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
-import { architecture } from '@mermaid-js/diagram-architecture';
+import { architecture, ARCHITECTURE_SETTINGS_IGNORED } from '@mermaid-js/diagram-architecture';
 import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
@@ -160,7 +160,7 @@ describe('architecture diagrams through the public API (#618)', () => {
     ]);
   });
 
-  it('ignores the six fcose keys (D328), useWidth and fontSize (D507), with no warning', async () => {
+  it('ignores the six fcose keys (D328), useWidth and fontSize (D507), with one warning (D763)', async () => {
     const m = createMermaid();
     const plain = await m.render('a7', TEXT);
     const ignored = {
@@ -174,10 +174,49 @@ describe('architecture diagrams through the public API (#618)', () => {
       fontSize: 40,
     };
     for (const [key, value] of Object.entries(ignored)) {
+      // A directive, then `initialize`: each key arrives as set, and only it is named.
       const r = await m.render('a7', withInit({ architecture: { [key]: value } }));
       expect(r.svg, key).toBe(plain.svg);
-      expect(r.warnings, key).toEqual([]);
+      expect(
+        r.warnings.map((w) => [w.code, w.path]),
+        key
+      ).toEqual([[ARCHITECTURE_SETTINGS_IGNORED, `architecture.${key}`]]);
+      const site = createMermaid();
+      site.initialize({ architecture: { [key]: value } });
+      const s = await site.render('a7', TEXT);
+      expect(s.svg, key).toBe(plain.svg);
+      expect(
+        s.warnings.map((w) => w.code),
+        key
+      ).toEqual([ARCHITECTURE_SETTINGS_IGNORED]);
     }
+  });
+
+  it('warns once for the fcose keys and fontSize set in front matter, naming each (#1222)', async () => {
+    const m = createMermaid();
+    const plain = await m.render('a8', TEXT);
+    const r = await m.render(
+      'a8',
+      [
+        '---',
+        'config:',
+        '  architecture:',
+        '    idealEdgeLengthMultiplier: 3',
+        '    seed: 7',
+        '    fontSize: 20',
+        '---',
+        TEXT,
+      ].join('\n')
+    );
+    expect(r.svg).toBe(plain.svg);
+    expect(r.warnings).toHaveLength(1);
+    const [w] = r.warnings;
+    expect(w!.code).toBe(ARCHITECTURE_SETTINGS_IGNORED);
+    expect(w!.message).toMatch(
+      /architecture\.idealEdgeLengthMultiplier.*architecture\.seed.*architecture\.fontSize/
+    );
+    expect(w!.message).toContain('v13 has no fcose layout');
+    expect(w!.message).toContain('themeVariables.fontSize');
   });
 
   it('supports svg only: ascii is refused with UnsupportedFormatError (D320, R-ASCII-5)', async () => {
