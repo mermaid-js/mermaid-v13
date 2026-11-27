@@ -177,7 +177,7 @@ describe('warnings (D82, pitfall 22)', () => {
 
   it('warns for the options text output cannot honour, set in the diagram or in config', async () => {
     const src =
-      '---\nconfig:\n  agentflow:\n    minNodeWidth: 200\n    useMaxWidth: false\n  flowchart:\n    curve: basis\n---\n' +
+      '---\nconfig:\n  agentflow:\n    minNodeWidth: 200\n    useMaxWidth: false\n    curve: basis\n---\n' +
       H +
       'LR\n  a --> b';
     const { warnings } = await draw(src);
@@ -191,6 +191,18 @@ describe('warnings (D82, pitfall 22)', () => {
     });
     expect(site.warnings[0]!.message).toContain('flowchart.padding, flowchart.subGraphTitleMargin');
     expect((await draw(H + 'LR\n  a --> b')).warnings).toEqual([]);
+  });
+
+  it('warns for a curve set by agentflow.curve or curve, not for flowchart.curve (D733)', async () => {
+    const curveWarnings = async (config: string) => {
+      const { warnings } = await draw(`---\nconfig:\n${config}\n---\n${H}LR\n  a --> b`);
+      return dropped(warnings);
+    };
+    expect(await curveWarnings('  agentflow:\n    curve: linear')).toEqual([
+      ['ASCII_DROPPED', 'curve'],
+    ]);
+    expect(await curveWarnings('  curve: linear')).toEqual([['ASCII_DROPPED', 'curve']]);
+    expect(await curveWarnings('  flowchart:\n    curve: linear')).toEqual([]);
   });
 
   it('reads a numeric string as its number, and a default as not set', async () => {

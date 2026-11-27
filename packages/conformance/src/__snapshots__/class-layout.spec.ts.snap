@@ -102,6 +102,7 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link-3.mmd": 0,
   "class/nightly-check/9-should-render-a-simple-class-diagram-with-clickable-link.mmd": 0,
   "class/nightly-check/clickable-callback.mmd": 0,
+  "class/nightly-check/curve-key.mmd": 0,
   "class/nightly-check/dagre/dagre-0-should-render-a-simple-class-diagram.mmd": 0,
   "class/nightly-check/dagre/dagre-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd": 0,
   "class/nightly-check/dagre/dagre-11-1-should-render-a-simple-class-diagram-with-return-type-on-method-without-htmllabels.mmd": 0,

@@ -12,8 +12,8 @@ import {
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   curveKind,
+  curveResolver,
   curveRouting,
-  DEFAULT_CURVE,
   type CurveKind,
 } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
@@ -21,6 +21,7 @@ import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-j
 import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type { BoxOf, Relation, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
+import { REQUIREMENT_CURVE } from './curve.ts';
 import { v12Label } from '@mermaid-js/core/text/v12-label';
 import {
   markerGeometry,
@@ -99,7 +100,7 @@ export interface RelationView {
   readonly dashed: boolean;
 }
 
-/** How relation lines are drawn: v12 drew them with `flowchart.curve` (class's precedent). */
+/** How relation lines are drawn: one of flowchart's curve names (D733). */
 export type RequirementCurve = CurveKind;
 
 export interface RequirementPrepared {
@@ -108,7 +109,7 @@ export interface RequirementPrepared {
   readonly boxes: readonly BoxView[];
   /** The relations whose two ends name boxes, in model order (D434). */
   readonly relations: readonly RelationView[];
-  /** `flowchart.curve`, `rounded` when unset; the graph's `routing` follows it. */
+  /** `requirement.curve`, else the top-level `curve`, else `rounded` (D733); `routing` follows it. */
   readonly curve: RequirementCurve;
   /**
    * The theme's marker geometry, which the room was sized for and the renderer draws; unset in
@@ -410,7 +411,9 @@ export function prepareRequirement(
       dashed: !contains,
     });
   });
-  const curve = requirementCurve(ctx.config.flowchart?.curve ?? DEFAULT_CURVE, (w) => ctx.warn(w));
+  const curve = curveResolver(ctx.config.curve, REQUIREMENT_CURVE, (w) => ctx.warn(w))(
+    ctx.config.requirement?.curve
+  );
   // The marker geometry and its room are the px drawing's; text output draws its own marks.
   let graph: LayoutGraph;
   let markers: MarkerGeometry | undefined;
