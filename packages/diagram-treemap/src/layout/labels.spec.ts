@@ -1,8 +1,9 @@
 /**
  * Treemap labels by the label rule (#1368, #1403): the title, section and leaf labels are read by
  * core's label handler and fitted as one block of lines and runs; a label that reads as one line
- * of text in one style is fitted and drawn as one string, as before (D405). No treemap label kind
- * read markdown in v12, so `legacyMarkdown` changes nothing.
+ * of text in one style is fitted and drawn as one string, as before (D405). With
+ * `markdownAlwaysOn` every label is markdown and takes the block path; the rest holds in both
+ * modes.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
@@ -21,7 +22,7 @@ beforeAll(async () => {
 
 const MODES: readonly [string, (ctx: TreemapLayoutContext) => TreemapLayoutContext][] = [
   ['default', (ctx) => ctx],
-  ['legacyMarkdown', (ctx) => ({ ...ctx, config: { ...ctx.config, legacyMarkdown: true } })],
+  ['markdownAlwaysOn', (ctx) => ({ ...ctx, config: { ...ctx.config, markdownAlwaysOn: true } })],
 ];
 
 const md = (node: TreemapNode): TreemapNode => ({ ...node, markdown: true });
@@ -41,17 +42,55 @@ function shown(t: TreemapText | undefined): string | undefined {
     .join(' / ');
 }
 
-describe.each(MODES)('treemap labels (%s)', (_name, mode) => {
-  const lay = (m: TreemapModel) => layoutTreemap(m, mode(context(theme)));
-  const leafText = (node: TreemapNode) => lay(model([node])).leaves[0]!.label;
-
+describe('treemap labels in the default mode', () => {
   it('draws plain markdown markers and a code span as written, as one string', () => {
     for (const name of ['leaf **bold** _ital_', 'leaf a `code` b', '`leaf **bold**`']) {
-      const label = leafText(leaf(name, 1));
+      const label = layoutTreemap(model([leaf(name, 1)]), context(theme)).leaves[0]!.label;
       expect(label?.text).toBe(name);
       expect(label?.block).toBeUndefined();
     }
   });
+
+  it('warns once per label that holds markdown it does not read', () => {
+    const codes: string[] = [];
+    const ctx = { ...context(theme), warn: (w: { code: string }) => void codes.push(w.code) };
+    layoutTreemap(model([section('s **b**', leaf('a', 1)), leaf('`c **d**`', 1)]), ctx);
+    expect(codes).toEqual(['MARKDOWN_NOT_READ']);
+  });
+});
+
+describe('treemap labels with markdownAlwaysOn', () => {
+  const on = (): TreemapLayoutContext => MODES[1]![1](context(theme));
+
+  it('reads every label kind as markdown', () => {
+    const l = layoutTreemap(
+      model([section('section **bold** _ital_', leaf('leaf **bold** _ital_', 1))], {
+        title: 'title **bold** _ital_',
+      }),
+      on()
+    );
+    expect(shown(l.title)).toBe('title [b:bold] [i:ital]');
+    expect(shown(l.sections[0]!.label)).toBe('section bold [i:ital]');
+    expect(shown(l.leaves[0]!.label)).toBe('leaf [b:bold] [i:ital]');
+  });
+
+  it('fits a markdown leaf as the default mode fits the same text, or hides it', () => {
+    const name = 'a **long** label '.repeat(6);
+    const plain = name.replaceAll('**', '');
+    const fit = (n: string, ctx: TreemapLayoutContext) =>
+      layoutTreemap(model([leaf(n, 1), leaf('b', 9)]), ctx).leaves.find((x) => x.node.name === n)!;
+    // The half-em measurer gives bold no extra width: the sizes match.
+    expect(fit(name, on()).label?.font.size).toBe(fit(plain, context(theme)).label?.font.size);
+    const tiny = layoutTreemap(model([leaf(name, 1), leaf('b', 4000)]), on()).leaves.find(
+      (x) => x.node.name === name
+    )!;
+    expect(tiny.label).toBeUndefined();
+  });
+});
+
+describe.each(MODES)('treemap labels (%s)', (_name, mode) => {
+  const lay = (m: TreemapModel) => layoutTreemap(m, mode(context(theme)));
+  const leafText = (node: TreemapNode) => lay(model([node])).leaves[0]!.label;
 
   it('reads a marked markdown string as markdown, without its backticks', () => {
     const label = leafText(md(leaf('`leaf **bold** _ital_`', 1)));

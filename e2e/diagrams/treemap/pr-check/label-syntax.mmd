@@ -2,12 +2,12 @@
 description: >-
   Label syntax (#1368, #1403): each section and leaf label written as plain markdown markers, a
   quoted markdown string, a code span in plain text, tags and a written `\n`; the title with
-  tags and a break. Only a quoted markdown string is markdown; tags draw and `\n` breaks. A
+  plain markers, a tag break and a subscript. Only a quoted markdown string is markdown; tags draw and `\n` breaks. A
   section header is one line high, so it keeps a label's first line with `...` after it. Names
   are always quoted, so they have no bare-backtick form.
 ---
 treemap-beta
-  title title <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  title title **bold** _ital_<br>next H<sub>2</sub>O
   "section **bold** _ital_"
     "leaf **bold** _ital_": 10
   "`section **bold** _ital_`"

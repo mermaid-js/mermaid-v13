@@ -52,5 +52,5 @@ e2e/diagrams/treemap/pr-check/5-should-render-with-a-forest-theme.mmd 1 eab13cda
 e2e/diagrams/treemap/pr-check/7-should-handle-classdef-with-multiple-styles.mmd 1 cc1e3066fb019e13
 e2e/diagrams/treemap/pr-check/8d-should-handle-dollar-sign-with-thousands-separator-and-decimal-places.mmd 1 76eb229308dd162b
 e2e/diagrams/treemap/pr-check/9-should-handle-a-complex-example-with-multiple-features.mmd 1 02353bea99dd91e6
-e2e/diagrams/treemap/pr-check/label-syntax-compat.mmd 1 f2a703b47bbf4ee8
-e2e/diagrams/treemap/pr-check/label-syntax.mmd 1 9a421e2645686a2b
+e2e/diagrams/treemap/pr-check/label-syntax-compat.mmd 1 098947b819516105
+e2e/diagrams/treemap/pr-check/label-syntax.mmd 1 06821b5f28ed98ab

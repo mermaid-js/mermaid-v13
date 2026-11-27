@@ -1,13 +1,14 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd (#1368, #1403): the same labels with
-  `legacyMarkdown: true`. No treemap label kind read markdown in v12, so the picture equals the
-  default one: only a quoted markdown string is markdown; tags draw and `\n` breaks.
+  label-syntax.mmd with `markdownAlwaysOn: true` (#1368, #1403): every label is markdown, so the
+  plain `**bold** _ital_` rows of the title, the sections and the leaves draw bold and italic,
+  and the code-span rows draw inline code. The picture differs from label-syntax.mmd; tags and
+  `\n` draw as there.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 treemap-beta
-  title title <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  title title **bold** _ital_<br>next H<sub>2</sub>O
   "section **bold** _ital_"
     "leaf **bold** _ital_": 10
   "`section **bold** _ital_`"

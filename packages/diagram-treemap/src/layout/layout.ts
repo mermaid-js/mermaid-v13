@@ -13,7 +13,8 @@
  * the complex leaf label truncated with `...`.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import type { FontKey, LabelConfig, MeasuredLabel, Measurer } from '@mermaid-js/core/text';
+import type { FontKey, MeasuredLabel, Measurer } from '@mermaid-js/core/text';
+import type { MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { treemapLayoutConfig, type TreemapLayoutConfig } from '../config.ts';
 import { treemapValueFormat } from '../format/index.ts';
 import { classStyles, type TreemapModel } from '../model.ts';
@@ -30,7 +31,7 @@ import {
   classFont,
   placed,
   placedBlock,
-  readLabel,
+  readTreemapLabel,
   textWidth,
   truncate,
   truncateBlock,
@@ -50,7 +51,7 @@ import { growRect } from '@mermaid-js/core/layout';
 
 /** What the layout reads from the render context (`warn` for `TREEMAP_CONFIG_INVALID`). */
 export type TreemapLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn'>>;
+  Partial<Pick<RenderContext, 'warn' | 'inline'>>;
 
 /** For a layout run without a `warn` sink (unit tests, the invariants). */
 const ignoreWarning = (): void => undefined;
@@ -62,8 +63,8 @@ interface Frame {
   readonly config: TreemapLayoutConfig;
   readonly format: (value: number) => string;
   readonly model: TreemapModel;
-  /** The render's config, for the label handler (#1368). */
-  readonly labels: LabelConfig;
+  /** What the label handler reads (#1368): the config, the warning sink, the inline spans. */
+  readonly labels: MarkdownWarningContext;
   /** The title band: every box moves down by it. */
   readonly band: number;
   /** `treemapTitleFontSize` (D407). */
@@ -81,7 +82,8 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
     size: ctx.theme.number('treemapTitleFontSize'),
     weight: NORMAL_WEIGHT,
   };
-  const head = readTitle(model.title, titleFont, ctx);
+  const reading = labelContext(ctx);
+  const head = readTitle(model.title, titleFont, reading, ctx.measurer);
   const { band } = head;
   const frame: Frame = {
     measurer: ctx.measurer,
@@ -89,7 +91,7 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
     config,
     format: treemapValueFormat(config.valueFormat),
     model,
-    labels: ctx.config,
+    labels: reading,
     band,
     titleSize: titleFont.size,
   };
@@ -148,6 +150,14 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
   };
 }
 
+/** The label handler's context from the layout's: a run without `warn` drops the warning. */
+function labelContext(ctx: TreemapLayoutContext): MarkdownWarningContext {
+  const warn = ctx.warn ?? ignoreWarning;
+  return ctx.inline
+    ? { config: ctx.config, warn, inline: ctx.inline }
+    : { config: ctx.config, warn };
+}
+
 /**
  * The title read by the label rule (#1368), its block when it is not one line of text in one
  * style, and the title band: none without a title, wider by the extra lines of a title of
@@ -156,12 +166,13 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
 function readTitle(
   title: string | undefined,
   font: FontKey,
-  ctx: TreemapLayoutContext
+  labels: MarkdownWarningContext,
+  measurer: Measurer
 ): { text?: TreemapLabelText; block?: MeasuredLabel; band: number } {
   if (!title) return { band: 0 };
-  const text = readLabel(title, false, ctx.config, font, ctx.measurer);
+  const text = readTreemapLabel(title, false, labels, font, measurer);
   if (text.line !== undefined) return { text, band: M.titleBand };
-  const block = blockOf(text.source, font, ctx.measurer);
+  const block = blockOf(text, font, measurer);
   return {
     text,
     block,
@@ -270,12 +281,12 @@ function sectionLabel(
   { space, at }: { space: number; at: TextAt }
 ): TreemapText | undefined {
   const { measurer } = frame;
-  const read = readLabel(name, markdown, frame.labels, font, measurer);
+  const read = readTreemapLabel(name, markdown, frame.labels, font, measurer);
   if (read.line !== undefined) {
     const text = truncate(measurer, read.line, font, space);
     return text === '' ? undefined : placed(text, font, measurer, at);
   }
-  const block = truncateBlock(blockOf(read.source, font, measurer), font, measurer, space, true);
+  const block = truncateBlock(blockOf(read, font, measurer), font, measurer, space, true);
   return block && block.lines.length > 0 ? placedBlock(block, font, at) : undefined;
 }
 
@@ -340,7 +351,7 @@ function leafShape(
   const blocks = new Map<number, MeasuredLabel>();
   const block = (size: number): MeasuredLabel => {
     let b = blocks.get(size);
-    if (b === undefined) blocks.set(size, (b = blockOf(read.source, font(size), measurer)));
+    if (b === undefined) blocks.set(size, (b = blockOf(read, font(size), measurer)));
     return b;
   };
   return {
@@ -375,7 +386,7 @@ function fitLeaf(
     weight: NORMAL_WEIGHT,
   });
   const font = (size: number): FontKey => ({ ...start, size });
-  const read = readLabel(node.name, node.markdown === true, frame.labels, start, measurer);
+  const read = readTreemapLabel(node.name, node.markdown === true, frame.labels, start, measurer);
   const shape = leafShape(read, measurer, font);
   const valueSize = (size: number): number =>
     Math.max(fit.minValueSize, Math.min(fit.valueSize, Math.round(size * M.valueScale)));

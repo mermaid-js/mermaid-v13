@@ -3,19 +3,51 @@
  * for `treemap/pr-check/label-syntax.mmd`. Only a quoted markdown string is markdown, in a
  * section or leaf name, whose quotes the parser removes and whose markdown string it marks;
  * plain markers and a code span are drawn as written; tags draw and a written `\n` breaks. A
- * section header is one line high: it keeps a label's first line, with `...` after it. No
- * treemap label kind read markdown in v12, so `legacyMarkdown` changes nothing.
+ * section header is one line high: it keeps a label's first line, with `...` after it. With
+ * `markdownAlwaysOn` every label is markdown (`label-syntax-compat.mmd` is that fixture with the
+ * setting on), and the default mode warns once per render about markdown in a plain label.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createMermaid, type InitializeConfig, type Mermaid } from 'mermaid';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 
 const fixture = (name: string): string =>
   readFileSync(join(REPO_ROOT, `e2e/diagrams/treemap/pr-check/${name}.mmd`), 'utf8');
 const SOURCE = fixture('label-syntax');
+
+/** What `label-syntax.mmd` draws in the default mode. */
+const DEFAULT = [
+  'title **bold** _ital_ / next H2O',
+  'section **bold** _ital_',
+  'section bold [i:ital]',
+  'section a `code` b',
+  'section bold [i:ital...]',
+  'section one...',
+  'leaf **bold** _ital_',
+  'leaf [b:bold] [i:ital]',
+  'leaf a `code` b',
+  'leaf [b:bold] [i:ital] / next H2O',
+  'leaf one / two',
+];
+
+/** What it draws with `markdownAlwaysOn`: the plain rows and the code spans are markdown too. */
+const ALWAYS_ON = [
+  'title [b:bold] [i:ital] / next H2O',
+  'section bold [i:ital]',
+  'section bold [i:ital]',
+  'section a [c:code] b',
+  'section bold [i:ital...]',
+  'section one...',
+  'leaf [b:bold] [i:ital]',
+  'leaf [b:bold] [i:ital]',
+  'leaf a [c:code] b',
+  'leaf [b:bold] [i:ital] / next H2O',
+  'leaf one / two',
+];
 
 function api(config: InitializeConfig = {}): Mermaid {
   const m = createMermaid();
@@ -31,7 +63,8 @@ const own = (tree: SvgView, n: SvgElement): string =>
 
 /**
  * Each drawn label `<text>` (values left out): a bold run as `[b:…]`, an italic run as `[i:…]`,
- * and a new line (a `<tspan>` with its own `y`) as ` / `. A section label's bold, which the
+ * inline code (a `<tspan>` in its own font) as `[c:…]`, and a new line (a `<tspan>` with its own
+ * `y`) as ` / `. A section label's bold, which the
  * whole label has, is not marked.
  */
 function drawn(svg: string): string[] {
@@ -48,6 +81,7 @@ function drawn(svg: string): string[] {
       if (n === t) label += text;
       else if (tree.getAttr(n, 'font-weight') === 'bold' && !section) label += `[b:${text}]`;
       else if (tree.getAttr(n, 'font-style') === 'italic') label += `[i:${text}]`;
+      else if (tree.getAttr(n, 'font-family') !== undefined) label += `[c:${text}]`;
       else label += text;
     }
     out.push(label.trim());
@@ -57,20 +91,10 @@ function drawn(svg: string): string[] {
 
 describe('treemap label syntax (#1368)', () => {
   it('reads markdown only in a quoted markdown string, in every label kind', async () => {
-    const { svg } = await api().render('m', SOURCE);
-    expect(drawn(svg)).toEqual([
-      'title [b:bold] [i:ital] / next H2O',
-      'section **bold** _ital_',
-      'section bold [i:ital]',
-      'section a `code` b',
-      'section bold [i:ital...]',
-      'section one...',
-      'leaf **bold** _ital_',
-      'leaf [b:bold] [i:ital]',
-      'leaf a `code` b',
-      'leaf [b:bold] [i:ital] / next H2O',
-      'leaf one / two',
-    ]);
+    const { svg, warnings } = await api().render('m', SOURCE);
+    expect(drawn(svg)).toEqual(DEFAULT);
+    // Plain `**bold** _ital_` labels of three kinds: one warning per render.
+    expect(warnings.filter((w) => w.code === MARKDOWN_NOT_READ.code)).toHaveLength(1);
   });
 
   it('draws a plain one-line label as one string, as before', async () => {
@@ -79,14 +103,19 @@ describe('treemap label syntax (#1368)', () => {
     expect(svg).toContain('>leaf</text>');
   });
 
-  it('draws the same with legacyMarkdown: no treemap label kind read markdown in v12', async () => {
-    const svg = async (config: InitializeConfig): Promise<string> =>
-      (await api(config).render('m', SOURCE)).svg;
-    expect(await svg({ legacyMarkdown: true })).toBe(await svg({}));
+  it('gives no warning for markdown strings', async () => {
+    const source = 'treemap-beta\n  "`a **b**`"\n    "`c _d_`": 1\n';
+    const { warnings } = await api().render('m', source);
+    expect(warnings.map((w) => w.code)).not.toContain(MARKDOWN_NOT_READ.code);
   });
 
-  it('draws the compatibility-mode twin fixture as the default one', async () => {
-    const { svg } = await api().render('m', fixture('label-syntax-compat'));
-    expect(svg).toBe((await api().render('m', SOURCE)).svg);
+  it.each<[string, InitializeConfig, string]>([
+    ['the fixture', {}, 'label-syntax-compat'],
+    ['global config', { markdownAlwaysOn: true }, 'label-syntax'],
+    ['the treemap section', { treemap: { markdownAlwaysOn: true } }, 'label-syntax'],
+  ])('reads every label as markdown with markdownAlwaysOn (%s)', async (_, config, name) => {
+    const { svg, warnings } = await api(config).render('m', fixture(name));
+    expect(drawn(svg)).toEqual(ALWAYS_ON);
+    expect(warnings.map((w) => w.code)).not.toContain(MARKDOWN_NOT_READ.code);
   });
 });

@@ -2,24 +2,25 @@
  * Treemap text, measured by the injected measurer in the font it is drawn in (pitfall 16), with
  * v12's fitting rules (`renderer.ts:240-292`, `:381-523`) in place of `getComputedTextLength()`.
  *
- * Labels follow the label rule (#1368): read by core's handler (`labelSource`), so tags draw, a
- * written `\n` breaks the line and a markdown string is markdown. A label that reads as one line
+ * Labels follow the label rule (#1368): read by core's handler (`readLabel`), so tags draw, a
+ * written `\n` breaks the line and a markdown string is markdown, as every label is under
+ * `markdownAlwaysOn`. A label that reads as one line
  * of text in one style is measured, truncated and drawn as one string, as before (D405); any
  * other is laid out by core's label layout and fitted as one block of lines and runs.
  */
 import {
   decodeEntities,
   fontSizePx,
-  labelSource,
   layoutLabel,
   Style,
   type FontKey,
-  type LabelConfig,
+  type InlineSpans,
   type LabelSource,
   type MeasuredLabel,
   type Measurer,
   type Run,
 } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { BOLD_WEIGHT, MAX_WEIGHT, NORMAL_WEIGHT } from './metrics.ts';
 import type { Rect, TreemapText, TreemapTextAnchor } from './types.ts';
 
@@ -92,37 +93,46 @@ export interface TreemapLabelText {
   readonly line?: string;
   /** The label for core's label layout. */
   readonly source: LabelSource;
+  /** The render's inline-box providers (icons, math), for core's label layout. */
+  readonly inline?: InlineSpans;
 }
 
 /**
- * Reads a label: `written` as the model holds it, `markdown` when the parser marked it as a
- * markdown string (its backticks are still on it). No treemap label kind is read as markdown by
- * v12 (`v12Markdown: false`), so `config`'s compatibility mode changes nothing here.
+ * Reads a label through core's handler, which warns once per render about markdown in a plain
+ * label (`MARKDOWN_NOT_READ`): `written` as the model holds it, `markdown` when the parser marked
+ * it as a markdown string (its backticks are still on it). Under `markdownAlwaysOn` every label
+ * is markdown, so none takes the one-line path.
  */
-export function readLabel(
+export function readTreemapLabel(
   written: string,
   markdown: boolean,
-  config: LabelConfig,
+  ctx: MarkdownWarningContext,
   font: FontKey,
   measurer: Measurer
 ): TreemapLabelText {
-  const source = markdown
-    ? labelSource(written.slice(1, -1), { markdown: true, v12Markdown: false }, config)
-    : labelSource(written, { v12Markdown: false }, config);
-  if (source.markup !== 'plain') return { source };
+  const source = readLabel(markdown ? written.slice(1, -1) : written, { markdown }, ctx);
+  const read = ctx.inline ? { source, inline: ctx.inline } : { source };
+  if (source.markup !== 'plain') return read;
   const decoded = decodeEntities(written);
-  const { lines } = blockOf(source, font, measurer);
+  const { lines } = blockOf(read, font, measurer);
   const only = lines.length === 1 && lines[0]!.length === 1 ? lines[0]![0]! : undefined;
   const one =
     lines.length === 0
       ? decoded.trim() === ''
       : only !== undefined && only.style === baseStyle(font) && only.text === decoded.trim();
-  return one ? { line: decoded, source } : { source };
+  return one && !lines.some((line) => line.some((run) => run.kind === 'box'))
+    ? { ...read, line: decoded }
+    : read;
 }
 
 /** A label's lines and runs in `font`, broken only where it is written to break. */
-export function blockOf(source: LabelSource, font: FontKey, measurer: Measurer): MeasuredLabel {
-  return layoutLabel(source.text, font, Infinity, measurer, { ...source, style: baseStyle(font) });
+export function blockOf(label: TreemapLabelText, font: FontKey, measurer: Measurer): MeasuredLabel {
+  const { source, inline } = label;
+  return layoutLabel(source.text, font, Infinity, measurer, {
+    ...source,
+    style: baseStyle(font),
+    ...(inline ? { inline } : {}),
+  });
 }
 
 /**
