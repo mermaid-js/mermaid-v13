@@ -1,4 +1,12 @@
-import type { EndMarker, Point, RoutePoint } from '../types.ts';
+import type { EndMarker, Point, RoutePoint, Side } from '../types.ts';
+
+/** The axis a side faces along, and which way is out of the box. */
+export const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
+  top: { axis: 'y', sign: -1 },
+  bottom: { axis: 'y', sign: 1 },
+  left: { axis: 'x', sign: -1 },
+  right: { axis: 'x', sign: 1 },
+};
 
 /** A box: left, top, right, bottom. */
 export interface Rect {
