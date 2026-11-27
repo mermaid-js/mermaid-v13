@@ -53,7 +53,9 @@
   ([Kanban SVG structure](#kanban-svg-structure)).
 - **Ticket links** (D377) pass the link check, and a refused URL draws the ticket as plain text
   with a `URL_REFUSED` warning; the first `#TICKET#` is replaced with the ticket taken literally
-  ([Kanban SVG structure](#kanban-svg-structure)).
+  ([Kanban SVG structure](#kanban-svg-structure)). The ticket and assignee follow the label
+  rule, so a tag the ticket draws as formatting is left out of its link: `<b>T-1</b>` draws a
+  bold `T-1` and links to `…T-1`, where v12 put the tags in the URL (D712).
 - **Column colours** (D374) come from the `cScale` palette in every theme, lightened by 10 or
   darkened under a dark theme, and cycle through the twelve slots, so v12's black columns past
   the tenth are gone and `neo-dark` darkens where v12 left it light

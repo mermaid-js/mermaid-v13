@@ -9,7 +9,7 @@ e2e/diagrams/kanban/baseline/handdrawn/default.mmd 6 d49dae643903815b
 e2e/diagrams/kanban/baseline/handdrawn/neo-dark.mmd 6 766847279b6750ba
 e2e/diagrams/kanban/baseline/handdrawn/neo.mmd 6 7c43bdf542891989
 e2e/diagrams/kanban/baseline/handdrawn/redux.mmd 6 e55ca392a5dcaf4b
-e2e/diagrams/kanban/baseline/text/markdown-and-line-breaks.mmd 2 107b7ba825d647e1
+e2e/diagrams/kanban/baseline/text/markdown-and-line-breaks.mmd 2 9d672493073c46fe
 e2e/diagrams/kanban/baseline/themes/base.mmd 6 8f71d4daff82c412
 e2e/diagrams/kanban/baseline/themes/dark.mmd 6 ccab4f1ec7ca7af1
 e2e/diagrams/kanban/baseline/themes/default.mmd 6 a93e46b0054d153d

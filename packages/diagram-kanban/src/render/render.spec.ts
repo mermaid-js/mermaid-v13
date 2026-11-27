@@ -304,6 +304,19 @@ describe('label markup (D710, D712)', () => {
     expect(card).not.toContain('**md**');
   });
 
+  it('draws a ticket in <b> bold and an assignee in <i> italic, without their tags', async () => {
+    const { svg } = await renderKanbanForTest(
+      "kanban\n  todo[Todo]\n    a[Card]@{ ticket: '<b>T-1</b>', assigned: '<i>knsv</i>' }\n"
+    );
+    const [ticket, assignee] = svg
+      .slice(svg.indexOf('data-ast="n:a"'))
+      .match(/<text[^>]*>.*?<\/text>/g)!
+      .slice(-2);
+    expect(ticket).toMatch(/<tspan[^>]*font-weight="bold"[^>]*>T-1<\/tspan>/);
+    expect(assignee).toMatch(/<tspan[^>]*font-style="italic"[^>]*>knsv<\/tspan>/);
+    expect(svg).not.toMatch(/&lt;\/?[bi]&gt;/);
+  });
+
   it('reads a column title by the same rule', async () => {
     const { svg } = await renderKanbanForTest('kanban\n  a["`**md**`"]\n  b[**plain**]\n');
     expect(textOf(svg, 'n:a')).toMatch(/font-weight="bold"[^>]*>md</);
@@ -333,6 +346,18 @@ describe('ticket links (D377)', () => {
     ]);
     expect(svg).toMatch(/<a [^>]*><g class="label"[^>]*><text[^>]*>MC-1<\/text><\/g><\/a>/);
     expect(refused(warnings)).toBe(0);
+  });
+
+  it('links a ticket with drawn tags by its text without them (D712)', async () => {
+    const { svg } = await renderKanbanForTest(
+      board('https://example.com/browse/#TICKET#', '<b>T-1</b>')
+    );
+    expect(links(svg)[0]!.href).toBe('https://example.com/browse/T-1');
+    const mixed = await renderKanbanForTest(
+      board('https://example.com/#TICKET#', '<U>T</U>-<sub>1</sub><Strike>2</Strike>')
+    );
+    expect(links(mixed.svg)[0]!.href).toBe('https://example.com/T-12');
+    expect(svg).toMatch(/<a [^>]*><g class="label"[^>]*><text[^>]*><tspan[^>]*font-weight="bold"/);
   });
 
   it('keeps $& and $` in a ticket literal (a function replacer)', async () => {
