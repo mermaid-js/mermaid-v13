@@ -111,6 +111,8 @@ exports[`layered over parser-produced state graphs > lays out every corpus graph
   "e2e/diagrams/state-diagram-v2/nightly-check/special-state-types-neo-look-neo-theme.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/special-state-types-neo-look-redux-dark-theme.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/special-state-types-neo-look-redux-theme.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/nightly-check/state-curve-global.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/nightly-check/state-curve-step.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd": 0,
   "e2e/diagrams/state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd": 0,

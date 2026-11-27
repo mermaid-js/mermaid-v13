@@ -1195,6 +1195,17 @@ wrappingWidth?: number
  */
 minNodeWidth?: number
 /**
+ * How transitions and note connectors are drawn between their route
+ * points (D733).
+ * 
+ * Defaults to `curved`, today's state look. Precedence: this key when
+ * set, then the top-level `curve` when set, then `curved`. State does
+ * not read `flowchart.curve`. A self-transition stays `rounded`, and
+ * text output stays stepped on the grid (D78).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * Margin top for the text over the diagram
  */
 titleTopMargin?: number

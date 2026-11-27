@@ -12,7 +12,9 @@ import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
+import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import type { StateRenderContext } from './context.ts';
+import { STATE_CURVE } from './curve.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
 import { v12Label, type V12LabelMode } from '@mermaid-js/core/text/v12-label';
@@ -96,6 +98,12 @@ export interface StateEdgeView {
 
 export interface StatePrepared {
   graph: LayoutGraph;
+  /**
+   * How the diagram's edges are drawn (D733): `state.curve`, else the global `curve`, else
+   * `curved`, resolved once per render so `CURVE_UNKNOWN` warns once. A self-transition is
+   * drawn `rounded` whatever it is.
+   */
+  curve: CurveKind;
   nodes: StateNodeView[];
   /** Composites and regions, outermost first. */
   groups: StateGroupView[];
@@ -272,8 +280,9 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
       })
     ),
   ];
-  const graph = layoutGraph(model, { nodes, groups, edges }, regionsOf, groupDir, m, length);
-  return { graph, nodes, groups, edges, views, regions: regionsOf };
+  const curve = curveResolver(ctx.config.curve, STATE_CURVE, (w) => ctx.warn(w))(cfg.curve);
+  const graph = layoutGraph(model, { nodes, groups, edges, curve }, regionsOf, groupDir, m, length);
+  return { graph, curve, nodes, groups, edges, views, regions: regionsOf };
 }
 
 /** A note's node and the edge that joins it to its state. */
@@ -448,7 +457,7 @@ function measureState(
 /** The graph the layout engine gets, every length from the unit profile. */
 function layoutGraph(
   model: StateModel,
-  { nodes, groups, edges }: Pick<StatePrepared, 'nodes' | 'groups' | 'edges'>,
+  { nodes, groups, edges, curve }: Pick<StatePrepared, 'nodes' | 'groups' | 'edges' | 'curve'>,
   regionsOf: ReadonlyMap<string, readonly string[]>,
   groupDir: ReadonlyMap<string, Dir | undefined>,
   m: Measure,
@@ -485,7 +494,7 @@ function layoutGraph(
     ...spacing,
     diagramPadding: b.diagramPadding,
     // On the grid routes are always square (D78).
-    routing: units.grid === undefined ? 'curved' : 'stepped',
+    routing: units.grid === undefined ? curveRouting(curve) : 'stepped',
     headRoom: b.headRoom,
     metrics: units.engine,
   };
