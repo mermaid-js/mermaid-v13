@@ -400,29 +400,32 @@ class Populate {
       } else byParent.set(parent, pipeline);
       parentNode.isPipelineParent = true;
       const target = before ?? pipeline;
-      for (const c of p.children) {
-        const id = childId(parent, c.name.value);
-        if (!this.childOf.has(c.name.value)) this.childOf.set(c.name.value, parent);
-        const x = this.percent(c.evolution, `Pipeline component "${c.name.value}" evolution`, c.id);
-        this.nodes.add({
-          id,
-          label: c.name.value,
-          x,
-          y: parentY,
-          className: 'pipeline-component',
-          labelOffsetX: c.label?.x,
-          labelOffsetY: c.label?.y,
-          inertia: undefined,
-          sourceStrategy: undefined,
-        });
-        target.componentIds.push(id);
-        const child = this.nodes.get(id);
-        if (child) child.inPipeline = true;
-      }
+      for (const c of p.children) target.componentIds.push(this.child(parent, parentY, c));
     }
     return [...byParent.values()].map(({ nodeId, componentIds, astId }) =>
       Object.freeze({ nodeId, componentIds: Object.freeze(componentIds), astId })
     );
+  }
+
+  /** Adds one pipeline component at its parent's y; returns its node id. */
+  private child(parent: string, parentY: number, c: WardleyPipelineComponentNode): string {
+    const id = childId(parent, c.name.value);
+    if (!this.childOf.has(c.name.value)) this.childOf.set(c.name.value, parent);
+    const x = this.percent(c.evolution, `Pipeline component "${c.name.value}" evolution`, c.id);
+    this.nodes.add({
+      id,
+      label: c.name.value,
+      x,
+      y: parentY,
+      className: 'pipeline-component',
+      labelOffsetX: c.label?.x,
+      labelOffsetY: c.label?.y,
+      inertia: undefined,
+      sourceStrategy: undefined,
+    });
+    const child = this.nodes.get(id);
+    if (child) child.inPipeline = true;
+    return id;
   }
 
   /** Range checks of pipeline components that add no node (their parent is unknown or failed). */
