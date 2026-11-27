@@ -1,0 +1,13 @@
+---
+description: >-
+  CJK, Arabic and emoji in group, service and edge labels (#1210): a service
+  label hangs as in v12, its first line's middle fontSize under the icon, so
+  emoji that rise above the Latin ascent stay clear of it (D762)
+---
+architecture-beta
+    group g(cloud)[中文分组]
+    service a(server)[数据库服务器] in g
+    service b(server)[خادم البيانات] in g
+    service c(server)[🚀 Launch 🎉]
+    a:R -[边]- L:b
+    b:B -[🔗]-> T:c

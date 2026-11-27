@@ -5,14 +5,17 @@
  * Every length comes from the metrics table (`metrics.ts`, pitfall 13).
  *
  * - A service is its `iconSize` icon with its label beneath, wrapped at `iconSize × 1.5`: as
- *   wide as the wider of the two, `iconSize` + the label's height high, and its `left`/`right`
- *   ends meet the icon's centre line (`anchorY`, D501).
+ *   wide as the wider of the two, `iconSize` + `labelGap` + the label's height high (the label
+ *   hangs as in v12, D762), and its `left`/`right` ends meet the icon's centre line (`anchorY`,
+ *   D501).
  * - A junction is v12's invisible `iconSize` square, with no label.
  * - A group has `padding` on every side and a title band: its icon, then 4 px and its label.
  * - An edge names both its sides, its `{group}` ends (`border`) and its label's size; the
  *   label is measured unwrapped, since v12 wrapped it to the drawn edge (D507: the renderer
  *   places it).
  * - Every `align` statement is one `align` hint, in source order.
+ * - A section that sets a key v13 reads nowhere (the six fcose settings, `fontSize`, `useWidth`)
+ *   earns one `ARCHITECTURE_SETTINGS_IGNORED` naming each (D763).
  *
  * The lists are read in the model's order (v12's insertion order), so the graph, and with it
  * the layout, is the same on every run.
@@ -33,7 +36,7 @@ import {
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import { configLengths } from '@mermaid-js/shared/config/readers';
-import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
+import { ARCHITECTURE_CONFIG_IGNORED, ARCHITECTURE_SETTINGS_IGNORED } from '../codes.ts';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
@@ -91,9 +94,10 @@ const SIDE: Readonly<Record<ArchitectureSide, Side>> = {
 /**
  * The document's `iconSize` and `padding` (0 up to 10000, as the other ports read lengths; else
  * the section's generated default, v12's, with one `ARCHITECTURE_CONFIG_IGNORED` per key), and
- * the lengths v12 drew with them. Read once per layout: renderers take `ArchitecturePrepared.sizes`.
+ * the lengths v12 drew with them and with labels in `font`. Read once per layout: renderers take
+ * `ArchitecturePrepared.sizes`.
  */
-function sizesOf(ctx: ArchitectureLayoutContext): ArchitectureSizes {
+function sizesOf(ctx: ArchitectureLayoutContext, font: FontKey): ArchitectureSizes {
   const D = architectureConfigDefaults;
   const length = configLengths(
     'architecture',
@@ -102,7 +106,51 @@ function sizesOf(ctx: ArchitectureLayoutContext): ArchitectureSizes {
     D,
     ctx.warn
   );
-  return architectureSizes(length('iconSize') ?? D.iconSize!, length('padding') ?? D.padding!);
+  const text = { fontSize: font.size, lineHeight: ctx.measurer.metrics(font).lineHeight };
+  return architectureSizes(
+    text,
+    length('iconSize') ?? D.iconSize!,
+    length('padding') ?? D.padding!
+  );
+}
+
+/** v12's fcose settings (D328), in the order a warning names them. */
+const FCOSE_KEYS = [
+  'randomize',
+  'nodeSeparation',
+  'idealEdgeLengthMultiplier',
+  'edgeElasticity',
+  'numIter',
+  'seed',
+] as const;
+
+/** The keys v13 reads nowhere (D328, D507), in the order a warning names them. */
+const IGNORED_KEYS = [...FCOSE_KEYS, 'fontSize', 'useWidth'] as const;
+
+/**
+ * One {@link ARCHITECTURE_SETTINGS_IGNORED} naming every key of {@link IGNORED_KEYS} the section
+ * holds as its own (D763): none has a default, so each is one the author set, at any value.
+ */
+function warnIgnoredSettings(ctx: ArchitectureLayoutContext): void {
+  const section = (ctx.config.architecture ?? {}) as Readonly<Record<string, unknown>>;
+  const set = IGNORED_KEYS.filter((k) => Object.hasOwn(section, k) && section[k] !== undefined);
+  if (set.length === 0) return;
+  const path = (k: string) => `architecture.${k}`;
+  const fcose = set.filter((k) => (FCOSE_KEYS as readonly string[]).includes(k));
+  const notes = [
+    fcose.length > 0
+      ? `v13 has no fcose layout, so ${fcose.join(', ')} ${fcose.length === 1 ? 'does' : 'do'} nothing.`
+      : undefined,
+    set.includes('fontSize') ? 'For fontSize, use themeVariables.fontSize.' : undefined,
+    set.includes('useWidth') ? 'useWidth was never read, in v12 either.' : undefined,
+  ];
+  ctx.warn({
+    code: ARCHITECTURE_SETTINGS_IGNORED,
+    message: [`Ignored ${set.map(path).join(', ')}.`, ...notes.filter((n) => n !== undefined)].join(
+      ' '
+    ),
+    path: path(set[0]!),
+  });
 }
 
 /**
@@ -127,14 +175,15 @@ export function prepareArchitecture(
   model: ArchitectureModel,
   ctx: ArchitectureLayoutContext
 ): ArchitecturePrepared {
-  const sizes = sizesOf(ctx);
-  const { iconSize, padding, anchorY } = sizes;
   // v12 drew every label in the global font (D507: `architecture.fontSize` is ignored).
   const font: FontKey = {
     family: ctx.theme.value('fontFamily'),
     size: ctx.theme.number('fontSize'),
     weight: ARCHITECTURE_METRICS.fontWeight,
   };
+  const sizes = sizesOf(ctx, font);
+  warnIgnoredSettings(ctx);
+  const { iconSize, padding, anchorY, labelGap } = sizes;
   // A markdown string is laid out as markdown without its wrapper; any other label is plain
   // (D710, a break with v12, whose `createText` read markdown in every label).
   const measure = (text: string | undefined, maxWidth: number): MeasuredLabel | undefined => {
@@ -148,7 +197,7 @@ export function prepareArchitecture(
   for (const [index, s] of model.services.entries()) {
     const label = measure(s.title, sizes.labelWidth);
     const width = Math.max(iconSize, label?.width ?? 0);
-    const height = iconSize + (label?.height ?? 0);
+    const height = iconSize + (label ? labelGap + label.height : 0);
     nodes.push({ id: s.id, kind: 'service', index, ...(label ? { label } : {}) });
     layoutNodes.push({
       id: s.id,

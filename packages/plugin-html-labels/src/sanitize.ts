@@ -62,6 +62,20 @@ function tidyStyle(el: Element): void {
 export type LinkRules = Pick<UrlOptions, 'linkSchemes' | 'securityLevel'>;
 
 /**
+ * What the sanitizer does to each element after DOMPurify has filtered its attributes: drops a
+ * link the render's rules refuse, tidies its style, and keeps a new browsing context from
+ * reaching back to the page.
+ */
+export function tidyAttributes(node: Element, links: LinkRules): void {
+  for (const name of ['href', 'src']) {
+    const url = node.getAttribute(name);
+    if (url !== null && checkUrl(url, links) === undefined) node.removeAttribute(name);
+  }
+  if (node.hasAttribute('style')) tidyStyle(node);
+  if (node.hasAttribute('target')) node.setAttribute('rel', 'noopener noreferrer');
+}
+
+/**
  * A sanitizer of its own for `window` (hooks are per instance, so the page's DOMPurify is not
  * changed), with the link rules of the render.
  */
@@ -70,14 +84,7 @@ export function createSanitizer(
   links: LinkRules = {}
 ): Sanitize {
   const purify = createDOMPurify(window);
-  purify.addHook('afterSanitizeAttributes', (node) => {
-    for (const name of ['href', 'src']) {
-      const url = node.getAttribute(name);
-      if (url !== null && checkUrl(url, links) === undefined) node.removeAttribute(name);
-    }
-    if (node.hasAttribute('style')) tidyStyle(node);
-    if (node.hasAttribute('target')) node.setAttribute('rel', 'noopener noreferrer');
-  });
+  purify.addHook('afterSanitizeAttributes', (node) => tidyAttributes(node, links));
   return (html) =>
     purify.sanitize(html, {
       ALLOWED_TAGS: [...ALLOWED_TAGS],
