@@ -10,7 +10,7 @@
  * - a lane with no slot is stroked `clusterBorder` (v12's `:not([data-color-id])` override);
  * - the author's `style` still wins over the palette (v12: no lane palette rule is `!important`);
  * - no empty or undefined paint;
- * - `redux-dark-color` has no background palette, so lanes keep `clusterBkg` there;
+ * - `redux-dark-color` has no background palette, so both halves take `clusterBkg` there (D768);
  * - the plain themes write no palette slot at all.
  */
 import { describe, expect, it } from 'vitest';
@@ -100,7 +100,7 @@ describe.each(COLOUR_THEMES)('%s lane palette', (theme) => {
         expect(lane.body.fill).toBe(bkg[order % bkg.length]);
       } else {
         expect(lane.title.fill).toBe(clusterBkg);
-        expect(lane.body.fill).toBe('none');
+        expect(lane.body.fill).toBe(clusterBkg);
       }
     }
   });
@@ -142,7 +142,8 @@ describe.each(PLAIN_THEMES)('%s lanes', (theme) => {
     for (const id of ['__swimlane_default__', 'L0', 'L1', 'L2']) {
       const lane = laneOf(tree, id);
       expect(lane.title, id).toEqual({ stroke: clusterBorder, fill: clusterBkg });
-      expect(lane.body, id).toEqual({ stroke: clusterBorder, fill: 'none' });
+      // The body is filled as the band is (#1217, #1245, #1316, D768), the default lane too.
+      expect(lane.body, id).toEqual({ stroke: clusterBorder, fill: clusterBkg });
     }
   });
 });

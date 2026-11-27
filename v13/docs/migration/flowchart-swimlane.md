@@ -30,8 +30,9 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   when the curve was unset or `basis`; in v13 an author's `flowchart.curve` (`basis` included)
   or `linkStyle default interpolate` wins.
 - **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
-  (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
-  then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned
+  and `rect.swimlane-title`, both filled `clusterBkg` and stroked `clusterBorder`, then the
+  label. v12 wrote `fill="none"` on the body but its `.cluster rect` CSS filled it; v13 fills
+  it in every look, the default lane too, and the hand-drawn look hachures it (D768). The title band is on top for `TB` and `BT`, and on the left, its label turned
   to read upward, for `LR` and `RL`. **Fixed:** v12 turned only `LR`, so `RL` lanes got a top
   band over a left-reserved layout; in v13 `RL` matches `LR` (D536). The default lane (nodes
   outside every subgraph) has no label, `data-id="__swimlane_default__"` and the palette slot
