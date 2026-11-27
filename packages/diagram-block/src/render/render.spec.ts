@@ -122,7 +122,7 @@ describe('block SVG structure (v12 class names)', () => {
     expect(svg.match(/<circle class="marker"/g)).toHaveLength(1);
     // The label: g.edgeLabel with data-id only, on edgeLabelBackground, after the edges.
     expect(svg).toMatch(
-      /<g class="edgeLabel" data-id="1-b-c"><rect [^>]*fill="var\(--_el\)"[^>]*\/><text [^>]*>lbl<\/text><\/g>/
+      /<g class="edgeLabel" data-id="1-b-c"><rect [^>]*fill="var\(--_beb\)"[^>]*\/><text [^>]*>lbl<\/text><\/g>/
     );
     expect(svg.match(/data-ast=/g)).toHaveLength(4 + 5);
   });

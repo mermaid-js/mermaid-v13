@@ -132,7 +132,6 @@ export const D332_INPUTS: readonly string[] = [
   'canvasItemBkg',
   'canvasItemBkg3',
   'canvasNodeBkg',
-  'bandBkg',
   'guideLineColor',
 ];
 

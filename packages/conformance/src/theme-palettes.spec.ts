@@ -161,3 +161,49 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
     expect(await v13Palettes(theme, vars)).toEqual(expected(theme, v12Palettes(theme, vars)));
   });
 });
+
+/**
+ * Series slots v13 sets apart from v12's `pie<i+1>`, by theme: D228 (v12 `dark` leaves `pie12`
+ * unset; v13 gives it `cScale0`) and D333(a) (v12's rounding artefacts, which v13 derives from
+ * the hex base colour). `packages/conformance/src/pie/theme.spec.ts` checks both values.
+ */
+const SERIES_DIFFERENCES: Readonly<Partial<Record<ThemeName, readonly number[]>>> = {
+  dark: [11],
+  default: [2, 5],
+  forest: [5],
+  'redux-dark': [4],
+  'neo-dark': [4],
+};
+
+/** Series slots 0–11, each as hex, with the slots `SERIES_DIFFERENCES` lists left out. */
+function seriesSlots(theme: ThemeName, read: (i: number) => unknown): (string | undefined)[] {
+  const skip = SERIES_DIFFERENCES[theme] ?? [];
+  return Array.from({ length: 12 }, (_, i) => (skip.includes(i) ? undefined : hex(read(i))));
+}
+
+async function v13Series(theme: ThemeName, themeVariables?: object) {
+  const t = createTheme(await loadTheme(theme), {
+    cssVariables: false,
+    themeVariables: themeVariables as Record<string, unknown>,
+  });
+  const series = t.palette('seriesColorArray');
+  return seriesSlots(theme, (i) => series[i]);
+}
+
+function v12Series(theme: ThemeName, themeVariables?: object) {
+  const vars = v12Vars(theme, themeVariables);
+  return seriesSlots(theme, (i) => vars[`pie${i + 1}`]);
+}
+
+// D334: palettes over `cScale` follow an author's `cScale` overrides, as in v12; the series
+// palette is v12's `pie1`–`pie12` (#1202).
+describe("series slots 0–11 against v12 12.2.0's pie1–pie12 (#1202, D334)", () => {
+  it.each(THEME_NAMES)('%s: the theme values', async (theme) => {
+    expect(await v13Series(theme)).toEqual(v12Series(theme));
+  });
+
+  it.each(THEME_NAMES)('%s: under a cScale1 override', async (theme) => {
+    const vars = { cScale1: '#ff0000' };
+    expect(await v13Series(theme, vars)).toEqual(v12Series(theme, vars));
+  });
+});

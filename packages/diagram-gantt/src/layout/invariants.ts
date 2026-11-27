@@ -1,8 +1,8 @@
 /**
  * Layout invariants (spec #293 T3, DDLT-style): no NaN or Infinity anywhere (R-LAYOUT-3), bars
  * inside the plot and the rows, no two bars of one row overlapping in time in compact mode,
- * ticks ascending, and the bounds covering every bar and band (D224). Returns the violations,
- * an empty list when the layout holds.
+ * ticks ascending, an inside label no wider than its drawn bar (D729), and the bounds covering
+ * every bar and band (D224). Returns the violations, an empty list when the layout holds.
  */
 import {
   EPS,
@@ -21,6 +21,17 @@ function inPlot(l: GanttLayout, bar: GanttBar): boolean {
   if (bar.kind === 'vert') return at(bar.x);
   if (bar.kind === 'milestone') return at(bar.x + bar.width / 2);
   return at(bar.x) && at(bar.x + bar.width);
+}
+
+/** A label drawn inside its bar is no wider than the bar as drawn (#1249, D729). */
+function labelViolations(l: GanttLayout, out: string[]): void {
+  for (const bar of l.bars)
+    if (
+      bar.kind !== 'vert' &&
+      bar.label.side === 'inside' &&
+      bar.label.text.width > bar.width + EPS
+    )
+      out.push(`${what(bar)} has an inside label wider than its bar`);
 }
 
 function barViolations(l: GanttLayout, out: string[]): void {
@@ -69,6 +80,7 @@ export function ganttLayoutViolations(l: GanttLayout): string[] {
   nonFinite(l, 'layout', out);
   if (out.length > 0) return out;
   barViolations(l, out);
+  labelViolations(l, out);
   if (l.compact) overlapViolations(l, out);
   tickViolations(l.bottomAxis, out);
   tickViolations(l.topAxis, out);

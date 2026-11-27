@@ -386,6 +386,7 @@ e2e/diagrams/flowchart/nightly-check/shape-themes/37-connect-all-shapes-with-eac
 e2e/diagrams/flowchart/nightly-check/shape-themes/38-connect-all-shapes-with-each-other.mmd 6 3487525dcd78cd93
 e2e/diagrams/flowchart/nightly-check/shape-themes/39-connect-all-shapes-with-each-other.mmd 6 a531b1e9377163b8
 e2e/diagrams/flowchart/nightly-check/shape-themes/40-connect-all-shapes-with-each-other.mmd 6 0db334bae05462f4
+e2e/diagrams/flowchart/nightly-check/style-comma-values.mmd 1 d583f59853db024e
 e2e/diagrams/flowchart/nightly-check/title-position-unknown.mmd 2 5c335cadc70f0087
 e2e/diagrams/flowchart/nightly-check/v2/01-7-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd 1 5fc842836e6a9605
 e2e/diagrams/flowchart/nightly-check/v2/02-8-should-render-a-flowchart-when-usemaxwidth-is-false.mmd 1 3fb8a7fb81e5c569

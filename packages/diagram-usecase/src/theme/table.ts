@@ -31,6 +31,12 @@ export const theme: DiagramThemeTable = {
       usecaseBoundaryBorder: 'clusterBorder',
       usecaseIncludeLine: 'slot(borderColorArray, 10, lineColor)',
       usecaseExtendLine: 'slot(borderColorArray, 2, lineColor)',
+      // A relationship label's tag (#1350, D713, D715): filled with the shared edgeLabelBackground
+      // unless use case sets its own, inked with textColor where it reads there, else black or
+      // white.
+      usecaseEdgeLabelBackground: 'edgeLabelBackground',
+      usecaseEdgeLabelColor:
+        'contrast(usecaseEdgeLabelBackground, textColor, contrast(usecaseEdgeLabelBackground, #000000, #ffffff))',
     },
   },
 };

@@ -10,7 +10,9 @@ const C4: readonly string[] = ['c4'];
  * (spec #730 T2). The rules are on the table (`table.ts`). `pnpm gen:theme` writes
  * `generated/variables.ts` from them.
  *
- * - `c4RelationColor`: relation lines, their arrowheads and their text (v12 `#444444`);
+ * - `c4RelationColor`: relation lines (v12 `#444444`; the page's `textColor` since D714);
+ * - `c4EdgeLabelBackground` and `c4EdgeLabelColor`: the fill and ink of a relation label's tag
+ *   (D713, D715);
  * - `c4BoundaryColor`: boundary frames and their header text (v12 `#444444`);
  * - `c4TitleColor`: the diagram's title (v12: the page's `textColor`, which its `<text>` took);
  * - `c4<Kind>Color` and `c4<Kind>Border`, for a c4-beta person, softwareSystem, container,
@@ -20,6 +22,8 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   c4RelationColor: { alias: 'c4r', kind: 'color', usedBy: C4 },
   c4BoundaryColor: { alias: 'c4b', kind: 'color', usedBy: C4 },
   c4TitleColor: { alias: 'c4t', kind: 'color', usedBy: C4 },
+  c4EdgeLabelBackground: { alias: 'c4elb', kind: 'color', usedBy: C4 },
+  c4EdgeLabelColor: { alias: 'c4elc', kind: 'color', usedBy: C4 },
   c4PersonColor: { alias: 'c4pec', kind: 'color', usedBy: C4 },
   c4PersonBorder: { alias: 'c4peb', kind: 'color', usedBy: C4 },
   c4SoftwareSystemColor: { alias: 'c4ssc', kind: 'color', usedBy: C4 },

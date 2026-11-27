@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { checkColor, streamWriter, type LabelBox, type OutlineRole } from '@mermaid-js/core/svg';
+import { DEFAULT_FONT_FAMILY, tableMeasurer } from '@mermaid-js/core/text';
 import { edgeLabel } from './graph.ts';
 
 // A one-line label 40 px wide and 18 px high, and the px profile's room around it (D629).
@@ -92,5 +93,53 @@ describe('edgeLabel draws an edge label as a tag (D626–D630)', () => {
     const roles: OutlineRole[] = [];
     draw(ONE, {}, (role) => roles.push(role));
     expect(roles).toEqual(['label']);
+  });
+});
+
+describe('edgeLabel centres the text ink in the tag (#1319)', () => {
+  // The default font through the table measurer: trebuchet ms at 14 px.
+  const metrics = tableMeasurer.metrics({ family: DEFAULT_FONT_FAMILY, size: 14, weight: 400 });
+  const labelOf = (texts: string[]): LabelBox & { width: number } => ({
+    lines: texts.map((text) => [{ text }]),
+    lineHeight: metrics.lineHeight,
+    height: texts.length * metrics.lineHeight,
+    baseline: metrics.ascent,
+    width: 60,
+  });
+  const ys = (svg: string): number[] =>
+    [...svg.matchAll(/<(?:text|tspan)\b[^>]*\sy="([^"]*)"/g)].map((m) => Number(m[1]));
+  // The ink centre sits a tenth of the ascent below the line boxes' centre (graph.ts INK_DROP),
+  // so the line boxes go up by that much from the box centre (y 50).
+  const lift = metrics.ascent / 10;
+  /** The first baseline of a label whose line boxes are centred `lift` above y 50. */
+  const firstBaseline = (lines: number): number =>
+    50 - lift - (lines * metrics.lineHeight) / 2 + metrics.ascent;
+
+  it('lifts one line so its ink centre is on the box centre, the box unchanged', () => {
+    const label = labelOf(['implements']);
+    const svg = draw(label);
+    const [box] = rects(svg);
+    expect(Number(attr(box!, 'height'))).toBeCloseTo(label.height + PATCH.y, 1);
+    expect(Number(attr(box!, 'y'))).toBeCloseTo(50 - (label.height + PATCH.y) / 2, 1);
+    expect(lift).toBeGreaterThan(1);
+    expect(ys(svg)[0]).toBeCloseTo(firstBaseline(1), 1);
+  });
+
+  it('lifts a label of three lines as one block', () => {
+    const svg = draw(labelOf(['first', 'second', 'third']));
+    const lines = ys(svg);
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toBeCloseTo(firstBaseline(3), 1);
+    expect(lines[1]! - lines[0]!).toBeCloseTo(metrics.lineHeight, 1);
+    expect(lines[2]! - lines[1]!).toBeCloseTo(metrics.lineHeight, 1);
+  });
+
+  it('keeps a label with an inline box centred', () => {
+    const box = { kind: 'box', text: '', width: 16, height: 12, baseline: 12, node: { tag: 'g' } };
+    const icon: LabelBox & { width: number } = {
+      ...labelOf(['x']),
+      lines: [[box as LabelBox['lines'][number][number], { text: 'icon' }]],
+    };
+    expect(ys(draw(icon))[0]).toBeCloseTo(50 - metrics.lineHeight / 2 + metrics.ascent, 1);
   });
 });

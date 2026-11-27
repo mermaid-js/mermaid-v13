@@ -5,6 +5,7 @@
 import {
   checkColor,
   checkStyle,
+  joinStyle,
   px,
   styleScope,
   styleText,
@@ -167,7 +168,8 @@ export function paletteSlots(
 
 /**
  * The checked style of a thing from its classes' declarations, then its own; one check per
- * distinct list. `base` names classes every thing takes first.
+ * distinct list. `base` names classes every thing takes first. Each list's comma pieces are
+ * joined on their own (D706), so a piece never joins onto another class's declaration.
  */
 export function styleCache(
   classDefs: ReadonlyMap<string, readonly string[]>,
@@ -176,16 +178,16 @@ export function styleCache(
 ): (classes: readonly string[], own?: readonly string[]) => CheckedStyle {
   const styles = new Map<string, CheckedStyle>();
   const add = (decls: string[], name: string): void => {
-    for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
+    for (const s of joinStyle(classDefs.get(name) ?? [])) decls.push(s.trim());
   };
   return (classes, own = []) => {
     const decls: string[] = [];
     for (const name of base) add(decls, name);
     for (const name of classes) add(decls, name);
-    for (const s of own) decls.push(s.trim());
+    for (const s of joinStyle(own)) decls.push(s.trim());
     const key = decls.join(';');
     let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, warn)));
+    if (!style) styles.set(key, (style = checkStyle(decls, warn, true)));
     return style;
   };
 }

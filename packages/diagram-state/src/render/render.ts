@@ -174,7 +174,7 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
       }
     : undefined;
   const labelPaint = s.edges.some((e) => e.label.width > 0)
-    ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
+    ? { fill: theme.color('stateEdgeLabelBackground'), text: theme.color('stateEdgeLabelColor') }
     : undefined;
   // Read here, not in core, so the theme inventory lists the diagrams that use them.
   const folded = s.nodes.some((v) => v.block === 'folded')

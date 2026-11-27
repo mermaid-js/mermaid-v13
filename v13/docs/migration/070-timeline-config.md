@@ -15,8 +15,11 @@
   `diagramMarginX`, `diagramMarginY`, `width`, `height`, `boxMargin`, `boxTextMargin`,
   `noteMargin`, `messageMargin`, `messageAlign`, `bottomMarginAdj`, `rightAngles`,
   `taskFontSize`, `taskFontFamily`, `taskMargin`, `activationWidth`, `textPlacement`,
-  `actorColours`, `sectionFills`, `sectionColours` and `useWidth`. Box colours come from the
-  `cScale`, `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+  `actorColours`, `sectionColours` and `useWidth`. Box colours come from the `cScale`,
+  `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+- **Removed**, with a `CONFIG_REMOVED_KEY` warning: `sectionFills` (D708). v12's timeline never
+  read it either. Box fills come from the `cScale<n>` theme variables in the classic themes,
+  otherwise from `mainBkg` or the `borderColorArray` palette (D227, D257).
 - **`cScale<n>`, `cScaleLabel<n>` and `cScaleInv<n>` overrides** recolour a timeline only in the
   classic themes (`default`, `base`, `dark`, `forest`, `neutral`). They change nothing in the
   redux themes, the default `redux-color` included, or under `theme: 'auto'` (which is

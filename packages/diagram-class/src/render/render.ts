@@ -8,6 +8,7 @@ import {
   checkLinkTarget,
   checkStyle,
   checkUrl,
+  joinStyle,
   translate,
   type Attrs,
   type CheckedStyle,
@@ -77,7 +78,8 @@ interface Paints {
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /** Relationship labels and multiplicities, and the interface names. */
   readonly text?: Color;
-  readonly edgeLabel?: Color;
+  /** A relationship label's tag: its fill and the ink that reads on it (#1327). */
+  readonly edgeLabel?: { fill: Color; text: Color };
   /** Multiplicities' font size (`classTerminalFontSize`, v12 11px). */
   readonly terminalSize?: Length;
   readonly slotOf: (order: number) => PaletteTint | undefined;
@@ -91,7 +93,8 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     // v12 neo strokes class boxes and their dividers with the gradient; notes keep
     // noteBorderColor (v12 `note.ts` writes it as an inline `!important` style).
     stroke: theme.outline('nodeBorder'),
-    // v12 `classText`: every class-diagram text but notes and namespace titles.
+    // v12 `classText`: every class-diagram text but notes, namespace titles and relation
+    // labels, whose tag takes `classEdgeLabelColor` (D713, D715).
     text: theme.color('classText'),
   };
   const shadow = theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow');
@@ -120,8 +123,11 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
   const terminalSize = p.edges.some((e) => e.startLabel ?? e.endLabel)
     ? theme.length('classTerminalFontSize')
     : undefined;
-  // The theme background, as every edge label's fill (D628).
-  const labelFill = labelled ? theme.color('background') : undefined;
+  // The tag: class's own fill, the shared edgeLabelBackground unless set (D628, D715), and the
+  // ink chosen against it (D713, #1327).
+  const labelTag = labelled
+    ? { fill: theme.color('classEdgeLabelBackground'), text: theme.color('classEdgeLabelColor') }
+    : undefined;
   return {
     font: theme.font(),
     fontSize: theme.length('fontSize'),
@@ -134,7 +140,7 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     note,
     cluster,
     text,
-    edgeLabel: labelFill,
+    edgeLabel: labelTag,
     terminalSize,
     slotOf: paletteSlots(theme),
   };
@@ -210,30 +216,31 @@ function openRoot(
  * The checked style of a class, in v12's order: the `classDef`s of its CSS classes (v12's
  * generated `.name > *` rules), then its inline `style` (the model's `styles`, which already
  * holds the `classDef`s v12's `defineClass` copied in). A declaration is checked once: one
- * already inline is not repeated from the class rules, and the inline one wins as in v12.
+ * already inline is not repeated from the class rules, and the inline one wins as in v12. Each
+ * list's comma pieces are joined first (D706), so a repeat is a whole declaration.
  */
 function styleCache(model: ClassModel, ctx: ClassRenderContext): (node: ClassNode) => CheckedStyle {
   const defs = new Map<string, readonly string[]>();
-  for (const sc of model.styleClasses) defs.set(sc.id, sc.styles);
+  for (const sc of model.styleClasses)
+    defs.set(sc.id, joinStyle(sc.styles.flatMap((s) => s.split(','))));
   const seen = new Map<string, CheckedStyle>();
   return (node) => {
-    const inline = new Set(node.styles.map((d) => d.trim()));
+    const own = joinStyle(node.styles);
+    const inline = new Set(own.map((d) => d.trim()));
     const decls: string[] = [];
     const taken = new Set<string>();
     for (const c of node.classes) {
-      for (const s of defs.get(c) ?? []) {
-        for (const d of s.split(',')) {
-          const k = d.trim();
-          if (inline.has(k) || taken.has(k)) continue;
-          taken.add(k);
-          decls.push(d);
-        }
+      for (const d of defs.get(c) ?? []) {
+        const k = d.trim();
+        if (inline.has(k) || taken.has(k)) continue;
+        taken.add(k);
+        decls.push(d);
       }
     }
-    decls.push(...node.styles);
+    decls.push(...own);
     const key = decls.join(';');
     let style = seen.get(key);
-    if (!style) seen.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
+    if (!style) seen.set(key, (style = checkStyle(decls, (w) => ctx.warn(w), true)));
     return style;
   };
 }
@@ -329,9 +336,9 @@ function drawEdgeLabels({ w, layout, ctx, paint }: Scene, e: ClassEdgeView, id: 
   // The middle label is a tag bordered in the line colour (D626, D627); the ends stay plain.
   if (e.label && at.label && paint.edgeLabel)
     edgeLabel(w, e.label, at.label, id, {
-      fill: paint.edgeLabel,
+      fill: paint.edgeLabel.fill,
       stroke: paint.line,
-      text: { fill: paint.text },
+      text: { fill: paint.edgeLabel.text },
       patch: (ctx.units ?? pxProfile).builder.labelPatch,
     });
   const ends: [MeasuredLabel | undefined, { x: number; y: number } | undefined][] = [

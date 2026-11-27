@@ -9,9 +9,16 @@
  * listed one that has gone.
  */
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { contrastRatio, parseColor, type Rgba } from '@mermaid-js/core/theme';
 import { requirement } from '@mermaid-js/diagram-requirement';
-import { describe } from 'vitest';
+import { createMermaid, type InitializeConfig } from 'mermaid';
+import { describe, expect, it } from 'vitest';
+import { REPO_ROOT } from '../corpus.ts';
+import { hex } from '../hex.ts';
 import { describeDiagramOverrides, keys, type ReferenceTable } from '../override-matrix.ts';
+import { parseSvg } from '../svg-tree.ts';
 
 /** v12 12.2.0's requirement colours: `capture-theme-overrides.ts requirement`. */
 const V12: ReferenceTable = {
@@ -170,6 +177,14 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         ['relationLabelBackground']
       ),
     ],
+  "D713: the relation label ink is chosen against the tag (#1322): where the theme's ink misses AA on the tag that D628 fills with the author's background, or on base's background under a light primaryTextColor, it turns black or white, whichever reads better":
+    [
+      ...(['default', 'forest', 'neutral', 'base'] as const).flatMap((theme) =>
+        keys(theme, ['background:dark'], ['relationLabelColor'])
+      ),
+      ...keys('dark', ['background:light'], ['relationLabelColor']),
+      ...keys('base', ['primaryTextColor:light'], ['relationLabelColor']),
+    ],
   "D571: v12's darkMode turns base's primaryTextColor, and the text inks that follow it, to #eee; v13's darkMode switches only the derivation rules":
     [...keys('base', ['darkMode'], ['requirementTextColor', 'relationLabelColor'])],
 };
@@ -212,5 +227,30 @@ describe('requirement colours under one override, against v12 12.2.0 (#1037, D65
     reference: V12,
     differences: DIFFERENCES,
     responseOnly: RESPONSE_ONLY,
+  });
+});
+
+describe('#1322: the relation label ink reads on the tag (D713)', () => {
+  // The issue's repro: the dark theme's light ink on an author's light background.
+  const source = readFileSync(
+    join(REPO_ROOT, 'e2e/diagrams/requirement/nightly-check/dark-theme-base-colour-overrides.mmd'),
+    'utf8'
+  );
+
+  it('draws every relation label at 4.5:1 or more on its tag', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true, output: { cssVariables: false } } as InitializeConfig);
+    const tree = parseSvg((await m.render('rq1322', source)).svg);
+    const tags = tree.find({ class: 'edgeLabel' });
+    expect(tags).toHaveLength(4);
+    for (const tag of tags) {
+      const [rect, text] = tree.children(tag);
+      const fill = hex(tree.getAttr(rect!, 'fill'), String);
+      const ink = hex(tree.getAttr(text!, 'fill'), String);
+      expect(fill).toBe('#fff2cc');
+      expect(
+        contrastRatio(parseColor(ink) as Rgba, parseColor(fill) as Rgba)
+      ).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

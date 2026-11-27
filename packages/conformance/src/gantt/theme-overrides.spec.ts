@@ -203,7 +203,7 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         ['activeTaskBorderColor']
       ),
     ],
-  "D657: the task bars, the active bar and the third section band read mainBkg, so an author's mainBkg moves them where v12's constructor values stay; under dark, the text on the active bar follows its fill (D574's contrast rule)":
+  "D657, D730: the task bars, the active bar and the third section band (through the first, D730) read mainBkg, so an author's mainBkg moves them where v12's constructor values stay; under dark, the text on the active bar follows its fill (D574's contrast rule)":
     [
       ...keys(
         'default',
@@ -223,6 +223,13 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         ['mainBkg:light', 'mainBkg:dark'],
         ['sectionBkgColor2', 'taskBkgColor', 'activeTaskBkgColor']
       ),
+    ],
+  "D726: the first section band is the theme's mainBkg darkened (lightened under dark) for contrast, so an author's mainBkg moves it where v12's literal stays, and base's tertiaryColor no longer does":
+    [
+      ...(['default', 'dark', 'forest', 'neutral', 'base'] as const).flatMap((theme) =>
+        keys(theme, ['mainBkg:light', 'mainBkg:dark'], ['sectionBkgColor'])
+      ),
+      ...keys('base', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
     ],
   "D667: v13 keeps its own response where following v12's would move a value with no override: neutral's done outline stays grey, dark's alternate band stays white, and dark's done bars follow mainBkg":
     [
@@ -311,7 +318,17 @@ const RESPONSE_ONLY: readonly string[] = [
       'taskTextDarkColor',
     ]
   ),
-  ...keys('base', ['none'], ['vertLineColor', 'taskBorderColor', 'activeTaskBorderColor']),
+  ...keys(
+    'base',
+    ['none'],
+    [
+      'sectionBkgColor',
+      'sectionBkgColor2',
+      'vertLineColor',
+      'taskBorderColor',
+      'activeTaskBorderColor',
+    ]
+  ),
 ];
 
 describe('gantt colours under one override, against v12 12.2.0 (#1037, D654)', () => {

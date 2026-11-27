@@ -185,6 +185,7 @@ interface Resolved {
 }
 
 const RE_SIZE = /^(\d{1,6}(?:\.\d{1,6})?)(?:px)?$/;
+const RE_PERCENT = /^(\d{1,3}(?:\.\d{1,6})?)%$/;
 /** A multiple of the diagram's padding: `padding` or `<n> * padding`. */
 const RE_PADDING = /^(?:(\d{1,6}(?:\.\d{1,6})?)\s*\*\s*)?padding$/;
 const WEIGHTS = new Set([
@@ -205,6 +206,16 @@ const WHITE: Rgba = [255, 255, 255, 1];
 const AA = 4.5;
 
 const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
+
+/**
+ * An opacity: a plain number from 0 to 1 (D221), `RE_SIZE` without its `px`, or a percentage from
+ * 0% to 100%, kept as N/100 to 6 decimals so that `number()` still reads 0 to 1 (D707).
+ */
+function checkOpacity(v: string): string | undefined {
+  const pct = RE_PERCENT.exec(v);
+  if (pct) return +pct[1]! <= 100 ? String(Math.round(+pct[1]! * 1e4) / 1e6) : undefined;
+  return RE_SIZE.test(v) && +v <= 1 ? v : undefined;
+}
 
 /** A value of every kind but `palette`, a list that `paletteSource` checks. */
 function checkValue(kind: Exclude<ThemeVarKind, 'palette'>, raw: unknown): string | undefined {
@@ -233,8 +244,7 @@ function checkValue(kind: Exclude<ThemeVarKind, 'palette'>, raw: unknown): strin
       return f === 'true' || f === 'false' ? f : undefined;
     }
     case 'opacity':
-      // A plain number from 0 to 1 (D221): `RE_SIZE` without its `px`.
-      return RE_SIZE.test(v) && +v <= 1 ? v : undefined;
+      return checkOpacity(v);
   }
 }
 

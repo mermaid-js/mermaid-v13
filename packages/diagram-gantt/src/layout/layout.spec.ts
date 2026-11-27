@@ -6,7 +6,7 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { GanttModel } from '../model.ts';
 import { parseGantt } from '../parser/index.ts';
 import { fixture, type LayoutFixture } from './fixtures.ts';
-import { layoutGantt, type GanttLayout } from './index.ts';
+import { layoutGantt, type GanttBar, type GanttLayout } from './index.ts';
 import { ganttLayoutViolations } from './invariants.ts';
 
 // Spec #293 T3: the layout seam, on hand-built models. Expected numbers are v12's formulas
@@ -401,8 +401,74 @@ describe('warnings and errors (D274, D276)', () => {
         .click('a', 'w')
     );
     expect(warnings.map((w) => w.code)).toEqual(['GANTT_UNKNOWN_TASK', 'GANTT_BAD_DURATION']);
-    expect(warnings[0]!.message).toContain('"x", "y", "z", "w"');
+    expect(warnings[0]!.message).toBe(
+      'No task has the id "x", "y" (named by "after"): the task starts at midnight today. ' +
+        'No task has the id "z" (named by "until"): the task ends at midnight today. ' +
+        'No task written before the click has the id "w": the click does nothing.'
+    );
     expect(warnings[1]!.message).toContain('"soon", "later"');
+  });
+
+  describe('GANTT_UNKNOWN_TASK names only what applies (D727)', () => {
+    const messageOf = (f: LayoutFixture | GanttModel): string => {
+      const { warnings } = lay(f);
+      expect(warnings.map((w) => w.code)).toEqual(['GANTT_UNKNOWN_TASK']);
+      return warnings[0]!.message;
+    };
+
+    it('says only what an unknown after does', () => {
+      expect(
+        messageOf(fixture().addTask('a', 'a,2014-01-01,1d').addTask('b', 'b,after zz,2d'))
+      ).toBe('No task has the id "zz" (named by "after"): the task starts at midnight today.');
+    });
+
+    it('says only what an unknown until does', () => {
+      expect(messageOf(fixture().addTask('a', 'a,2014-01-01,until zz'))).toBe(
+        'No task has the id "zz" (named by "until"): the task ends at midnight today.'
+      );
+    });
+
+    it('says only what an unknown click does', () => {
+      expect(messageOf(fixture().addTask('a', 'a,2014-01-01,1d').click('a', 'w'))).toBe(
+        'No task written before the click has the id "w": the click does nothing.'
+      );
+    });
+
+    it('gives the milestone hint only when a milestone named the id', () => {
+      const plain = messageOf(fixture().addTask('a', 'a,after zz,1d'));
+      const milestone = messageOf(fixture().addTask('m', 'milestone, m1, after zz, 0d'));
+      expect(plain).not.toContain('ilestone');
+      expect(milestone).toContain('"zz" (named by "after")');
+      expect(milestone).toContain('A milestone needs an id and a duration');
+    });
+
+    it('gives no milestone hint for the reserved id', () => {
+      const text = messageOf(fixture().addTask('m', 'milestone, m1, after __proto__, 0d'));
+      expect(text).toContain('"__proto__" is reserved');
+      expect(text).not.toContain('A milestone needs');
+    });
+
+    it('calls __proto__ reserved for after, until and click', () => {
+      const text = messageOf(
+        fixture()
+          .addTask('a', 'a,after __proto__,1d')
+          .addTask('b', 'b,2014-01-01,until __proto__')
+          .click('__proto__')
+      );
+      expect(text).toBe(
+        'The id "__proto__" is reserved and cannot be referenced: ' +
+          'an "after" naming it starts at midnight today, an "until" naming it ends at midnight today, ' +
+          'and a click naming it does nothing.'
+      );
+    });
+
+    it('keeps a reserved id out of the unknown-id clauses', () => {
+      const text = messageOf(fixture().addTask('a', 'a,after __proto__ x,1d'));
+      expect(text).toBe(
+        'No task has the id "x" (named by "after"): the task starts at midnight today. ' +
+          'The id "__proto__" is reserved and cannot be referenced: an "after" naming it starts at midnight today.'
+      );
+    });
   });
 
   it('rejects a schedule error as SEMANTIC at the task data', () => {
@@ -568,5 +634,60 @@ describe('final review fixes', () => {
       ['B', 's:B'],
       ['A', 's:A@2'],
     ]);
+  });
+});
+
+type RawGlob = (
+  pattern: string,
+  options: { query: '?raw'; import: 'default'; eager: true }
+) => Readonly<Record<string, string>>;
+const FIXTURES = (import.meta as ImportMeta & { glob: RawGlob }).glob(
+  '../../../../e2e/diagrams/gantt/**/*.mmd',
+  { query: '?raw', import: 'default', eager: true }
+);
+
+/** The model of the fixture at `path` under `e2e/diagrams/gantt/`, front matter dropped. */
+function fixtureModel(path: string): GanttModel {
+  const source = FIXTURES[`../../../../e2e/diagrams/gantt/${path}.mmd`];
+  if (source === undefined) throw new Error(`no fixture e2e/diagrams/gantt/${path}.mmd`);
+  return parseGantt(source.replace(/^---\n[\s\S]*?\n---\n/, '')).model;
+}
+
+describe('a label wider than its drawn bar (#1249, D729)', () => {
+  const path = 'nightly-check/handle-multiline-section-titles-with-different-line-breaks';
+
+  it('goes right of a bar that excludes shortened, though its unshortened span would hold it', () => {
+    // "Implement parser and jison": the label is 132.66 wide, the span 185 (`end`), the drawn
+    // bar 123 (`renderEnd`): v12 chose `inside` from the span and placed it from the bar.
+    const { layout } = lay(fixtureModel(path));
+    const bar = layout.bars.find((b) => b.id === 'task2')!;
+    expect(bar.width).toBeCloseTo(123, 0);
+    expect(bar.label.text.width).toBeGreaterThan(bar.width);
+    expect(bar.label.text.width).toBeLessThan(185);
+    expect([bar.label.side, bar.label.anchor]).toEqual(['right', 'start']);
+    expect(bar.label.x).toBeCloseTo(bar.x + bar.width + 5, 5);
+  });
+
+  it('leaves the labels that fit their bar centred inside it', () => {
+    const { layout } = lay(fixtureModel(path));
+    const inside = layout.bars.filter((b) => b.label.side === 'inside');
+    expect(inside.length).toBeGreaterThan(5);
+    for (const b of inside) {
+      expect(b.label.anchor).toBe('middle');
+      expect(b.label.x).toBeCloseTo(b.x + b.width / 2, 5);
+    }
+  });
+
+  it('is reported by the invariants when an inside label is wider than its bar', () => {
+    const { layout } = lay(two());
+    const [a, b] = layout.bars;
+    const wide: GanttBar = {
+      ...a!,
+      width: a!.label.text.width - 1,
+      label: { ...a!.label, side: 'inside' },
+    };
+    expect(ganttLayoutViolations({ ...layout, bars: [wide, b!] })).toContain(
+      'bar "a" has an inside label wider than its bar'
+    );
   });
 });

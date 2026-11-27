@@ -206,7 +206,10 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   const slotOf = (view: Pick<NodeView, 'order'>): PaletteTint | undefined =>
     view.order === undefined ? undefined : slot(view.order);
   const labelPaint = flow.edges.some((e) => e.label.width > 0)
-    ? { fill: theme.color('edgeLabelBackground'), text: { fill: theme.color('textColor') } }
+    ? {
+        fill: theme.color('flowchartEdgeLabelBackground'),
+        text: { fill: theme.color('flowchartEdgeLabelColor') },
+      }
     : undefined;
   const shape: Attrs = {
     fill: node.fill,

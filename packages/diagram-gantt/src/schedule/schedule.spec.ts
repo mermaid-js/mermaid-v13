@@ -87,10 +87,40 @@ describe('schedule follows v12 getTasks()', () => {
     expect(s.unknownIds).toEqual(['id9', 'id8']);
   });
 
+  it('records the statement and the task kind that named each unknown id', () => {
+    const s = run(
+      ymd()
+        .addTask('t1', 'id1,2013-01-01,2w')
+        .addTask('t2', 'id2,after id9 id8,1d')
+        .addTask('t3', 'id3,2013-01-01,until id9')
+        .addTask('t4', 'milestone, m1, after id9, 0d')
+        .addTask('t5', 'id5,after id9,1d')
+    );
+    expect(s.unknownRefs).toEqual([
+      { id: 'id9', kind: 'after', milestone: true },
+      { id: 'id8', kind: 'after', milestone: false },
+      { id: 'id9', kind: 'until', milestone: false },
+    ]);
+    expect(s.unknownIds).toEqual(['id9', 'id8']);
+  });
+
+  it('records a __proto__ reference with its statement', () => {
+    const s = run(ymd().addTask('a', 'a,2020-01-01,until __proto__'));
+    expect(s.unknownRefs).toEqual([{ id: '__proto__', kind: 'until', milestone: false }]);
+  });
+
   it('lists data that is neither a date nor a duration, and gives the task no duration', () => {
     const s = run(ymd().addTask('M1', 'milestone, 2023-01-01, m1'));
     expect(times(s.tasks[0]!)).toEqual([d(2023, 1, 1), d(2023, 1, 1)]);
     expect(s.badDurations).toEqual(['m1']);
+  });
+
+  it('lists the bad durations a milestone wrote apart from the others', () => {
+    const s = run(
+      ymd().addTask('M1', 'milestone, 2023-01-01, m1').addTask('t', 't1, 2023-01-01, soon')
+    );
+    expect(s.badDurations).toEqual(['m1', 'soon']);
+    expect(s.milestoneBadDurations).toEqual(['m1']);
   });
 
   it('pushes ends past excluded days, keeping where the bar ends', () => {

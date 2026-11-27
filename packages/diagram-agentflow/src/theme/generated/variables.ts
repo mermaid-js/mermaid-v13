@@ -17,4 +17,4 @@ function table(text: string): Record<string, DiagramThemeVar> {
 
 /** The diagram's theme variables, for `DiagramThemeTable.vars`: `THEME_VARIABLES` without `usedBy`. */
 export const THEME_VARIABLE_TABLE: Readonly<Record<string, DiagramThemeVar>> =
-  /* @__PURE__ */ table('flowContainerStroke afc color -');
+  /* @__PURE__ */ table('flowContainerStroke afc color - agentflowEdgeLabelBackground aeb color - agentflowEdgeLabelColor ael color -');

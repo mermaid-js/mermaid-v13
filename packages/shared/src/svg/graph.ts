@@ -25,11 +25,31 @@ function blank(label: LabelBox): boolean {
   return label.lines.every((line) => line.every((s) => s.kind !== 'box' && !s.text.trim()));
 }
 
+/** Whether a label holds an inline box (an icon or an image). */
+const hasBox = (label: LabelBox): boolean =>
+  label.lines.some((line) => line.some((s) => s.kind === 'box'));
+
+/**
+ * How far the text's ink centre sits below its line boxes' centre, as a share of the ascent.
+ * The ink of a label with capitals and descenders runs from the cap height above the baseline
+ * to the descender below it, and the ascent leaves more room above the caps than the descent
+ * leaves below the descenders. Measured in Chromium (#1319): 0.088 of the ascent for trebuchet
+ * ms, 0.103 for arial.
+ */
+const INK_DROP = 0.1;
+
+/**
+ * How far above the box's centre the label's line boxes go so that its ink is centred (#1319,
+ * D716): `INK_DROP` of the ascent, the same for every line, so a label of several lines moves
+ * as one block. A label with an inline box keeps its line boxes centred.
+ */
+const inkLift = (label: LabelBox): number => (hasBox(label) ? 0 : label.baseline * INK_DROP);
+
 /**
  * An edge label as a tag centred on `at` (D626): a `g.edgeLabel` (`data-id`) holding a box
  * with rounded corners, the label's size plus `paint.patch`, filled with `paint.fill` and
- * bordered 1 px solid in `paint.stroke`, then the text. The box is an outline of role `label`
- * (D630). A blank label draws nothing.
+ * bordered 1 px solid in `paint.stroke`, then the text with its ink centred in the box
+ * (`inkLift`). The box is an outline of role `label` (D630). A blank label draws nothing.
  */
 export function edgeLabel(
   w: SvgWriter,
@@ -53,7 +73,7 @@ export function edgeLabel(
     stroke,
     'stroke-width': 1,
   });
-  w.label(label, at.x, at.y, text);
+  w.label(label, at.x, at.y - inkLift(label), text);
   w.close();
 }
 
