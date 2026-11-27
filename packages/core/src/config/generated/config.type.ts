@@ -103,6 +103,24 @@ layout?: string
  */
 lineHops?: (false | true | "arc" | "gap")
 /**
+ * How edges are drawn between their route points, for every diagram type
+ * that draws edges and has a `curve` key of its own (D733). Unset by
+ * default: each type then draws its own default curve.
+ * 
+ * Precedence, per type: a per-edge curve where the type has one, then
+ * the type's own key (`flowchart.curve`, `swimlane.curve`,
+ * `class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,
+ * `usecase.curve`, `eventmodeling.curve`) when set, then this key when
+ * set, then the type's default (`rounded` for flowchart, swimlane, class,
+ * requirement and agentflow; S-curves for state and usecase; today's
+ * routes for eventmodeling). Other diagram types take no curve (D760).
+ * A swimlane diagram (`swimlane-beta`) reads `swimlane.curve`, then
+ * `flowchart.curve`, before this key; a flowchart with `layout:
+ * swimlane` reads only `flowchart.curve` (D761).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * The maximum allowed size of the users text diagram
  */
 maxTextSize?: number
@@ -341,7 +359,13 @@ nodeSpacing?: number
  */
 rankSpacing?: number
 /**
- * Defines how mermaid renders curves for flowcharts.
+ * How flowchart edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`: right angles whose corners are small arcs.
+ * Precedence: a per-edge curve (`curve:` on an edge, `linkStyle …
+ * interpolate`), then this key when set, then the top-level `curve`
+ * when set, then `rounded`. A swimlane diagram reads `swimlane.curve`
+ * first. The top-level `curve` and every `<type>.curve` take these names.
  * 
  */
 curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
@@ -461,6 +485,19 @@ layout?: string
  */
 lineHops?: (boolean | ("arc" | "gap"))
 /**
+ * How swimlane edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`, as flowchart's. Precedence in a
+ * `swimlane-beta` diagram: a per-edge curve (`curve:` on an edge,
+ * `linkStyle … interpolate`), then this key when set in any config
+ * source (front matter, a directive or `initialize()`), then
+ * `flowchart.curve` when set, then the top-level `curve` when set,
+ * then `rounded` (D761). It is the diagram's key, not the layout's: a
+ * flowchart drawn with `layout: swimlane` ignores it.
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * Ignores edges that cross swimlane boundaries during swimlane layer
  * assignment. This can improve rank quality for diagrams with many
  * cross-lane links.
@@ -522,6 +559,16 @@ layout?: string
  * 
  */
 useMaxWidth?: boolean
+/**
+ * How agentflow edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+ * a per-edge `linkStyle <n> interpolate`, then `linkStyle default interpolate`, then
+ * `agentflow.curve` when set, then the top-level `curve` when set, then `rounded`.
+ * `flowchart.curve` does not apply to agentflow diagrams (v12 drew them with it).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
 useWidth?: number
 /**
  * Margin top for the text over the diagram
@@ -1060,6 +1107,15 @@ useWidth?: number
  */
 useMaxWidth?: boolean
 /**
+ * How class edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+ * `class.curve` when set, then the top-level `curve` when set, then `rounded`.
+ * `flowchart.curve` does not apply to class diagrams (v12 drew them with it).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * Margin top for the text over the diagram
  */
 titleTopMargin?: number
@@ -1146,6 +1202,17 @@ wrappingWidth?: number
  * 
  */
 minNodeWidth?: number
+/**
+ * How transitions and note connectors are drawn between their route
+ * points (D733).
+ * 
+ * Defaults to `curved`, today's state look. Precedence: this key when
+ * set, then the top-level `curve` when set, then `curved`. State does
+ * not read `flowchart.curve`. A self-transition stays `rounded`, and
+ * text output stays stepped on the grid (D78).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
 /**
  * Margin top for the text over the diagram
  */
@@ -1553,6 +1620,15 @@ rect_border_size?: string
 rect_border_color?: string
 rect_min_width?: number
 rect_min_height?: number
+/**
+ * How requirement edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+ * `requirement.curve` when set, then the top-level `curve` when set, then `rounded`.
+ * `flowchart.curve` does not apply to requirement diagrams (v12 drew them with it).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
 fontSize?: number
 rect_padding?: number
 line_height?: number
@@ -1668,7 +1744,8 @@ colorBy?: ("branch" | "depth")
  */
 padding?: number
 /**
- * The width in px at which node labels wrap.
+ * The width in px at which node labels wrap, in every node shape. Values below 120 or
+ * above 1200 are clamped to that range.
  * 
  */
 maxNodeWidth?: number
@@ -2468,6 +2545,19 @@ useMaxWidth?: boolean
  */
 padding?: number
 /**
+ * How the relations between frames are drawn between their route
+ * points (D733, D760).
+ * 
+ * Unset keeps today's look: straight lines between lanes and along a
+ * lane, and right-angled routes under a row, each ending in an
+ * arrowhead. Precedence: this key when set, then the top-level `curve`
+ * when set, then today's look. With a curve set, the relations are
+ * drawn with that curve and each arrowhead follows the end of its
+ * line. A relation from a frame to itself stays as it is.
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * The height of each row in the Event Modeling diagram.
  */
 rowHeight?: number
@@ -2646,6 +2736,17 @@ wrappingWidth?: number
  * 
  */
 minNodeWidth?: number
+/**
+ * How usecase relationship and note lines are drawn between their route
+ * points (D733).
+ * 
+ * Defaults to S-curves, as `basis` draws them: the curve usecase drew
+ * before this key. Precedence: this key when set, then the top-level
+ * `curve` when set, then S-curves. A line from a node back to itself
+ * stays rounded.
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
 /**
  * Font size for actor labels
  */
