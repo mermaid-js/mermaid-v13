@@ -89,6 +89,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './config/authored',
         './config/readers',
         './layout',
+        './layout/segment-clip',
         './parser/common-values',
         './parser/display-text',
         './parser/drop',
