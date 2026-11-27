@@ -10,12 +10,12 @@
 import type { RenderContext } from '@mermaid-js/core';
 import {
   checkColor,
-  checkCssColor,
   type Attrs,
   type OutlinePaint,
   type Paint,
   type SafeValue,
 } from '@mermaid-js/core/svg';
+import { authoredColours } from '@mermaid-js/shared/config/authored';
 import { TIMELINE_PALETTE_IGNORED } from '../codes.ts';
 import { boxStrokes, scaleColors } from '../layout/env.ts';
 
@@ -113,23 +113,16 @@ function unreadPalettes(theme: Theme): readonly PaletteName[] {
 /**
  * One `TIMELINE_PALETTE_IGNORED` warning per render naming the author's `cScale<n>`,
  * `cScaleInv<n>` and `cScaleLabel<n>` that the paint does not read (D766). `Theme` resolves an
- * author's value but does not say whose a value is, so this reads the config the theme was
- * built from, as venn does. A slot past the palette or a value the theme dropped is not counted.
+ * author's value but does not say whose a value is, so this reads the author's colours
+ * (`authoredColours`, as venn does). A slot past the palette or a value the theme dropped is
+ * not counted.
  */
 export function warnUnreadPalettes(ctx: Pick<RenderContext, 'theme' | 'config' | 'warn'>): void {
   const unread = unreadPalettes(ctx.theme);
   if (unread.length === 0) return;
-  const authored = (ctx.config.themeVariables ?? {}) as Readonly<Record<string, unknown>>;
-  const keys = Object.keys(authored).filter((key) => {
+  const keys = [...authoredColours(ctx.config)].filter((key) => {
     const m = RE_SCALE_SLOT.exec(key);
-    const v = authored[key];
-    return (
-      m !== null &&
-      unread.includes(m[1] as PaletteName) &&
-      Number(m[2]) < PALETTE_SLOTS &&
-      typeof v === 'string' &&
-      checkCssColor(v) !== undefined
-    );
+    return m !== null && unread.includes(m[1] as PaletteName) && Number(m[2]) < PALETTE_SLOTS;
   });
   if (keys.length === 0) return;
   const them = keys.length === 1 ? 'it' : 'them';
