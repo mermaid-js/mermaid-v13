@@ -1,15 +1,15 @@
 ---
 description: >-
-  Label syntax (#1368): items and transition labels written as plain markdown, a quoted
-  markdown string (with double and with single quotes), a code span, tags and a written \n;
-  only the markdown strings are bold and italic. The title is a quoted markdown string. Items
-  and transition labels are always quoted, so they have no bare form.
+  Label syntax (#1368): the title, items and transition labels written as plain markdown, a
+  quoted markdown string (one item also with single quotes), a code span, tags and a written
+  \n. Only the markdown strings are bold and italic; the plain markdown and the code span are
+  drawn as written.
 config:
   cynefin:
     seed: 7
 ---
 cynefin-beta
-  title "`title **bold** _ital_`"
+  title title **bold** _ital_
   complex
     "item **bold** _ital_"
     "`item **bold** _ital_`"

@@ -1,14 +1,17 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd (#1368): the same source with legacyMarkdown
-  on. No cynefin label kind read markdown in v12, so the picture equals the default one.
+  label-syntax.mmd with markdownAlwaysOn (#1368): every label is markdown, so the plain
+  **bold** _ital_ title, items and transition labels draw bold and italic and the code spans
+  draw as inline code; markdown strings, tags and the written \n draw as in the default mode.
+  Domain names and descriptions are fixed text and stay plain. The picture differs from
+  label-syntax.mmd.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
   cynefin:
     seed: 7
 ---
 cynefin-beta
-  title "`title **bold** _ital_`"
+  title title **bold** _ital_
   complex
     "item **bold** _ital_"
     "`item **bold** _ital_`"

@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { Style, type Measurer, type MeasuredLabel } from '@mermaid-js/core/text';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
 import { cynefin as plugin } from '../plugin.ts';
@@ -454,22 +455,23 @@ describe('cynefin layout: the seed (D362)', () => {
   });
 });
 
-describe('cynefin layout: labels through the core label handler (#1368)', () => {
+describe('cynefin layout: labels through the core label handler (#1368, #1394)', () => {
   /** Each line's text, and whether a run of it is bold, for the title, item 0 and transition 0. */
   const read = (l: MeasuredLabel) =>
     l.lines.map((line) => ({
       text: line.map((r) => r.text).join(''),
       bold: line.some((r) => (r.style & Style.Bold) !== 0),
     }));
-  const kinds = (src: string, legacyMarkdown = false) => {
-    const { model: m } = parseCynefin(src);
-    const l = layoutCynefin(m, {
-      config: { cynefin: {}, legacyMarkdown } as unknown as ResolvedConfig,
+  const layout = (src: string, markdownAlwaysOn = false, warnings: Warning[] = []) =>
+    layoutCynefin(parseCynefin(src).model, {
+      config: { cynefin: {}, markdownAlwaysOn } as unknown as ResolvedConfig,
       measurer: tenPx,
       theme: createTheme(spec, { diagram: plugin.theme }),
       idPrefix: 'mermaid-1',
-      warn: () => undefined,
+      warn: (w) => warnings.push(w),
     });
+  const kinds = (src: string, markdownAlwaysOn = false) => {
+    const l = layout(src, markdownAlwaysOn);
     return {
       title: read(l.title!.text),
       item: read(l.items[0]!.label.text),
@@ -478,13 +480,12 @@ describe('cynefin layout: labels through the core label handler (#1368)', () => 
   };
   const chart = (title: string, label: string) =>
     `cynefin-beta\ntitle ${title}\ncomplex\n  ${label}\ncomplex --> clear : ${label}`;
-  const each = (title: string, label: string) => {
-    for (const legacyMarkdown of [false, true]) {
-      const got = kinds(chart(title, label), legacyMarkdown);
-      expect(got.item).toEqual(got.transition);
-      expect(kinds(chart(title, label), !legacyMarkdown)).toEqual(got);
-    }
-    return kinds(chart(title, label));
+  /** The default reading; with `same`, also checks that `markdownAlwaysOn` reads it alike. */
+  const each = (title: string, label: string, same = true) => {
+    const got = kinds(chart(title, label));
+    expect(got.item).toEqual(got.transition);
+    if (same) expect(kinds(chart(title, label), true)).toEqual(got);
+    return got;
   };
 
   it('reads a quoted markdown string as markdown in every label kind', () => {
@@ -493,12 +494,14 @@ describe('cynefin layout: labels through the core label handler (#1368)', () => 
     expect(got.item).toEqual([{ text: 'l', bold: true }]);
   });
 
-  it('draws bare backticks, plain markdown and a code span as written (D733)', () => {
-    expect(each('`**t**`', '"x"').title).toEqual([{ text: '`**t**`', bold: false }]);
-    expect(each('**t** _i_', '"**l** _i_"').item).toEqual([{ text: '**l** _i_', bold: false }]);
-    expect(each('a `c` b', '"a `c` b"').item).toEqual([{ text: 'a `c` b', bold: false }]);
+  it('draws bare backticks, plain markdown and a code span as written (#1368)', () => {
+    expect(each('`**t**`', '"x"', false).title).toEqual([{ text: '`**t**`', bold: false }]);
+    expect(each('**t** _i_', '"**l** _i_"', false).item).toEqual([
+      { text: '**l** _i_', bold: false },
+    ]);
+    expect(each('a `c` b', '"a `c` b"', false).item).toEqual([{ text: 'a `c` b', bold: false }]);
     // A backtick inside the outer pair: no markdown string.
-    expect(each('"`a `b` c`"', '"`a `b` c`"')).toEqual({
+    expect(each('"`a `b` c`"', '"`a `b` c`"', false)).toEqual({
       title: [{ text: '"`a `b` c`"', bold: false }],
       item: [{ text: '`a `b` c`', bold: false }],
       transition: [{ text: '`a `b` c`', bold: false }],
@@ -515,5 +518,38 @@ describe('cynefin layout: labels through the core label handler (#1368)', () => 
     const written = each('"`t\\nn`"', '"`l\\\\nn`"');
     expect(written.title.map((line) => line.text)).toEqual(['t', 'n']);
     expect(written.item.map((line) => line.text)).toEqual(['l', 'n']);
+  });
+
+  it('with markdownAlwaysOn, reads every label kind as markdown, and no fixed text', () => {
+    const runs = (l: MeasuredLabel) =>
+      l.lines.flat().map((r) => [r.text, r.style & (Style.Bold | Style.Italic | Style.Mono)]);
+    const l = layout(chart('**t** _i_ `c`', '"**l** _i_ `c`"'), true);
+    const expected = (k: string) => [
+      [k, Style.Bold],
+      [' ', 0],
+      ['i', Style.Italic],
+      [' ', 0],
+      ['c', Style.Mono],
+    ];
+    expect(runs(l.title!.text)).toEqual(expected('t'));
+    expect(runs(l.items[0]!.label.text)).toEqual(expected('l'));
+    expect(runs(l.transitions[0]!.label!.text)).toEqual(expected('l'));
+    // Domain names and descriptions are fixed text, not labels.
+    const plain = layout(chart('t', '"l"'));
+    expect(l.labels.map((t) => t.text)).toEqual(plain.labels.map((t) => t.text));
+    expect(l.subtitles.map((t) => t.text)).toEqual(plain.subtitles.map((t) => t.text));
+  });
+
+  it('warns about markdown drawn as written, never in a markdown string', () => {
+    const codes = (src: string, markdownAlwaysOn = false) => {
+      const warnings: Warning[] = [];
+      layout(src, markdownAlwaysOn, warnings);
+      return warnings.map((w) => w.code);
+    };
+    // Without the API's `inline` (which gives it once per render), each such label warns:
+    // the title, the item and the transition label.
+    expect(codes(chart('**t**', '"**l**"'))).toEqual(Array(3).fill(MARKDOWN_NOT_READ.code));
+    expect(codes(chart('**t**', '"**l**"'), true)).toEqual([]);
+    expect(codes(chart('"`**t**`"', '"`**l**`"'))).toEqual([]);
   });
 });

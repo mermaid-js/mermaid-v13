@@ -1,12 +1,14 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd (#1368): the same source with legacyMarkdown
-  on. No radar label kind read markdown in v12, so the picture equals the default one.
+  label-syntax.mmd with markdownAlwaysOn (#1368): every label is markdown, so the plain
+  **bold** _ital_ title, axis and legend labels draw bold and italic and the code span draws as
+  inline code; markdown strings, tags and the written \n draw as in the default mode. The
+  picture differs from label-syntax.mmd.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 radar-beta
-  title `title **bold** _ital_`
+  title title **bold** _ital_
   axis a["axis **bold** _ital_"], b["`axis **bold** _ital_`"], c['`axis single **bold**`']
   axis d["axis a `code` b"], e["axis <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
   axis f["axis one\ntwo"]

@@ -11,13 +11,8 @@
  * the `label.length * 7` width fallback is gone, since v13 always measures.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  labelSource,
-  layoutLabel,
-  Style,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
+import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { CynefinDomain, CynefinDomainName, CynefinModel } from '../model.ts';
 import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.ts';
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
@@ -154,10 +149,14 @@ function environment(
       title: font(lengths.domainFontSize + TITLE.sizeDelta, FONTS.bold),
     },
     plain: (text, f) => layoutLabel(text, key(f), Infinity, ctx.measurer, { style: bits(f) }),
-    // v12 drew every cynefin label with `.text()`, so no kind reads markdown in v12's way.
+    // Core's label handler (#1368, #1394), which also warns about markdown drawn as written.
     rich: (text, f, markdown = false) => {
       const written = markdown ? text.slice(1, -1) : text;
-      const source = labelSource(written, { markdown, v12Markdown: false }, ctx.config);
+      const source = readLabel(
+        written,
+        { markdown },
+        { config: ctx.config, warn: ctx.warn, ...inline }
+      );
       const options = { ...inline, ...source, style: bits(f) };
       return layoutLabel(source.text, key(f), Infinity, ctx.measurer, options);
     },

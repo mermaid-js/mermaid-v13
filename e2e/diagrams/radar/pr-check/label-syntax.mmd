@@ -1,12 +1,12 @@
 ---
 description: >-
-  Label syntax (#1368): axis and legend labels written as plain markdown, a quoted markdown
-  string (with double and with single quotes), a code span, tags and a written \n; only the
-  markdown strings are bold and italic. The title is in bare backticks, which is plain text
-  (D733). Axis and curve labels are always quoted, so they have no bare form.
+  Label syntax (#1368): the title, axis and legend labels written as plain markdown, a quoted
+  markdown string (axis labels also with single quotes), a code span, tags and a written \n.
+  Only the markdown strings are bold and italic; the plain markdown and the code span are drawn
+  as written. Axis and curve labels are always quoted, so they have no bare form.
 ---
 radar-beta
-  title `title **bold** _ital_`
+  title title **bold** _ital_
   axis a["axis **bold** _ital_"], b["`axis **bold** _ital_`"], c['`axis single **bold**`']
   axis d["axis a `code` b"], e["axis <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
   axis f["axis one\ntwo"]

@@ -14,7 +14,8 @@
  * `RADAR_CURVE_SKIPPED`, with positions); the layout only guards against them.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { labelSource, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { largestEntry, type RadarModel, type RadarOptions } from '../model.ts';
 import { radarLayoutConfig, type RadarLayoutConfig } from '../config.ts';
 import { closedRoundCurve, relativeRadius } from './curve.ts';
@@ -90,12 +91,17 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
     graticule: theme.number('radarGraticuleStrokeWidth'),
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
-  // Every label through core's label handler (#1368). A label the parser marked as a markdown
-  // string holds its backticks, without its quotes; the text between them is the markdown.
-  // v12 drew every radar label with `.text()`, so no kind reads markdown in v12's way.
+  // Every label through core's label handler (#1368, #1394), which also warns about markdown
+  // that is drawn as written. A label the parser marked as a markdown string holds its
+  // backticks, without its quotes; the text between them is the markdown.
+  const reading: MarkdownWarningContext = {
+    config: ctx.config,
+    warn: ctx.warn ?? ignoreWarning,
+    ...inline,
+  };
   const measure = (text: string, labelFont: FontKey, markdown = false): MeasuredLabel => {
     const written = markdown ? text.slice(1, -1) : text;
-    const source = labelSource(written, { markdown, v12Markdown: false }, ctx.config);
+    const source = readLabel(written, { markdown }, reading);
     return layoutLabel(source.text, labelFont, Infinity, ctx.measurer, { ...inline, ...source });
   };
 
