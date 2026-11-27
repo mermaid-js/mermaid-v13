@@ -99,6 +99,8 @@ describe('checkStyle', () => {
       'red blue',
       'red,blue',
       '12',
+      'rgb(redd)',
+      'hsl(redd)',
       'none none',
     ]) {
       const { warnings, warn } = collect();
@@ -118,6 +120,95 @@ describe('checkStyle', () => {
       expect(checkCssColor(` ${v} `), v).toBe(v);
     // checkColor keeps its wider reading for values no author misspells (theme rules, math, icons).
     expect(checkColor('redd')).toBe('redd');
+  });
+
+  it('reads the arguments of a channel colour function (D737)', () => {
+    for (const v of [
+      'rgb(37 99 235 / 60%)',
+      'hsla(210, 80%, 30%, 0.9)',
+      'oklch(70% 0.1 200 / .5)',
+      'hsl(none 0% 0%)',
+      'hwb(1turn 0% 0%)',
+      'lab(50% -20 +30.5)',
+      'LCH(50% 30 1.5rad)',
+      'oklab(0.5 0.1 -0.1)',
+      'hsl(100grad 50% 50%)',
+    ])
+      expect(checkCssColor(v), v).toBe(v);
+    for (const v of [
+      'rgb(redd)',
+      'rgb(1 2)',
+      'rgb(1, 2, 3, 4, 5)',
+      'rgb(1,,2,3)',
+      'hsl(redd)',
+      'oklch(redd)',
+      'lab(1)',
+      'rgba()',
+      'rgb(1px 2 3)',
+      // Valid CSS the check does not read.
+      'rgb(from red r g b)',
+      'rgb(var(--mermaid-x) 0 0)',
+      'rgb(calc(1) 0 0)',
+      'rgb(1e2 0 0)',
+    ])
+      expect(checkCssColor(v), v).toBeUndefined();
+  });
+
+  it('reads the arguments of color(), color-mix() and light-dark() (D737)', () => {
+    for (const v of [
+      'color(display-p3 1 0 0)',
+      'color(srgb 1 0 0 / 50%)',
+      'color(xyz-d65 0.1 0.2 0.3)',
+      'color-mix(in oklch longer hue, 30% red, rgb(0 0 255))',
+      'color-mix(in srgb, red 50%, blue)',
+      'color-mix(in srgb, light-dark(red, blue), #fff)',
+      'light-dark(#fff, rgb(0 0 0))',
+      'light-dark(red, blue)',
+      'var(--mermaid-primaryColor)',
+      'var(--_pf, #fff)',
+    ])
+      expect(checkCssColor(v), v).toBe(v);
+    for (const v of [
+      'color(redd 1 0 0)',
+      'color(srgb redd)',
+      'color(srgb 1 0)',
+      'color(srgb)',
+      'color(display-p3, 1, 0, 0)',
+      'color(from red srgb r g b)',
+      'color-mix(in srgb, redd, blue)',
+      'color-mix(in srgb, red 50% 20%, blue)',
+      'color-mix(in srgb, red, blue, green)',
+      'color-mix(in srgb, red)',
+      'color-mix(srgb, red, blue)',
+      'color-mix(in srgb, rgb(redd), blue)',
+      'light-dark(redd, blue)',
+      'light-dark(red)',
+      'light-dark(red 50%, blue)',
+      'light-dark(red, blue, green)',
+    ])
+      expect(checkCssColor(v), v).toBeUndefined();
+  });
+
+  it('refuses a colour nested past the depth limit without reading its arguments', () => {
+    let v = 'red';
+    for (let i = 0; i < 2000; i++) v = `light-dark(${v}, red)`;
+    expect(checkCssColor(v)).toBeUndefined();
+  });
+
+  it('refuses a space between a colour function and its parenthesis, as CSS does', () => {
+    for (const v of [
+      'rgb (1 2 3)',
+      'light-dark (red, blue)',
+      'color-mix (in srgb, red, blue)',
+      'color (srgb 1 0 0)',
+      'var (--mermaid-primaryColor)',
+    ])
+      expect(checkCssColor(v), v).toBeUndefined();
+  });
+
+  it('refuses a channel that ends in a dot', () => {
+    expect(checkCssColor('rgb(1. 2 3)')).toBeUndefined();
+    expect(checkCssColor('rgb(1.5 2 .3)')).toBe('rgb(1.5 2 .3)');
   });
 
   it('keeps an earlier colour when a later one is misspelt, as CSS does', () => {

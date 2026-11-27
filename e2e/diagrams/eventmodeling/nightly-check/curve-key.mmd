@@ -1,0 +1,22 @@
+---
+description: >-
+  `eventmodeling.curve` (D733, D760, #1380) draws every relation between frames over the top-level
+  `curve`: S-curves here (`basis`), where the default keeps straight and right-angled lines. Each
+  arrowhead follows the end of its line; the frame that names itself keeps its loop. Sources the
+  validator rejects (event to event, a frame to itself) are what give a relation along a lane,
+  under a row and a loop.
+config:
+  curve: linear
+  eventmodeling:
+    curve: basis
+---
+eventmodeling
+tf 01 cmd Start
+tf 02 evt Started ->> 01
+tf 03 evt Continued ->> 02
+tf 04 evt Finished ->> 03 ->> 02
+tf 05 rmo Status ->> 04 ->> 02
+tf 06 ui Screen ->> 05 ->> 06
+tf 07 cmd Retry ->> 06
+rf 08 evt Retried ->> 07
+tf 09 rmo Again

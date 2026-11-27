@@ -20,7 +20,8 @@
  *
  * AST ids (D289, DESIGN §4.2): `n:<id>` for columns and cards alike, `n:<id>@k` for the k-th
  * item with the same id (blanks around the id dropped); an id-less item's id is its text.
- * Decorations and data belong to their item.
+ * Decorations and data belong to their item. `accTitle` and `accDescr` (D742) are no items:
+ * they set the SVG's title and description.
  */
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
@@ -78,6 +79,10 @@ export interface KanbanModel {
   readonly columns: readonly KanbanColumn[];
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
   readonly warnings: readonly Diagnostic[];
+  /** The last `accTitle: …`'s value, trimmed; empty without one (D742; v12 drew it as an item). */
+  readonly accTitle: string;
+  /** The last `accDescr`'s value (`: …` or `{ … }`); empty without one (D742). */
+  readonly accDescr: string;
 }
 
 /**
