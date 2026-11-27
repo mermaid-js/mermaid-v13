@@ -881,6 +881,27 @@ properties:
       status: honoured
       since: 13.0.0
       reason: "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Off by default (D689, #1191): D672 turned it on, which made flowchart rendering 13.7% slower, so a crossing hops only where the author sets `lineHops` (or a layout engine's own key does). Drawn by a part of core (D672), so `render` and `renderSync` need nothing loaded for it."
+  curve:
+    $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+    description: |
+      How edges are drawn between their route points, for every diagram type
+      that draws edges and has a `curve` key of its own (D733). Unset by
+      default: each type then draws its own default curve.
+
+      Precedence, per type: a per-edge curve where the type has one, then
+      the type's own key (`flowchart.curve`, `swimlane.curve`,
+      `class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,
+      `usecase.curve`, `eventmodeling.curve`) when set, then this key when
+      set, then the type's default (`rounded` for flowchart, swimlane, class,
+      requirement and agentflow; S-curves for state and usecase; today's
+      routes for eventmodeling). Other diagram types take no curve (D760).
+      A swimlane diagram (`swimlane-beta`) reads `swimlane.curve`, then
+      `flowchart.curve`, before this key; a flowchart with `layout:
+      swimlane` reads only `flowchart.curve` (D761).
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: 'New in v13 (D733, #1338): one key for the curve of every diagram type that draws edges. v12 had only `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681).'
   maxTextSize:
     description: The maximum allowed size of the users text diagram
     type: number
@@ -1163,8 +1184,9 @@ properties:
         Agentflow also reads three `flowchart` keys, as v12 did (D466): `flowchart.padding` (the
         padding between a node's label and its shape), `flowchart.inheritDir` (a flow without a
         `direction` of its own takes the diagram's) and `flowchart.subGraphTitleMargin` (room
-        above and below a flow's title). Its edges follow `flowchart.curve`, as class diagrams
-        do. `flowchart.arrowMarkerAbsolute` stays ignored: arrowheads are inline paths.
+        above and below a flow's title). Its edges do not follow `flowchart.curve` (D733): they follow
+        `linkStyle … interpolate`, then `agentflow.curve`, then the top-level `curve`, then `rounded`.
+        `flowchart.arrowMarkerAbsolute` stays ignored: arrowheads are inline paths.
   sequence:
     $ref: '#/$defs/SequenceDiagramConfig'
     x-mermaid: { status: honoured, since: 13.0.0 }
@@ -2335,6 +2357,18 @@ $defs:
           since: 13.0.0
           reason: >-
             v12.2.0's requirement renderer never read it: a box is as tall as its lines plus its padding (D436).
+      curve:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+        description: |
+          How requirement edges are drawn between their route points (D733).
+
+          Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+          `requirement.curve` when set, then the top-level `curve` when set, then `rounded`.
+          `flowchart.curve` does not apply to requirement diagrams (v12 drew them with it).
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: 'New in v13 (D733, #1378): v12 drew requirement edges with `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681).'
       fontSize:
         type: number
         default: 14
@@ -2592,17 +2626,19 @@ $defs:
             `MINDMAP_CONFIG_IGNORED`.
       maxNodeWidth:
         description: |
-          The width in px at which node labels wrap.
+          The width in px at which node labels wrap, in every node shape. Values below 120 or
+          above 1200 are clamped to that range.
         type: number
         default: 200
         x-mermaid:
           status: honoured
           since: 13.0.0
           reason: >-
-            Labels wrap at it in every shape (D287); v12 wrapped square, rounded and hexagon
-            nodes at `flowchart.wrappingWidth` instead (both 200 by default). Numeric strings are
-            read as numbers; anything else, or a value of 0 or less, lays out with 200 and warns
-            `MINDMAP_CONFIG_IGNORED`.
+            Labels wrap at it in every shape (D287, D769). v12 wrapped square, rounded and hexagon
+            nodes at `flowchart.wrappingWidth` instead (120 by default); v13 never reads it. A
+            value below 120 or above 1200 is clamped to the nearest limit and warns
+            `MINDMAP_CONFIG_IGNORED` once. Numeric strings are read as numbers; anything else, or
+            a value of 0 or less, lays out with 200 and warns `MINDMAP_CONFIG_IGNORED`.
       layoutAlgorithm:
         description: Layout algorithm to use for positioning mindmap nodes
         type: string
@@ -2825,7 +2861,7 @@ $defs:
           since: 13.0.0
           reason: >-
             As v12's `sectionWidth || 200`. A number or a numeric string from 0 to 10,000; a
-            width above 0 and below 26 is raised to 26, so cards keep a width, and anything else
+            width above 0 and below 36 is raised to 36, so cards keep a width, and anything else
             lays out with the default, each with one `KANBAN_CONFIG_IGNORED` warning.
       ticketBaseUrl:
         description: |
@@ -3490,6 +3526,20 @@ $defs:
         type: number
         default: 120
         x-mermaid: { status: honoured, since: 13.0.0 }
+      curve:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+        description: |
+          How transitions and note connectors are drawn between their route
+          points (D733).
+
+          Defaults to `curved`, today's state look. Precedence: this key when
+          set, then the top-level `curve` when set, then `curved`. State does
+          not read `flowchart.curve`. A self-transition stays `rounded`, and
+          text output stays stepped on the grid (D78).
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: 'New in v13 (D733, #1324, #1325): v12 drew state edges with `flowchart.curve`, which v13 does not read. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681).'
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -3711,6 +3761,18 @@ $defs:
           reason: >-
             v12's class renderer read `state.useMaxWidth` instead (a v12 bug); v13 reads
             `class.useMaxWidth`.
+      curve:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+        description: |
+          How class edges are drawn between their route points (D733).
+
+          Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+          `class.curve` when set, then the top-level `curve` when set, then `rounded`.
+          `flowchart.curve` does not apply to class diagrams (v12 drew them with it).
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: 'New in v13 (D733, #1378): v12 drew class edges with `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681).'
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -4791,6 +4853,22 @@ $defs:
             enum: ['arc', 'gap']
         default: 'arc'
         x-mermaid: { status: honoured, since: 13.0.0 }
+      curve:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+        description: |
+          How swimlane edges are drawn between their route points (D733).
+
+          Defaults to `rounded`, as flowchart's. Precedence in a
+          `swimlane-beta` diagram: a per-edge curve (`curve:` on an edge,
+          `linkStyle … interpolate`), then this key when set in any config
+          source (front matter, a directive or `initialize()`), then
+          `flowchart.curve` when set, then the top-level `curve` when set,
+          then `rounded` (D761). It is the diagram's key, not the layout's: a
+          flowchart drawn with `layout: swimlane` ignores it.
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: "New in v13 (D733, #1377): v12's swimlane read only `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
       ignoreCrossLaneEdges:
         description: |
           Ignores edges that cross swimlane boundaries during swimlane layer
@@ -4869,6 +4947,19 @@ $defs:
           status: honoured
           since: 13.0.0
           reason: As v12's `setupViewPortForSVG`, `width="100%"` and a `max-width` when true.
+      curve:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+        description: |
+          How agentflow edges are drawn between their route points (D733).
+
+          Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+          a per-edge `linkStyle <n> interpolate`, then `linkStyle default interpolate`, then
+          `agentflow.curve` when set, then the top-level `curve` when set, then `rounded`.
+          `flowchart.curve` does not apply to agentflow diagrams (v12 drew them with it).
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: 'New in v13 (D733, #1378): v12 drew agentflow edges with `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681).'
       useWidth:
         $ref: '#/$defs/BaseDiagramConfig/properties/useWidth'
         x-mermaid:
@@ -5090,7 +5181,13 @@ $defs:
         x-mermaid: { status: honoured, since: 13.0.0 }
       curve:
         description: |
-          Defines how mermaid renders curves for flowcharts.
+          How flowchart edges are drawn between their route points (D733).
+
+          Defaults to `rounded`: right angles whose corners are small arcs.
+          Precedence: a per-edge curve (`curve:` on an edge, `linkStyle …
+          interpolate`), then this key when set, then the top-level `curve`
+          when set, then `rounded`. A swimlane diagram reads `swimlane.curve`
+          first. The top-level `curve` and every `<type>.curve` take these names.
         type: string
         enum:
           [
@@ -5108,7 +5205,6 @@ $defs:
             'stepBefore',
             'rounded',
           ]
-        default: 'rounded'
         x-mermaid:
           status: honoured
           since: 13.0.0
@@ -5120,7 +5216,9 @@ $defs:
             `rounded` draws straight segments with rounded corners; every other value draws
             S-curves (the layout engine routes edges, not a d3 curve factory). A name outside
             this list is drawn with the default, `rounded`, and warns `CURVE_UNKNOWN` once per
-            render (D602, D681); v12 drew it as `basis`.
+            render (D602, D681); v12 drew it as `basis`. The default lives in code, not in the
+            schema (D733), so the resolved config shows no `flowchart.curve` unless it is set,
+            and the top-level `curve` applies where it is not.
 
       padding:
         description: |
@@ -5629,6 +5727,22 @@ $defs:
             A negative value, one that is not a number, or one so large the drawing would not
             stay finite falls back to 30 with one `EVENTMODELING_CONFIG_INVALID` warning (D226); a
             numeric string counts as its number.
+      curve:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+        description: |
+          How the relations between frames are drawn between their route
+          points (D733, D760).
+
+          Unset keeps today's look: straight lines between lanes and along a
+          lane, and right-angled routes under a row, each ending in an
+          arrowhead. Precedence: this key when set, then the top-level `curve`
+          when set, then today's look. With a curve set, the relations are
+          drawn with that curve and each arrowhead follows the end of its
+          line. A relation from a frame to itself stays as it is.
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: "New in v13 (D733, D760, #1380): v12's event modeling drew fixed straight lines and read no curve key. Unset, the output is unchanged. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
       rowHeight:
         description: The height of each row in the Event Modeling diagram.
         type: number
@@ -5912,6 +6026,20 @@ $defs:
         $ref: '#/$defs/FlowchartDiagramConfig/properties/minNodeWidth'
         default: 120
         x-mermaid: *usecaseLength
+      curve:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+        description: |
+          How usecase relationship and note lines are drawn between their route
+          points (D733).
+
+          Defaults to S-curves, as `basis` draws them: the curve usecase drew
+          before this key. Precedence: this key when set, then the top-level
+          `curve` when set, then S-curves. A line from a node back to itself
+          stays rounded.
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: "New in v13 (D733, #1379): v12's usecase drew a fixed curve and read no curve key. The text output stays on the grid's right angles (D78). A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
       actorFontSize:
         description: Font size for actor labels
         type: number

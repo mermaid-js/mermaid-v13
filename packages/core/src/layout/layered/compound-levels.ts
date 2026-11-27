@@ -18,7 +18,6 @@ function makeLevel(levelOf: Map<number, Level>, id: number, dir: Dir): Level {
     own: [],
     ports: [],
     portOf: new Map(),
-    routes: new Map(),
     x: 0,
     y: 0,
   };

@@ -1,15 +1,17 @@
 /**
- * The lexer's and model's small paths against the implementations they replaced, kept here as
- * the reference: the INITIAL rules tried in order without the first-character table, a token's
- * range always mapped through the offset maps, edges indexed by id as they are made, and class
- * styles always split through the `§§§` swap. Each generated text is parsed both ways and the
- * whole result (tokens, model, AST, diagnostics, symbols, statements) must be equal.
+ * The lexer's, parser's and model's small paths against the implementations they replaced, kept
+ * as the reference: the INITIAL rules tried in order without the first-character table, a
+ * token's range always mapped through the offset maps, a token's text always cooked, edges
+ * indexed by id as they are made, and class styles always split through the `§§§` swap. Each
+ * generated text is parsed both ways and the whole result (tokens, model, AST, diagnostics,
+ * symbols, statements) must be equal.
  */
-import { describe, expect, it } from 'vitest';
-import { FlowBuilderBase, FlowLexer } from '@mermaid-js/shared/parser/flow';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { FlowBuilderBase, FlowLexer, FlowParser } from '@mermaid-js/shared/parser/flow';
 import { StateLexer } from '@mermaid-js/shared/parser/state';
 import { referencePaths } from '@mermaid-js/shared/testing/parser-reference';
 import { parseFlowchart } from '../index.ts';
+import { flowchartLanguage } from '../language.ts';
 import { FlowBuilder } from './model.ts';
 
 const HEADERS = [
@@ -91,9 +93,11 @@ describe('lexer and model small paths', () => {
     const lexer = FlowLexer.prototype as unknown as Record<string, unknown>;
     const state = StateLexer.prototype as unknown as Record<string, unknown>;
     const builder = FlowBuilderBase.prototype as unknown as Record<string, unknown>;
+    const parser = Object.getPrototypeOf(FlowParser.prototype) as Record<string, unknown>;
     const now = () => [
       lexer.initial,
       state.emit,
+      parser.raw,
       builder.edgeNamed,
       builder.hasEdge,
       builder.addClass,
@@ -195,5 +199,88 @@ describe('edges indexed on lookup stay linear', () => {
       ratio = Math.min(ratio, fastest(() => parseFlowchart(large, options)) / Math.max(s, 1));
     }
     expect(ratio).toBeLessThan(8);
+  });
+});
+
+// A token's text is sliced straight from the source while it lies in a stretch with no CR, `#`
+// or `}` (the characters `cook` may read otherwise), the character before it included; anything
+// else, a token read again behind that stretch included, is cooked as before.
+describe('token text without cooking', () => {
+  const sources = [
+    // CRLF and lone CR line ends, inside labels and strings too
+    'flowchart LR\r\nA --> B\r\nB -- text --> C\r\n',
+    'graph TD\rA[x\ry] --> B\r\nC["a\r\nb"]\r',
+    'flowchart LR\nA["one\r\ntwo"] -->|"three\rfour"| B\r\n%% c\r\nC',
+    // entities, decoded or not, in labels, edge text, ids and styles
+    'flowchart LR\nA["#35; #quot;x#quot; #9829; #nope;"] -->|#35;| B[#lt;b#gt;]',
+    'flowchart LR\nA#35;B --> C\nstyle A fill:#f9f,stroke:#333;\nclassDef c color:#fff',
+    'flowchart LR\nA -- #35; text --> B\nA == #amp; ==> C\nA -.#quot;.-> D',
+    // a token straight after `}`, or after `}` and blanks before a line end
+    'flowchart LR\nA{x}B\nC{x}-->D\nE{{x}}F',
+    'flowchart LR\nA{x}   \n  B\nC@{ shape: rect }D\nE@{ label: "q" }\t\nF',
+    'flowchart LR\nsubgraph S\nA\nend}\nB}C\n}D\naccDescr { a\n}\nX',
+    'flowchart LR\nA["}x}"] --> B{"}"}\nclick A "u"}x\n}',
+    // `}`, blanks and a line end inside a token, which `cook` closes up to `}` and the line end
+    'flowchart LR\nA["a}   \nb"] --> B\nA -- x}  \ny --> C{"q}\t\nr"}',
+    // errors: messages read tokens behind the one at fault; recovery lexes again mid-document
+    'flowchart LR\nA --> B C D -->\nE[unclosed\nF --> G\nH["also\nI}',
+    'flowchart LR\nA -->|t B\nC((x) --> D\nstyle\nclass A\n#\nE --> F',
+    'graph TD\r\nA[x --> B\r\nC{y --> D\r\nE#35;( --> F\r\n}G',
+    // removed spans and a mask: always cooked
+    'flowchart LR\n%%{init: {}}%%\nA --> B %% c\nC["<b class="x">y</b>"]\nD{x}E',
+  ];
+
+  it('gives the reference result, at every probe offset too', () => {
+    const run = (src: string, probe?: number) =>
+      flowchartLanguage.parse(src, { keepTokens: true, ...(probe === undefined ? {} : { probe }) });
+    for (const src of sources) {
+      expect(run(src), JSON.stringify(src)).toEqual(referencePaths(() => run(src)));
+      for (let at = 0; at <= src.length; at++) {
+        const fast = run(src, at);
+        expect(fast, `${JSON.stringify(src)} at ${at}`).toEqual(referencePaths(() => run(src, at)));
+      }
+    }
+  });
+
+  // Each search for the next CR, `#` or `}` starts at or past where the last one stopped, so
+  // no stretch of the source is searched twice: the characters searched add up to at most the
+  // source and one for each search. Each of the three absent, once at the very end, and at every
+  // other character, in sources of a million characters (a `}` on every line is an error each
+  // time, which costs far more than the rest, so that source is 40,000 characters).
+  describe('searches each part of the source once', () => {
+    const test = RegExp.prototype.test;
+    let searched = 0;
+    let searches = 0;
+    afterEach(() => vi.restoreAllMocks());
+    const count = () => {
+      searched = 0;
+      searches = 0;
+      vi.spyOn(RegExp.prototype, 'test').mockImplementation(function (this: RegExp, s: string) {
+        if (this.source !== '[\\r#}]' || !this.global) return test.call(this, s);
+        const from = this.lastIndex;
+        const found = test.call(this, s);
+        searched += (found ? this.lastIndex : s.length) - from;
+        searches++;
+        return found;
+      });
+    };
+    const N = 1_000_000;
+    const body = (n: number) => 'flowchart LR\n' + 'a1 --> b2\n'.repeat(n / 10);
+    it.each([
+      ['none of them', body(N)],
+      ['a CR at the end', body(N) + '\r'],
+      ['a `#` at the end', body(N) + '#'],
+      ['a `}` at the end', body(N) + '}'],
+      ['a CR every other character', 'flowchart LR\n' + 'a\r'.repeat(N / 2)],
+      ['a `#` every other character', 'flowchart LR\n' + '#;'.repeat(N / 2)],
+      ['a `}` every other character', 'flowchart LR\n' + '}\n'.repeat(20_000)],
+      ['a `}` before every edge', 'flowchart LR\n' + 'a{b}-->c\n'.repeat(25_000)],
+      ['a `}` every other character in a label', 'flowchart LR\nA["' + '}a'.repeat(N / 2) + '"]'],
+    ])('%s', (_name, src) => {
+      count();
+      parseFlowchart(src, { maxEdges: Infinity, maxNodes: Infinity });
+      expect(searches).toBeGreaterThan(0);
+      expect(searched).toBeLessThanOrEqual(src.length + searches);
+    });
   });
 });

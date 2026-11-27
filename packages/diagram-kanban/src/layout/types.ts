@@ -28,7 +28,10 @@ export interface CardLayout extends Rect {
   readonly column: number;
   /** Its place in the column, from 0. */
   readonly index: number;
-  /** Left-aligned, wrapped at `W − 25`; undefined for a title with no text. */
+  /**
+   * Left-aligned, wrapped at `W − wrapInset` (165 at the default `W`), so it keeps `labelInset`
+   * on both sides (D764); undefined for a title with no text.
+   */
   readonly title?: PlacedLabel;
   /** Left-aligned, under the title; undefined without a ticket. */
   readonly ticket?: PlacedLabel;
@@ -50,9 +53,9 @@ export interface ColumnLayout extends Rect {
    */
   readonly ordinal: number;
   /**
-   * Wrapped at `W` and centred on the column. A word wider than `W` stays whole and overflows
-   * both sides, as in v12 (in cells it is split between characters). The bounds hold the title
-   * (D224).
+   * Wrapped at `W − titleInset` (`labelInset` each side, D764) and centred on the column. A word
+   * wider than that breaks between characters, so the title stays inside the column (D765). The
+   * bounds hold the title (D224).
    */
   readonly title?: PlacedLabel;
 }

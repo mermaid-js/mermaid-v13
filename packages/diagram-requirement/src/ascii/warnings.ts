@@ -39,7 +39,7 @@ const SQUARE = new Set(['step', 'stepBefore', 'stepAfter']);
 /**
  * The warnings for one drawing: the features without a text form, one per kind (D82). `ast`
  * adds the statements' ids (`style:1`, `classDef:1`, `accTitle:1`, …). `curve` is the
- * `flowchart.curve` the config sets: text lines are always square (pitfall 22).
+ * `requirement.curve` or `curve` the config sets: text lines are always square (pitfall 22).
  */
 export function asciiWarnings(
   model: RequirementModel,

@@ -1,14 +1,15 @@
 /**
- * The flow family's lexer and model paths as they were before their fast paths, kept as the
- * reference the specs compare the fast paths with: {@link referencePaths} runs a function with
- * these installed on the shared prototypes and puts the fast ones back after. Workspace-only:
- * specs import it, the build and the tarball leave it out.
+ * The flow family's lexer, parser and model paths as they were before their fast paths, kept as
+ * the reference the specs compare the fast paths with: {@link referencePaths} runs a function
+ * with these installed on the shared prototypes and puts the fast ones back after.
+ * Workspace-only: specs import it, the build and the tarball leave it out.
  */
-import { CR, LF } from '@mermaid-js/core/parser-kit';
-import type { TokenWriter } from '@mermaid-js/core/parser-kit';
+import { cook, CR, LF } from '@mermaid-js/core/parser-kit';
+import type { SourceView, TokenWriter } from '@mermaid-js/core/parser-kit';
 import { FlowBuilderBase } from '../parser/flow-model.ts';
 import type { FlowClassRecord } from '../parser/flow-model.ts';
 import { FlowLexer } from '../parser/flow-lexer.ts';
+import { FlowParserBase } from '../parser/flow-parser-base.ts';
 import { StateLexer } from '../parser/state-lexer.ts';
 
 /** The members the reference paths read: TypeScript-private, there at run time. */
@@ -30,6 +31,14 @@ interface Lexer {
   punctuation(c: number): boolean;
   blankRule(c: number): boolean;
   word(c: number): boolean;
+}
+
+interface Parser {
+  src: string;
+  view: SourceView;
+  i: number;
+  start(j: number): number;
+  end(j: number): number;
 }
 
 interface Builder {
@@ -67,6 +76,11 @@ function emit(this: Lexer, kind: number, s: number, end: number, next: number = 
   this.p = next;
 }
 
+/** A token's text, always through `cook`. */
+function raw(this: Parser, j = this.i): string {
+  return cook(this.src, this.start(j), this.end(j), this.view);
+}
+
 /** The first edge given the id `id`, of every edge made so far. */
 function edgeNamed(this: Builder, id: string): unknown {
   return this.edges.find((edge) => edge.id === id);
@@ -100,6 +114,7 @@ function addClass(this: Builder, ids: string, styles: string[]): void {
 const REFERENCE: [object, string, unknown][] = [
   [FlowLexer.prototype, 'initial', initial],
   [StateLexer.prototype, 'emit', emit],
+  [FlowParserBase.prototype, 'raw', raw],
   [FlowBuilderBase.prototype, 'edgeNamed', edgeNamed],
   [FlowBuilderBase.prototype, 'hasEdge', hasEdge],
   [FlowBuilderBase.prototype, 'addClass', addClass],

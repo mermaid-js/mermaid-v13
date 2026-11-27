@@ -5,19 +5,20 @@
  * inside its column, below the shared title row, and clear of the next; every column title in
  * the title row at its column's top; a card's title above its ticket row; a card's ticket and
  * assignee clear of each other, and an assignee stacked under its ticket inside the card (D647);
- * the priority bar's line inside its card (in cells its stroke sits on the card's edge); no box
- * of negative size (pitfall 22); the bounds holding everything drawn (D224). Each violation is
- * one readable line. Comparisons allow a float tolerance.
+ * the priority bar's line inside its card (in cells its stroke sits on the card's edge); card
+ * and column text `labelInset` in from both sides of its box (D764, D765); no box of negative
+ * size (pitfall 22); the bounds holding everything drawn (D224). Each violation is one readable
+ * line. Comparisons allow a float tolerance.
  *
  * Not an invariant, because v12 does it too: a ticket or assignee over 40 px high on a shared
- * row sticks out of the card's bottom. Nor is a label inside its column or card: a word wider
- * than the wrap width stays whole and overflows, as in v12 (in cells it is split between
- * characters, and a single character can still be wider than a narrow `kanban.sectionWidth`
- * allows).
+ * row sticks out of the card's bottom. The inset holds for every line but a line of a single
+ * character wider than the room between the insets, which a narrow `kanban.sectionWidth` can
+ * leave: no break keeps that one inside.
  */
 import type { KanbanLayoutInput } from './input.ts';
 import { drawnRects } from './extent.ts';
-import type { CardLayout, KanbanLayout, Rect } from './types.ts';
+import { KANBAN_CELL_METRICS, KANBAN_METRICS } from './metrics.ts';
+import type { CardLayout, KanbanLayout, PlacedLabel, Rect } from './types.ts';
 import {
   EPS,
   nonFinite as numbers,
@@ -39,6 +40,38 @@ function ticketRowViolations(card: CardLayout, where: string, out: string[]): vo
     assignee.y + assignee.height > card.y + card.height + EPS
   )
     out.push(`${where}: its assignee, stacked under the ticket, sticks out of its bottom`);
+}
+
+/**
+ * Whether `label` sits closer than `inset` to a side of `outer` (D764). A line of one character
+ * wider than the room between the insets cannot break (D765), so it is left out: the label's
+ * other lines must still fit that room.
+ */
+function textCrowdsInset(outer: Rect, label: PlacedLabel, inset: number): boolean {
+  const room = outer.width - 2 * inset;
+  const { lines, widths } = label.text;
+  const unbreakable = (i: number): boolean =>
+    (widths[i] ?? 0) > room + EPS && [...(lines[i] ?? []).map((r) => r.text).join('')].length < 2;
+  if (lines.some((_, i) => unbreakable(i)))
+    return widths.some((w, i) => !unbreakable(i) && w > room + EPS);
+  return !(
+    within(label.x, outer.x + inset, outer.x + outer.width - inset) &&
+    within(label.x + label.width, outer.x + inset, outer.x + outer.width - inset)
+  );
+}
+
+/** Card and column text keeps `labelInset` on both sides of its box (D764, D765). */
+function insetViolations(layout: KanbanLayout, out: string[]): void {
+  const inset = (layout.units === 'cell' ? KANBAN_CELL_METRICS : KANBAN_METRICS).labelInset;
+  for (const column of layout.columns)
+    if (column.title && textCrowdsInset(column, column.title, inset))
+      out.push(`column ${column.ast}: its title is within ${inset} of its sides`);
+  for (const card of layout.cards)
+    for (const kind of ['title', 'ticket', 'assignee'] as const) {
+      const label = card[kind];
+      if (label && textCrowdsInset(card, label, inset))
+        out.push(`card ${card.ast}: its ${kind} is within ${inset} of its sides`);
+    }
 }
 
 const contains = (outer: Rect, inner: Rect): boolean =>
@@ -126,6 +159,8 @@ export function kanbanLayoutViolations(input: KanbanLayoutInput, layout: KanbanL
         out.push(`${where}: its priority bar is outside it`);
     }
   });
+
+  insetViolations(layout, out);
 
   // Pitfall 22: no box comes out with a negative size, whatever the config.
   const boxes: [string, Rect | undefined][] = [['the bounds', layout.bounds]];

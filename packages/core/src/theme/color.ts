@@ -40,6 +40,15 @@ function part(raw: string | undefined, full: number, angle = false): number {
 
 const clamp = (n: number, max: number): number => Math.min(Math.max(n, 0), max);
 
+/** sRGB channels (0–255) of hue `hue` (twelfths of a turn), saturation `s` and lightness `l` (0–1). */
+function hslChannels(hue: number, s: number, l: number): number[] {
+  const k = s * Math.min(l, 1 - l);
+  return [0, 8, 4].map((o) => {
+    const t = (o + hue) % 12;
+    return (l - k * Math.max(-1, Math.min(t - 3, 9 - t, 1))) * 255;
+  });
+}
+
 /** A colour's channels, or undefined for anything that only CSS can compute. */
 export function parseColor(value: string): Rgba | undefined {
   const v = value.trim().toLowerCase();
@@ -64,11 +73,7 @@ export function parseColor(value: string): Rgba | undefined {
     const hue = (((part(list[0], 0, true) % 360) + 360) % 360) / 30;
     const s = clamp(part(list[1], 1), 1);
     const l = clamp(part(list[2], 1), 1);
-    const k = s * Math.min(l, 1 - l);
-    rgb = [0, 8, 4].map((o) => {
-      const t = (o + hue) % 12;
-      return (l - k * Math.max(-1, Math.min(t - 3, 9 - t, 1))) * 255;
-    });
+    rgb = hslChannels(hue, s, l);
   }
   const out = [rgb[0], rgb[1], rgb[2], a] as [number, number, number, number];
   return out.some((c) => Number.isNaN(c)) ? undefined : out;
@@ -129,13 +134,8 @@ export function shiftHsl(c: Hsl, dh: number, dl: number): Hsl {
 
 /** HSL channels back to sRGB, as a browser converts `hsl()`. */
 export function hslToRgb(c: Hsl, alpha: number): Rgba {
-  const lt = c[2] / 100;
-  const k = (c[1] / 100) * Math.min(lt, 1 - lt);
   const hue = (c[0] < 0 ? (c[0] % 360) + 360 : c[0]) / 30; // degrees → twelfths of a turn
-  const [x, y, z] = [0, 8, 4].map((o) => {
-    const t = (o + hue) % 12;
-    return (lt - k * Math.max(-1, Math.min(t - 3, 9 - t, 1))) * 255;
-  }) as [number, number, number];
+  const [x, y, z] = hslChannels(hue, c[1] / 100, c[2] / 100) as [number, number, number];
   return [x, y, z, alpha];
 }
 

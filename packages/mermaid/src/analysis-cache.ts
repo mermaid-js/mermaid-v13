@@ -94,7 +94,7 @@ const CACHE_SIZE = 32;
 
 /** The analyses of recent texts, each valid only for the snapshot it was made with. */
 export class AnalysisCache<A> {
-  private readonly entries = new Map<string, CacheEntry<A>>();
+  private entries = new Map<string, CacheEntry<A>>();
 
   get(text: string, snap: Snapshot): A | undefined {
     const hit = this.entries.get(text);
@@ -108,6 +108,9 @@ export class AnalysisCache<A> {
   }
 
   clear(): void {
-    this.entries.clear();
+    // A new map, not `Map#clear()`: V8 leaves a cleared map's old table pointing at its new one,
+    // so once the GC has promoted one table, every later table and the analyses in it survive
+    // each scavenge until a full GC. Only these methods read `entries`, so none holds the old map.
+    this.entries = new Map();
   }
 }
