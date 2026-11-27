@@ -6,10 +6,12 @@
  * which v12 merges into the same node), is the parent's name and the component's, each a
  * reference: renaming either keeps the id it is part of.
  *
- * The name after `evolve` and `pipeline` is a node id, as the parser resolves it: an anchor's or
- * a component's name, or a pipeline component's id. A pipeline component's own name there names
- * no node (`WARDLEY_UNKNOWN_TARGET`, `WARDLEY_UNKNOWN_PARENT`), so it has no symbol; a link's
- * ends, which v12 also resolved by label, keep it.
+ * The name after `pipeline` is a node id, as the parser resolves it: an anchor's or a
+ * component's name, or a pipeline component's id. A pipeline component's own name there names
+ * no node (`WARDLEY_UNKNOWN_PARENT`), so it has no symbol; a link's ends, which v12 also
+ * resolved by label, keep it. So does the name after `evolve` (D745): the parser resolves it as
+ * a node id too, but a pipeline component's own name there is reported as that component
+ * (`WARDLEY_EVOLVE_PIPELINE_COMPONENT`), so renaming the component renames it with it.
  */
 import type { SymbolOccurrence } from '@mermaid-js/core/parser-kit';
 import type { WardleyStatementNode } from './ast.ts';
@@ -63,7 +65,7 @@ function pipelineChildIds(statements: readonly WardleyStatementNode[]): ChildIds
 
 /**
  * The names anchors and components declare outside pipelines, and where a name is read as a
- * node id only: the starts of the names after `evolve` and `pipeline`.
+ * node id only: the starts of the names after `pipeline`.
  */
 function idReferences(statements: readonly WardleyStatementNode[]): {
   topLevel: ReadonlySet<string>;
@@ -73,7 +75,6 @@ function idReferences(statements: readonly WardleyStatementNode[]): {
   const idOnly = new Set<number>();
   for (const n of statements) {
     if (n.type === 'Anchor' || n.type === 'Component') topLevel.add(n.name.value);
-    else if (n.type === 'Evolve') idOnly.add(n.name.range.start);
     else if (n.type === 'Pipeline') idOnly.add(n.parent.range.start);
   }
   return { topLevel, idOnly };

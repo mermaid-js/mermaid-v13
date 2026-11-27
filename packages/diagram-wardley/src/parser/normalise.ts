@@ -485,8 +485,8 @@ class Populate {
     }
     this.raise(WARDLEY_EVOLVE_PIPELINE_COMPONENT, {
       ...place,
-      message: `\`${name}\` is a pipeline component of \`${parent}\`; pipeline components cannot evolve.`,
-      also: `\`${name}\` is a pipeline component of \`${parent}\` too`,
+      message: `\`${name}\` is a pipeline component of \`${parent}\`; it can't evolve by its name. Use its id \`${childId(parent, name)}\`.`,
+      also: `\`${name}\` is a pipeline component of \`${parent}\` too; use its id \`${childId(parent, name)}\``,
     });
   }
 

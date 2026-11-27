@@ -253,7 +253,7 @@ describe('wardley model: v12 population rules', () => {
     const [d] = parse(src).diagnostics;
     expect(d).toMatchObject({ code: WARDLEY_EVOLVE_PIPELINE_COMPONENT, severity: 'warning' });
     expect(d?.message).toBe(
-      '`c` is a pipeline component of `P`; pipeline components cannot evolve.'
+      "`c` is a pipeline component of `P`; it can't evolve by its name. Use its id `P_c`."
     );
     expect(d && src.slice(d.range.start, d.range.end)).toBe('c');
   });
@@ -464,6 +464,17 @@ describe('wardley AST, symbols and statements', () => {
       "'  spaced  '",
       '"Tea \\"Cup\\""',
       "'  spaced  '",
+    ]);
+    // D745: an `evolve` naming a pipeline component by its name refers to it, so a rename of
+    // the component renames the `evolve` too and keeps its warning.
+    const child = nightly('parser-evolve-pipeline-child');
+    expect(parse(child).symbols.map((s) => [s.role, s.name, s.range.start, s.range.end])).toEqual([
+      ['def', 'P', 23, 24],
+      ['ref', 'P', 45, 46],
+      ['def', 'c', 61, 62],
+      ['ref', 'c', 78, 79],
+      ['ref', 'P', 91, 92],
+      ['ref', 'c', 93, 94],
     ]);
     expect(parse(nightly('parser-link-resolve')).symbols.map((s) => s.name)).toEqual([
       'A',
