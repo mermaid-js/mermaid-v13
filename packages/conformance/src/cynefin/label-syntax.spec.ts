@@ -45,5 +45,10 @@ describe('cynefin render: label syntax (#1368)', () => {
     expect((await legacy.render('x', SOURCE)).svg).toBe(
       (await deterministicApi().render('x', SOURCE)).svg
     );
+    // The compatibility-mode twin fixture, which sets the key in its front matter.
+    const twin = fixture('cynefin/pr-check/label-syntax-compat.mmd');
+    expect((await deterministicApi().render('x', twin)).svg).toBe(
+      (await deterministicApi().render('x', SOURCE)).svg
+    );
   });
 });

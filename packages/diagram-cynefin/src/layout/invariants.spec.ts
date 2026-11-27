@@ -49,7 +49,7 @@ const OPTION_SETS: readonly unknown[] = [
 
 describe('cynefin layout invariants', () => {
   it('reads every e2e fixture', () => {
-    expect(Object.keys(FIXTURES).length).toBe(35);
+    expect(Object.keys(FIXTURES).length).toBe(36);
   });
 
   it.each(Object.keys(FIXTURES))('hold for %s at every option set', (name) => {
