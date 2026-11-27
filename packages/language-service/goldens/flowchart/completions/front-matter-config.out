@@ -16,4 +16,4 @@
   wrap property (boolean) 3:3-3:3 "" -> "wrap: "
   fontSize property (number) 3:3-3:3 "" -> "fontSize: "
   markdownAutoWrap property (boolean) 3:3-3:3 "" -> "markdownAutoWrap: "
-  legacyMarkdown property (boolean) 3:3-3:3 "" -> "legacyMarkdown: "
+  markdownAlwaysOn property (boolean) 3:3-3:3 "" -> "markdownAlwaysOn: "
