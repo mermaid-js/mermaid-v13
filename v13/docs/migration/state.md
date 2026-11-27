@@ -14,6 +14,11 @@
   state with several description lines break only at a written `\n`, never at
   `state.wrappingWidth`, and the box grows to the longest line. This holds in cells too. v12 built
   these labels with an infinite width. A state with one description wraps as before.
+- **Room below a composite's title** (D732, #1301, #1307): the first state or start dot in a
+  titled composite sits 20 px below the line under the title, the same room as on the other
+  three sides, at every nesting level. v12 left about 8 to 12 px there. The concurrency regions
+  of a composite start at that line, so their dividers run from it to the bottom border. Titled
+  composites are 16 px taller than before; the title keeps its place in the strip.
 - **A transition written inside a composite that names the composite** (D555):
   `state Boot { Running; Boot --> Running }`, the reverse, and `Outer --> Inner` written inside
   `Inner`. v12 filed the composite under itself (or under a state inside it) and then never
