@@ -342,11 +342,11 @@ describe('the families (D152, D215, D227)', () => {
   });
 });
 
-describe('edges follow flowchart.curve (class precedent)', () => {
+describe('edges follow requirement.curve (D733)', () => {
   /** The path commands of every relation line. */
   const commands = async (curve?: string): Promise<string> =>
     byClass(
-      (await render(SAMPLE, curve ? { flowchart: { curve } } : {})).svg,
+      (await render(SAMPLE, curve ? { requirement: { curve } } : {})).svg,
       'path',
       'relationshipLine'
     )
@@ -365,7 +365,7 @@ describe('edges follow flowchart.curve (class precedent)', () => {
   it('draws a self-loop with rounded corners whatever the curve', async () => {
     const loop = 'requirementDiagram\nrequirement a {\n}\na - refines -> a\n';
     for (const curve of ['linear', 'basis', 'step']) {
-      const { svg } = await render(loop, { flowchart: { curve } });
+      const { svg } = await render(loop, { requirement: { curve } });
       const d = byClass(svg, 'path', 'relationshipLine')[0]!.d!;
       expect(d, curve).toContain('A');
       expect(d, curve).not.toContain('C');

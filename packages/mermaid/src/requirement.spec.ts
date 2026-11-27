@@ -264,16 +264,18 @@ describe('requirement diagrams through the public API (#587)', () => {
     ]);
   });
 
-  it('warns once that a flowchart.curve other than a step is drawn square (pitfall 22)', async () => {
+  it('warns once that a requirement.curve other than a step is drawn square (pitfall 22, D733)', async () => {
     const m = createMermaid();
     m.initialize({ deterministic: true });
-    const codes = async (curve: 'basis' | 'step') => {
-      const config = { flowchart: { curve } };
+    const codes = async (config: Record<string, unknown>) => {
       const out = await m.render('r8k', TEXT, { format: 'ascii', config });
       return out.warnings.map((w) => [w.code, (w as { feature?: string }).feature]);
     };
-    expect(await codes('basis')).toEqual([['ASCII_DROPPED', 'curve']]);
-    expect(await codes('step')).toEqual([]);
+    expect(await codes({ requirement: { curve: 'basis' } })).toEqual([['ASCII_DROPPED', 'curve']]);
+    expect(await codes({ curve: 'basis' })).toEqual([['ASCII_DROPPED', 'curve']]);
+    expect(await codes({ requirement: { curve: 'step' } })).toEqual([]);
+    // Requirement no longer reads `flowchart.curve` (D733).
+    expect(await codes({ flowchart: { curve: 'basis' } })).toEqual([]);
   });
 
   it('renders text with renderSync once prepare has loaded the ascii entry', async () => {

@@ -202,18 +202,17 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
   });
 
   // #818 (D559): `@mermaid-js/shared/parser/common-values` is lazy, out of core, and loaded by the
-  // diagrams ported from a langium grammar and by no other diagram. Since #1066 every one of them
-  // loads `@mermaid-js/shared/parser/rule` too, so esbuild puts the readers in the rule chunk.
-  it('keeps the common.langium value readers lazy, in the rule chunk', () => {
+  // diagrams ported from a langium grammar and by kanban, for its `accTitle` and `accDescr`
+  // (D742), and by no other diagram. Kanban loads no `@mermaid-js/shared/parser/rule`, so esbuild
+  // gives the readers a chunk of their own.
+  it('keeps the common.langium value readers lazy, in a chunk of their own', () => {
     const isValues = (input: string) => input.endsWith('shared/src/parser/common-values.ts');
-    const isRuleFamily = (input: string) =>
-      isValues(input) || /shared\/src\/parser\/rule(?:-[a-z]+)?\.ts$/.test(input);
     expect(coreModules(stable).filter(isValues)).toEqual([]);
     const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isValues));
     expect(files).toHaveLength(1);
     const [path, file] = files[0]!;
     expect(coreFiles(stable)).not.toContain(path);
-    expect(file.inputs.every(isRuleFamily)).toBe(true);
+    expect(file.inputs).toEqual(['packages/shared/src/parser/common-values.ts']);
     expect(diagramsLoading(stable, path)).toEqual(
       [
         'architecture',
@@ -221,6 +220,7 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
         'eventmodeling',
         'gitgraph',
         'info',
+        'kanban',
         'packet',
         'pie',
         'radar',

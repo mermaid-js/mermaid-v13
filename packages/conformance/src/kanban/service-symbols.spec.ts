@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseKanban } from '@mermaid-js/diagram-kanban';
+import type { KanbanItemNode } from '@mermaid-js/diagram-kanban';
 import { kanbanBoardOrder } from '@mermaid-js/diagram-kanban/testing';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
@@ -68,7 +69,8 @@ describe('kanban symbols and folding through the service match v12', () => {
       if (board.length !== model.nodes.length) continue;
       checked++;
       const fail = (what: string) => problems.push(`${item.id}: ${what}`);
-      const astOf = new Map(parsed.ast.children.map((n) => [n.id, n]));
+      const itemNodes = parsed.ast.children.filter((n): n is KanbanItemNode => n.type === 'Item');
+      const astOf = new Map(itemNodes.map((n) => [n.id, n]));
       const asts = board.map((b) => astOf.get(b.ast)!);
       const nodeSymbols = parsed.symbols.filter((s) => s.kind === 'node');
       const seen = new Map<string, number>();

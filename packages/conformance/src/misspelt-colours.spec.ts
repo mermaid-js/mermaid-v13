@@ -41,6 +41,16 @@ const CLASS_FIXTURES = {
   swimlane: 'swimlanes/pr-check/classdef-and-class-statements.mmd',
 } as const;
 
+/** Types whose style statements cannot hold a colour function, as in v12 (D737). */
+const NO_FUNCTION = {
+  agentflow: '`(` is a parse error in a `style` or `classDef`',
+  er: '`(` is a parse error in a `style` or `classDef`',
+  flowchart: '`(` is a parse error in a `style` or `classDef` (#1344)',
+  requirement: '`(` is a parse error in a `style` or `classDef`',
+  swimlane: '`(` is a parse error in a `style` or `classDef`',
+  venn: 'a word in brackets is a parse error; `rgb(1,2,3)` is read',
+} as const;
+
 const RE_STATEMENT = /^\s*(?:style|classDef|linkStyle|todayMarker)\b.*$/gm;
 const RE_COLOUR = /\b(fill|stroke|color)(\s*:\s*)(?:#\w+|\w+(?:\([^)]*\))?)/g;
 
@@ -48,9 +58,9 @@ const RE_COLOUR = /\b(fill|stroke|color)(\s*:\s*)(?:#\w+|\w+(?:\([^)]*\))?)/g;
 const recoloured = (source: string, colour: string): string =>
   source.replace(RE_STATEMENT, (line) => line.replace(RE_COLOUR, `$1$2${colour}`));
 
-async function render(source: string) {
+async function render(source: string, config: object = {}) {
   const m = createMermaid();
-  m.initialize({ deterministic: true } as InitializeConfig);
+  m.initialize({ deterministic: true, ...config } as InitializeConfig);
   const r = await m.render('misspelt', source);
   return {
     svg: r.svg,
@@ -67,7 +77,7 @@ afterAll(() => {
   vi.useRealTimers();
 });
 
-describe.each(Object.entries(FIXTURES))('#1195: misspelt style colours in %s', (_type, file) => {
+describe.each(Object.entries(FIXTURES))('#1195: misspelt style colours in %s', (type, file) => {
   const source = readFileSync(join(DIAGRAMS, file), 'utf8');
 
   it('draws a spelt colour, without a warning', async () => {
@@ -76,11 +86,16 @@ describe.each(Object.entries(FIXTURES))('#1195: misspelt style colours in %s', (
     expect(dropped).toEqual([]);
   });
 
-  it.each(['rebeccapurpel', '#12345'])('ignores %s, with a warning', async (colour) => {
-    const { svg, dropped } = await render(recoloured(source, colour));
-    expect(svg).not.toContain(colour);
-    expect(dropped[0]?.message).toContain(JSON.stringify(colour));
-  });
+  it.for(['rebeccapurpel', '#12345', 'rgb(redd)'])(
+    'ignores %s, with a warning',
+    async (colour, ctx) => {
+      if (colour.includes('(') && type in NO_FUNCTION)
+        ctx.skip(NO_FUNCTION[type as keyof typeof NO_FUNCTION]);
+      const { svg, dropped } = await render(recoloured(source, colour));
+      expect(svg).not.toContain(colour);
+      expect(dropped[0]?.message).toContain(JSON.stringify(colour));
+    }
+  );
 });
 
 describe('#1195: a misspelt `color` of a classDef', () => {
@@ -130,7 +145,7 @@ const AUTHOR_FIXTURES = {
 
 describe.each(Object.entries(AUTHOR_FIXTURES))(
   'D690: misspelt colours in %s',
-  (_, [file, code]) => {
+  (name, [file, code]) => {
     const source = readFileSync(join(DIAGRAMS, file), 'utf8');
     /** `source` with every quoted hex colour and every `rgb()` replaced by `colour`. */
     const given = (colour: string): string =>
@@ -158,6 +173,27 @@ describe.each(Object.entries(AUTHOR_FIXTURES))(
       expect(svg).not.toContain('#12345"');
       expect(svg).not.toContain('#12345)');
       expect(warnings.some((w) => w.code === code && w.message.includes('"#12345"'))).toBe(true);
+    });
+
+    it('ignores a malformed colour function (D737)', async () => {
+      const { svg, warnings } = await render(given('rgb(redd)'));
+      expect(svg).not.toContain('rgb(redd)');
+      expect(warnings.some((w) => w.code === code && w.message.includes('"rgb(redd)"'))).toBe(true);
+    });
+
+    // Diagram text cannot hold `-` in a theme variable (v12's sanitiser), so the site config gives it.
+    it.runIf(name === 'themeVariables')('ignores a malformed color-mix() (D737)', async () => {
+      const mixed = (c: string) => `color-mix(in srgb, ${c}, blue)`;
+      const drawn = await render(source, {
+        themeVariables: { primaryColor: mixed('rebeccapurple') },
+      });
+      expect(drawn.svg).toContain(mixed('rebeccapurple'));
+      const { svg, warnings } = await render(source, {
+        themeVariables: { primaryColor: mixed('rebeccapurpel') },
+      });
+      expect(svg).not.toContain('rebeccapurpel');
+      const warned = warnings.find((w) => w.code === code);
+      expect(warned?.message).toContain(JSON.stringify(mixed('rebeccapurpel')));
     });
   }
 );
