@@ -733,6 +733,18 @@ function buildModel(
       .sort((p, q) => p.range.start - q.range.start),
   };
   if (orientation) model.orientation = orientation;
+  return withTitle(model, title, frontMatterTitle);
+}
+
+/**
+ * `model` with its title: the last in-text `title`, else the front-matter one (D218); and the
+ * texts written as a quoted markdown string (`markdownStrings`).
+ */
+function withTitle(
+  model: Mutable<XyChartModel>,
+  title: XyChartTextStatementNode | undefined,
+  frontMatterTitle: string | undefined
+): XyChartModel {
   if (title) {
     model.title = title.text;
     model.titleAst = title.id;
