@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { RoutePoint } from '@mermaid-js/core/layout';
 import { streamWriter } from '@mermaid-js/core/svg';
-import { curveKind, curveReporter, DEFAULT_CURVE, routePath, type CurveKind } from './route.ts';
+import {
+  curveKind,
+  curveReporter,
+  curveResolver,
+  DEFAULT_CURVE,
+  routePath,
+  type CurveKind,
+} from './route.ts';
 
 const down = (x: number, y: number): RoutePoint => ({ x, y, axis: 'v' });
 const side = (x: number, y: number): RoutePoint => ({ x, y, axis: 'h' });
@@ -143,5 +150,42 @@ describe('curveReporter', () => {
     curveReporter((w) => seen.push(w.message))('bogus');
     curveReporter((w) => seen.push(w.message))('bogus');
     expect(seen).toHaveLength(2);
+  });
+});
+
+describe('curveResolver (D733)', () => {
+  const quiet = (): void => undefined;
+
+  it("takes the type's own key over the global curve", () => {
+    expect(curveResolver('linear', 'rounded', quiet)('step')).toBe('step');
+  });
+
+  it('takes the first own value that is set, strongest first', () => {
+    const curve = curveResolver('linear', 'rounded', quiet);
+    expect(curve(undefined, 'stepAfter', 'step')).toBe('stepAfter');
+    expect(curve('basis', 'stepAfter')).toBe('curved');
+  });
+
+  it("takes the global curve over the type's default", () => {
+    const curve = curveResolver('linear', 'curved', quiet);
+    expect(curve(undefined)).toBe('linear');
+    expect(curve()).toBe('linear');
+  });
+
+  it("draws the type's default when nothing is set", () => {
+    expect(curveResolver(undefined, 'rounded', quiet)(undefined, undefined)).toBe('rounded');
+    expect(curveResolver(undefined, 'curved', quiet)()).toBe('curved');
+  });
+
+  it('draws an unknown name with DEFAULT_CURVE and warns CURVE_UNKNOWN once per render', () => {
+    const seen: { code: string; message: string }[] = [];
+    const curve = curveResolver('bogus', 'curved', (w) => seen.push(w));
+    expect(curve()).toBe(DEFAULT_CURVE);
+    expect(curve(undefined)).toBe(DEFAULT_CURVE);
+    expect(curve('oops')).toBe(DEFAULT_CURVE);
+    expect(curve('step')).toBe('step');
+    expect(seen.map((w) => w.code)).toEqual(['CURVE_UNKNOWN', 'CURVE_UNKNOWN']);
+    expect(seen[0]!.message).toContain('bogus');
+    expect(seen[1]!.message).toContain('oops');
   });
 });

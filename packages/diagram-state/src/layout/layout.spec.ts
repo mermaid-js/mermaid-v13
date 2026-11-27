@@ -2,6 +2,7 @@ import type { DiagramPlugin } from '@mermaid-js/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
 import {
+  cellProfile,
   layered,
   pxProfile,
   validateLayout,
@@ -9,6 +10,7 @@ import {
   type LayoutModel,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
+import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import {
@@ -18,6 +20,7 @@ import {
   type StateRenderContext,
 } from '../index.ts';
 import { state as diagramPlugin } from '../plugin.ts';
+import { STATE_CURVE } from './curve.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
 const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
@@ -41,7 +44,7 @@ function run(src: string, options: { units?: UnitProfile; config?: ConfigInput }
   let model: LayoutModel | undefined;
   const ctx: StateRenderContext = {
     config: resolveConfig(CORE_DEFAULTS, options.config),
-    measurer: tableMeasurer,
+    measurer: options.units?.id === 'cell' ? cellMeasurer : tableMeasurer,
     units: options.units ?? pxProfile,
     theme: createTheme(spec, { diagram: diagramTheme }),
     warn: () => {},
@@ -180,10 +183,178 @@ describe('state graph builder', () => {
     expect(view.h).toBeGreaterThan(view.label.height + view.rows.height);
   });
 
+  describe('a described state breaks only at a written \\n (D731, #1214)', () => {
+    const long = 'Waiting for payment confirmation';
+    const row = 'retries every minute until the bank answers';
+    const src = `stateDiagram-v2\n  state "${long}" as W\n  W : ${row}\n  W : second row\n`;
+    const text = (lines: { text: string }[][]) => lines.map((l) => l.map((r) => r.text).join(''));
+    const described = (source: string, units: UnitProfile) => {
+      const view = run(source, { units }).layout.state.views.get('W');
+      if (!view || !('rows' in view) || !view.rows) throw new Error('not described');
+      return { label: view.label, rows: view.rows };
+    };
+
+    it.each([
+      ['px', pxProfile],
+      ['cells', cellProfile()],
+    ])('keeps the title and each row on one line in %s', (_name, units) => {
+      const view = described(src, units);
+      expect(text(view.label.lines)).toEqual([long]);
+      expect(text(view.rows.lines)).toEqual([row, 'second row']);
+    });
+
+    it.each([
+      ['px', pxProfile],
+      ['cells', cellProfile()],
+    ])('still breaks at a written \\n in %s', (_name, units) => {
+      const view = described(
+        'stateDiagram-v2\n  state "first\\nsecond" as W\n  W : row one\\nrow two\n  W : row three\n',
+        units
+      );
+      expect(text(view.label.lines)).toEqual(['first', 'second']);
+      expect(text(view.rows.lines)).toEqual(['row one', 'row two', 'row three']);
+    });
+
+    it('keeps wrapping a state with one description', () => {
+      const view = run(`stateDiagram-v2\n  W : ${long} ${row}\n`).layout.state.views.get('W');
+      expect(view && 'label' in view ? view.label.lines.length : 0).toBeGreaterThan(1);
+    });
+  });
+
+  describe('the room below a composite title equals its other padding (D732, #1301, #1307)', () => {
+    // The renderer draws the title strip's line `titlePad / 4` (4 px) below the title.
+    const strip = (layout: CompleteStateLayout, id: string): number =>
+      layout.groups.get(id)!.title.y + layout.state.views.get(id)!.label.height / 2 + 4;
+    const box = (layout: CompleteStateLayout, id: string) => {
+      const b = layout.nodes.get(id) ?? layout.groups.get(id)!;
+      return {
+        top: b.y - b.height / 2,
+        bottom: b.y + b.height / 2,
+        left: b.x - b.width / 2,
+        right: b.x + b.width / 2,
+      };
+    };
+    /** The gaps between frame `id` (with `line` as its top) and its nearest children. */
+    const gaps = (
+      graph: LayoutGraph,
+      layout: CompleteStateLayout,
+      id: string,
+      line = strip(layout, id)
+    ) => {
+      const kids = [...graph.nodes, ...graph.groups]
+        .filter((n) => n.parent === id)
+        .map((n) => box(layout, n.id));
+      const frame = box(layout, id);
+      return {
+        top: Math.min(...kids.map((k) => k.top)) - line,
+        left: Math.min(...kids.map((k) => k.left)) - frame.left,
+        right: frame.right - Math.max(...kids.map((k) => k.right)),
+        bottom: frame.bottom - Math.max(...kids.map((k) => k.bottom)),
+      };
+    };
+    const even = { top: 20, left: 20, right: 20, bottom: 20 };
+    const near = (g: Record<string, number>) =>
+      Object.fromEntries(Object.entries(g).map(([k, v]) => [k, Math.round(v)]));
+
+    it('keeps 20 px below the strip of a composite holding one state (#1301)', () => {
+      const { graph, layout } = run('stateDiagram\n  state Parent {\n  C\n  }\n');
+      expect(near(gaps(graph, layout, 'Parent'))).toEqual(even);
+    });
+
+    it('keeps 20 px between the strip and a start dot (#1307)', () => {
+      const { graph, layout } = run(
+        'stateDiagram-v2\n  Idle --> Ringing : press\n  state "Ringing" as Ringing {\n    [*] --> Loud\n    Loud : loud\n  }\n'
+      );
+      expect(near(gaps(graph, layout, 'Ringing'))).toEqual(even);
+    });
+
+    it('keeps the title 8 px below the top of the frame', () => {
+      const { layout } = run('stateDiagram\n  state Parent {\n  C\n  }\n');
+      const title = layout.groups.get('Parent')!.title.y;
+      const label = layout.state.views.get('Parent')!.label.height;
+      expect(title - label / 2 - box(layout, 'Parent').top).toBeCloseTo(8);
+    });
+
+    it('keeps the room even at every nesting level', () => {
+      const { graph, layout } = run(
+        'stateDiagram-v2\n  state Outer {\n    [*] --> Mid\n    state Mid {\n      [*] --> Inner\n      state Inner {\n        [*] --> X\n        X --> Y\n      }\n    }\n  }\n'
+      );
+      for (const id of ['Outer', 'Mid', 'Inner'])
+        expect(near(gaps(graph, layout, id)), id).toEqual(even);
+    });
+
+    it('starts the regions and their dividers at the strip line', () => {
+      const { graph, layout } = run(
+        'stateDiagram-v2\n  state Conc {\n    [*] --> A\n    --\n    [*] --> B\n  }\n'
+      );
+      const line = strip(layout, 'Conc');
+      for (const r of ['Conc:region1', 'Conc:region2']) {
+        expect(box(layout, r).top).toBeCloseTo(line);
+        expect(near(gaps(graph, layout, r, line)), r).toEqual(even);
+      }
+      expect(layout.dividers).toHaveLength(1);
+      expect(layout.dividers[0]!.y1).toBeCloseTo(line);
+      expect(layout.dividers[0]!.y2).toBeCloseTo(box(layout, 'Conc').bottom);
+    });
+
+    it('leaves the cell layout as it was: the title on the border row, no strip', () => {
+      const { graph } = run('stateDiagram\n  state Parent {\n  C\n  }\n', { units: cellProfile() });
+      expect(group(graph, 'Parent')!.padding).toEqual({ top: 0, right: 1, bottom: 1, left: 1 });
+    });
+  });
+
   it('takes spacing from state config in px', () => {
     const { graph } = run('stateDiagram-v2\n  A --> B\n', {
       config: { state: { nodeSpacing: 80, rankSpacing: 90 } },
     });
     expect(graph.spacing).toMatchObject({ node: 80, rank: 90 });
+  });
+});
+
+describe('state graph builder: edge routing follows the curve (D733, #1324, #1325)', () => {
+  const src = 'stateDiagram-v2\n  [*] --> A\n  A --> B\n  A --> C\n  B --> D\n  C --> D\n';
+  const routing = (config?: ConfigInput, units?: UnitProfile) =>
+    run(src, { config, units }).graph.routing;
+
+  it('keeps the curved default when no curve is set', () => {
+    expect(routing()).toBe('curved');
+    expect(STATE_CURVE).toBe('curved');
+  });
+
+  it.each([
+    ['linear', 'straight'],
+    ['step', 'stepped'],
+    ['stepBefore', 'stepped'],
+    ['stepAfter', 'stepped'],
+    ['rounded', 'stepped'],
+    ['basis', 'curved'],
+    ['cardinal', 'curved'],
+  ] as const)('routes state.curve %s as %s', (curve, expected) => {
+    expect(routing({ state: { curve } })).toBe(expected);
+  });
+
+  it('takes the global curve when state.curve is unset', () => {
+    expect(routing({ curve: 'linear' })).toBe('straight');
+  });
+
+  it('takes state.curve over the global curve', () => {
+    expect(routing({ curve: 'linear', state: { curve: 'step' } })).toBe('stepped');
+    expect(routing({ curve: 'step', state: { curve: 'basis' } })).toBe('curved');
+  });
+
+  it('does not read flowchart.curve', () => {
+    expect(routing({ flowchart: { curve: 'linear' } })).toBe('curved');
+    expect(routing({ curve: 'step', flowchart: { curve: 'linear' } })).toBe('stepped');
+  });
+
+  it('puts the resolved kind on the prepared state for the renderer', () => {
+    expect(run(src).layout.state.curve).toBe('curved');
+    expect(run(src, { config: { state: { curve: 'step' } } }).layout.state.curve).toBe('step');
+    expect(run(src, { config: { curve: 'linear' } }).layout.state.curve).toBe('linear');
+  });
+
+  it('stays stepped on the grid, whatever the curve', () => {
+    expect(routing({ state: { curve: 'linear' } }, cellProfile())).toBe('stepped');
+    expect(routing({ curve: 'basis' }, cellProfile())).toBe('stepped');
   });
 });

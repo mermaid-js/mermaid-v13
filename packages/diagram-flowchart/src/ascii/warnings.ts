@@ -7,7 +7,7 @@ import type { FlowModel } from '../parser/index.ts';
 import type { FlowWarning } from '../render/context.ts';
 import type { NodeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
-import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
+import { FLOWCHART_CURVE } from '../render/curve.ts';
 import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
 import { addsEmphasis } from '@mermaid-js/shared/svg/graph';
 import type {
@@ -37,8 +37,6 @@ export interface AsciiShapeWarning extends FlowWarning {
 export type { AsciiRouteWarning };
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiShapeWarning | AsciiRouteWarning;
-
-const DEFAULT_CURVE = flowchartConfigDefaults.curve;
 
 const WHAT: Record<AsciiDroppedFeature, string> = {
   style: 'colours and styles (style, classDef, linkStyle)',
@@ -88,7 +86,7 @@ function features(model: FlowModel, flow: Prepared, curve: string | undefined): 
     if ((e.edge.interpolate ?? model.defaultInterpolate) !== undefined) add('curve', e.edge.ast);
   }
   // A curve set in config (site, front matter or directive) draws every edge with it in SVG.
-  if (curve !== undefined && curve !== DEFAULT_CURVE) add('curve');
+  if (curve !== undefined && curve !== FLOWCHART_CURVE) add('curve');
   for (const v of model.vertices) if (v.link) add('link', astOf.get(v.id) ?? v.ast);
   for (const [id] of model.tooltips) add('link', astOf.get(id));
   for (const c of model.callbacks) add('link', astOf.get(c.id));
