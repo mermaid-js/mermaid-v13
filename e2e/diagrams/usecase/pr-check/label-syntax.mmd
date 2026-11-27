@@ -5,6 +5,8 @@ description: >-
   markdown markers, a quoted markdown string, bare backticks, a code span in
   plain text, tags and a written backslash-n (D735, spec #1368). Only the
   markdown string draws markdown; tags and the written break draw everywhere.
+  Boundary titles stay on one line (no <br>, no written backslash-n): the text
+  output draws a frame title on the frame's top border, one row high.
 ---
 usecase-beta
   direction LR
@@ -44,7 +46,7 @@ usecase-beta
   A4 --> S4
   note for U4 "note a `code` b"
 
-  systemBoundary B5["boundary <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+  systemBoundary B5["boundary <b>bold</b> <i>ital</i> H<sub>2</sub>O"]
     actor A5("actor <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O")
     U5("usecase <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O")
     S5[square <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
@@ -53,7 +55,7 @@ usecase-beta
   A5 --> S5
   note for U5 "note <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
 
-  systemBoundary B6["boundary one\ntwo"]
+  systemBoundary B6["boundary six"]
     actor A6("actor one\ntwo")
     U6("usecase one\ntwo")
     S6[square one\ntwo]

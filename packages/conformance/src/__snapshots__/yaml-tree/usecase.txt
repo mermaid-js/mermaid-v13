@@ -46,7 +46,7 @@ e2e/diagrams/usecase/nightly-check/themed-elements-redux-color-theme.mmd 5 1987b
 e2e/diagrams/usecase/nightly-check/themed-elements-redux-dark-color-theme.mmd 5 7bd35e29ac189cbc
 e2e/diagrams/usecase/pr-check/complete-hand-drawn-rendering-contract.mmd 10 72b02784ecb39704
 e2e/diagrams/usecase/pr-check/empty-diagram.mmd 1 cfc18eb8ce476aa9
-e2e/diagrams/usecase/pr-check/label-syntax.mmd 1 bcd3aea6db42185f
+e2e/diagrams/usecase/pr-check/label-syntax.mmd 1 5493f98c408c2346
 e2e/diagrams/usecase/pr-check/palette-rotation-redux-color-theme.mmd 5 77657787df04efa3
 e2e/diagrams/usecase/pr-check/palette-rotation-redux-dark-color-theme.mmd 5 9fc2c5d60031a0c1
 e2e/diagrams/usecase/pr-check/small-representative-visual-snapshot.mmd 10 6647e85bdbb271f6

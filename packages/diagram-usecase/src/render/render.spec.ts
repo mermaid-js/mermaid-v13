@@ -420,7 +420,7 @@ describe('accessible names (v12 usecaseRenderer.spec.ts)', () => {
     const name = (id: string) => elements(svg, 'g').find((e) => e['data-id'] === id)!['aria-label'];
     expect(name('A5')).toBe('actor actor bold ital\nnext H2O');
     expect(name('U5')).toBe('use case usecase bold ital\nnext H2O');
-    expect(name('B5')).toBe('rect system boundary boundary bold ital\nnext H2O');
+    expect(name('B5')).toBe('rect system boundary boundary bold ital H2O');
     expect(name('note-4')).toBe('Note for usecase bold ital\nnext H2O: note bold ital\nnext H2O');
     expect(name('note-5')).toBe('Note for usecase one\ntwo: note one\ntwo');
     expect(name('U2')).toBe('use case usecase bold ital');
