@@ -2600,10 +2600,11 @@ $defs:
           status: honoured
           since: 13.0.0
           reason: >-
-            Labels wrap at it in every shape (D287); v12 wrapped square, rounded and hexagon
-            nodes at `flowchart.wrappingWidth` instead (both 200 by default). Numeric strings are
-            read as numbers; anything else, or a value of 0 or less, lays out with 200 and warns
-            `MINDMAP_CONFIG_IGNORED`.
+            With it unset, square, rounded and hexagon labels wrap at 120 (v12's
+            `flowchart.wrappingWidth` default) and other shapes at 200 (D744); a value the author
+            sets wraps every shape (D287), and a value of exactly 200 counts as unset. Numeric
+            strings are read as numbers; anything else, or a value of 0 or less, lays out with 200
+            and warns `MINDMAP_CONFIG_IGNORED`.
       layoutAlgorithm:
         description: Layout algorithm to use for positioning mindmap nodes
         type: string
