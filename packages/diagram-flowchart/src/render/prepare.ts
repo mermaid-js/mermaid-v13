@@ -268,28 +268,29 @@ function nodeViews(
   }
   // Under the swimlane engine a top-level subgraph is a lane (`ctx.layoutPart`, render.ts).
   const lanes = typeof m.ctx.layoutPart === 'function';
-  for (const view of groups) {
-    const [f, bits] = textStyle(view.style, m.font);
-    const sg = subgraphs.get(view.id)!;
-    view.label =
-      lanes && view.parent === undefined
-        ? laneTitle(sg, f, bits, m)
-        : m.label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
-  }
+  for (const view of groups) view.label = groupTitle(view, subgraphs.get(view.id)!, lanes, m);
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
 }
 
 /**
- * A lane title keeps its own reading until spec #1368 T14 moves it to the label handler: a
- * markdown string with or without quotes (D710). The parser strips only the quoted form's
- * wrapper, so the bare form is read here.
+ * A group's title, measured. A subgraph title is read by the label handler, as every other
+ * flowchart label. A lane title keeps its own reading until spec #1368 T14 moves it: a markdown
+ * string with or without quotes (D710). The parser strips only the quoted form's wrapper, so
+ * the bare form is read here.
  */
-function laneTitle(sg: FlowModelSubgraph, f: FontKey, bits: number, m: Measure): MeasuredLabel {
-  const { text, markup } =
-    sg.labelType === 'markdown'
-      ? { text: sg.title, markup: 'markdown' as const }
-      : markdownString(sg.title);
+function groupTitle(
+  view: NodeView,
+  sg: FlowModelSubgraph,
+  lanes: boolean,
+  m: Measure
+): MeasuredLabel {
+  const [f, bits] = textStyle(view.style, m.font);
+  const md = sg.labelType === 'markdown';
+  if (!lanes || view.parent !== undefined) return m.label(sg.title, md, f, Infinity, bits);
+  const { text, markup } = md
+    ? { text: sg.title, markup: 'markdown' as const }
+    : markdownString(sg.title);
   const { measurer, inline } = m.ctx;
   return layoutLabel(text, f, Infinity, measurer, { markup, style: bits, inline });
 }
