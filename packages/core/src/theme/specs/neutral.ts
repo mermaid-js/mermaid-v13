@@ -38,8 +38,7 @@ const theme: ThemeSpec = {
     // colour moves them (#773, #798): the node fill, the borders, the inverted text inks, and
     // the error colours, which darkMode leaves alone.
     mainBkg: '#eeeeee',
-    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
-    bandBkg: '#eeeeee',
+    // v12's constructor line colour (`guideLineColor` in vocabulary.ts).
     guideLineColor: '#666666',
     border1: '#999999',
     primaryBorderColor: '#d4d4d4',
@@ -93,12 +92,10 @@ const theme: ThemeSpec = {
       '#777777',
     ],
     cScaleInv: INVERTED_SCALE,
-    // v12 theme-neutral.js: series colour `i` is `cScale<i>`, the twelfth `cScale0`; then the
-    // tints, which v12 recomputes from the base colours (`SERIES_TINTS`, D656).
-    seriesColorArray: series(
-      '#f4f4f4 #555555 #bbbbbb #777777 #999999 #dddddd #ffffff #dddddd #bbbbbb #999999 #777777 #555555 ' +
-        SERIES_TINTS
-    ),
+    // v12 theme-neutral.js: series colour `i` is `cScale<i>`, the twelfth `cScale0`. They read
+    // `cScale`, so they follow an author's override (D334). Then the tints, which v12
+    // recomputes from the base colours (`SERIES_TINTS`, D656).
+    seriesColorArray: [...paletteSlots((i) => `cScale${(i + 1) % 12}`), ...series(SERIES_TINTS)],
     // v12 sets labelTextColor to its own text colour (#333) before the labels.
     cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : 'scaleLabelColor')),
     // v12 theme-neutral.js: pie1 darkened by 25, then pie2–pie8; labels 1 and 3 white, the

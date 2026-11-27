@@ -391,6 +391,24 @@ describe('diagram text is sanitised as in v12', () => {
     expect(warnings[0]?.message).toMatch(/themeCSS.*removed.*themeVariables/);
   });
 
+  it('warns that journey.sectionFills was removed and names fillType0 to fillType7 (#1293, D708)', () => {
+    const { config, warnings } = resolve({
+      frontMatter: { journey: { sectionFills: ['#ff0000', '#00ff00'] } },
+    });
+    expect(codes(warnings)).toEqual(['CONFIG_REMOVED_KEY journey.sectionFills']);
+    expect(warnings[0]?.message).toMatch(/journey\.sectionFills.*removed.*fillType<n>.*0 to 7/);
+    expect(config.journey ?? {}).not.toHaveProperty('sectionFills');
+  });
+
+  it('warns that timeline.sectionFills was removed and names the cScale palettes (#1293, D708)', () => {
+    const { config, warnings } = resolve({
+      frontMatter: { timeline: { sectionFills: ['#ff0000', '#00ff00'] } },
+    });
+    expect(codes(warnings)).toEqual(['CONFIG_REMOVED_KEY timeline.sectionFills']);
+    expect(warnings[0]?.message).toMatch(/timeline\.sectionFills.*removed.*cScale/);
+    expect(config.timeline ?? {}).not.toHaveProperty('sectionFills');
+  });
+
   it('blanks theme variables outside the v12 character set', () => {
     const { config } = resolve({
       directives: [{ themeVariables: { primaryColor: '#fff', lineColor: 'red; x: url(evil)' } }],

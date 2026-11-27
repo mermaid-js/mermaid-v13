@@ -298,13 +298,8 @@ describe('createTheme: the named classic themes pin v12 constructor values (#798
     ['canvasNodeBkg', 'mainBkg', 'forest', null],
     ['canvasNodeBkg', 'mainBkg', 'neutral', null],
     ['canvasNodeBkg', 'mainBkg', 'base', null],
-    // The band and guide inputs (D656, #1041): v12's named classic themes keep their gantt
-    // section band and outline/marker colours under every override, so all four pin them.
-    ['bandBkg', 'tertiaryColor', 'default', '#f9ffec'],
-    ['bandBkg', 'tertiaryColor', 'dark', '#201f1f'],
-    ['bandBkg', 'tertiaryColor', 'forest', '#e1efc0'],
-    ['bandBkg', 'tertiaryColor', 'neutral', '#eeeeee'],
-    ['bandBkg', 'tertiaryColor', 'base', null],
+    // The guide input (D656, #1041): v12's named classic themes keep their gantt
+    // outline/marker colour under every override, so all four pin it.
     ['guideLineColor', 'lineColor', 'default', '#333333'],
     ['guideLineColor', 'lineColor', 'dark', '#d3d3d3'],
     ['guideLineColor', 'lineColor', 'forest', '#000000'],
@@ -372,7 +367,7 @@ describe('createTheme: shape tokens (R-THEME-11)', () => {
   });
 });
 
-describe('createTheme: opacity (D221)', () => {
+describe('createTheme: opacity (D221, D707)', () => {
   // A diagram's opacity variable, 0.7 in the classic family (as pie's slices, #325).
   const OPACITY: DiagramThemeTable = {
     vars: { sliceOpacity: { alias: 'so', kind: 'opacity' } },
@@ -396,6 +391,16 @@ describe('createTheme: opacity (D221)', () => {
       [1, 1],
       [' 0.5 ', 0.5],
       ['1.0', 1],
+      // D707: a percentage from 0% to 100%, as CSS takes it, read as N/100.
+      ['50%', 0.5],
+      ['0%', 0],
+      ['100%', 1],
+      [' 33.5% ', 0.335],
+      ['7%', 0.07],
+      // Kept to 6 decimals: no float noise, no exponent.
+      ['14.3%', 0.143],
+      ['0.00001%', 0],
+      ['0.0001%', 0.000001],
     ] as const) {
       const t = createTheme(base, { diagram: OPACITY, themeVariables: { sliceOpacity: given } });
       expect(t.number('sliceOpacity'), String(given)).toBe(read);
@@ -403,7 +408,24 @@ describe('createTheme: opacity (D221)', () => {
   });
 
   it('drops anything else with a warning and keeps the theme value', () => {
-    for (const given of [1.5, -0.1, '70%', '1.01', '0.5px', '.5', 'abc', 'var(--x)', NaN, true]) {
+    for (const given of [
+      1.5,
+      -0.1,
+      '1.01',
+      '0.5px',
+      '.5',
+      'abc',
+      'var(--x)',
+      NaN,
+      true,
+      '150%',
+      '100.5%',
+      '-1%',
+      '50 %',
+      '%',
+      '.5%',
+      '50%%',
+    ]) {
       const warnings: ThemeWarning[] = [];
       const t = createTheme(base, {
         diagram: OPACITY,
@@ -523,5 +545,32 @@ describe('createTheme: extra rules (config fragments, D153)', () => {
       themeVariables: { fixtureInk: '#ff0000' },
     });
     expect(set.value('fixtureInk')).toBe('#ff0000');
+  });
+});
+
+describe('createTheme: series colours follow cScale overrides (#1202, D334)', () => {
+  // v12: redux-color and redux-dark-color `pie<i+1> ||= cScale<i>`; dark and neutral
+  // `pie<i> = cScale<i>`, the twelfth `cScale0` (D228).
+  const OFFSETS: readonly [ThemeName, number][] = [
+    ['redux-color', 0],
+    ['redux-dark-color', 0],
+    ['dark', 1],
+    ['neutral', 1],
+  ];
+  const series = (t: ReturnType<typeof createTheme>) => t.palette('seriesColorArray').slice(0, 12);
+  const scale = (t: ReturnType<typeof createTheme>, offset: number) =>
+    Array.from({ length: 12 }, (_, i) => t.palette('cScale')[(i + offset) % 12]);
+
+  it.each(OFFSETS)('%s: series slots 0-11 are cScale shifted by %i', async (name, offset) => {
+    const t = createTheme(await loadTheme(name), { cssVariables: false });
+    expect(series(t)).toEqual(scale(t, offset));
+  });
+
+  it.each(OFFSETS)('%s: a cScale1 override moves its series slot', async (name, offset) => {
+    const spec = await loadTheme(name);
+    const plain = series(createTheme(spec, { cssVariables: false }));
+    const t = createTheme(spec, { cssVariables: false, themeVariables: { cScale1: '#ff0000' } });
+    const slot = (1 - offset + 12) % 12;
+    expect(series(t)).toEqual(plain.map((c, i) => (i === slot ? '#ff0000' : c)));
   });
 });

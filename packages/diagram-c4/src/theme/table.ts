@@ -48,9 +48,11 @@ const ELEMENT_DARK = {
  * v12 C4 is "fixed style": its relations and boundaries are `#444444` literals
  * (`svgDraw.ts:30-31, 141-142, 167-205`), its title takes the page's `textColor` (the root
  * `fill` of v12's style sheet), and its element palette is config. The light rules are those
- * values, so light themes draw what v12 drew; under a dark theme or `darkMode` (the `dark`
- * trait, never a theme name) relations take `lineColor` and boundaries `nodeBorder`, which v12
- * left dark on dark (D333(b)). The title's `textColor` is already the page's ink in both.
+ * values for boundaries, so light themes draw what v12 drew; under a dark theme or `darkMode`
+ * (the `dark` trait, never a theme name) boundaries take `nodeBorder`, which v12 left dark on
+ * dark (D333(b)). Relations take the page's `textColor` in every theme (D714), and a relation
+ * label's tag the edge-label variables (D713, D715). The title's `textColor` is already the
+ * page's ink in both.
  * Every family takes the same rules: v12 C4 has no theme-name branch, gradient or shadow (D227).
  * The element rows are c4-beta's alone; legacy C4 keeps its config palette (D456).
  */
@@ -58,13 +60,18 @@ export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   rules: {
     light: {
-      c4RelationColor: '#444444',
+      c4RelationColor: 'textColor',
       c4BoundaryColor: '#444444',
       c4TitleColor: 'textColor',
+      // A relation label's tag (#1351, D713, D714, D715): filled with the shared
+      // edgeLabelBackground unless C4 sets its own, inked with textColor where it reads there,
+      // else black or white.
+      c4EdgeLabelBackground: 'edgeLabelBackground',
+      c4EdgeLabelColor:
+        'contrast(c4EdgeLabelBackground, textColor, contrast(c4EdgeLabelBackground, #000000, #ffffff))',
       ...ELEMENT_LIGHT,
     },
     dark: {
-      c4RelationColor: 'lineColor',
       c4BoundaryColor: 'nodeBorder',
       c4TitleColor: 'textColor',
       ...ELEMENT_DARK,

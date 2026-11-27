@@ -3,6 +3,7 @@ import {
   checkColor,
   checkCssColor,
   checkStyle,
+  joinStyle,
   px,
   streamWriter,
   styleText,
@@ -222,6 +223,61 @@ describe('checkStyle', () => {
   it('keeps fonts with non-ASCII names and quoted families', () => {
     expect(checkStyle(['font-family:"Trebuchet MS", 微软雅黑, sans-serif']).text).toEqual({
       'font-family': '"Trebuchet MS", 微软雅黑, sans-serif',
+    });
+  });
+
+  describe('a comma inside a value (D706)', () => {
+    it('joins the pieces of a function the parser split on its commas', () => {
+      const { warnings, warn } = collect();
+      // As the state parser splits `fill:rgb(255, 200, 200),stroke:hsl(0, 50%, 40%)`.
+      expect(
+        checkStyle(['fill:rgb(255', '200', '200)', 'stroke:hsl(0', ' 50%', ' 40%)'], warn).shape
+      ).toEqual({ fill: 'rgb(255, 200, 200)', stroke: 'hsl(0, 50%, 40%)' });
+      expect(warnings).toEqual([]);
+    });
+
+    it('gives the same value whether or not the parser trimmed the pieces', () => {
+      expect(checkStyle(['fill:rgb(255', ' 200', ' 200)'])).toEqual(
+        checkStyle(['fill:rgb(255', '200', '200)'])
+      );
+    });
+
+    it('keeps the whole font-family list', () => {
+      const { warnings, warn } = collect();
+      expect(
+        checkStyle(['font-family:Georgia', ' "Times New Roman"', 'serif', 'color:red'], warn).text
+      ).toEqual({ 'font-family': 'Georgia, "Times New Roman", serif', fill: 'red' });
+      expect(warnings).toEqual([]);
+    });
+
+    it('still drops a piece with no colon that follows neither', () => {
+      for (const decls of [['fill:red', 'blue'], ['stroke-dasharray:5', '5'], ['blue']]) {
+        const { warnings, warn } = collect();
+        checkStyle(decls, warn);
+        expect(
+          warnings.map((w) => w.code),
+          decls.join(',')
+        ).toEqual(['STYLE_PROPERTY_DROPPED']);
+      }
+    });
+
+    it('joinStyle joins one statement; checkStyle with joined pieces joins nothing more', () => {
+      expect(joinStyle(['font-family:Georgia', ' serif', 'fill:rgb(1', '2', '3)'])).toEqual([
+        'font-family:Georgia, serif',
+        'fill:rgb(1, 2, 3)',
+      ]);
+      const { warnings, warn } = collect();
+      expect(checkStyle(['font-family:Georgia', 'bold'], warn, true).text).toEqual({
+        'font-family': 'Georgia',
+      });
+      expect(warnings.map((w) => w.code)).toEqual(['STYLE_PROPERTY_DROPPED']);
+    });
+
+    it('stops joining once the parentheses are closed', () => {
+      expect(checkStyle(['fill:rgb(1', '2', '3)', 'stroke:red']).shape).toEqual({
+        fill: 'rgb(1, 2, 3)',
+        stroke: 'red',
+      });
     });
   });
 

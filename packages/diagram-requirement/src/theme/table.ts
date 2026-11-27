@@ -3,9 +3,11 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
 /**
  * Requirement's theme table (`DiagramPlugin.theme`, D331, spec #520 T4). The rules are what
- * mermaid\@12.2.0 draws (D435): the box fill `mainBkg`, its outline `nodeBorder`, its text and
- * the relation label ink `nodeTextColor` where the theme writes one, else `textColor` (v12
- * `.label text, span`: `nodeTextColor || textColor`; equal to v12 in all eleven themes),
+ * mermaid\@12.2.0 draws (D435): the box fill `mainBkg`, its outline `nodeBorder`, its text
+ * `nodeTextColor` where the theme writes one, else `textColor` (v12 `.label text, span`:
+ * `nodeTextColor || textColor`; equal to v12 in all eleven themes), the relation label ink
+ * `textColor` where it reads on the tag, else black or white (D713; v12 drew `nodeTextColor`,
+ * #e0dfdf rather than #cccccc in redux-dark, redux-dark-color and neo-dark),
  * the lines and markers `canvasLineColor` (the theme's `lineColor`, which `default` and `dark`
  * keep under an override as v12's lines do, D656), the label tag `edgeLabelBackground` where the
  * theme has no `linkLabelBkg` (v12 `.labelBkg`).
@@ -28,9 +30,16 @@ export const theme: DiagramThemeTable = {
       requirementBorderColor: 'nodeBorder',
       requirementBorderSize: 'strokeWidth',
       requirementTextColor: 'inline(nodeTextColor, textColor)',
-      relationLabelBackground: 'inline(linkLabelBkg, edgeLabelBackground)',
+      // The tag (D715): the diagram-level fill and ink, read through v12's names, so an
+      // author's relationLabel* wins and the ink is contrasted with the fill actually drawn.
+      requirementEdgeLabelBackground: 'inline(linkLabelBkg, edgeLabelBackground)',
+      relationLabelBackground: 'requirementEdgeLabelBackground',
+      // The ink (#1322, D713): textColor where it meets AA on the tag, else black or white,
+      // whichever reads better (as `Theme.ink`, R-THEME-12).
+      requirementEdgeLabelColor:
+        'contrast(relationLabelBackground, textColor, contrast(relationLabelBackground, #000000, #ffffff))',
+      relationLabelColor: 'requirementEdgeLabelColor',
       relationColor: 'canvasLineColor',
-      relationLabelColor: 'inline(nodeTextColor, textColor)',
       relationStrokeWidth: 'strokeWidth',
       relationArrowScale: '1',
     },

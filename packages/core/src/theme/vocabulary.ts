@@ -13,10 +13,11 @@
  * the diagram's own `padding` config (`padding`, `2 * padding`), resolved at render time
  * because the classic themes follow `flowchart.padding` (D152). A `flag` is `true` or `false`,
  * read literally at render time like geometry, so it has no CSS variable (D182). An `opacity` is
- * a number from 0 to 1, read with `Theme.number` like geometry, so it has no CSS variable either
- * (D221). A `palette` is a diagram table's list of colours, set as palettes are (an array or a
- * comma-separated string) and read with `Theme.palette` as literal colours, so it has no CSS
- * variable either; its rule names the shared palette it reads (`PALETTE_VARIABLES`, D545).
+ * a number from 0 to 1, or a percentage from 0% to 100% kept as N/100 (D707), read with
+ * `Theme.number` like geometry, so it has no CSS variable either (D221). A `palette` is a
+ * diagram table's list of colours, set as palettes are (an array or a comma-separated string)
+ * and read with `Theme.palette` as literal colours, so it has no CSS variable either; its rule
+ * names the shared palette it reads (`PALETTE_VARIABLES`, D545).
  */
 export type ThemeVarKind =
   | 'color'
@@ -436,12 +437,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // `default` pins (D656, #1035). The second item fill is `badgeBkg`, which has that shape.
   canvasItemBkg3: def('cv3', 'color', ['sequence']),
   canvasNodeBkg: def('cvn', 'color', ['state']),
-  // The band behind a chart's rows and the lines that guide the eye over it (a marker, an
-  // outline): gantt's section band, its active outline and its `vert` marker. v12's named
-  // classic themes keep them at their constructor tertiary and line colours under every override,
-  // so `default`, `dark`, `forest` and `neutral` pin them in `values` (D656, #1041); `base`
-  // derives them. v13 names; v12 has none.
-  bandBkg: def('bnb', 'color', ['gantt']),
+  // The lines that guide the eye over a chart's rows (a marker, an outline): gantt's active
+  // outline and its `vert` marker. v12's named classic themes keep them at their constructor
+  // line colour under every override, so `default`, `dark`, `forest` and `neutral` pin them in
+  // `values` (D656, #1041); `base` derives them. v13 names; v12 has none.
   guideLineColor: def('gdl', 'color', ['gantt']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.

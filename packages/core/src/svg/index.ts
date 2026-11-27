@@ -65,6 +65,7 @@ export {
   checkFilter,
   checkLength,
   checkStyle,
+  joinStyle,
   px,
   styleScope,
   styleText,

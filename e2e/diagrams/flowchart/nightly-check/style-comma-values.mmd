@@ -1,0 +1,11 @@
+---
+description: >-
+  A comma inside a style value (#1312, D706): a font-family list is kept whole. Flowchart's
+  style syntax takes no parentheses (as v12), so it has no rgb() case. v12 dropped the names
+  after the first comma.
+---
+flowchart LR
+  A --> B --> C
+  style A fill:#fcc,font-family:Georgia, Times New Roman, serif
+  classDef serif font-family:Courier New, monospace
+  class C serif

@@ -8,6 +8,10 @@ import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   // v12 `classText`: every text of a class diagram but notes and namespace titles.
   classText: { alias: 'ct', kind: 'color', usedBy: ['class'] },
+  // A relation label's tag (#1327): its fill (edgeLabelBackground unless set, D715) and its ink
+  // (textColor where it reads on the fill, D713).
+  classEdgeLabelBackground: { alias: 'ceb', kind: 'color', usedBy: ['class'] },
+  classEdgeLabelColor: { alias: 'cel', kind: 'color', usedBy: ['class'] },
   // Relationship marker geometry (D152), read as numbers at render time.
   classMarkerStrokeWidth: { alias: 'cmw', kind: 'length', usedBy: ['class'] },
   classFilledMarkerStrokeWidth: { alias: 'cfw', kind: 'length', usedBy: ['class'] },

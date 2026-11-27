@@ -11,6 +11,7 @@
 
 import { er } from '@mermaid-js/diagram-er';
 import { describe } from 'vitest';
+import { describeTagVariables } from '../edge-label-tag-paint.ts';
 import { describeDiagramOverrides, keys, type ReferenceTable } from '../override-matrix.ts';
 
 /** v12 12.2.0's er colours: `capture-theme-overrides.ts er`. */
@@ -65,4 +66,8 @@ describe('er colours under one override, against v12 12.2.0 (#1037, D654)', () =
     differences: DIFFERENCES,
     responseOnly: RESPONSE_ONLY,
   });
+});
+
+describe('the ER relationship-label tag (#1347, D713, D715)', () => {
+  describeTagVariables('er', 'er-diagram', ['tags', 'tags-in-container']);
 });

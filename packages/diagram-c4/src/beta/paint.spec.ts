@@ -180,7 +180,8 @@ describe('what a style paints on a relation', () => {
     });
     const plain = relation(svg, 'b->c');
     expect(plain.stroke).not.toBe('#0a7a3d');
-    expect(plain.text).toBe(plain.stroke);
+    // The tag ink is its own variable (D714, D715); the border stays the line's.
+    expect(plain.text).toBe('var(--_c4elc)');
     expect(plain.border).toBe(plain.stroke);
   });
 

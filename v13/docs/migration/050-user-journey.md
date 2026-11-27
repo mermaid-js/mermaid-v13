@@ -15,8 +15,8 @@
 - **Section fills (D241):** sections cycle over all eight `fillType0`–`fillType7`, so an
   eighth section takes `fillType7` and a ninth `fillType0`. v12 cycled over seven (the length
   of `sectionFills`, read once at module load), so `fillType7` never showed although the redux
-  themes tune eight. `sectionFills` is ignored: v12's `fillType<n>` style rules hid it in
-  every theme anyway.
+  themes tune eight. `sectionFills` is removed and warns `CONFIG_REMOVED_KEY` (D708): v12's
+  `fillType<n>` style rules hid it in every theme anyway. Set `fillType0`–`fillType7` instead.
 - **The empty actor (D244):** a trailing comma (`Task: 5: Me,`) still adds the actor `''` to
   the model, but it is not drawn: no legend row, no dot, no colour. v12 drew a nameless row
   and dot, and as `''` sorts first it took the first colour and shifted every other actor's.
@@ -46,7 +46,9 @@
 - **Ignored**, accepted without a warning: `noteMargin`, `messageMargin`, `messageAlign`,
   `bottomMarginAdj`, `rightAngles`, `activationWidth` and `useWidth` (v12's journey renderer
   never read them), `boxMargin` (read only in a loop over an empty list), `textPlacement`
-  (every label is SVG text, D225) and `sectionFills` (D241).
+  (every label is SVG text, D225).
+- **Removed**, with a `CONFIG_REMOVED_KEY` warning: `sectionFills` (D241, D708). The theme's
+  `fillType0`–`fillType7` fill the sections.
 - **`actorColours` replaces the defaults:** an author's list is the whole palette, cycling
   from the first actor. v12 appended the author's colours after its six defaults (`#8FBC8F`,
   `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`), so they reached only the seventh

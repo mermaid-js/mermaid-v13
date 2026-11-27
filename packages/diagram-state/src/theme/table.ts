@@ -19,6 +19,12 @@ export const theme: DiagramThemeTable = {
       altBackground: 'inline(nestedBkg)',
       stateLabelColor: 'nodeTextColor',
       compositeTitleColor: 'titleColor',
+      // A transition label's tag: filled with the shared edgeLabelBackground (D628) unless state
+      // sets its own (D715), and inked with textColor where it reads there, else black or white,
+      // whichever reads better (D713, #1346).
+      stateEdgeLabelBackground: 'edgeLabelBackground',
+      stateEdgeLabelColor:
+        'contrast(stateEdgeLabelBackground, textColor, contrast(stateEdgeLabelBackground, #000000, #ffffff))',
     },
   },
   families: {

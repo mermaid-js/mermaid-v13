@@ -17,7 +17,9 @@ describe('findTables: the diagram theme tables, from the packages’ files', () 
     const types = tables.map((t) => t.type);
     expect(types).toContain('gitgraph');
     expect(types).toContain('treeView');
-    expect(types).not.toContain('flowchart');
+    // Flowchart has had a table since #1345; sankey still has none.
+    expect(types).toContain('flowchart');
+    expect(types).not.toContain('sankey');
   });
 });
 

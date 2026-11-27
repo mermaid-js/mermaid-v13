@@ -1,0 +1,11 @@
+---
+description: >-
+  A task with the id __proto__ and a click naming it: the id is reserved and
+  cannot be referenced (v12 stores ids on a plain object), so the click does
+  nothing and the chart warns that the id is reserved.
+---
+gantt
+  dateFormat YYYY-MM-DD
+  section S
+  A task :__proto__, 2024-06-01, 3d
+  click __proto__ href "https://example.com"

@@ -308,7 +308,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `journey.rightAngles` | ignored | v12's journey renderer never read it. |  |
 | `journey.activationWidth` | ignored | v12's journey renderer never read it. |  |
 | `journey.textPlacement` | ignored | Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode. |  |
-| `journey.sectionFills` | ignored | Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme. |  |
+| `journey.sectionFills` | removed | v12's theme rules hid it. | `fillType<n>`, n 0 to 7 |
 | `timeline.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the timeline renderer never did. |  |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `timeline.diagramMarginX` | ignored | v12's timeline never read it. |  |
@@ -328,7 +328,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `timeline.activationWidth` | ignored | v12's timeline never read it. |  |
 | `timeline.textPlacement` | ignored | v12's timeline never read it. |  |
 | `timeline.actorColours` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
-| `timeline.sectionFills` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionFills` | removed | v12 never read it. | `cScale<n>`, `mainBkg` or `borderColorArray` by theme |
 | `timeline.sectionColours` | ignored | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -596,6 +596,7 @@ Sequence diagrams (`sequence` section, #145):
 | A plugin's config fragment declaring a theme variable | Unchanged (colour-only, global), but when a diagram's own theme table defines the same name, the diagram's table wins in that diagram's renders | D336, D337 |
 | `themeCSS` | Removed, with a warning; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable (below WCAG AA), the text switches to black or white, whichever reads better. This holds for node labels and for subgraph titles. A `color` the author sets wins. Under `look: handDrawn` the text is still judged against the fill colour, although the hachure lets some background show through | R-THEME-12, D21, D688 |
+| A comma inside a `style`, `classDef` or `linkStyle` value: the statement was split at every comma and the pieces joined with `;`, so `fill:rgb(255, 200, 200)` lost its colour and `font-family:Georgia, serif` kept only `Georgia`, without a warning | The pieces of a value with an open parenthesis (`rgb(`, `hsl(`, `var(`) or of a `font-family` list are joined back, so the whole value is kept, in every type. Syntax is unchanged: flowchart's `style` still takes no parentheses, as in v12 | D706, #1312 |
 | `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes, `neo` and `neo-dark` carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
 | `look: handDrawn` | Drawn by the optional `@mermaid-js/plugin-hand-drawn`, whose config fragment takes `look: handDrawn` as an alias of its `handDrawn` key. Without the plugin it is ignored like any other `look`, with one `LOOK_REMOVED` warning that names the plugin. See [Hand-drawn look](#hand-drawn-look) | D7, D153, D300, D303, R-PLUG-8 |
 | Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Public theme variables. `neo` and `neo-dark` turn the gradient on (`#0042eb` to `#eb0042`, left to right); every other theme has it off, and any theme can turn it on in `themeVariables`. The SVG then carries one `<defs>` with a `<linearGradient id="<idPrefix>-gradient">`, and the outlines v12 neo strokes with the gradient take `url(#<idPrefix>-gradient)`, so two diagrams on a page never share it. The stops read `--mermaid-gradientStart` / `--mermaid-gradientStop`. See [Neo gradient](#neo-gradient) | D182, R-THEME-7 |
@@ -1360,6 +1361,7 @@ them keep working.
 | Edge label: `<g class="edgeLabel"><g class="label">…foreignObject…`, its background `edgeLabelBackground` (80% alpha in `default`) with no border | `<g class="edgeLabel" data-id>` with a tag: a `<rect rx="6">` with 8 px of room each side of the text and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set), bordered 1 px solid in the edge's stroke (a `linkStyle`, class or `style` stroke, else `lineColor`) (still 1 px and solid on thick, dotted and dashed edges), then a `<text>`; one box around a label of several lines, none for an empty one. Edges reserve the matching room (`labelPatch` 16 × 8) | Text labels; edge labels are tags (D626–D629) |
 | Collapsed subgraph: a node drawn by the cluster code | `<g class="node cluster collapsed" data-ast="s:<id>">` | It is drawn as a node with its subgraph's AST id |
 | `style`/`classDef`/`linkStyle` as a `style` attribute | Presentation attributes (`fill`, `stroke`, …) after the allow-list (R-SEC-3) | Unknown properties and unsafe values are dropped with a warning |
+| A font list in `style`/`classDef` (`font-family:Georgia, Times New Roman, serif`) split at each comma into `font-family:Georgia;Times New Roman;serif`, so only `Georgia` was kept | The whole list is kept. The statement still takes no parentheses, as in v12, so `rgb(…)` is a parse error there | D706, #1312 |
 | `click A "url"` wraps the node in `<a xlink:href>`; tooltips are an HTML hover div | `<a href>` inside the node group (only URLs that pass `securityLevel`); tooltips are an SVG `<title>`; `click … callback` draws nothing (interactions plugin) | No script in output (R-SVG-4, R-SVG-5) |
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
 | `nodeSpacing`/`rankSpacing` below the arrowhead: a subgraph level used its parent's `nodesep` and `ranksep + 25`, so frames were never drawn as tight as asked | Spacing is literal, except a rank gap is never smaller than an arrowhead plus its 6 px lead (13 px classic, 19.5 px neo), so the edge between two subgraphs stays visible | D601, #399 |
@@ -1427,14 +1429,15 @@ rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edge
 | Each relationship part had its own id scheme (the path `id_A_B_1`, the labels none) | The line, its label and its multiplicities all carry `data-id="id_A_B_1"` (v12's edge id); only the line's group carries `data-ast` | One id per relationship for hosts and `plugin-interactions` |
 | `<marker>` elements `…-aggregationEnd`, `-extensionEnd`, `-compositionEnd`, `-dependencyEnd`, `-lollipopEnd`, and their `-margin` variants under `look: neo` | Inline `<path class="marker aggregation">` (and `extension`, `composition`, `dependency`) and `<circle class="marker lollipop">`. The classic themes draw v12's classic markers, the redux themes its neo `-margin` ones (a shorter inheritance triangle, the tip gaps, 2px outlines on hollow markers and none on filled ones), through the class marker variables in [Theme geometry](#theme-geometry). Each marker is narrowed by its outline so that it stays 12px across outline included, and multiplicities stay clear of it | D35, D152 |
 | Note edge `edgeNote<k>`, dotted | `<g class="edge relation edge-thickness-normal edge-pattern-dotted" data-id="edgeNote<k>">`, no `data-ast`: the note's AST id is on its box | One `data-ast` element per AST node (R-PARSE-8) |
-| Relationship label `<g class="edgeLabel">` with HTML on `mainBkg` (`.labelBkg`; the `.edgeLabel[data-look="neo"]` rule never matched, as v12 sets `data-look` on the path only) | `<g class="edgeLabel" data-id>` with a tag: a `<rect rx="6">` with 8 px of room each side of the text and 4 px above and below, filled opaque with `background` (the theme background unless set), bordered 1 px solid in `lineColor` (still 1 px and solid on dashed relations), then a `<text>`; one box around a label of several lines, none for an empty one. The multiplicities at the ends stay plain text | Text labels; edge labels are tags (D626–D629) |
+| Relationship label `<g class="edgeLabel">` with HTML on `mainBkg` (`.labelBkg`; the `.edgeLabel[data-look="neo"]` rule never matched, as v12 sets `data-look` on the path only) | `<g class="edgeLabel" data-id>` with a tag: a `<rect rx="6">` with 8 px of room each side of the text and 4 px above and below, filled opaque with `classEdgeLabelBackground` (`edgeLabelBackground` unless set, itself the theme `background` unless set; either recolours the tags and not the canvas, `edgeLabelBackground` in every diagram type, `classEdgeLabelBackground` in class only), bordered 1 px solid in `lineColor` (still 1 px and solid on dashed relations), then a `<text>` in `classEdgeLabelColor`: `textColor` where it reads on the tag (4.5:1), else black or white, whichever reads better. v12 drew relation labels in `classText`, so in the classic themes, where `classText` is `primaryTextColor`, the label ink changes: default #131300 → #333333, dark #e0dfdf → #cccccc, forest #321b67 → #000000, neutral #111111 → #000000. One box around a label of several lines, none for an empty one. The multiplicities at the ends stay plain text | Text labels; edge labels are tags (D626–D629); readable ink on the tag (D713, D715, #1327) |
 | Multiplicities: one `<g class="edgeTerminals">` per end, HTML at 11px | One `<g class="edgeTerminals" data-id>` per relationship holding a `<text>` per end, at `classTerminalFontSize` (11px in every theme), measured at that size by the layout | Text labels |
-| Class text coloured by `classText` through the `<style>` (`.nodeLabel`, `.edgeLabel`, `.label text`) | `classText` is a theme variable and colours names, annotations, members, relationship labels, multiplicities and interface names; notes keep `noteTextColor` and namespace titles `titleColor`. On a box an author `style` fills, the text switches to black or white as in flowcharts | R-THEME-12 |
+| Class text coloured by `classText` through the `<style>` (`.nodeLabel`, `.edgeLabel`, `.label text`) | `classText` is a theme variable and colours names, annotations, members, multiplicities and interface names; relationship labels sit on a tag and take `classEdgeLabelColor` (above); notes keep `noteTextColor` and namespace titles `titleColor`. On a box an author `style` fills, the text switches to black or white as in flowcharts | R-THEME-12 |
 | Note: `<g class="node …">` with the rough.js note shape | `<g class="node note" data-id="note0" data-ast="note:k">` with `<rect class="outer-path">` (`noteBkgColor`, `noteBorderColor`) and the text, left-aligned | Text labels |
 | Lollipop interface: a node with an invisible (`opacity: 0`) rect and its label | `<g class="node interface" data-id="interface0" data-ast="i:Name">` holding only the text | Nothing invisible is drawn |
 | Namespace: `<g class="cluster" id>` with `<rect>` and an HTML label | `<g class="cluster namespace" data-id="<qualified id>" data-ast="s:<id>">` with `<rect>` and `<text class="cluster-label">`. A namespace made only as the ancestor of a dotted one (`X` of `namespace X.Y`) has no `namespace` statement of its own, so it has no `data-ast` | Text labels; one `data-ast` per AST node (R-PARSE-8) |
 | Per-class colour through `[data-look][data-color-id].node .outer-path` rules in the `<style>` | `data-color-id` is kept; the colours are presentation attributes on the box and its dividers; an author `style` / `classDef` still wins | No style sheet |
 | A `classDef`'s styles were copied into the `style` of each class that already had that CSS class when the `classDef` line was read, and drawn inline on its box. A class given the CSS class after the `classDef` (`class Cat:::pet`, `cssClass "Cat" pet`) got the class name but no styles, and v12 wrote no `.pet` rule, so it was drawn unstyled | The `classDef` styles of every CSS class of the class, then its own `style`, as presentation attributes after the allow-list, whatever the order of the lines: a class given the CSS class after the `classDef` is styled too | Unknown properties and unsafe values are dropped with a warning (R-SEC-3) |
+| A comma inside a `style` / `classDef` value split it: `fill:rgb(255, 200, 200)` lost the colour and `font-family:Georgia, serif` kept only `Georgia`, without a warning | The whole value is kept: `rgb()`, `hsl()` and font lists work | D706, #1312 |
 | Under `look: neo` (the redux family, `neo`, `neo-dark`), the `[data-look=neo]` rules beat a `style` / `classDef` fill and stroke on a class box | `style` and `classDef` fill and stroke on a class box take effect in every theme | D187, D152 |
 | Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)). A generic written with `~` is always drawn as written, as in v12, also when its type is named like a tag: `B~U~` draws `B<U>` and `+List~Data~ items` draws `+List<Data> items`, with no `HTML_DROPPED` | R-SEC-1; the flowchart's rule; D619 |
 | `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
@@ -1485,8 +1488,8 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 - **Section fills (D241):** sections cycle over all eight `fillType0`–`fillType7`, so an
   eighth section takes `fillType7` and a ninth `fillType0`. v12 cycled over seven (the length
   of `sectionFills`, read once at module load), so `fillType7` never showed although the redux
-  themes tune eight. `sectionFills` is ignored: v12's `fillType<n>` style rules hid it in
-  every theme anyway.
+  themes tune eight. `sectionFills` is removed and warns `CONFIG_REMOVED_KEY` (D708): v12's
+  `fillType<n>` style rules hid it in every theme anyway. Set `fillType0`–`fillType7` instead.
 - **The empty actor (D244):** a trailing comma (`Task: 5: Me,`) still adds the actor `''` to
   the model, but it is not drawn: no legend row, no dot, no colour. v12 drew a nameless row
   and dot, and as `''` sorts first it took the first colour and shifted every other actor's.
@@ -1516,7 +1519,9 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 - **Ignored**, accepted without a warning: `noteMargin`, `messageMargin`, `messageAlign`,
   `bottomMarginAdj`, `rightAngles`, `activationWidth` and `useWidth` (v12's journey renderer
   never read them), `boxMargin` (read only in a loop over an empty list), `textPlacement`
-  (every label is SVG text, D225) and `sectionFills` (D241).
+  (every label is SVG text, D225).
+- **Removed**, with a `CONFIG_REMOVED_KEY` warning: `sectionFills` (D241, D708). The theme's
+  `fillType0`–`fillType7` fill the sections.
 - **`actorColours` replaces the defaults:** an author's list is the whole palette, cycling
   from the first actor. v12 appended the author's colours after its six defaults (`#8FBC8F`,
   `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`), so they reached only the seventh
@@ -1590,8 +1595,11 @@ Legend entries carry `data-id="a:<name>"` only.
   `diagramMarginX`, `diagramMarginY`, `width`, `height`, `boxMargin`, `boxTextMargin`,
   `noteMargin`, `messageMargin`, `messageAlign`, `bottomMarginAdj`, `rightAngles`,
   `taskFontSize`, `taskFontFamily`, `taskMargin`, `activationWidth`, `textPlacement`,
-  `actorColours`, `sectionFills`, `sectionColours` and `useWidth`. Box colours come from the
-  `cScale`, `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+  `actorColours`, `sectionColours` and `useWidth`. Box colours come from the `cScale`,
+  `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+- **Removed**, with a `CONFIG_REMOVED_KEY` warning: `sectionFills` (D708). v12's timeline never
+  read it either. Box fills come from the `cScale<n>` theme variables in the classic themes,
+  otherwise from `mainBkg` or the `borderColorArray` palette (D227, D257).
 - **`cScale<n>`, `cScaleLabel<n>` and `cScaleInv<n>` overrides** recolour a timeline only in the
   classic themes (`default`, `base`, `dark`, `forest`, `neutral`). They change nothing in the
   redux themes, the default `redux-color` included, or under `theme: 'auto'` (which is
@@ -1781,14 +1789,14 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   a base colour as v12's do (D656): `default` keeps all twelve slots, as v12 computed them before
   the override; `forest` and `base` recompute all twelve, hue turns included; `dark` and
   `neutral` keep their `cScale` values. In the redux and neo themes, slots v12 derives by
-  lightness alone follow the theme's base colours and hue-turned and `cScale` slots are fixed
-  values, so in `redux-color` and `redux-dark-color` a `cScale<n>` override no longer recolours
-  `pie<n+1>` (set `pie<n+1>`).
-  `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
-  `THEME_VARIABLE_DROPPED`.
+  lightness alone follow the theme's base colours and hue-turned slots are fixed values; a
+  `cScale<n>` override recolours the slot that reads it, as in v12 (D334).
+  `pieOpacity` is a number from 0 to 1 (D221) or a percentage from `0%` to `100%`, read as
+  N/100 as CSS reads it (D707); any other value is dropped with `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
   `cScale`*n*, so the first slice is `cScale1`). v12 `dark` left `pie12` unset, so a twelfth
-  slice drew black; it is now `cScale0`, as in `neutral`.
+  slice drew black; it is now `cScale0`, as in `neutral`, so under `dark` a `primaryColor`
+  override (which sets `cScale0`) also recolours the twelfth slice.
 - **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
   which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
   by v12's own formula (`default` writes the result as a fixed value, which v12 keeps under an
@@ -2030,10 +2038,12 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   2,000 tasks of `9000y` with any `excludes` fit in the source limit. The largest corpus chart
   walks 689 days. Raise it with `initialize({ limits: { maxLayoutWork } })` or a per-call
   `config.limits`.
-- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click names
-  only a task written before it, as v12 bound it while reading the line) and data that
+- **Warnings (D276, D727):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click
+  names only a task written before it, as v12 bound it while reading the line) and data that
   is neither a date nor a duration (`GANTT_BAD_DURATION`), one each per render, where v12 only
-  logged. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
+  logged. The unknown-id text has one clause for each statement involved and says only what
+  that statement did (`after` starts and `until` ends at midnight today, a click does nothing);
+  `__proto__` is reported as a reserved id; the milestone hint appears for a milestone's own `after`/`until`, and when an unknown id is the one a milestone wrote where its duration goes. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
   10,000 ticks: automatic ticks instead), `GANTT_EXCLUDES_NOT_DRAWN` (a chart over five years
   draws no excluded days, as v12) and `GANTT_CONFIG_IGNORED`.
 - **Nothing at NaN (D277, R-LAYOUT-3):** a chart with nothing to schedule draws its title and
@@ -2054,6 +2064,11 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   shown as written, as v12 drew them with `.text()`. A reference typed with `&` (`&amp;`) is
   decoded too; v12 showed it as written. A `#name;` Mermaid does not know stays as written
   (D561).
+- **A label wider than its bar goes outside it (D729, provisional):** with `excludes`, a task's
+  bar is drawn shorter than its span. v12 chose the label's side from the whole span and placed
+  it from the drawn bar, so a label wider than the drawn bar but not than the span was centred on
+  the bar's end, across the bar. v13 chooses the side from the drawn bar: such a label goes right
+  of the bar, or left near the chart's edge. Labels that fit are unchanged.
 
 ### Config
 
@@ -2091,15 +2106,31 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
 - **Under a `themeVariables` override (D656, D657):** in the classic family the task bars,
-  the active bar and the third section band (`taskBkgColor`, `activeTaskBkgColor`,
-  `sectionBkgColor2`) read `mainBkg`, the first section band (`sectionBkgColor`) reads
-  `bandBkg`, and the active bar's outline and the `vert` marker read `guideLineColor`.
-  `default`, `dark`, `forest` and `neutral` pin all three to their own primary, tertiary and
-  line colours, so an author's `primaryColor`, `tertiaryColor` or `lineColor` leaves the bars,
-  the band and the outline alone there, as in v12. In `base` they derive from `primaryColor`,
-  `tertiaryColor` and `lineColor`, so they follow them, as in v12, except that the active
-  outline and the `vert` marker follow `lineColor` where v12's followed `primaryColor` and
-  stayed navy (D574). Set `bandBkg` or `guideLineColor` in `themeVariables` to move them.
+  the active bar and the section bands (`taskBkgColor`, `activeTaskBkgColor`, and through
+  `sectionBkgColor`, `sectionBkgColor2`) read `mainBkg`, and the active bar's outline and the `vert` marker read
+  `guideLineColor`. `default`, `dark`, `forest` and `neutral` pin both to their own primary and
+  line colours, so an author's `primaryColor` or `lineColor` leaves the bars and the outline
+  alone there, as in v12. In `base` they derive from `primaryColor` and `lineColor`, so they
+  follow them, as in v12, except that the active outline and the `vert` marker follow
+  `lineColor` where v12's followed `primaryColor` and stayed navy (D574). Set
+  `guideLineColor` in `themeVariables` to move the outline and the marker.
+- **The first section band is visible in every classic theme (D726, #1249):** `sectionBkgColor`
+  is the theme's `mainBkg` darkened (to black under `dark`). Bands are drawn at opacity 0.2,
+  as in v12, and the band as drawn reads at least 1.1:1 against the page, the grid lines and
+  the done bars at least 1.2:1 against it, and the text written on it at AA. v12's `default` drew a lavender `rgba(102, 102, 255, 0.49)`; v13's is
+  `#9898d1` (v13 used the near-white `#f9ffec` before). `neutral` is `#aeaeae` (v12 `#bdbdbd`),
+  `forest` `#98b25c` (v12 `#6eaa49`), `base` `#d1bb8b` (v12 `#f6f9ff`) and `dark` `#000000`
+  (v12 `#b4ac76`). An author's `sectionBkgColor` wins in
+  every theme; an author's `mainBkg` also moves the band, and `base`'s band no longer follows
+  `tertiaryColor`. The v13-only `bandBkg` variable is removed (it never existed in v12): a
+  `themeVariables.bandBkg` is ignored without a warning, like any unknown name; set
+  `sectionBkgColor`.
+- **Zebra section bands (D730):** the third band (`sectionBkgColor2`) repeats the first, so the
+  tinted rows alternate with `altSectionBkgColor` like zebra rows, in every classic theme. v12
+  gave the third band its own colour (`default` `#fff400`, `neutral` and `forest` the first
+  band's, `dark` `#eae8d9`, `base` `#fff4dd`); in v13 it was `mainBkg`, which at opacity 0.2 was
+  barely apart from the page. An author's `sectionBkgColor` moves both tinted bands; set
+  `sectionBkgColor2` as well to colour the third band on its own.
 - **A `mainBkg` override moves the bars (D657):** an author's `mainBkg` recolours the task
   bars, the active bar and the third band in every classic theme, where v12's `default`,
   `forest` and `neutral` kept their own; under `dark` the text on the active bar follows that
@@ -2927,7 +2958,7 @@ each a `g.node` (`node <classes or default> flowchart-label`) holding its shape 
 | Edge classes `… flowchart-link LS-a1 LE-b1` (fixed, meaningless `LS`/`LE`) | `edge-thickness-* edge-pattern-* flowchart-link` | Dead classes dropped |
 | Edges from centre to centre, clipped at the outline v12's intersect found (the crossing nearest the far end) | Clipped at the outermost crossing of each outline; a self-loop is a cubic standing out at the top right | D441 |
 | Edge label `g.edgeLabel` > `g.label` > `foreignObject`, a background at `edgeLabelBackground` | `g.edgeLabel` > its background `rect` (`edgeLabelBackground`) and its `text` | R-SEC-2 |
-| Edge label on a half-transparent `edgeLabelBackground` fill with square corners and no border, the edge's room not counting it | A tag, the shared edge label: a rounded box (`rx` 6) with 8 px of room each side and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set) and bordered 1 px solid in the line colour, also on thick and dotted edges. The label's room in the layout is the same box (`labelPatch`), so diagrams with labels grow a little. Under `look: handDrawn` the border is sketched | D626, D627, D628, D629, D630 |
+| Edge label on a half-transparent `edgeLabelBackground` fill with square corners and no border, the edge's room not counting it | A tag, the shared edge label: a rounded box (`rx` 6) with 8 px of room each side and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set) and bordered 1 px solid in the line colour, also on thick and dotted edges. The label's room in the layout is the same box (`labelPatch`), so diagrams with labels grow a little. Under `look: handDrawn` the border is sketched. The fill is `blockEdgeLabelBackground` (default `edgeLabelBackground`) and the ink `blockEdgeLabelColor` (default `textColor` where it reads on the fill, else black or white); v12 inked the label with the node text colour, so the ink differs in `redux-dark`, `redux-dark-color` and `neo-dark` (`#cccccc`, was `#e0dfdf`), and an author's `nodeTextColor` no longer colours edge labels (set `blockEdgeLabelColor`) | D626, D627, D628, D629, D630, D713, D715 |
 | Each edge label drawn straight after its edge (`insertEdges`), so a later edge could cross it | Every edge first, then every edge label, so no edge crosses a label | As flowchart v13 (one family, user story 6) |
 | Arrowheads painted `lineColor` (block's `.marker` rule) | Painted `arrowheadColor`, as flowchart v13, which follows `lineColor` in every built-in theme, so the heads have the line's colour, as in v12 | One family with flowchart (D680) |
 | Composite palette in CSS (`[data-look][data-color-id="color-i"].node rect.composite`), only in `redux-color` and `redux-dark-color` | `data-color-id="color-<n>"` on the composite's `g.node` (kept) with the slot's stroke and fill on its `rect`, wherever the theme or the author sets `borderColorArray`; `style`/`classDef` still beat it | D152, `paletteSlots()` |
@@ -2996,13 +3027,13 @@ new, as v12 wrote no classes there: the title `text.c4-title`; `g.c4-boundaries`
 | Element ids `<render id>-<alias>` | No ids: `data-id` (the alias) and `data-ast` on each element's `g.node` and each boundary's `g`; a relation's `path` carries `data-ast` and `data-id` (`<from>-><to>`); text carries `data-id` only | R-ARCH-6, R-PARSE-8, D458, pitfall 12 |
 | Boundaries drawn after their contents, so a boundary's `$bgColor` painted over its shapes | Boundaries first (parents before children), then elements, then relations | Spec #522 |
 | The first relation a `<line>`, the others a quadratic curve through a fixed control point; labels to the right of the midpoint by half their width, no background | Each relation one `path` along the routed line (straight, bent round shapes, or a self-loop), its label and italic `[techn]` placed along the line where they cover least; where the line has no room (a label wider than the gap between neighbours), beside it, a label's depth further out at each step, never over its own arrowheads, an element or a boundary header | D455 |
-| Relation labels had no background: they sat beside the curve | The label and `[techn]` are one tag, as every edge label: a `g.edgeLabel` with a rounded box (`rx` 6) bordered 1 px solid in the relation's line colour (`$lineColor` or a c4-beta `stroke` when set, never its dashes), filled with the page's `background`, with 8 px of room each side and 4 px above and below, which the layout reserves, so labels sit a little further out. The classes `rect.c4-rel-label-box`, `text.c4-rel-label` and `text.c4-rel-techn` are gone: select `g.c4-relation g.edgeLabel` and its `text` instead | D455, D626–D629 |
+| Relation labels had no background: they sat beside the curve | The label and `[techn]` are one tag, as every edge label: a `g.edgeLabel` with a rounded box (`rx` 6) bordered 1 px solid in the relation's line colour (`$lineColor` or a c4-beta `stroke` when set, never its dashes), filled with `c4EdgeLabelBackground` (the shared `edgeLabelBackground`, the page's `background` unless set) and inked with `c4EdgeLabelColor` (`textColor` where it reads on the tag, else black or white; a `$textColor` or c4-beta `color` as written; `c4RelationColor` no longer colours the label text, only the lines), with 8 px of room each side and 4 px above and below, which the layout reserves, so labels sit a little further out. The classes `rect.c4-rel-label-box`, `text.c4-rel-label` and `text.c4-rel-techn` are gone: select `g.c4-relation g.edgeLabel` and its `text` instead | D455, D626–D629, D713–D715 |
 | A relation's `descr` was never drawn | The relation group's SVG `<title>` | D455 |
 | The title a `<text>` at `x = boxWidth/2 − 4·diagramMarginX`, in a row above the diagram reached by a negative-y viewBox | `text.c4-title` centred over the diagram in a 60 px row at the top of a `0 0 width height` viewBox | D224 |
 | `$link`, `$sprite`, `$tags` (but shape words), `$shadowing` and `$legend*` parsed and not drawn | The same: no `<a>`, no icon, no 48 px sprite gap on a boundary | D457 |
 | `$bgColor`, `$fontColor`, `$borderColor`, `$textColor`, `$lineColor` and the 40 config colours written raw: a misspelt one (`$bgColor="redd"`) fell back to the inherited paint on a boundary or relation | Each through core's colour check: a value it refuses, a misspelt colour included, is dropped and the default drawn, with one `C4_COLOR_INVALID` warning per render naming each | R-SEC-2, D690 |
 | A boundary's `$fontColor` was set and never drawn (its text was always `#444444`) | The same: its text is `c4BoundaryColor` (`#444444` in light themes) | v12 |
-| Relations and boundaries `#444444` literals, the title the page's text colour, in every theme: dark on dark in the dark themes | Theme variables `c4RelationColor`, `c4BoundaryColor`, `c4TitleColor`: v12's colours in light themes; `lineColor` and `nodeBorder` for relations and boundaries under a dark theme or `darkMode` | D456, D333(b) |
+| Relations and boundaries `#444444` literals, the title the page's text colour, in every theme: dark on dark in the dark themes | Theme variables `c4RelationColor`, `c4BoundaryColor`, `c4TitleColor`. Relations take the page's `textColor` in every theme, so they are no longer `#444444` (`#333333` in default, base and neo, `#000000` in forest and neutral, `#28253d` in redux and redux-color, `#cccccc` in the dark themes). The dark rule `c4RelationColor: lineColor` (under a dark theme or `darkMode`) is gone, so a dark theme's relations follow `textColor`, not `lineColor`. `c4RelationColor` colours the relation lines only: the label text is `c4EdgeLabelColor`. Boundaries keep v12's `#444444` in light themes and take `nodeBorder` under a dark theme or `darkMode` | D456, D333(b), D714 |
 | `look: neo`: the cylinder, the queue and `fr-rect` padded with v12 neo's 24, 12 and 28 × 12 | Read from the theme's `cylinderPadding*` (the queue half of it) and `subroutinePadding*`: neo's values in the redux and neo themes, `2 · c4ShapePadding` in the classic ones. No gradient or shadow in any family, as v12 | D152, D227 |
 | Text by `<text>` per line with `dominant-baseline: middle` and CSS font sizes (`0.75em` type line, `0.82em` description) | Core's label layout: `text`/`tspan` placed by their measured boxes, each in the font it was measured in (`font-size` in px, `font-family` where a `c4.<kind>FontFamily` sets one) | Pitfall 16 |
 | The `viewBox` from the packer's bounds, which depended on `screen.availWidth` | The layout's canvas: everything drawn, the config margins round it and the title row | D224, D454 |
@@ -3311,7 +3342,14 @@ v12's, apart from the two layout fixes of D514.
   documented and never read, now take effect, with `relationColor` and `relationLabelColor`
   added; unset, they draw v12's colours, but for the label tag's fill, which is the theme
   background in every theme (D628; v12's redux chip was white, dark `#16141f`), so it follows an
-  author's `background`, where v12's kept its own fill or followed `secondaryColor`. The box fill
+  author's `background`, where v12's kept its own fill or followed `secondaryColor`. The label
+  ink is chosen against that fill (D713): `textColor` where it meets AA, else black or white,
+  whichever reads better, so a light `background` under a dark theme gets dark label text. Its
+  base is `textColor`, not v12's `nodeTextColor`, so redux-dark, redux-dark-color and neo-dark
+  write their labels in `#cccccc` where v12 wrote `#e0dfdf`, and an author's `nodeTextColor` no
+  longer colours them. The tag also has diagram-level
+  names, `requirementEdgeLabelBackground` and `requirementEdgeLabelColor` (D715);
+  `relationLabelBackground` and `relationLabelColor` read them and, when set, win. The box fill
   and text follow the overrides v12's drawn box and text follow (`mainBkg`, the text ink), not
   those of v12's unused `requirementBackground` and `requirementTextColor`. See
   [theme-variables.md](./theme-variables.md).
@@ -3374,6 +3412,10 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 
 ## State diagram
 
+- **A comma inside a `style` or `classDef` value** (D706, #1312): `fill:rgb(255, 200, 200)`,
+  `stroke:hsl(210, 60%, 40%)` and `font-family:Georgia, "Times New Roman", serif` keep the
+  whole value. v12 split the statement at every comma, so the colour was lost and the font list
+  kept only its first name, without a warning.
 - **Label text** (D564, D610, #763, #836): state text, composite titles, transition text and
   notes read bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` is drawn
   as written: no bullet. A code span is drawn as written, backticks included and no monospace,
@@ -3504,7 +3546,7 @@ order are kept: `g.clusters` (each `g.usecase-system-boundary.system-boundary-<t
 | An icon actor drew Font Awesome's fallback glyph (`usecase-actor-icon-fallback`) for an unknown icon | The icons extension's glyph (D293) in the frame, else the frame alone with one `ICON_NOT_RENDERED` | D293, D299 |
 | `look: neo` (the `usecase.look` default) was never read by the renderer, which took the global `look` (`classic`): no shadow, no gradient | The same in every theme: usecase differs between families by colour only | D227, D153 |
 | Hand-drawn: roughjs sketched each shape, cell and frame (roughness 0.7, hachure, fill weight 1.5) and each line (roughness 0.3) | `@mermaid-js/plugin-hand-drawn` sketches each node shape (`node`), JSON cell (`part`), boundary frame and tab (`group`, fill weight 3), line (`edge`) and edge-label border (`label`, solid fill); markers, business marks and text stay plain | D301, D302, D630 |
-| Relationship label on a `.labelBkg` background (`edgeLabelBackground`, 2 px each side, square, no border) | A tag, the shared edge label: `g.edgeLabel` > a rounded `rect` (`rx` 6, no `labelBkg` class) with 8 px of room each side and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set) and bordered 1 px solid in the line's colour (an author's `style` stroke, else include's or extend's colour, else `lineColor`), solid on dashed lines; then `text.relationship-label`. The layout reserves the same box (`labelPatch`) | D626, D627, D628, D629 |
+| Relationship label on a `.labelBkg` background (`edgeLabelBackground`, 2 px each side, square, no border) | A tag, the shared edge label: `g.edgeLabel` > a rounded `rect` (`rx` 6, no `labelBkg` class) with 8 px of room each side and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set) and bordered 1 px solid in the line's colour (an author's `style` stroke, else include's or extend's colour, else `lineColor`), solid on dashed lines; then `text.relationship-label`. The layout reserves the same box (`labelPatch`). The fill is `usecaseEdgeLabelBackground` (default `edgeLabelBackground`) and the ink `usecaseEdgeLabelColor` (default `textColor` where it reads on the fill, else black or white), not `primaryTextColor`: the ink differs in `default` (`#333333`, was `#131300`), `dark`, `redux-dark`, `redux-dark-color` and `neo-dark` (`#cccccc`, was `#e0dfdf`), `forest` (`#000000`, was `#321b67`) and `neutral` (`#000000`, was `#111111`). An author's `primaryTextColor` no longer colours relationship labels (set `usecaseEdgeLabelColor`); an author's `style` colour on the edge still wins | D626, D627, D628, D629, D713, D715 |
 
 ### Usecase theme colours
 

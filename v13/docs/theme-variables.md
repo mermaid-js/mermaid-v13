@@ -15,7 +15,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad, sequence |
-| `background` | `--mermaid-background` | base | color | | | all | core, packet, kanban, venn, c4, class |
+| `background` | `--mermaid-background` | base | color | | | all | core, packet, kanban, venn, c4 |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, packet, railroad, state, usecase |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, agentflow, architecture, block, c4, ishikawa, railroad, treeview, usecase |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, agentflow, architecture, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
@@ -32,7 +32,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, block, railroad, usecase |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, block, usecase |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn, agentflow, railroad, usecase |
-| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `background` | `background` | | flowchart, state, agentflow, block, usecase |
+| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `background` | `background` | | flowchart, state, agentflow, block, c4, class, usecase |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | | flowchart, state, agentflow, block |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | dark | architecture |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral |  |
@@ -103,7 +103,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `canvasItemBkg` | `--mermaid-canvasItemBkg` | derived | color | `primaryColor` | `primaryColor` | default | quadrant, venn |
 | `canvasItemBkg3` | `--mermaid-canvasItemBkg3` | derived | color | `tertiaryColor` | `tertiaryColor` | default | sequence, venn |
 | `canvasNodeBkg` | `--mermaid-canvasNodeBkg` | derived | color | `mainBkg` | `mainBkg` | default | state |
-| `bandBkg` | `--mermaid-bandBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | gantt |
 | `guideLineColor` | `--mermaid-guideLineColor` | derived | color | `lineColor` | `lineColor` | default, dark, forest, neutral | gantt |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
@@ -145,6 +144,8 @@ flags and opacities, which are read literally.
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `flowContainerStroke` | | color | `#adadad` | `#adadad` | `#2f2f2f` | `#2f2f2f` | `#eeeebc` | `#2f2f2f` | `#b4e599` | `#e3e3e3` | `#cfbcd9` | `#b3b3b3` | `#6c6d6d` |
+| `agentflowEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `agentflowEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### architecture
 
@@ -161,14 +162,18 @@ flags and opacities, which are read literally.
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `blockCompositeClusterPaint` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `false` | `false` |
+| `blockEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `blockEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### c4
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `c4RelationColor` | | color | `#444444` | `#444444` | `#cccccc` | `#cccccc` | `#444444` | `#d3d3d3` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
+| `c4RelationColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `c4BoundaryColor` | | color | `#444444` | `#444444` | `#ffffff` | `#ffffff` | `#444444` | `#cccccc` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
 | `c4TitleColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `c4EdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `c4EdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `c4PersonColor` | | color | `#08427b` | `#08427b` | `#449ff4` | `#449ff4` | `#08427b` | `#449ff4` | `#08427b` | `#08427b` | `#08427b` | `#08427b` | `#449ff4` |
 | `c4PersonBorder` | | color | `#073b6f` | `#073b6f` | `#0a7fe5` | `#0a7fe5` | `#073b6f` | `#0a7fe5` | `#073b6f` | `#073b6f` | `#073b6f` | `#073b6f` | `#0a7fe5` |
 | `c4SoftwareSystemColor` | | color | `#1168bd` | `#1168bd` | `#51a0ec` | `#51a0ec` | `#1168bd` | `#51a0ec` | `#1168bd` | `#1168bd` | `#1168bd` | `#1168bd` | `#51a0ec` |
@@ -187,6 +192,8 @@ flags and opacities, which are read literally.
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `classText` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#cccccc` |
+| `classEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `classEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `classMarkerStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
 | `classFilledMarkerStrokeWidth` | | length | `0` | `0` | `0` | `0` | `1` | `1` | `1` | `1` | `1` | `0` | `0` |
 | `extensionMarkerLength` | | length | `8` | `8` | `8` | `8` | `17` | `17` | `17` | `17` | `17` | `8` | `8` |
@@ -222,6 +229,7 @@ flags and opacities, which are read literally.
 | `rowOdd` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#2c2d2d` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
 | `rowEven` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#f1f1ff` | `#060606` | `#f4f9e9` | `#f4f4f4` | `#fffcf6` | `#ffffff` | `#2a2020` |
 | `erEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `erEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `erMarkerFill` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
 | `erRowOddTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `erRowEvenTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
@@ -247,13 +255,20 @@ flags and opacities, which are read literally.
 | `emArrowhead` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `emTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
+### flowchart
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `flowchartEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `flowchartEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+
 ### gantt
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `sectionBkgColor` | | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#f9ffec` | `#201f1f` | `#e1efc0` | `#eeeeee` | `#f6f9ff` | `#ffffff` | `#201f1f` |
+| `sectionBkgColor` | | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#9898d1` | `#000000` | `#98b25c` | `#aeaeae` | `#d1bb8b` | `#ffffff` | `#201f1f` |
 | `altSectionBkgColor` | | color | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` |
-| `sectionBkgColor2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `sectionBkgColor2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#9898d1` | `#000000` | `#98b25c` | `#aeaeae` | `#d1bb8b` | `#cccccc` | `#1f2020` |
 | `excludeBkgColor` | | color | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` |
 | `gridColor` | | color | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` |
 | `todayLineColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |
@@ -449,7 +464,9 @@ flags and opacities, which are read literally.
 | `requirementTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
 | `relationLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `relationColor` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
-| `relationLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
+| `relationLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `requirementEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `requirementEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `relationStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
 | `relationArrowScale` | | length | `0.8` | `0.8` | `0.8` | `0.8` | `1` | `1` | `1` | `1` | `1` | `0.8` | `0.8` |
 
@@ -484,6 +501,8 @@ flags and opacities, which are read literally.
 | `altBackground` | | color | `#f9f9fb` | `#f9f9fb` | `#16141f` | `#16141f` | `#f0f0f0` | `#555555` | `#f0f0f0` | `#f4f4f4` | `#f6f9ff` | `#f0f0f0` | `#404040` |
 | `stateLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
 | `compositeTitleColor` | | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#000000` | `#dfe0e0` |
+| `stateEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `stateEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### timeline
 
@@ -539,6 +558,8 @@ With a palette (a non-empty `borderColorArray`: redux-color, redux-dark-color, o
 | `usecaseBoundaryBorder` | | color | `#bdbccc` | `#bdbccc` | `#bdbccc` | `#bdbccc` | `#aaaa33` | `#ffffff40` | `#6eaa49` | `#707070` | `#d2d4d9` | `#e6e6e6` | `#4d4c4c` |
 | `usecaseIncludeLine` | | color | `#38bdf8` | `#000000` | `#cccccc` | `#38bdf8` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `usecaseExtendLine` | | color | `#fb923c` | `#000000` | `#cccccc` | `#fb923c` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
+| `usecaseEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `usecaseEdgeLabelColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### venn
 

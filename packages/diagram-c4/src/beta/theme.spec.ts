@@ -266,7 +266,7 @@ describe('the text on a fill a style gave', () => {
       ).toBe(PAGE);
   });
 
-  it('leaves a relation label on the page, in the relation colour, when a style gives a stroke only', async () => {
+  it('leaves a relation label on its tag, in the tag ink, when a style gives a stroke only (D714)', async () => {
     const svg = await text([
       'style hot stroke:#ff0000',
       'container a "A"',
@@ -275,7 +275,7 @@ describe('the text on a fill a style gave', () => {
     ]);
     const g = svg.slice(svg.indexOf('<g class="c4-relation"'));
     expect(/<g class="edgeLabel"[^>]*><rect[^>]*><text[^>]*? fill="([^"]+)"/.exec(g)![1]).toBe(
-      'var(--_c4r)'
+      'var(--_c4elc)'
     );
   });
 

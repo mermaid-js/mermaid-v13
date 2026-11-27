@@ -109,6 +109,7 @@ e2e/diagrams/state-diagram-v2/nightly-check/states-with-descriptions-neo-look-ne
 e2e/diagrams/state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd 1 23ca46047e0f9f24
 e2e/diagrams/state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd 1 67e809b0eef4048a
 e2e/diagrams/state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd 1 8b2f0b7687fe9d3a
+e2e/diagrams/state-diagram-v2/nightly-check/style-comma-values.mmd 1 5c1d536e25149bd9
 e2e/diagrams/state-diagram-v2/nightly-check/user-styled-composite-containers-redux-color-theme.mmd 1 65ae75dd0c556410
 e2e/diagrams/state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-color-theme.mmd 1 49d3a82e574f76c1
 e2e/diagrams/state-diagram-v2/nightly-check/user-styled-composite-containers-redux-dark-theme.mmd 1 87b97fdf87134411

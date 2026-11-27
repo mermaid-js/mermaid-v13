@@ -43,16 +43,23 @@ export const theme: DiagramThemeTable = {
     // in the derivation, for the classic family only (D574). The active outline, the `vert`
     // marker and its label take `lineColor`; text on a critical bar is black where the bar text
     // misses AA on red. Text on the other bars stays `taskTextColor`, the theme's text.
-    // The bars and the third band (`sectionBkgColor2`) read `mainBkg`, which `default`, `forest`,
-    // `neutral` and `dark` pin to their primary colour, so an author's `primaryColor` leaves them
-    // alone there, as in v12; `base` derives `mainBkg` from it (D657). The first band reads
-    // `bandBkg` and the lines `guideLineColor`, the tertiary and line colours those four themes
-    // pin where v12 keeps its own under an override (D656); in `base` they are `tertiaryColor`
-    // and `lineColor`.
+    // The bars read `mainBkg`, which `default`, `forest`, `neutral` and `dark` pin to their
+    // primary colour, so an author's `primaryColor` leaves them alone there, as in v12; `base`
+    // derives `mainBkg` from it (D657). The lines read `guideLineColor`, the line colour those
+    // four themes pin where v12 keeps its own under an override (D656); in `base` it is
+    // `lineColor`. The first band is `mainBkg` moved away from the page: darker in the light
+    // themes (a little in HSL, then mixed with black, since a plain HSL step that is enough for
+    // `base` leaves `default` too dark), and darker than everything in `dark`, whose page is
+    // lighter than `mainBkg` (D726, amending D656's pin and D541's rows; #1249). The third band
+    // repeats the first, so the tinted rows alternate with `altSectionBkgColor` like zebra rows
+    // (D730). Bands are drawn at `bandOpacity` (0.2), and `conformance/src/gantt/theme.spec.ts`
+    // holds every classic theme's tinted bands, as drawn over `background`, to 1.1:1 from the
+    // page and the text on them to AA. An author's `sectionBkgColor` still wins, and moves the
+    // third band with it unless `sectionBkgColor2` is set too.
     classic: {
       rules: {
-        sectionBkgColor: 'bandBkg',
-        sectionBkgColor2: 'mainBkg',
+        sectionBkgColor: 'mix(darkenHsl(mainBkg, 10%), black, 18%)',
+        sectionBkgColor2: 'sectionBkgColor',
         taskBkgColor: 'mainBkg',
         activeTaskBkgColor: 'lightenHsl(mainBkg, 23%)',
         activeTaskBorderColor: 'guideLineColor',
@@ -64,6 +71,8 @@ export const theme: DiagramThemeTable = {
       // theme's misses AA on the grey active bar.
       dark: {
         rules: {
+          sectionBkgColor: 'darkenHsl(mainBkg, 15%)',
+          sectionBkgColor2: 'sectionBkgColor',
           critBkgColor: 'darkenHsl(red, 20%)',
           taskTextDarkColor: 'contrast(activeTaskBkgColor, textColor, white)',
         },
