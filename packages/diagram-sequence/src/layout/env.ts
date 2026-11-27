@@ -91,7 +91,11 @@ export interface Env {
   readonly index: ReadonlyMap<string, number>;
   /** The render's warning sink. */
   readonly warn: SequenceLayoutContext['warn'];
-  measure(text: string, font: FontKey, max: number): MeasuredLabel;
+  /**
+   * `text` laid out in `font`, wrapped at `max`. With `keepWords`, a word wider than `max` stays
+   * whole on a line of its own instead of breaking between characters.
+   */
+  measure(text: string, font: FontKey, max: number, keepWords?: boolean): MeasuredLabel;
 }
 
 const kindsWhere = (
@@ -185,6 +189,15 @@ export function sequenceNumbers(
   return out;
 }
 
+/**
+ * Whether every label wraps without its own `wrap`: the top-level `wrap` or `sequence.wrap`, as
+ * in v12. The layout invariants read the config the same way.
+ */
+export const autoWrapOf = (config: {
+  readonly wrap?: unknown;
+  readonly sequence?: { readonly wrap?: unknown };
+}): boolean => config.wrap === true || config.sequence?.wrap === true;
+
 /** The shared state of one layout, before the columns are measured. */
 export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<Env, 'columns'> {
   const seq = ctx.config.sequence ?? {};
@@ -196,7 +209,7 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
     m,
     fonts: fontsOf(ctx, (w) => ctx.warn(w)),
     seq,
-    autoWrap: ctx.config.wrap === true || seq.wrap === true,
+    autoWrap: autoWrapOf(ctx.config),
     mirror: seq.mirrorActors !== false,
     rightAngles: !m.cells && seq.rightAngles === true,
     numbers,
@@ -208,11 +221,12 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
     order: participants.map((p) => p.id),
     index: new Map(participants.map((p, i) => [p.id, i])),
     warn: (w) => ctx.warn(w),
-    measure: (text, font, max) => {
+    measure: (text, font, max, keepWords = false) => {
       // v12 sequence broke a label at `<br>` only: a written `\n` is text (#763, D564).
       const label = layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, {
         backslashBreak: false,
         inline: ctx.inline,
+        keepWords,
       });
       if (!mathShown && showsMath(label) && ctx.inline?.notRendered('math') === true) {
         mathShown = true;

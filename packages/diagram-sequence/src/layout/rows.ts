@@ -23,6 +23,7 @@ import type {
   FragmentLayout,
   MessageLayout,
   NoteLayout,
+  PlacedLabel,
   Rect,
   RectLayout,
   SelfLoop,
@@ -193,7 +194,8 @@ export class Rows {
 
   /**
    * v12 `boundMessage`: the rows of a message. `reserve` is the room the message needs above
-   * its line (half of a box centred on it); the row moves down when the label gives less.
+   * its line (half of a box centred on it, or a label lifted over a sequence number); the row
+   * moves down when the label gives less.
    * Returns the top of the row and the y of the line.
    */
   private boundMessage(g: MessageX, self: boolean, reserve: number): [number, number] {
@@ -201,8 +203,7 @@ export class Rows {
     const { m } = this.env;
     const textH = g.label.height;
     const first = g.label.lines.length > 0 ? g.label.lineHeight : 0;
-    const gap = !self || !this.env.rightAngles ? m.boxMargin.y : 0;
-    const above = m.messageLeadLines * first + textH + gap;
+    const above = m.messageLeadLines * first + textH + this.lineGap(self);
     if (above < reserve) b.bump(reserve - above);
     const starty = b.y;
     b.bump(m.messageLead);
@@ -226,6 +227,92 @@ export class Rows {
     b.bump(total);
     b.insert(g.fromBounds, starty, g.toBounds, b.y);
     return [starty, lineY];
+  }
+
+  /** v12's room between a message's text rows and its line: none for a square self message. */
+  private lineGap(self: boolean): number {
+    return !self || !this.env.rightAngles ? this.env.m.boxMargin.y : 0;
+  }
+
+  /**
+   * The top of a message label (#1237, D723). v12 drew the text's middle 1 em plus half the wrap
+   * padding below `starty + messageLead`, over a line placed from rows it measured in Arial: its
+   * last baseline sits 1 em of the message font plus `lineGap`, less the lead and half the wrap
+   * padding, above the line (11 px at the defaults; v12 10.81 in Chromium), whatever the font and
+   * the number of lines. The label never reaches below its line, which would strike it through:
+   * a large `wrapPadding`, a small message font or a square self message lift it until its box
+   * ends on the line (#1337 review). In cells the label keeps the rows right above its line.
+   */
+  private messageLabelY(
+    label: MeasuredLabel,
+    self: boolean,
+    starty: number,
+    lineY: number
+  ): number {
+    const { m, fonts } = this.env;
+    if (m.cells) return starty + m.messageLead;
+    const n = label.lines.length;
+    const last = label.baselines?.[n - 1] ?? (n - 1) * label.lineHeight + label.baseline;
+    const rise = fonts.message.size + this.lineGap(self) - m.messageLead - m.half(m.wrapPadding);
+    return Math.min(lineY - rise - last, lineY - label.height);
+  }
+
+  /** A message's label, placed across its span and above its line. */
+  private messageLabel(
+    s: SequenceMessage,
+    g: MessageX,
+    starty: number,
+    lineY: number,
+    numberX: number | undefined
+  ): PlacedLabel {
+    const { m } = this.env;
+    const { label } = g;
+    const self = s.from === s.to;
+    const span = [Math.min(g.startx, g.stopx), Math.max(g.startx, g.stopx)] as const;
+    // In cells a label centred on the lifeline would cut it: it starts right of it.
+    const x =
+      self && m.cells
+        ? g.startx + m.lifelineHalf
+        : clearOf(this.borders, this.labelX(g, span), label.width, span, this.lifelinesOf(s));
+    const y = this.messageLabelY(label, self, starty, lineY);
+    return placed(
+      label,
+      x,
+      numberX === undefined ? y : this.clearOfNumber(label, x, y, numberX, lineY)
+    );
+  }
+
+  /**
+   * A message label's x at `messageAlign`. A label wrapped inside its span (D724) that a whole
+   * word makes wider than the room inside the padding keeps on its line where the line holds it,
+   * and is centred on the line where it does not.
+   */
+  private labelX(g: MessageX, span: readonly [number, number]): number {
+    const { m, seq } = this.env;
+    const w = g.label.width;
+    const x = alignX(this.env, seq.messageAlign, span, w, m.wrapPadding);
+    if (!g.inside) return x;
+    const [lo, hi] = span;
+    return w > hi - lo ? lo + m.half(hi - lo - w) : Math.min(Math.max(x, lo), hi - w);
+  }
+
+  /**
+   * The label's y, moved up to `numberLabelGap` above the message's sequence number, a circle
+   * on its line (#1337, D723). Only a label over the circle moves: a self message's, centred
+   * on its lifeline, and one that a narrow span brings to the line's numbered end.
+   */
+  private clearOfNumber(
+    label: MeasuredLabel,
+    x: number,
+    y: number,
+    cx: number,
+    lineY: number
+  ): number {
+    const { m } = this.env;
+    const r = m.numberRadius + m.numberLabelGap;
+    const dx = Math.max(x - cx, cx - (x + label.width), 0);
+    if (dx >= r) return y;
+    return Math.min(y, lineY - Math.sqrt(r * r - dx * dx) - label.height);
   }
 
   /** The lifeline columns of a message's two ends, which its label keeps off (cells only). */
@@ -290,14 +377,21 @@ export class Rows {
       this.unknown(s.ast, [s.from, s.to]);
       return;
     }
-    const { m, seq } = this.env;
+    const { m } = this.env;
     const number = this.env.numbers.get(s);
     const self = s.from === s.to;
     const box = this.boxAt(s);
-    const [starty, lineY] = this.boundMessage(g, self, box ? m.half(box.height) : 0);
-    this.lifecycle(s, g, starty, lineY);
-    const span = [Math.min(g.startx, g.stopx), Math.max(g.startx, g.stopx)] as const;
     const label = g.label;
+    const badge = number !== undefined ? { value: number, x: this.numberX(s, g) } : undefined;
+    // A label lifted clear of the number stays inside its row (only a small font needs more).
+    const lifted =
+      badge && label.lines.length > 0 ? m.numberRadius + m.numberLabelGap + label.height : 0;
+    const [starty, lineY] = this.boundMessage(
+      g,
+      self,
+      Math.max(box ? m.half(box.height) : 0, lifted)
+    );
+    this.lifecycle(s, g, starty, lineY);
     const layout: MessageLayout = {
       ast: s.ast,
       from: s.from,
@@ -307,25 +401,10 @@ export class Rows {
       startX: g.startx,
       stopX: g.stopx,
       ...(label.lines.length > 0
-        ? {
-            label: placed(
-              label,
-              // In cells a label centred on the lifeline would cut it: it starts right of it.
-              self && m.cells
-                ? g.startx + m.lifelineHalf
-                : clearOf(
-                    this.borders,
-                    alignX(this.env, seq.messageAlign, span, label.width, m.wrapPadding),
-                    label.width,
-                    span,
-                    this.lifelinesOf(s)
-                  ),
-              starty + m.messageLead
-            ),
-          }
+        ? { label: this.messageLabel(s, g, starty, lineY, badge?.x) }
         : {}),
       ...(self ? { self: this.selfLoop(g, lineY) } : {}),
-      ...(number !== undefined ? { number: { value: number, x: this.numberX(s, g) } } : {}),
+      ...(badge ? { number: badge } : {}),
       ...(s.central ? { central: s.central } : {}),
     };
     this.messages.push(layout);
@@ -511,7 +590,7 @@ export class Rows {
                 r.x + m.half(m.labelBoxWidth) + m.half(r.width) - m.half(title.width),
                 title.width
               ),
-              textY(r.y)
+              this.frameLabelY(title, r.y, textY)
             ),
           }
         : {}),
@@ -523,12 +602,27 @@ export class Rows {
               label: placed(
                 sec.text,
                 this.inFrame(r, r.x + m.half(r.width - sec.text.width), sec.text.width),
-                textY(sec.y)
+                this.frameLabelY(sec.text, sec.y, textY)
               ),
             }
           : {}),
       })),
     };
+  }
+
+  /**
+   * The top of a frame title or section label hung from the line at `y` (#1238, D723). v12 drew
+   * the first baseline `boxMargin + boxTextMargin` and half a `boxTextMargin` below that line
+   * (17.5 px at the defaults; the glyph box centred 12.5 px below it in Chromium), whatever the
+   * font. The label never rises above its line, and never sinks below `textY`, which the frame
+   * is sized to hold. Cells keep the label at `textY`.
+   */
+  private frameLabelY(label: MeasuredLabel, y: number, textY: (y: number) => number): number {
+    const { m } = this.env;
+    const top = textY(y);
+    if (m.cells) return top;
+    const first = label.baselines?.[0] ?? label.baseline;
+    return Math.min(top, Math.max(y, top + m.half(m.boxTextMargin.y) - first));
   }
 
   /** A frame label's x, moved clear of the box borders inside the frame (cells only). */
