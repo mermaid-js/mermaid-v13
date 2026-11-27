@@ -1,0 +1,64 @@
+---
+description: >-
+  Spec #1368 (D734). The compatibility-mode twin of label-syntax.mmd: the same source with
+  legacyMarkdown set. Flowchart has no label kind where v12 read markdown outside a markdown
+  string, so the picture is expected to equal the default one.
+config:
+  legacyMarkdown: true
+---
+flowchart TB
+  subgraph W1
+    direction LR
+    A1["node **bold** _ital_"] -->|"edge **bold** _ital_"| B1(unquoted node **bold** _ital_)
+    B1 -- inline edge **bold** _ital_ --> C1
+  end
+  subgraph W2
+    direction LR
+    A2["`node **bold** _ital_`"] -->|"`edge **bold** _ital_`"| B2("`unquoted node **bold** _ital_`")
+    B2 -- "`inline edge **bold** _ital_`" --> C2
+  end
+  subgraph W3
+    direction LR
+    A3[`node **bold** _ital_`] -->|`edge **bold** _ital_`| B3(`unquoted node **bold** _ital_`)
+    B3 -- `inline edge **bold** _ital_` --> C3
+  end
+  subgraph W4
+    direction LR
+    A4["node a `code` b"] -->|"edge a `code` b"| B4(unquoted node a `code` b)
+    B4 -- inline edge a `code` b --> C4
+  end
+  subgraph W5
+    direction LR
+    A5["node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] -->|"edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"| B5(unquoted node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O)
+    B5 -- inline edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O --> C5
+  end
+  subgraph W6
+    direction LR
+    A6["node one\ntwo"] -->|"edge one\ntwo"| B6(unquoted node one\ntwo)
+    B6 -- inline edge one\ntwo --> C6
+  end
+  subgraph S1["subgraph __bold__ _ital_"]
+    direction LR
+    D1[plain] ~~~ E1[drawn as written]
+  end
+  subgraph S2["`subgraph __bold__ _ital_`"]
+    direction LR
+    D2[quoted string] ~~~ E2[read as markdown]
+  end
+  subgraph S3[`subgraph __bold__ _ital_`]
+    direction LR
+    D3[bare backticks] ~~~ E3[drawn as written]
+  end
+  subgraph S4["subgraph a `code` b"]
+    direction LR
+    D4[code span] ~~~ E4[drawn as written]
+  end
+  subgraph S5["subgraph <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+    direction LR
+    D5[tags] ~~~ E5[drawn as formatting]
+  end
+  subgraph S6["subgraph one\ntwo"]
+    direction LR
+    D6[written backslash-n] ~~~ E6[breaks the line]
+  end
+  W1 ~~~ W2 ~~~ W3 ~~~ W4 ~~~ W5 ~~~ W6 ~~~ S1 ~~~ S2 ~~~ S3 ~~~ S4 ~~~ S5 ~~~ S6
