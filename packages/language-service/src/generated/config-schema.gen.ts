@@ -1400,14 +1400,13 @@ export const configSchema: ConfigSchema = {
         "reason": "Set to `false`, a flowchart markdown label (node, subgraph and edge) breaks only at its own line breaks, as v12 did for HTML labels. No other diagram type reads this key."
       }
     },
-    "legacyMarkdown": {
-      "description": "Restores v12's reading of markdown written without a markdown string (`\"`…`\"`): `**bold**`\nand `_italic_` in a plain label are drawn as emphasis again, in the label kinds where v12\nread them (class, state, ER, requirement, mindmap, kanban, architecture and swimlane lane\ntitles). It does not change tags, line breaks or markdown strings.\n",
-      "type": "boolean",
+    "markdownAlwaysOn": {
+      "$ref": "#/$defs/BaseDiagramConfig/properties/markdownAlwaysOn",
       "default": false,
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "v13 reads markdown only in a markdown string (D734). Set to `true`, a plain label of a kind where v12 read markdown is read as v12 read it: bold and italic, with code spans and list markers drawn as written. Tags, a written `\\n` and markdown strings are read as without it."
+        "reason": "v13 reads markdown only in a markdown string (D734). Set to `true`, every label is read as a markdown string is, quoted or not; tags and a written `\\n` are read as without it. A diagram section's `markdownAlwaysOn` wins over this one within a config layer."
       }
     },
     "suppressErrorRendering": {
@@ -1485,6 +1484,15 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "x-mermaid": {
             "status": "pending"
+          }
+        },
+        "markdownAlwaysOn": {
+          "description": "Reads every label of the diagram as markdown, as a markdown string (`\"`…`\"`) is read,\nwhether it is written as one or not: `**bold**`, `_italic_`, code spans and lists are\ndrawn as markdown. Tags and a written `\\n` are read as without it. Set in a diagram\nsection (`flowchart.markdownAlwaysOn`), it wins over the top-level key for that diagram\ntype within a config layer. Names and literal text that are no labels are not changed.\n",
+          "type": "boolean",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D734). Off, only a markdown string is markdown. Set in a diagram section, it wins over the top-level key within a config layer, as `theme` does."
           }
         }
       }
