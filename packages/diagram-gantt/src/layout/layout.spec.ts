@@ -704,7 +704,11 @@ describe('gantt labels follow the label handler (D735)', () => {
 
   it('draws plain markdown, bare backticks and a code span as written by default', () => {
     for (const label of ['**b** _i_', '`**b** _i_`', 'a `code` b', 'List<T>']) {
-      const { layout } = lay(labelled(label));
+      const { layout, warnings } = lay(labelled(label));
+      // D732: plain markdown is drawn as written, with one warning for the three labels.
+      expect(warnings.map((w) => w.code)).toEqual(
+        label === '**b** _i_' ? ['MARKDOWN_NOT_READ'] : []
+      );
       for (const t of texts(layout)) {
         expect(lineTexts(t)).toHaveLength(1);
         expect(lineTexts(t)[0]).toMatch(new RegExp(`${escapeRe(label)}$`));

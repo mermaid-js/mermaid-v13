@@ -7,12 +7,12 @@ import type { RenderContext } from '@mermaid-js/core';
 import {
   decodeEntities,
   fontSizePx,
-  labelSource,
   layoutLabel,
   Style,
   type FontKey,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { lengthReader } from '@mermaid-js/shared/config/readers';
 import { GANTT_METRICS, type GanttMetrics } from './metrics.ts';
 
@@ -145,8 +145,20 @@ export function envOf(ctx: GanttLayoutContext): Env {
     return out !== undefined && out.boxes.length === 1 && out.source.length === 1;
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
+  // `readLabel` warns through `inline.warn`, once per render; a layout called without one
+  // (specs, the corpus) still gives each warning once (D732).
+  const warned = new Set<string>();
+  const labelCtx = {
+    config: ctx.config,
+    warn: (w: Parameters<Warn>[0]): void => {
+      if (warned.has(w.code)) return;
+      warned.add(w.code);
+      warn(w);
+    },
+    ...inline,
+  };
   const measure = (text: string, f: FontKey, style = 0): MeasuredLabel => {
-    const source = labelSource(text, {}, ctx.config);
+    const source = readLabel(text, undefined, labelCtx);
     return layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, style, ...inline });
   };
   return {

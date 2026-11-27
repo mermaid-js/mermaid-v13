@@ -415,4 +415,24 @@ describe('gantt labels draw tags and markdown strings (D735)', () => {
     expect(svg).toContain('Task **kb** _ki_');
     expect(svg).toContain('Code a `cc` b');
   });
+
+  // D732: markdown in a plain label is drawn as written, and the render says so once.
+  const codes = (warnings: readonly Warning[]): string[] =>
+    warnings.map((w) => w.code).filter((c) => c === 'MARKDOWN_NOT_READ');
+
+  it('warns MARKDOWN_NOT_READ once for plain markdown in several label kinds', async () => {
+    const { warnings } = await render(ALWAYS);
+    expect(codes(warnings)).toEqual(['MARKDOWN_NOT_READ']);
+  });
+
+  it('gives no MARKDOWN_NOT_READ with markdownAlwaysOn, nor for markdown strings', async () => {
+    expect(codes((await render(ALWAYS, { markdownAlwaysOn: true })).warnings)).toEqual([]);
+    const quoted = [
+      'title "`Title **tb**`"',
+      'section "`Section **sb**`"',
+      '"`Task **kb**`" :a, 2014-01-01, 3d',
+      'Plain snake_case <b>tag</b> :b, 2014-01-01, 3d',
+    ].join('\n');
+    expect(codes((await render(quoted)).warnings)).toEqual([]);
+  });
 });
