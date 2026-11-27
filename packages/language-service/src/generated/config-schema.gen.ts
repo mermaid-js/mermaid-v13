@@ -1167,7 +1167,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Agentflow also reads three `flowchart` keys, as v12 did (D466): `flowchart.padding` (the padding between a node's label and its shape), `flowchart.inheritDir` (a flow without a `direction` of its own takes the diagram's) and `flowchart.subGraphTitleMargin` (room above and below a flow's title). Its edges follow `flowchart.curve`, as class diagrams do. `flowchart.arrowMarkerAbsolute` stays ignored: arrowheads are inline paths."
+        "reason": "Agentflow also reads three `flowchart` keys, as v12 did (D466): `flowchart.padding` (the padding between a node's label and its shape), `flowchart.inheritDir` (a flow without a `direction` of its own takes the diagram's) and `flowchart.subGraphTitleMargin` (room above and below a flow's title). Its edges do not follow `flowchart.curve` (D733): they follow `linkStyle … interpolate`, then `agentflow.curve`, then the top-level `curve`, then `rounded`. `flowchart.arrowMarkerAbsolute` stays ignored: arrowheads are inline paths."
       }
     },
     "sequence": {
@@ -3206,6 +3206,15 @@ export const configSchema: ConfigSchema = {
             "reason": "v12.2.0's requirement renderer never read it: a box is as tall as its lines plus its padding (D436)."
           }
         },
+        "curve": {
+          "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
+          "description": "How requirement edges are drawn between their route points (D733).\n\nDefaults to `rounded`: right angles whose corners are small arcs. Precedence:\n`requirement.curve` when set, then the top-level `curve` when set, then `rounded`.\n`flowchart.curve` does not apply to requirement diagrams (v12 drew them with it).\n",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D733, #1378): v12 drew requirement edges with `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+          }
+        },
         "fontSize": {
           "type": "number",
           "default": 14,
@@ -4781,6 +4790,15 @@ export const configSchema: ConfigSchema = {
             "reason": "v12's class renderer read `state.useMaxWidth` instead (a v12 bug); v13 reads `class.useMaxWidth`."
           }
         },
+        "curve": {
+          "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
+          "description": "How class edges are drawn between their route points (D733).\n\nDefaults to `rounded`: right angles whose corners are small arcs. Precedence:\n`class.curve` when set, then the top-level `curve` when set, then `rounded`.\n`flowchart.curve` does not apply to class diagrams (v12 drew them with it).\n",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D733, #1378): v12 drew class edges with `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+          }
+        },
         "titleTopMargin": {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
@@ -6152,6 +6170,15 @@ export const configSchema: ConfigSchema = {
             "status": "honoured",
             "since": "13.0.0",
             "reason": "As v12's `setupViewPortForSVG`, `width=\"100%\"` and a `max-width` when true."
+          }
+        },
+        "curve": {
+          "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
+          "description": "How agentflow edges are drawn between their route points (D733).\n\nDefaults to `rounded`: right angles whose corners are small arcs. Precedence:\na per-edge `linkStyle <n> interpolate`, then `linkStyle default interpolate`, then\n`agentflow.curve` when set, then the top-level `curve` when set, then `rounded`.\n`flowchart.curve` does not apply to agentflow diagrams (v12 drew them with it).\n",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D733, #1378): v12 drew agentflow edges with `flowchart.curve`. A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
           }
         },
         "useWidth": {

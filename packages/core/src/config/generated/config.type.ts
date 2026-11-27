@@ -551,6 +551,16 @@ layout?: string
  * 
  */
 useMaxWidth?: boolean
+/**
+ * How agentflow edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+ * a per-edge `linkStyle <n> interpolate`, then `linkStyle default interpolate`, then
+ * `agentflow.curve` when set, then the top-level `curve` when set, then `rounded`.
+ * `flowchart.curve` does not apply to agentflow diagrams (v12 drew them with it).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
 useWidth?: number
 /**
  * Margin top for the text over the diagram
@@ -1089,6 +1099,15 @@ useWidth?: number
  */
 useMaxWidth?: boolean
 /**
+ * How class edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+ * `class.curve` when set, then the top-level `curve` when set, then `rounded`.
+ * `flowchart.curve` does not apply to class diagrams (v12 drew them with it).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * Margin top for the text over the diagram
  */
 titleTopMargin?: number
@@ -1593,6 +1612,15 @@ rect_border_size?: string
 rect_border_color?: string
 rect_min_width?: number
 rect_min_height?: number
+/**
+ * How requirement edges are drawn between their route points (D733).
+ * 
+ * Defaults to `rounded`: right angles whose corners are small arcs. Precedence:
+ * `requirement.curve` when set, then the top-level `curve` when set, then `rounded`.
+ * `flowchart.curve` does not apply to requirement diagrams (v12 drew them with it).
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
 fontSize?: number
 rect_padding?: number
 line_height?: number
