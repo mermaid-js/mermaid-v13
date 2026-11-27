@@ -1,11 +1,16 @@
 ---
 description: >-
   Set labels of two lines (a <br>) and three (wrapped, D414) above their text
-  nodes: each text grid moves down by what its label reaches below one line, so
-  no node lies under its set's label (D613, #770).
+  nodes, one under the first and six under the second: each text grid starts
+  below its set's label and stays inside the set's circle (D750, #770, #1295).
 ---
 venn-beta
   set A["Frontend<br>team"]
     text a1["React"]
   set B["Backend team and friends of the frontend"]
     text b1["API"]
+    text b2["Auth"]
+    text b3["Queue"]
+    text b4["Cache"]
+    text b5["Search"]
+    text b6["Billing"]

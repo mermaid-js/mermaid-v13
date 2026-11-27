@@ -39,6 +39,10 @@ export interface VennMetrics {
   /** A labelled region's grid moves down `min(32s, innerRadius / 4)`. */
   readonly labelOffsetMax: number;
   readonly labelOffsetFactor: number;
+  /** A labelled area's grid starts this far below the labels it would meet: `10s` (D750). */
+  readonly labelTextGap: number;
+  /** At most this many passes narrow a labelled area's grid to its inner circle (D750). */
+  readonly gridPasses: number;
   /** Two text nodes or fewer move down a further `30s`. */
   readonly fewNodesOffset: number;
   readonly fewNodes: number;
@@ -65,6 +69,8 @@ export const VENN_METRICS: VennMetrics = {
   innerRadiusFallback: 0.6,
   labelOffsetMax: 32,
   labelOffsetFactor: 0.25,
+  labelTextGap: 10,
+  gridPasses: 8,
   fewNodesOffset: 30,
   fewNodes: 2,
   cellFactor: 0.9,
