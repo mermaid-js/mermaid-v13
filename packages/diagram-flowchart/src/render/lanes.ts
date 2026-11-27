@@ -2,7 +2,8 @@
 // top-level group is a lane, drawn as v12's swimlane cluster (`clusters/swimlane.js` at
 // upstream c9b12739f): a title band and a body, both filled `clusterBkg` and stroked
 // `clusterBorder`. v12 wrote `fill="none"` on the body, but its `.cluster rect` CSS filled it
-// (D768). Loose nodes sit in a lane the engine makes, which flowchart's model does not have. v12's `log.warn`s for shared nodes and nested lanes are warnings here (D226).
+// (D768). Loose nodes sit in a lane the engine makes, which flowchart's model does not have.
+// v12's `log.warn`s for shared nodes and nested lanes are warnings here (D226).
 // A part of its own (`../lanes.ts`, R-PERF-1), loaded with the engine for flowcharts only. It
 // imports only types from the renderer: what it draws with comes in the `Scene` and `makeLanes()`.
 import type { LayoutModel, LayoutModelGroup } from '@mermaid-js/core/layout';

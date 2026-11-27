@@ -160,11 +160,11 @@
     "since": "2026-11-13"
   },
   {
-    "id": "e2e/nightly-check/06-uml-relationships.mmd (head colour)",
+    "id": "e2e/diagrams/usecase/nightly-check/06-uml-relationships.mmd",
     "inputHash": "sha256:35540af431ef1fef",
     "kind": "model",
     "reason": "v12 filled every arrowhead (`.marker`) with `lineColor`; v13 draws include and extend heads in their line's colour (`usecaseIncludeLine`, `usecaseExtendLine`), as the line, unless the edge's own style sets a stroke (D767, spec #1343, #1227).",
-    "owner": "#1227",
+    "owner": "D767",
     "since": "2026-11-27"
   }
 ]

@@ -93,10 +93,7 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
       fill: 'none',
     });
     const head = {
-      line:
-        e.style.shape.stroke ??
-        (e.kind === 'relation' ? lineColour(scene, e.relationship) : undefined) ??
-        edges.line,
+      line: inkOf(scene, e),
       hollow: edges.hollow,
       opacity: e.style.shape.opacity,
     };
@@ -104,6 +101,18 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
     marker(w, ends.end, { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy }, head);
   }
   w.close();
+}
+
+/**
+ * An edge's ink, shared by its line's heads and its label's border: an author's stroke, else
+ * include's or extend's line colour, else the edge line (D767).
+ */
+function inkOf(scene: Scene, e: UsecaseEdgeView) {
+  return (
+    e.style.shape.stroke ??
+    (e.kind === 'relation' ? lineColour(scene, e.relationship) : undefined) ??
+    need(scene.paint.edges, 'edge').line
+  );
 }
 
 const DASH = String(DRAW.dash) as SafeValue;
@@ -130,7 +139,7 @@ function drawEdgeLabel(scene: Scene, e: RelationEdgeView): void {
   const r = e.relationship;
   edgeLabel(w, label, at, r.id, {
     fill: bg.fill,
-    stroke: e.style.shape.stroke ?? lineColour(scene, r) ?? need(paint.edges, 'edge').line,
+    stroke: inkOf(scene, e),
     text: {
       class: 'relationship-label',
       'data-id': r.id,
