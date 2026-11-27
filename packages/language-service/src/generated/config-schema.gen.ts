@@ -1400,6 +1400,16 @@ export const configSchema: ConfigSchema = {
         "reason": "Set to `false`, a flowchart markdown label (node, subgraph and edge) breaks only at its own line breaks, as v12 did for HTML labels. No other diagram type reads this key."
       }
     },
+    "legacyMarkdown": {
+      "description": "Restores v12's reading of markdown written without a markdown string (`\"`…`\"`): `**bold**`\nand `_italic_` in a plain label are drawn as emphasis again, in the label kinds where v12\nread them (class, state, ER, requirement, mindmap, kanban, architecture and swimlane lane\ntitles). It does not change tags, line breaks or markdown strings.\n",
+      "type": "boolean",
+      "default": false,
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "v13 reads markdown only in a markdown string (D734). Set to `true`, a plain label of a kind where v12 read markdown is read as v12 read it: bold and italic, with code spans and list markers drawn as written. Tags, a written `\\n` and markdown strings are read as without it."
+      }
+    },
     "suppressErrorRendering": {
       "type": "boolean",
       "default": false,

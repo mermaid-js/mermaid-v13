@@ -11,7 +11,7 @@ export type { FontTable, TableMeasurerOptions } from './font-tables.ts';
 export { emphasisAt, layoutLabel, markdownLines, markdownString } from './label.ts';
 export type { BoxRun, LabelMarkup, LabelOptions, MeasuredLabel, Run, SourceLine } from './label.ts';
 export { labelSource } from './label-source.ts';
-export type { LabelMode, LabelSource, LabelSourceOptions } from './label-source.ts';
+export type { LabelConfig, LabelSource, LabelSourceOptions } from './label-source.ts';
 export { decodeEntities, entityAt } from './entities.ts';
 export { inlineSpans } from './inline.ts';
 export type {

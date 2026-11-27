@@ -265,6 +265,14 @@ wrap?: boolean
 fontSize?: number
 markdownAutoWrap?: boolean
 /**
+ * Restores v12's reading of markdown written without a markdown string (`"`…`"`): `**bold**`
+ * and `_italic_` in a plain label are drawn as emphasis again, in the label kinds where v12
+ * read them (class, state, ER, requirement, mindmap, kanban, architecture and swimlane lane
+ * titles). It does not change tags, line breaks or markdown strings.
+ * 
+ */
+legacyMarkdown?: boolean
+/**
  * Suppresses inserting 'Syntax error' diagram in the DOM.
  * This is useful when you want to control how to handle syntax errors in your application.
  * 

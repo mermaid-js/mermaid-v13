@@ -36,5 +36,6 @@ export const CORE_DEFAULTS: MermaidConfig = {
     "automaticLaneOrdering": false
   },
   "markdownAutoWrap": true,
+  "legacyMarkdown": false,
   "suppressErrorRendering": false
 };
