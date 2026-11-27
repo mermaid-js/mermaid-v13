@@ -91,6 +91,44 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     }
   );
 
+  it.each(THEME_NAMES)(
+    'keep fills 2–4 when an author sets quadrant1Fill alone in %s, as v12 does (#1265, D738)',
+    async (name) => {
+      const vars = { quadrant1Fill: '#ff8888' };
+      const old = v12Vars(name, vars);
+      const plain = createTheme(await loadTheme(name), {
+        diagram: DIAGRAM_TABLES.quadrant,
+        cssVariables: false,
+      });
+      const theme = createTheme(await loadTheme(name), {
+        diagram: DIAGRAM_TABLES.quadrant,
+        cssVariables: false,
+        themeVariables: vars,
+      });
+      expect(theme.value('quadrant1Fill')).toBe('#ff8888');
+      for (const n of FILLS.slice(1)) {
+        expect(hex(theme.value(n)), n).toBe(hex(plain.value(n)));
+        expect(hex(theme.value(n)), n).toBe(hex(old[n]));
+      }
+    }
+  );
+
+  it.each(THEME_NAMES)('honour explicit quadrant fills in %s, as v12 does', async (name) => {
+    const vars = {
+      quadrant1Fill: '#ff8888',
+      quadrant2Fill: '#88ff88',
+      quadrant3Fill: '#8888ff',
+      quadrant4Fill: '#ffff88',
+    };
+    const old = v12Vars(name, vars);
+    const theme = createTheme(await loadTheme(name), {
+      diagram: DIAGRAM_TABLES.quadrant,
+      cssVariables: false,
+      themeVariables: vars,
+    });
+    for (const n of FILLS) expect(hex(theme.value(n)), n).toBe(hex(old[n]));
+  });
+
   it('keep their own fills under a user primaryColor in default, as v12 does (D656)', async () => {
     const both = await userPrimary('default');
     // v12 theme-default.js derives them once in its constructor, before the overrides arrive.
