@@ -58,9 +58,9 @@ const RE_COLOUR = /\b(fill|stroke|color)(\s*:\s*)(?:#\w+|\w+(?:\([^)]*\))?)/g;
 const recoloured = (source: string, colour: string): string =>
   source.replace(RE_STATEMENT, (line) => line.replace(RE_COLOUR, `$1$2${colour}`));
 
-async function render(source: string) {
+async function render(source: string, config: object = {}) {
   const m = createMermaid();
-  m.initialize({ deterministic: true } as InitializeConfig);
+  m.initialize({ deterministic: true, ...config } as InitializeConfig);
   const r = await m.render('misspelt', source);
   return {
     svg: r.svg,
@@ -145,7 +145,7 @@ const AUTHOR_FIXTURES = {
 
 describe.each(Object.entries(AUTHOR_FIXTURES))(
   'D690: misspelt colours in %s',
-  (_, [file, code]) => {
+  (name, [file, code]) => {
     const source = readFileSync(join(DIAGRAMS, file), 'utf8');
     /** `source` with every quoted hex colour and every `rgb()` replaced by `colour`. */
     const given = (colour: string): string =>
@@ -179,6 +179,21 @@ describe.each(Object.entries(AUTHOR_FIXTURES))(
       const { svg, warnings } = await render(given('rgb(redd)'));
       expect(svg).not.toContain('rgb(redd)');
       expect(warnings.some((w) => w.code === code && w.message.includes('"rgb(redd)"'))).toBe(true);
+    });
+
+    // Diagram text cannot hold `-` in a theme variable (v12's sanitiser), so the site config gives it.
+    it.runIf(name === 'themeVariables')('ignores a malformed color-mix() (D737)', async () => {
+      const mixed = (c: string) => `color-mix(in srgb, ${c}, blue)`;
+      const drawn = await render(source, {
+        themeVariables: { primaryColor: mixed('rebeccapurple') },
+      });
+      expect(drawn.svg).toContain(mixed('rebeccapurple'));
+      const { svg, warnings } = await render(source, {
+        themeVariables: { primaryColor: mixed('rebeccapurpel') },
+      });
+      expect(svg).not.toContain('rebeccapurpel');
+      const warned = warnings.find((w) => w.code === code);
+      expect(warned?.message).toContain(JSON.stringify(mixed('rebeccapurpel')));
     });
   }
 );

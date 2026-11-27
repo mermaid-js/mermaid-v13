@@ -154,6 +154,41 @@ describe('checkStyle', () => {
       expect(checkCssColor(v), v).toBeUndefined();
   });
 
+  it('reads the arguments of color(), color-mix() and light-dark() (D737)', () => {
+    for (const v of [
+      'color(display-p3 1 0 0)',
+      'color(srgb 1 0 0 / 50%)',
+      'color(xyz-d65 0.1 0.2 0.3)',
+      'color-mix(in oklch longer hue, 30% red, rgb(0 0 255))',
+      'color-mix(in srgb, red 50%, blue)',
+      'color-mix(in srgb, light-dark(red, blue), #fff)',
+      'light-dark(#fff, rgb(0 0 0))',
+      'light-dark(red, blue)',
+      'var(--mermaid-primaryColor)',
+      'var(--_pf, #fff)',
+    ])
+      expect(checkCssColor(v), v).toBe(v);
+    for (const v of [
+      'color(redd 1 0 0)',
+      'color(srgb redd)',
+      'color(srgb 1 0)',
+      'color(srgb)',
+      'color(display-p3, 1, 0, 0)',
+      'color(from red srgb r g b)',
+      'color-mix(in srgb, redd, blue)',
+      'color-mix(in srgb, red 50% 20%, blue)',
+      'color-mix(in srgb, red, blue, green)',
+      'color-mix(in srgb, red)',
+      'color-mix(srgb, red, blue)',
+      'color-mix(in srgb, rgb(redd), blue)',
+      'light-dark(redd, blue)',
+      'light-dark(red)',
+      'light-dark(red 50%, blue)',
+      'light-dark(red, blue, green)',
+    ])
+      expect(checkCssColor(v), v).toBeUndefined();
+  });
+
   it('keeps an earlier colour when a later one is misspelt, as CSS does', () => {
     expect(checkStyle(['fill:red', 'fill:redd']).shape).toEqual({ fill: 'red' });
   });
