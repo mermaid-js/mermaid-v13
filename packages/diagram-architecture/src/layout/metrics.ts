@@ -3,8 +3,9 @@
  * v12 drew an architecture diagram with, in px, as its `svgDraw.ts` and schema wrote them. It is
  * the only file in `layout/` that holds a length literal; the builder and the renderer take
  * their lengths from {@link architectureSizes}, which scales them by the document's
- * `architecture.iconSize` and `architecture.padding` as v12 did. Architecture has no text output
- * (D320), so there is one set, in px.
+ * `architecture.iconSize` and `architecture.padding` as v12 did, and hangs a service label from
+ * the theme's font as v12 did (D762). Architecture has no text output (D320), so there is one
+ * set, in px.
  */
 
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
@@ -41,6 +42,12 @@ export const ARCHITECTURE_METRICS = {
   bendLabelTurn: 45,
 } as const;
 
+/** The font labels are drawn in: the theme's `fontSize` and the measurer's line height, px. */
+export interface ArchitectureLabelFont {
+  readonly fontSize: number;
+  readonly lineHeight: number;
+}
+
 /** v12's lengths for one document's `iconSize` and `padding`, px. */
 export interface ArchitectureSizes {
   /** A service's icon and a junction's box: `iconSize` square. */
@@ -53,7 +60,12 @@ export interface ArchitectureSizes {
   readonly labelWidth: number;
   /** The line `left`/`right` ends meet a service or junction on, down from its top: `iconSize / 2`. */
   readonly anchorY: number;
-  /** Where a service label's top centre sits from the icon's corner: `(iconSize / 2, iconSize)`. */
+  /**
+   * Between the icon's bottom and a service label's top: `fontSize − lineHeight / 2`, so the first
+   * line's middle sits `fontSize` under the icon, as v12's `dy="1em"` put it (D762).
+   */
+  readonly labelGap: number;
+  /** Where a service label's top centre sits from the icon's corner: `(iconSize / 2, iconSize + labelGap)`. */
   readonly labelAt: { readonly x: number; readonly y: number };
   /** A group's icon: `padding × 0.75` square. */
   readonly groupIcon: number;
@@ -69,19 +81,22 @@ export interface ArchitectureSizes {
   readonly iconTextMargin: number;
 }
 
-/** The lengths v12 drew with for `iconSize` and `padding` (px). */
+/** The lengths v12 drew with for labels in `font`, `iconSize` and `padding` (px). */
 export function architectureSizes(
+  font: ArchitectureLabelFont,
   iconSize: number = ARCHITECTURE_METRICS.iconSize,
   padding: number = ARCHITECTURE_METRICS.padding
 ): ArchitectureSizes {
   const M = ARCHITECTURE_METRICS;
+  const labelGap = font.fontSize - font.lineHeight / 2;
   return {
     iconSize,
     padding,
     arrow: iconSize / M.arrowDivisor,
     labelWidth: iconSize * M.labelWidthRatio,
     anchorY: iconSize / 2,
-    labelAt: { x: iconSize / 2, y: iconSize },
+    labelGap,
+    labelAt: { x: iconSize / 2, y: iconSize + labelGap },
     groupIcon: padding * M.groupIconRatio,
     groupLabelGap: M.groupLabelGap,
     groupDash: M.groupDash,

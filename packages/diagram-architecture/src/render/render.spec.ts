@@ -103,6 +103,27 @@ describe('structure (D508, v12 class names and order)', () => {
     expect(outline.fill).toBe('none');
   });
 
+  it("hangs a service label as v12's dy=1em: the first line's middle fontSize under the icon (D762)", async () => {
+    // The first baseline is iconSize + fontSize − lineHeight / 2 + ascent: 80 + 16 − 10 + 15.
+    const label = (svg: string) =>
+      Number(
+        /<g class="architecture-service-label" data-id="service:a"><text[^>]* y="([\d.]+)"/.exec(
+          svg
+        )![1]
+      );
+    const at = async (fontSize: string) =>
+      label(
+        (
+          await render('architecture-beta\n  service a(server)[A]', {
+            ...grid,
+            config: { themeVariables: { fontSize } },
+          })
+        ).svg
+      );
+    expect(await at('16px')).toBe(101);
+    expect(await at('20px')).toBe(105);
+  });
+
   it('honours architecture.useMaxWidth', async () => {
     const wide = await render(PAIR, grid);
     expect(wide.svg).toMatch(/<svg[^>]* width="100%"[^>]*style="max-width:/);

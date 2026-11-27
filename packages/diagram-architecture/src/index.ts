@@ -42,6 +42,7 @@ export type { ArchitectureLayoutContext } from './layout/context.ts';
 export {
   ARCHITECTURE_METRICS,
   architectureSizes,
+  type ArchitectureLabelFont,
   type ArchitectureSizes,
 } from './layout/metrics.ts';
 export type { ArchitectureParseOptions, ArchitectureParseResult } from './parser/index.ts';
