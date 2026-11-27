@@ -69,6 +69,16 @@ describe('packet layout invariants (R-LAYOUT-3)', () => {
       /bit number/,
     ],
     [
+      'bit numbers that crowd each other',
+      (l: PacketLayout) => (w(l).rows[0]!.pieces[0]!.bitNumbers[1]!.box.x += 4),
+      /bit numbers .* are not apart/,
+    ],
+    [
+      'a dropped start number',
+      (l: PacketLayout) => w(l).rows[0]!.pieces[1]!.bitNumbers.shift(),
+      /bit numbers/,
+    ],
+    [
       'a label line outside its box',
       (l: PacketLayout) => (w(l).rows[0]!.pieces[0]!.box.height -= 20),
       /line outside its box/,

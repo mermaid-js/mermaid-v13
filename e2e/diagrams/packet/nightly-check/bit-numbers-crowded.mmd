@@ -1,0 +1,19 @@
+---
+config:
+  packet:
+    bitWidth: 12
+    bitsPerRow: 16
+description: >-
+  3-digit bit numbers in 2-bit fields at bitWidth 12: each field's end number
+  would meet a start number, so it is dropped and the start numbers stay
+  (D747, #1268)
+---
+packet
+  0-95: "Filler"
+  96-97: "a"
+  98-99: "b"
+  100-101: "c"
+  102-103: "d"
+  104: "e"
+  105: "f"
+  106-111: "g"

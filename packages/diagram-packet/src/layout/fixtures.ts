@@ -145,6 +145,24 @@ export const FIXTURES: Readonly<Record<string, Fixture>> = {
       { title: 'Grown rows' }
     ),
   },
+  // e2e nightly-check bit-numbers-crowded.mmd (#1268): 3-digit numbers in 2-bit fields at
+  // bitWidth 12 meet the next number, so their end numbers are dropped (D747).
+  crowded: {
+    model: model(
+      [
+        [0, 95, 'Filler'],
+        [96, 97, 'a'],
+        [98, 99, 'b'],
+        [100, 101, 'c'],
+        [102, 103, 'd'],
+        [104, 104, 'e'],
+        [105, 105, 'f'],
+        [106, 111, 'g'],
+      ],
+      { bitsPerRow: 16 }
+    ),
+    config: { bitWidth: 12, bitsPerRow: 16 },
+  },
   // A title far wider than the canvas (D344).
   wideTitle: {
     model: model([[0, 3, 'a']], {

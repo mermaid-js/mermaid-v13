@@ -17,6 +17,7 @@ e2e/diagrams/packet/baseline/themes/redux-color.mmd 1 541c566e9fbefb62
 e2e/diagrams/packet/baseline/themes/redux-dark-color.mmd 1 868b19955ebd030e
 e2e/diagrams/packet/baseline/themes/redux-dark.mmd 1 94debb227e5ad8f0
 e2e/diagrams/packet/baseline/themes/redux.mmd 1 e8ccd391f5189c90
+e2e/diagrams/packet/nightly-check/bit-numbers-crowded.mmd 1 74d8c75a304adfb2
 e2e/diagrams/packet/nightly-check/label-four-lines-overflows.mmd 1 4c89cdbf69fc15d5
 e2e/diagrams/packet/nightly-check/label-three-lines-shrinks.mmd 1 d83bab10209827d2
 e2e/diagrams/packet/nightly-check/label-two-lines-fits.mmd 1 c7d2a1a68e498711
