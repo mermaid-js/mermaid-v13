@@ -20,12 +20,14 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import {
+  decodeEntities,
   layoutLabel,
   markdownString,
   type FontKey,
   type MeasuredLabel,
   type Measurer,
 } from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import {
   railroadConfig,
   railroadConfigWarning,
@@ -326,25 +328,28 @@ class Placer {
 
   /**
    * A special, `? text ?` in a dashed box (L473-499). Its text follows the label rule (D710):
-   * `<br>`, the drawn tags and character references, and Markdown only in a markdown string.
-   * A text that draws formatting is laid out in lines and its box sized from them (in px; the
-   * text output draws its plain text). Any other is drawn as one string, the label's text: its
-   * entities decoded, a dropped tag gone (`HTML_DROPPED`), a markdown string without its
-   * backticks. The SVG draws a special on one line, so a line break or tab written in it is a
-   * space. A special made from tokens (PEG's
-   * `&X`, `!X` and `.`, `literal`) is drawn as written, as a token is.
+   * `<br>`, the drawn tags and character references, and Markdown only in a markdown string;
+   * any other tag is dropped and named in `HTML_DROPPED`. A text that draws formatting is laid
+   * out in lines and its box sized from them (in px; the text output draws its plain text). Any
+   * other is drawn as one string, the label's text. A plain text with no `<`, which holds no tag,
+   * is drawn as before: as written, its entities decoded. The SVG draws a special on one line,
+   * so a line break or tab written in it is a space. A special made from tokens (PEG's `&X`,
+   * `!X` and `.`, `literal`) is drawn as written, as a token is.
    */
   private special(node: RailroadSpecial): Sized {
     if (node.literal) return this.leaf(node, `? ${oneLine(node.text)} ?`, 0, this.m.specialDash);
     const { text: source, markup } = markdownString(node.text);
     const written = `? ${source} ?`;
+    const inline = tagsOnly(this.cells.inline);
     const label = layoutLabel(oneLine(written), this.font, Infinity, this.measurer, {
       markup,
-      ...(this.cells.inline ? { inline: this.cells.inline } : {}),
+      ...(inline ? { inline } : {}),
     });
     const dash = this.m.specialDash;
-    const text = plainText(label);
-    const drawn = isFormatted(label) && !this.cells.measurer ? { text, label } : { text };
+    const formatted = isFormatted(label);
+    const asWritten = !formatted && markup === 'plain' && !source.includes('<');
+    const text = asWritten ? decodeEntities(written) : plainText(label);
+    const drawn = formatted && !this.cells.measurer ? { text, label } : { text };
     return this.leaf(node, written, 0, dash, drawn);
   }
 
