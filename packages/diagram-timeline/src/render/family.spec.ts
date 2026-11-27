@@ -282,11 +282,11 @@ describe('label markup (D710, D711)', () => {
     expect(runs(d.r.svg, 'per:1')).toBe('`npm` or `pnpm`');
   });
 
-  it('drops other tags, keeps their text, and keeps List<T> and escaped tags as text', async () => {
+  it('draws other tags, List<T> and escaped tags as written text (#1440)', async () => {
     const d = await draw(fx.timeline(['s', ['a <span>in</span> c', 'List<T> and &lt;b&gt;']]), {
       theme: 'default',
     });
-    expect(textOf(d.r.svg, 'per:1')).toBe('a in c');
+    expect(textOf(d.r.svg, 'per:1')).toBe('a &lt;span&gt;in&lt;/span&gt; c');
     expect(textOf(d.r.svg, 'ev:1.1')).toBe('List&lt;T&gt; and &lt;b&gt;');
   });
 

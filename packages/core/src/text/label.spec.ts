@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { streamWriter } from '../svg/index.ts';
 import {
   Style,
-  inlineSpans,
   layoutLabel,
   markdownString,
   tableMeasurer,
@@ -279,9 +278,9 @@ describe('HTML subset (R-TEXT-3)', () => {
     ]);
   });
 
-  it('drops other known tags and keeps their text', () => {
+  it('draws every other tag as written, with its attributes (#1440)', () => {
     expect(runs(layout('<span class="x">a</span> <big>b</big> <a href="x">c</a>'))).toEqual([
-      [['a b c', 0]],
+      [['<span class="x">a</span> <big>b</big> <a href="x">c</a>', 0]],
     ]);
   });
 
@@ -343,68 +342,69 @@ describe('HTML subset (R-TEXT-3)', () => {
     );
   });
 
-  // D566: the render's `InlineSpans.dropped` gets the names; the API warns `HTML_DROPPED`.
-  const droppedBy = (raw: string, options: LabelOptions = {}): [string[], string[]] => {
-    const inline = inlineSpans([], () => undefined);
-    const box = layoutLabel(raw, arial, Infinity, tableMeasurer, { ...options, inline });
-    return [texts(box), [...inline.dropped]];
-  };
+  // #1440, #1368: only the drawn tags are read as tags. Every other `<…>` is drawn as written,
+  // in every mode, so a label never loses text to a tag; a markdown string reads the same text.
+  const MODES: LabelMarkup[] = ['plain', 'emphasis', 'markdown'];
+  const shown = (raw: string, markup: LabelMarkup): [string, number][][] =>
+    runs(layoutLabel(raw, arial, Infinity, tableMeasurer, { markup }));
 
-  it('names the tags it drops, lower case and once each, but not the formatting subset', () => {
-    expect(
-      droppedBy('<IMG src="a.png"/> Logo <big>2</big> <a href=x>l</a><br><b>b</b><em>e</em>')
-    ).toEqual([
-      ['Logo 2 l', 'be'],
-      ['img', 'big', 'a'],
+  it.each(MODES)('draws tags it does not draw as written text (%s)', (markup) => {
+    for (const raw of [
+      '<img src=x onerror="alert(1)">',
+      '<IMG src="a.png"/> Logo',
+      '<script>alert(1)</script>',
+      'a <SCRIPT type="x">1</Script > b<style>.x{}</style>c',
+      '<span>s</span>',
+      '<a href=x>link</a>',
+      '<div>d</div><font color=red>f</font>',
+      'List<T>',
+      '<T>',
+      '<foo bar="1">',
+      'a < b > c',
+      '</span>',
+    ])
+      expect(shown(raw, markup), raw).toEqual([[[raw, 0]]]);
+  });
+
+  it.each(MODES)('reads a drawn tag inside a tag it does not draw (%s)', (markup) => {
+    expect(shown('<span><b>x</b></span>', markup)).toEqual([
+      [
+        ['<span>', 0],
+        ['x', B],
+        ['</span>', 0],
+      ],
     ]);
-    expect(droppedBy('<b>a</b><br/><i>b</i> List<T> <foo> a < b')[1]).toEqual([]);
-    expect(
-      droppedBy(
-        '<u>u</u><ins>i</ins><s>s</s><strike>t</strike><del>d</del><sub>b</sub><sup>p</sup>'
-      )[1]
-    ).toEqual([]);
-    expect(droppedBy('plain')[1]).toEqual([]);
   });
 
-  it.each<LabelMarkup>(['plain', 'emphasis', 'markdown'])(
-    'drops <script> and <style> with what they hold (%s)',
-    (markup) => {
-      expect(droppedBy('<script>alert(1)</script>', { markup })).toEqual([[''], ['script']]);
-      expect(
-        droppedBy('a <SCRIPT type="x">1<br>2\n3</Script > b<style>.x{}</style>c', { markup })
-      ).toEqual([['a bc'], ['script', 'style']]);
-      // Not a longer name that starts the same.
-      expect(droppedBy('<scripts>x</scripts>', { markup })).toEqual([['<scripts>x</scripts>'], []]);
-    }
-  );
-
-  it('keeps the text after text that only starts like <script> or <style>', () => {
-    expect(droppedBy('edit <style.css> then reload')).toEqual([
-      ['edit <style.css> then reload'],
-      [],
+  it.each(MODES)('breaks a <script> element at <br>, as any text (%s)', (markup) => {
+    expect(shown('<script>a<br>b</script>', markup)).toEqual([
+      [['<script>a', 0]],
+      [['b</script>', 0]],
     ]);
-    expect(droppedBy('open <script-x> now')).toEqual([['open <script-x> now'], []]);
-    expect(droppedBy('a <scripty> b </scripty> c')).toEqual([['a <scripty> b </scripty> c'], []]);
   });
 
-  it('drops only the tag of a <script> or <style> with no end tag, and keeps what follows', () => {
-    // Text shaped like a generic, as an author may type it in a label: `+List<Style> items`.
-    // (A class generic written with `~` reaches the label as `&lt;Style&gt;`, D619.)
-    expect(droppedBy('+List<Style> items')).toEqual([['+List items'], ['style']]);
-    expect(droppedBy('+run(Map<Script> m) void')).toEqual([['+run(Map m) void'], ['script']]);
-    // The end tag of another element, or one before the start tag, closes nothing.
-    expect(droppedBy('a</style> <script>b</style> c')).toEqual([['a b c'], ['style', 'script']]);
+  it('draws nothing for a <br> that does not break, and keeps the text around it', () => {
+    expect(texts(layout('a</br>b<br class="x">c'))).toEqual(['abc']);
   });
 
-  it('removes each closed element, also after one with no end tag', () => {
-    expect(droppedBy('a <style>b <script>c</script> d <script>e</script> f')[0]).toEqual([
-      'a b d f',
+  it('shows a tag in a markdown code span as written, in monospace', () => {
+    expect(shown('`<img src=x>` and `<b>`', 'markdown')).toEqual([
+      [
+        ['<img src=x>', Style.Mono],
+        [' and ', 0],
+        ['<b>', Style.Mono],
+      ],
     ]);
-    expect(droppedBy('<script>1</script>a<script>2</SCRIPT >b<script>c')[0]).toEqual(['abc']);
   });
 
-  it('drops script content without a sink too', () => {
-    expect(texts(layout('a<script>alert(1)</script>b'))).toEqual(['ab']);
+  it('escapes a tag drawn as text, so no element reaches the SVG (D471)', () => {
+    const w = streamWriter();
+    w.label(layout('<script>alert(1)</script><img src=x onerror=alert(1)>'), 0, 0);
+    const svg = w.finish();
+    expect(svg).toContain(
+      '&lt;script&gt;alert(1)&lt;/script&gt;&lt;img src=x onerror=alert(1)&gt;'
+    );
+    expect(svg).not.toMatch(/<(script|img)/i);
   });
 
   it('shows unknown tags and stray brackets as literal text', () => {
@@ -653,8 +653,8 @@ describe('backslashBreak (D562)', () => {
 });
 
 describe('plain-label wrapper', () => {
-  // Wrapped plain labels take a one-pass wrapper; `<span>` is dropped as markup but sends the
-  // same text down the general path, which is the reference. Labels that fit never reach either.
+  // Wrapped plain labels take a one-pass wrapper; `<i></i>` draws nothing but sends the same
+  // text down the general path, which is the reference. Labels that fit never reach either.
   const random = (seed: number) => (): number => {
     seed = (seed + 0x6d2b79f5) | 0;
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -753,11 +753,11 @@ describe('plain-label wrapper', () => {
         if (measurer.width(text, font, style) <= max) continue;
         for (const keepWords of [false, true]) {
           for (const markup of MODES) {
-            // A markdown bullet item is not plain (and `<span>` would hide its marker).
+            // A markdown bullet item is not plain (and `<i></i>` would hide its marker).
             if (markup === 'markdown' && BULLET.test(text)) continue;
             const options: LabelOptions = { style, keepWords, markup };
             const plain = layoutLabel(text, font, max, measurer, options);
-            const general = layoutLabel(`<span>${text}</span>`, font, max, measurer, options);
+            const general = layoutLabel(`<i></i>${text}`, font, max, measurer, options);
             if (!same(plain, general)) {
               const at = JSON.stringify({ text, font, style, max, keepWords, markup });
               expect(plain, at).toStrictEqual(general);
@@ -816,7 +816,7 @@ describe('plain-label wrapper', () => {
           expect(
             layoutLabel(text, arial, max, tableMeasurer, options),
             JSON.stringify({ text, max, keepWords })
-          ).toStrictEqual(layoutLabel(`<span>${text}</span>`, arial, max, tableMeasurer, options));
+          ).toStrictEqual(layoutLabel(`<i></i>${text}`, arial, max, tableMeasurer, options));
         }
       }
     }
@@ -851,7 +851,7 @@ describe('plain-label wrapper', () => {
 
   it('leaves labels with other white space to the general path', () => {
     const box = layout('aaa\u00a0aaa aaa\u3000aaa aaa', 40);
-    expect(box).toStrictEqual(layout('<span>aaa\u00a0aaa aaa\u3000aaa aaa</span>', 40));
+    expect(box).toStrictEqual(layout('<i></i>aaa\u00a0aaa aaa\u3000aaa aaa', 40));
   });
 
   // Labels whose only markup is explicit breaks: each source line is plain once trimmed, and is
@@ -911,7 +911,7 @@ describe('plain-label wrapper', () => {
     let compared = 0;
     for (let k = 0; k < count; k++) {
       const text = generate(rnd);
-      // Trimmed, a label may be empty (an empty box, where `<span></span>` is an empty line) or
+      // Trimmed, a label may be empty (an empty box, where `<i></i>` is an empty line) or
       // plain (measured once where it fits).
       const trimmed = text.trim();
       if (trimmed === '' || (PLAIN.test(trimmed) && !trimmed.includes('  '))) continue;
@@ -919,20 +919,14 @@ describe('plain-label wrapper', () => {
       const style = STYLES[Math.floor(rnd() * STYLES.length)] as number;
       const maxes = [-1, 0, rnd() * 20, 5 + rnd() * 60, 20 + rnd() * 200, NaN, Infinity];
       for (const max of maxes) {
-        // Not markdown: a markdown string with breaks takes the general path, where `<span>`
-        // would keep a line that markdown drops as blank. `<span>` goes around the trimmed text,
+        // Not markdown: a markdown string with breaks takes the general path, where `<i></i>`
+        // would keep a line that markdown drops as blank. `<i></i>` goes before the trimmed text,
         // since the label is trimmed before it is split into lines.
         for (const keepWords of [false, true]) {
           for (const [markup, backslashBreak] of BREAK_MODES) {
             const options: LabelOptions = { style, keepWords, markup, backslashBreak };
             const fast = layoutLabel(text, font, max, measurer, options);
-            const general = layoutLabel(
-              `<span>${text.trim()}</span>`,
-              font,
-              max,
-              measurer,
-              options
-            );
+            const general = layoutLabel(`<i></i>${text.trim()}`, font, max, measurer, options);
             if (!same(fast, general)) {
               const at = JSON.stringify({
                 text,
@@ -1000,7 +994,7 @@ describe('plain-label wrapper', () => {
               layoutLabel(text, arial, max, tableMeasurer, options),
               JSON.stringify({ text, max, keepWords, markup, backslashBreak })
             ).toStrictEqual(
-              layoutLabel(`<span>${text.trim()}</span>`, arial, max, tableMeasurer, options)
+              layoutLabel(`<i></i>${text.trim()}`, arial, max, tableMeasurer, options)
             );
           }
         }

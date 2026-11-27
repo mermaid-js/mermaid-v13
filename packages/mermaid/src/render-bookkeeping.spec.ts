@@ -124,11 +124,12 @@ describe('render bookkeeping', () => {
     expect(m.renderSync(FLOW).svg).not.toContain('flowchartTitleText');
   });
 
-  it('warns HTML_DROPPED only for a label that dropped a tag', async () => {
+  it('draws a tag labels do not draw as text, with no warning (#1440)', async () => {
     const m = await ready();
     expect(m.renderSync('flowchart LR\n A["<b>x</b>"]').warnings).toEqual([]);
     const r = m.renderSync('flowchart LR\n A["<div>x</div>"]');
-    expect(r.warnings.map((w) => w.code)).toContain('HTML_DROPPED');
+    expect(r.warnings).toEqual([]);
+    expect(r.svg).toContain('&lt;div&gt;x&lt;/div&gt;');
   });
 
   it('hands queued discovery warnings to the first draw that succeeds, then none', async () => {
