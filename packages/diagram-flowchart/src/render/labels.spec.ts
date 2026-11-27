@@ -1,6 +1,7 @@
 // How flowchart reads its labels (spec #1368 T7, D733, D734): node texts, edge texts and
-// subgraph titles all go through core's label handler, with no v12 markdown profile. Markdown is
-// read only in a quoted markdown string; a written `\n` breaks the line in every label.
+// subgraph titles all go through core's label handler. Markdown is
+// read only in a quoted markdown string, or in every label with `markdownAlwaysOn`; a written `\n`
+// breaks the line in every label.
 import { describe, expect, it } from 'vitest';
 import type { DiagramPlugin } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig } from '@mermaid-js/core/config';
@@ -102,15 +103,27 @@ const CASES: readonly (readonly [string, string, (p: Prepared) => string[], stri
   ],
 ];
 
+/** The cases whose lines differ with `markdownAlwaysOn`: plain labels are read as markdown. */
+const ALWAYS_ON: Readonly<Record<string, string[]>> = {
+  'plain node': ['node [b:b] [i:i]'],
+  'bare backticks node': ['**b**'],
+  'code span node': ['a code b'],
+  'plain edge': ['e [b:b]'],
+  'bare backticks edge': ['**e**'],
+  'bare backticks subgraph': ['**t**'],
+};
+
 describe('flowchart labels through the core label handler (#1395, D733, D734)', () => {
   it.each(CASES)('%s', async (_, src, read, lines) => {
     expect(read(await prepared(src))).toEqual(lines);
   });
 
-  // No flowchart label kind has a v12 markdown profile: v12 read markdown only in a markdown
-  // string, so `legacyMarkdown` changes nothing.
-  it.each(CASES)('%s, with legacyMarkdown', async (_, src, read, lines) => {
-    expect(read(await prepared(src, { legacyMarkdown: true }))).toEqual(lines);
+  // With `markdownAlwaysOn` every label is read as a markdown string; markdown strings, tags
+  // and line breaks are read as in the default mode.
+  it.each(CASES)('%s, with markdownAlwaysOn', async (name, src, read, lines) => {
+    const want = ALWAYS_ON[name] ?? lines;
+    expect(read(await prepared(src, { markdownAlwaysOn: true }))).toEqual(want);
+    expect(read(await prepared(src, { flowchart: { markdownAlwaysOn: true } }))).toEqual(want);
   });
 
   it('keeps markdownAutoWrap: false for a markdown string only', async () => {

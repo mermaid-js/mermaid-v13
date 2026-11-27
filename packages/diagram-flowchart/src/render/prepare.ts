@@ -41,6 +41,7 @@ import {
 } from './shapes.ts';
 import { themePads, type Frame } from '@mermaid-js/shared/shapes/kit';
 import { titlePositions } from './title-position.ts';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 
 export interface NodeView {
   id: string;
@@ -163,10 +164,10 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
-    // Read by core's label handler (D734); no flowchart label kind has a v12 markdown profile.
-    // `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
+    // Read by core's label handler (D734), which also warns of markdown outside a markdown
+    // string. `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
     label: (text, markdown, f, max, bits = 0) => {
-      const source = labelSource(text, { markdown, v12Markdown: false }, ctx.config);
+      const source = readLabel(text, { markdown }, ctx);
       const unwrapped = source.markup === 'markdown' && ctx.config.markdownAutoWrap === false;
       return layoutLabel(source.text, f, unwrapped ? Infinity : max, measurer, {
         ...source,
@@ -277,7 +278,8 @@ function nodeViews(
  * A group's title, measured. A subgraph title is read by the label handler, as every other
  * flowchart label. A lane title keeps its own reading until spec #1368 T14 moves it: a markdown
  * string with or without quotes (D710). The parser strips only the quoted form's wrapper, so
- * the bare form is read here.
+ * the bare form is read here. Any other lane title goes to the handler when that reads it as
+ * markdown (`markdownAlwaysOn`), and is drawn as written otherwise.
  */
 function groupTitle(
   view: NodeView,
@@ -291,7 +293,9 @@ function groupTitle(
   const { text, markup } = md
     ? { text: sg.title, markup: 'markdown' as const }
     : markdownString(sg.title);
-  const { measurer, inline } = m.ctx;
+  const { measurer, inline, config } = m.ctx;
+  if (markup === 'plain' && labelSource(text, undefined, config).markup === 'markdown')
+    return m.label(text, false, f, Infinity, bits);
   return layoutLabel(text, f, Infinity, measurer, { markup, style: bits, inline });
 }
 

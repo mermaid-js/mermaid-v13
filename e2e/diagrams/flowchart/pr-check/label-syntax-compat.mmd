@@ -1,10 +1,11 @@
 ---
 description: >-
-  Spec #1368 (D734). The compatibility-mode twin of label-syntax.mmd: the same source with
-  legacyMarkdown set. Flowchart has no label kind where v12 read markdown outside a markdown
-  string, so the picture is expected to equal the default one.
+  Spec #1368 (D734). The markdownAlwaysOn twin of label-syntax.mmd: the same source with the
+  setting on, so every label is markdown. The plain rows draw bold and italic, the code-span
+  row draws inline code, and the bare-backtick row is a code span; markdown strings, tags and a
+  written backslash-n draw as in label-syntax.mmd. The picture differs from that fixture.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 flowchart TB
   subgraph W1
