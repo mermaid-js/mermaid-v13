@@ -32,7 +32,7 @@ import {
   type CurveKind,
 } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { labelSource, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowFlowModel,
   AgentflowModel,
@@ -193,14 +193,17 @@ export function prepareAgentflow(
     wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
     minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
     edgeWrap: units.builder.edgeWrap,
-    label: (text, markdown, f, max, bits = 0) =>
-      // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
-      layoutLabel(text, f, max, measurer, {
-        markdown,
+    // Read by core's label handler (D734, #1368); no agentflow label kind has a v12 markdown
+    // profile. v12's HTML labels kept a long word whole (#649); in cells it is split to fit.
+    label: (text, markdown, f, max, bits = 0) => {
+      const source = labelSource(text, { markdown, v12Markdown: false }, ctx.config);
+      return layoutLabel(source.text, f, max, measurer, {
+        ...source,
         style: bits,
         inline,
         keepWords: units.id !== 'cell',
-      }),
+      });
+    },
     styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), (w) => ctx.warn(w)),
   };
   const rootDir = layoutDir(model.direction) ?? 'TB';
