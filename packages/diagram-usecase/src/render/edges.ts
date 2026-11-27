@@ -93,7 +93,10 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
       fill: 'none',
     });
     const head = {
-      line: e.style.shape.stroke ?? edges.line,
+      line:
+        e.style.shape.stroke ??
+        (e.kind === 'relation' ? lineColour(scene, e.relationship) : undefined) ??
+        edges.line,
       hollow: edges.hollow,
       opacity: e.style.shape.opacity,
     };

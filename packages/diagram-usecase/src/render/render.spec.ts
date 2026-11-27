@@ -287,6 +287,10 @@ describe('labels', () => {
 });
 
 describe('relationships', () => {
+  /** A head's line colour: its fill, or its stroke for a head that is only outlined. */
+  const headPaint = (h: Record<string, string>) =>
+    h.fill !== undefined && h.fill !== 'none' && !hasClass(h, 'extension') ? h.fill : h.stroke;
+
   it('draws v12’s point, circle and cross markers as paths at the right ends', async () => {
     const { svg } = await render('nightly-check/05-association-markers', plain);
     const markers = (id: string) =>
@@ -318,6 +322,59 @@ describe('relationships', () => {
     expect(line('edge-2')).toMatchObject({ stroke: 'var(--_uel)', 'stroke-dasharray': '3' });
     expect(line('edge-0')['stroke-dasharray']).toBeUndefined();
     expect(line('edge-0').stroke).toBeUndefined();
+  });
+
+  it('draws include and extend heads in their line colour, not the edge line (D767, #1227)', async () => {
+    const { svg } = await render('nightly-check/06-uml-relationships', {
+      config: { theme: 'redux-color' },
+    });
+    const parts = (id: string) => {
+      const rel = inside(svg, 'relationship', id);
+      return {
+        line: elements(rel, 'path').find((p) => !hasClass(p, 'marker'))!,
+        heads: byClass(rel, 'marker', 'path'),
+      };
+    };
+    // edge-0 and edge-3 are generalizations, edge-1 includes, edge-2 extends.
+    for (const id of ['edge-1', 'edge-2']) {
+      const { line, heads } = parts(id);
+      expect(line.stroke).toBeDefined();
+      expect(heads.length).toBeGreaterThan(0);
+      for (const h of heads) expect(headPaint(h)).toBe(line.stroke);
+    }
+    expect(parts('edge-1').line.stroke).not.toBe(parts('edge-2').line.stroke);
+    // The edge line's colour, as a plain association's head takes it.
+    const plainEdge = await renderUsecaseForTest('usecase-beta\n  A\n  B\n  A --> B', {
+      config: { theme: 'redux-color' },
+    });
+    const edgeLine = headPaint(byClass(plainEdge.svg, 'marker', 'path')[0]!);
+    expect(edgeLine).not.toBe(parts('edge-1').line.stroke);
+    for (const id of ['edge-0', 'edge-3']) {
+      const { line, heads } = parts(id);
+      expect(line.stroke).toBeUndefined();
+      for (const h of heads) expect(headPaint(h)).toBe(edgeLine);
+    }
+  });
+
+  it('lets a styled edge’s own stroke win on its heads (D767)', async () => {
+    const { svg } = await renderUsecaseForTest(
+      `usecase-beta
+  Checkout
+  Payment
+  Checkout i@..> : include Payment
+  style i stroke:#06c`,
+      { config: { theme: 'redux-color' } }
+    );
+    const heads = byClass(inside(svg, 'relationship', 'i'), 'marker', 'path');
+    expect(heads.length).toBeGreaterThan(0);
+    for (const h of heads) expect(headPaint(h)).toBe('#06c');
+  });
+
+  it('keeps an association’s head in the edge line colour (D767)', async () => {
+    const { svg } = await render('nightly-check/05-association-markers', plain);
+    const heads = byClass(svg, 'marker', 'path');
+    expect(heads.length).toBeGreaterThan(0);
+    for (const h of heads) expect(headPaint(h)).toBe('var(--_l)');
   });
 
   it('hides a note’s connector from assistive technology and names each relationship (v12)', async () => {
