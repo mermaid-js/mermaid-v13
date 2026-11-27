@@ -22,7 +22,9 @@
  *   `C4_NAMED_ARGUMENT_MOVED`). An argument a statement leaves out leaves its field as it was:
  *   absent, or empty for `descr` and `techn` (v12's defaults);
  * - text as v12's grammar handed it to its DB, trimmed, line breaks kept and entities as written
- *   (`#35;` reads `&#35;`): core's label layout decodes them;
+ *   (`#35;` reads `&#35;`): core's label layout decodes them; a field written as a quoted
+ *   markdown string (`"`…`"`) keeps its backticks and is listed in the item's `markdown`
+ *   (spec #1368), which v12 had no use for;
  * - the title is the last `title` statement's text, trimmed (D453), else the front-matter title
  *   (D218); `accTitle:` sets the accessible title only (D453; v12 set the visible one);
  * - `direction` (#730, amending D452) is the last `direction` statement at the top level, and on
@@ -110,6 +112,24 @@ export function kindParts(kind: C4ElementKind): { family: C4Family; store?: 'db'
 /** An element kind in words, as hover shows it (`external system db`). */
 export const kindWords = (kind: C4ElementKind): string => kind.split('_').join(' ');
 
+const RE_MARKDOWN_STRING = /^`[^`]*`$/;
+
+/**
+ * Whether a quoted text, without its quotes, is a markdown string: wholly in backticks, none
+ * inside, as core reads `"`…`"` (spec #1368). Only a quoted value is tested: bare backticks are
+ * text as written.
+ */
+export const isMarkdownString = (value: string): boolean => RE_MARKDOWN_STRING.test(value);
+
+/**
+ * What a model item says of its text fields' markup (spec #1368): the fields written as a quoted
+ * markdown string (`"`…`"`), whose values keep their backticks, as v12 stored them. Absent when
+ * there is none.
+ */
+export interface C4Marked {
+  readonly markdown?: readonly string[];
+}
+
 /** A `$name="value"` whose name sets no field of the model: the last value given. */
 export interface C4Extra {
   readonly name: string;
@@ -117,7 +137,7 @@ export interface C4Extra {
 }
 
 /** The fields an element or a boundary has, each set by its slot or by name. */
-export interface C4ElementFields {
+export interface C4ElementFields extends C4Marked {
   readonly label: string;
   readonly descr?: string;
   readonly techn?: string;
@@ -160,7 +180,7 @@ export interface C4Boundary extends C4ElementFields {
   readonly direction?: C4Direction;
 }
 
-export interface C4Relation {
+export interface C4Relation extends C4Marked {
   readonly ast: AstId;
   /**
    * A {@link C4RelationKind}, or any text a `$type="…"` argument set (v12 took it; an unknown

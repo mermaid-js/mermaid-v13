@@ -4,13 +4,15 @@
  * element external by a tag and decides what is a boundary after the parse.
  *
  * - elements in statement order, a parent before its children; text as written inside the
- *   quotes with `\` escapes resolved, `''` where a statement leaves a field out;
+ *   quotes with `\` escapes resolved (`\n` a line break, #1368), `''` where a statement leaves a field out; a field written
+ *   as a quoted markdown string keeps its backticks and is listed in `markdown` (spec #1368);
  * - an element with children, a `group` and a `deploymentNode` is a boundary;
  * - relations in statement order. `a <-- b` is stored as `b → a`, so ranks follow meaning;
  * - AST ids: `element:<id>`, `rel:<from>-><to>` with `@2`, `@3` for repeats, `style:<n>`.
  */
 import type { Dir } from '@mermaid-js/core/layout';
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
+import type { C4Marked } from '../model.ts';
 
 /** What follows `c4-beta`; `context` when it is left out. */
 export type C4BetaKind = 'context' | 'container' | 'component' | 'dynamic' | 'deployment';
@@ -29,7 +31,8 @@ export type C4BetaDirection = Dir;
 /** Whether a relation's end carries an arrowhead. */
 export type C4BetaHead = 'none' | 'arrow';
 
-export interface C4BetaElement {
+/** `markdown` lists the fields written as a quoted markdown string, backticks kept (spec #1368). */
+export interface C4BetaElement extends C4Marked {
   readonly id: string;
   readonly kind: C4BetaElementKind;
   readonly name: string;
@@ -45,7 +48,7 @@ export interface C4BetaElement {
   readonly ast: AstId;
 }
 
-export interface C4BetaRelation {
+export interface C4BetaRelation extends C4Marked {
   readonly from: string;
   readonly to: string;
   readonly start: C4BetaHead;

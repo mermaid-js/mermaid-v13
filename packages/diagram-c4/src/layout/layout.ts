@@ -16,6 +16,7 @@ import {
   type Measurer,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { unionRects } from '@mermaid-js/shared/layout';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
@@ -49,6 +50,14 @@ import {
   tagStepOf,
   type LabelSpot,
 } from './labels.ts';
+import {
+  fieldText,
+  fixedText,
+  joinTexts,
+  readText,
+  type C4Field,
+  type C4Text,
+} from '../label-text.ts';
 import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
 import {
   labelBlockers,
@@ -89,15 +98,25 @@ const STEREOTYPES: Readonly<Record<C4Family, string>> = {
 };
 
 /** v12's type line: `[Person]`, `[Software System]`, `[Container: techn]` (external, db and queue as their base). */
-export function stereotypeText(element: Pick<C4Element, 'kind' | 'techn'>): string {
+export function stereotypeText(element: Pick<C4Element, 'kind' | 'techn' | 'markdown'>): C4Text {
   const name = STEREOTYPES[kindParts(element.kind).family];
-  return element.techn ? `[${name}: ${element.techn}]` : `[${name}]`;
+  const techn = fieldText(element, 'techn', element.techn);
+  return techn?.text ? joinTexts([`[${name}: `, techn, ']']) : fixedText(`[${name}]`);
 }
 
 /** A boundary's `[type]` line, when it has a type (v12 `drawInsideBoundary`). */
-export function boundaryTypeText(boundary: Pick<C4Boundary, 'type'>): string | undefined {
-  return boundary.type ? `[${boundary.type}]` : undefined;
+export function boundaryTypeText(
+  boundary: Pick<C4Boundary, 'type' | 'markdown'>
+): C4Text | undefined {
+  const type = fieldText(boundary, 'type', boundary.type);
+  return type?.text ? joinTexts(['[', type, ']']) : undefined;
 }
+
+/** An element's or a boundary's label and description, as drawn. */
+export const labelText = (item: Pick<C4Element, 'label' | 'markdown'>): C4Field | undefined =>
+  fieldText(item, 'label', item.label);
+export const descrText = (item: Pick<C4Element, 'descr' | 'markdown'>): C4Field | undefined =>
+  fieldText(item, 'descr', item.descr);
 
 export { relationLabelText, relationTechnText } from './labels.ts';
 
@@ -122,25 +141,46 @@ export function placed(m: Measured, x: number, y: number): PlacedLabel {
   };
 }
 
-/** Measures a text in a font, wrapped at `maxWidth`; none for an empty text. */
+/**
+ * Measures a text in a font, wrapped at `maxWidth`; none for an empty text. A string is a user's
+ * label written as it is (the title).
+ */
 export type Measure = (
-  text: string | undefined,
+  text: C4Text | string | undefined,
   font: FontKey,
   maxWidth: number,
   style?: number
 ) => Measured | undefined;
 
-/** The one way C4 text is measured, for both syntaxes: whole words kept, inline spans boxed. */
-export function textMeasure(measurer: Measurer, inlineSpans?: C4LayoutContext['inline']): Measure {
-  const inline = inlineSpans ? { inline: inlineSpans } : {};
-  return (text, font, maxWidth, style = 0) =>
-    text === undefined || text.trim() === ''
-      ? undefined
-      : {
-          text: layoutLabel(text, font, maxWidth, measurer, { ...inline, keepWords: true, style }),
-          font,
-          style,
-        };
+/**
+ * The one way C4 text is measured, for both syntaxes: each label through core's label handler
+ * (#1368; `readLabel` gives the render its `MARKDOWN_NOT_READ` warning), fixed words as written,
+ * whole words kept, inline spans boxed.
+ */
+export function textMeasure(
+  measurer: Measurer,
+  ctx: Pick<C4LayoutContext, 'config' | 'inline'> & {
+    readonly warn: NonNullable<C4LayoutContext['warn']>;
+  }
+): Measure {
+  const inline = ctx.inline ? { inline: ctx.inline } : {};
+  const read = (field: C4Field) =>
+    readLabel(field.text, { markdown: field.markdown === true }, ctx);
+  return (written, font, maxWidth, style = 0) => {
+    if (written === undefined) return undefined;
+    const source = readText(typeof written === 'string' ? { text: written } : written, read);
+    if (source.text.trim() === '') return undefined;
+    return {
+      text: layoutLabel(source.text, font, maxWidth, measurer, {
+        ...inline,
+        ...source,
+        keepWords: true,
+        style,
+      }),
+      font,
+      style,
+    };
+  };
 }
 
 /** An element as the grid places it, with its outline and text. */
@@ -198,7 +238,7 @@ function setupOf(ctx: C4LayoutContext): Setup {
     family,
     room,
     fonts: c4Fonts(ctx.config, family, warn),
-    measure: textMeasure(measurer, ctx.inline),
+    measure: textMeasure(measurer, { config: ctx.config, inline: ctx.inline, warn }),
   };
 }
 
@@ -371,7 +411,11 @@ export interface SectionRoom {
 
 /** An element's name (bold), type line and description, measured in its kind's font. */
 export function measureSections(
-  texts: { readonly name: string; readonly type: string; readonly descr?: string },
+  texts: {
+    readonly name: C4Text | string | undefined;
+    readonly type: C4Text | string;
+    readonly descr?: C4Text | string | undefined;
+  },
   { font, config, measure, wrapWidth }: SectionRoom
 ): (Measured | undefined)[] {
   const wrapW = config.wrap
@@ -408,7 +452,7 @@ function elementNode(
   room: ShapeRoom
 ): Node {
   const sections = measureSections(
-    { name: element.label, type: stereotypeText(element), descr: element.descr },
+    { name: labelText(element), type: stereotypeText(element), descr: descrText(element) },
     { font: fonts.element(element.kind), config, measure }
   );
   let tw = 0;
@@ -450,10 +494,15 @@ function header(g: Group, contentW: number, { config, fonts, measure }: Measurin
   const b = g.boundary!;
   const f = fonts.boundary;
   const wrapW = config.wrapAll ? Math.max(contentW, config.width) : Infinity;
-  const label = measure(b.label, { ...f, size: f.size + M.boundaryLabelGrow }, wrapW, Style.Bold);
+  const label = measure(
+    labelText(b),
+    { ...f, size: f.size + M.boundaryLabelGrow },
+    wrapW,
+    Style.Bold
+  );
   const type = measure(boundaryTypeText(b), f, wrapW);
   const descr = measure(
-    b.descr,
+    descrText(b),
     { ...f, size: Math.max(M.minFontSize, f.size - M.boundaryDescrShrink) },
     wrapW
   );

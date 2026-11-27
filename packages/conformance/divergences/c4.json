@@ -902,5 +902,21 @@
     "reason": "12.2.0 has no `direction` statement; v13 reads one in a boundary's braces as that boundary's fill order (#730, amending D452).",
     "owner": "#730",
     "since": "2026-11-16"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/label-syntax.mmd",
+    "inputHash": "sha256:ce0220f88d1bcfe8",
+    "kind": "accept",
+    "reason": "The label fixture writes each label kind in bare backticks, unquoted, as a boundary's, element's and relation's last argument; v12's unquoted argument (`[^,]+`) ran over `)` and the line break to the next comma and failed at the boundary's `}`. v13 stops it at `)` and the line end (D452) and draws the backticks as written (#1368, #1400).",
+    "owner": "#1400",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/label-syntax-compat.mmd",
+    "inputHash": "sha256:809e15e817c12ee8",
+    "kind": "accept",
+    "reason": "The label fixture writes each label kind in bare backticks, unquoted, as a boundary's, element's and relation's last argument; v12's unquoted argument (`[^,]+`) ran over `)` and the line break to the next comma and failed at the boundary's `}`. v13 stops it at `)` and the line end (D452) and draws the backticks as written (#1368, #1400).",
+    "owner": "#1400",
+    "since": "2026-11-27"
   }
 ]

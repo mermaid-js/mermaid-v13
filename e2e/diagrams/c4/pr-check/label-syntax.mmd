@@ -1,0 +1,44 @@
+---
+description: >-
+  Every C4 label kind written six ways (spec #1368, #1400): plain `**x**`,
+  a quoted markdown string, bare backticks, a code span in plain text,
+  tags, and a written backslash-n. Each boundary holds one way: its label
+  and type, its container's label, technology and description, and the
+  relation from the container to the system below it. Only a quoted
+  markdown string reads markdown, over each line's own style (a bold name,
+  an italic technology); tags draw and a written `\n` breaks everywhere.
+  The title is a markdown string: a diagram has one.
+---
+C4Container
+  title "`title **bold** _ital_`"
+  UpdateLayoutConfig($c4ShapeInRow="1", $c4BoundaryInRow="3")
+  Boundary(b1, "boundary **bold** _ital_", "type **bold** _ital_") {
+    Container(c1, "label **bold** _ital_", "techn **bold** _ital_", "descr **bold** _ital_")
+    System(s1, "System 1")
+  }
+  Boundary(b2, "`boundary **bold** _ital_`", "`type **bold** _ital_`") {
+    Container(c2, "`label **bold** _ital_`", "`techn **bold** _ital_`", "`descr **bold** _ital_`")
+    System(s2, "System 2")
+  }
+  Boundary(b3, `boundary **bold** _ital_`, `type **bold** _ital_`) {
+    Container(c3, `label **bold** _ital_`, `techn **bold** _ital_`, `descr **bold** _ital_`)
+    System(s3, "System 3")
+  }
+  Boundary(b4, "boundary a `code` b", "type a `code` b") {
+    Container(c4, "label a `code` b", "techn a `code` b", "descr a `code` b")
+    System(s4, "System 4")
+  }
+  Boundary(b5, "boundary <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O", "type <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O") {
+    Container(c5, "label <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O", "techn <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O", "descr <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O")
+    System(s5, "System 5")
+  }
+  Boundary(b6, "boundary one\ntwo", "type one\ntwo") {
+    Container(c6, "label one\ntwo", "techn one\ntwo", "descr one\ntwo")
+    System(s6, "System 6")
+  }
+  Rel(c1, s1, "rel **bold** _ital_", "rtech **bold** _ital_")
+  Rel(c2, s2, "`rel **bold** _ital_`", "`rtech **bold** _ital_`")
+  Rel(c3, s3, `rel **bold** _ital_`, `rtech **bold** _ital_`)
+  Rel(c4, s4, "rel a `code` b", "rtech a `code` b")
+  Rel(c5, s5, "rel <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O", "rtech <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O")
+  Rel(c6, s6, "rel one\ntwo", "rtech one\ntwo")

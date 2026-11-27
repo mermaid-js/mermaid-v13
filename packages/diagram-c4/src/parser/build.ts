@@ -172,6 +172,7 @@ export class C4Builder {
     if (route === 'structure') return this.structure(s);
     if (route === 'field') {
       (item.bag as unknown as Record<string, string>)[name] = value;
+      this.mark(item.bag, name, s.arg);
       return;
     }
     const extra = item.bag.extra as C4Extra[];
@@ -316,9 +317,11 @@ export class C4Builder {
   /** The label slot: positional text, empty when left out, a named argument moved (D452). */
   private label(item: Item, arg: Arg | undefined, last: ReadonlySet<string>): void {
     item.bag.label = '';
+    this.mark(item.bag, 'label', undefined);
     if (arg === undefined) return;
     if (arg.name === undefined) {
       item.bag.label = arg.value;
+      this.mark(item.bag, 'label', arg);
       return;
     }
     this.moved(arg, 'label');
@@ -339,8 +342,23 @@ export class C4Builder {
   /** Any other slot: positional text sets its field, a named argument the field it names. */
   private slot(item: Item, field: string, arg: Arg | undefined, last: ReadonlySet<string>): void {
     if (arg === undefined) return;
-    if (arg.name === undefined) (item.bag as unknown as Record<string, string>)[field] = arg.value;
-    else this.named(item, arg, last);
+    if (arg.name === undefined) {
+      (item.bag as unknown as Record<string, string>)[field] = arg.value;
+      this.mark(item.bag, field, arg);
+    } else this.named(item, arg, last);
+  }
+
+  /**
+   * Field `field` of `bag` was just set from `arg` (none: from no argument): listed in the bag's
+   * `markdown` when `arg` is a quoted markdown string, else no longer (spec #1368).
+   */
+  private mark(bag: Bag, field: string, arg: Arg | undefined): void {
+    const was = bag.markdown;
+    if (was === undefined && !arg?.markdown) return;
+    const next = (was ?? []).filter((f) => f !== field);
+    if (arg?.markdown) next.push(field);
+    if (next.length > 0) bag.markdown = next;
+    else delete bag.markdown;
   }
 
   /** An alias as written, or undefined for a named argument there (moved, D452). */
@@ -472,7 +490,10 @@ export class C4Builder {
     if (name === undefined && args[0]) this.named(item, args[0], last);
     if (!(first && this.renames(args, alias))) this.definition(alias, args[0], 'boundary', first);
     this.label(item, args[1], last);
-    if (args[2] === undefined) item.bag.type = macro.type;
+    if (args[2] === undefined) {
+      item.bag.type = macro.type;
+      this.mark(item.bag, 'type', undefined);
+    }
     // A node's sprite: v12's `addDeploymentNode` never assigns it (a named one included).
     this.rest(item, args, { table, from: 2 });
     if (macro.nodeKind !== undefined) item.bag.nodeKind = macro.nodeKind;

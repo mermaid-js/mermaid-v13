@@ -73,7 +73,7 @@ describe('c4 grammar lexer', () => {
     expect(against.jison).toBeGreaterThan(2000);
     expect(against).toEqual({
       jison: 2374,
-      unquoted: 368,
+      unquoted: 384,
       comment: 43,
       title: 23,
       hash: 22,

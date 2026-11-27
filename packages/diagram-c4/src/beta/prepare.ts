@@ -38,6 +38,7 @@ import {
 } from '../layout/layout.ts';
 import type { C4BaseKind, C4ElementKind } from '../model.ts';
 import type { C4ShapeId } from '../layout/types.ts';
+import { fieldText, fixedText, joinTexts, type C4Field, type C4Text } from '../label-text.ts';
 import type { C4BetaElement, C4BetaModel, C4BetaRelation } from './model.ts';
 import { cellGraph } from './cells.ts';
 import { legendEntries, measureLegend, type BetaLegend } from './legend.ts';
@@ -133,21 +134,30 @@ const BASE_KINDS: Readonly<Record<C4BetaElement['kind'], C4BaseKind>> = {
  * false) it is the technology alone, `[techn]`, or nothing.
  */
 export function stereotypeOf(
-  element: Pick<C4BetaElement, 'kind' | 'technology'>,
+  element: Pick<C4BetaElement, 'kind' | 'technology' | 'markdown'>,
   shown = true
-): string {
+): C4Text {
   const name = shown ? STEREOTYPES[element.kind] : undefined;
-  if (name === undefined) return element.technology ? `[${element.technology}]` : '';
-  return element.technology ? `[${name}: ${element.technology}]` : `[${name}]`;
+  const techn = technologyOf(element);
+  if (name === undefined) return techn ? joinTexts(['[', techn, ']']) : fixedText('');
+  return techn ? joinTexts([`[${name}: `, techn, ']']) : fixedText(`[${name}]`);
+}
+
+/** An element's or a relation's technology as drawn; none when it is empty. */
+function technologyOf(item: Pick<C4BetaElement, 'technology' | 'markdown'>): C4Field | undefined {
+  const techn = fieldText(item, 'technology', item.technology);
+  return techn?.text ? techn : undefined;
 }
 
 /** The header's type line: `[technology]` and `xN`, as written. */
-function headerType(element: Pick<C4BetaElement, 'technology' | 'instances'>): string | undefined {
-  const parts = [
-    element.technology ? `[${element.technology}]` : '',
-    element.instances ? `x${element.instances}` : '',
-  ].filter((part) => part !== '');
-  return parts.length > 0 ? parts.join(' ') : undefined;
+function headerType(
+  element: Pick<C4BetaElement, 'technology' | 'instances' | 'markdown'>
+): C4Text | undefined {
+  const techn = technologyOf(element);
+  const instances = fieldText(element, 'instances', element.instances);
+  const parts: (C4Field | string)[] = techn ? ['[', techn, ']'] : [];
+  if (instances?.text) parts.push(...(techn ? [' x'] : ['x']), instances);
+  return parts.length > 0 ? joinTexts(parts) : undefined;
 }
 
 /** The shape an element is drawn in: `style <kind or tag> shape:cylinder` wins, else its kind's. */
@@ -174,9 +184,9 @@ function measureLeaf(model: C4BetaModel, element: C4BetaElement, m: Measuring): 
   const { config, fonts, measure } = m;
   const sections = measureSections(
     {
-      name: element.name,
+      name: fieldText(element, 'name', element.name),
       type: stereotypeOf(element, m.stereotypeShown(element.kind)),
-      descr: element.description,
+      descr: fieldText(element, 'description', element.description),
     },
     {
       font: fonts.element(legacyKind(element)),
@@ -202,14 +212,14 @@ function measureFrame(element: C4BetaElement, { config, fonts, measure }: Measur
   const f = fonts.boundary;
   const wrapW = config.wrapAll ? config.width : Infinity;
   const label = measure(
-    element.name,
+    fieldText(element, 'name', element.name),
     { ...f, size: f.size + M.boundaryLabelGrow },
     wrapW,
     Style.Bold
   );
   const type = measure(headerType(element), f, wrapW);
   const descr = measure(
-    element.description,
+    fieldText(element, 'description', element.description),
     { ...f, size: Math.max(M.minFontSize, f.size - M.boundaryDescrShrink) },
     wrapW
   );
@@ -219,14 +229,22 @@ function measureFrame(element: C4BetaElement, { config, fonts, measure }: Measur
   return { element, header: [label, type, descr], head: M.boundaryLabelTop + height + B.headGap };
 }
 
+/** A relation's label as drawn: `N. ` and the description. */
+export function edgeLabelText(
+  relation: Pick<C4BetaRelation, 'step' | 'description' | 'markdown'>
+): C4Text {
+  const description = fieldText(relation, 'description', relation.description) ?? { text: '' };
+  return relation.step === undefined ? description : joinTexts([`${relation.step}. `, description]);
+}
+
 /** A relation's label (`N.` and the description, bold) and `[technology]` (italic), measured. */
 function measureEdge(relation: C4BetaRelation, index: number, m: Measuring): BetaEdge {
   const { config, fonts, measure } = m;
   const wrapW = config.wrapAll ? M.wide : Infinity;
-  const step = relation.step === undefined ? '' : `${relation.step}. `;
-  const label = measure(step + relation.description, fonts.message, wrapW, Style.Bold);
+  const label = measure(edgeLabelText(relation), fonts.message, wrapW, Style.Bold);
+  const technology = technologyOf(relation);
   const techn = measure(
-    relation.technology ? `[${relation.technology}]` : undefined,
+    technology ? joinTexts(['[', technology, ']']) : undefined,
     fonts.message,
     wrapW,
     Style.Italic
@@ -335,7 +353,11 @@ function setupOf(ctx: C4BetaLayoutContext, units: UnitProfile | undefined): Setu
   const measuring: Measuring = {
     config,
     fonts,
-    measure: textMeasure(size ? cellPxMeasurer(ctx.measurer, size) : ctx.measurer, ctx.inline),
+    measure: textMeasure(size ? cellPxMeasurer(ctx.measurer, size) : ctx.measurer, {
+      config: ctx.config,
+      inline: ctx.inline,
+      warn,
+    }),
     room: size ? cellRoom(room, size) : room,
     stereotypeShown: c4betaStereotypeShown(ctx.config),
     personWrapWidth: c4betaPersonWrappingWidth(ctx.config),

@@ -62,6 +62,7 @@ import type {
   C4RelationKind,
   C4Type,
 } from '../model.ts';
+import { isMarkdownString } from '../model.ts';
 import type {
   C4BoundaryNode,
   C4Document,
@@ -77,6 +78,10 @@ import type { SlotTable } from './slots.ts';
 import { HEADERS, T } from './tokens.ts';
 
 export interface C4ParseOptions extends ParseOptions, C4LimitOptions {}
+
+/** The mark of a quoted value that is a markdown string (spec #1368), else nothing. */
+const markdownString = (value: string): { markdown?: true } =>
+  isMarkdownString(value) ? { markdown: true } : {};
 
 export type C4ParseResult = ParseResult<C4Model, C4Document>;
 
@@ -799,7 +804,7 @@ class C4Parser {
     if (c.kind !== T.QuoteClose) this.unclosed('UNCLOSED_STRING', 'string', open, '"');
     const end = c.end;
     c.next();
-    return { value, range: { start, end } };
+    return { value, range: { start, end }, ...markdownString(value) };
   }
 
   /** `$name="value"`. */
@@ -822,7 +827,7 @@ class C4Parser {
     if (c.kind !== T.ValueClose) this.unclosed('UNCLOSED_STRING', 'named argument', open, '"');
     const end = c.end;
     c.next();
-    return { name, value, range: { start, end } };
+    return { name, value, range: { start, end }, ...markdownString(value) };
   }
 
   /** The boundary statements are in now (-1: the top level). */

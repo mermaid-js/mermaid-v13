@@ -94,7 +94,7 @@ HEX                   /#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3,4})(?!\w)
 (** `rgb(255, 0, 0)`: a colour of a style, `rgb(…)`, `rgba(…)`, `hsl(…)` or `hsla(…)` on one line.
 What is inside has no `(`, `)` or `%%`. *)
 COLOR_FUNCTION        /(?:rgba?|hsla?)\((?:[^()\n\r%]|%(?!%))*\)/ :constant ;
-(** `"Ledger"` or `'Ledger'`: text. `\` escapes the next character. A string ends on its line. *)
+(** `"Ledger"` or `'Ledger'`: text. `\` escapes the next character; `\n` is a line break. A string ends on its line. *)
 STRING                /"(?:[^"\\\r\n]|\\.)*"|'(?:[^'\\\r\n]|\\.)*'/ :string ;
 (** An id: words of letters, digits and `_` joined by single `-`. The reserved words `title`,
 `accTitle`, `accDescr`, `direction`, `legend` and `style` are not ids. *)

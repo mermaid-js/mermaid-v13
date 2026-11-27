@@ -1,0 +1,38 @@
+---
+description: >-
+  label-syntax.mmd with `markdownAlwaysOn: true` (#1368, #1400): every
+  c4-beta label is markdown, so the plain `**bold** _ital_` rows draw bold
+  and italic, the code-span row draws inline code, and the picture
+  differs from label-syntax.mmd. A line's fixed words (`[Container: `,
+  `[`, `]`) stay as written. Tags draw and a written `\n` breaks as in
+  the default mode.
+config:
+  markdownAlwaysOn: true
+---
+c4-beta deployment
+title "`title **bold** _ital_`"
+deploymentNode n1 "node **bold** _ital_" "ndescr **bold** _ital_" "ntech **bold** _ital_" instances "1 **bold** _ital_" {
+  container c1 "name **bold** _ital_" "descr **bold** _ital_" "tech **bold** _ital_"
+  softwareSystem s1 "System 1"
+}
+deploymentNode n2 "`node **bold** _ital_`" "`ndescr **bold** _ital_`" "`ntech **bold** _ital_`" instances "`2 **bold** _ital_`" {
+  container c2 "`name **bold** _ital_`" "`descr **bold** _ital_`" "`tech **bold** _ital_`"
+  softwareSystem s2 "System 2"
+}
+deploymentNode n3 "node a `code` b" "ndescr a `code` b" "ntech a `code` b" instances "3 a `code` b" {
+  container c3 "name a `code` b" "descr a `code` b" "tech a `code` b"
+  softwareSystem s3 "System 3"
+}
+deploymentNode n4 "node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" "ndescr <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" "ntech <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" instances "4 <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" {
+  container c4 "name <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" "descr <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" "tech <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  softwareSystem s4 "System 4"
+}
+deploymentNode n5 "node one\ntwo" "ndescr one\ntwo" "ntech one\ntwo" instances "5 one\ntwo" {
+  container c5 "name one\ntwo" "descr one\ntwo" "tech one\ntwo"
+  softwareSystem s5 "System 5"
+}
+c1 --> s1 : "rel **bold** _ital_" "rtech **bold** _ital_"
+c2 --> s2 : "`rel **bold** _ital_`" "`rtech **bold** _ital_`"
+c3 --> s3 : "rel a `code` b" "rtech a `code` b"
+c4 --> s4 : "rel <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" "rtech <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+c5 --> s5 : "rel one\ntwo" "rtech one\ntwo"
