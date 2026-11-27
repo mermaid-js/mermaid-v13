@@ -42,6 +42,7 @@ import {
 } from './shapes.ts';
 import { themePads, type Frame } from '@mermaid-js/shared/shapes/kit';
 import { titlePositions } from './title-position.ts';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 
 export interface NodeView {
   id: string;
@@ -167,11 +168,10 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
-    // Read by core's label handler (#1368). `markdownAutoWrap: false` breaks a markdown label
-    // only where its source does (v12). No MARKDOWN_NOT_READ warning (`readLabel`) for now: it
-    // does not fit the loaded size budget (#1368, #1395).
+    // Read by core's label handler (#1368), which also warns of markdown outside a markdown
+    // string. `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
     label: (text, markdown, f, max, bits = 0) => {
-      const source = labelSource(text, { markdown }, ctx.config);
+      const source = readLabel(text, { markdown }, ctx);
       const unwrapped = source.markup === 'markdown' && ctx.config.markdownAutoWrap === false;
       return layoutLabel(source.text, f, unwrapped ? Infinity : max, measurer, {
         ...source,
