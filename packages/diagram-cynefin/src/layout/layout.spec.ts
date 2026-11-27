@@ -1,10 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { Style, type Measurer } from '@mermaid-js/core/text';
+import { Style, type Measurer, type MeasuredLabel } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
 import { cynefin as plugin } from '../plugin.ts';
+import { parseCynefin } from '../parser/index.ts';
 import { fixture } from './mmd.fixtures.ts';
 import { layoutCynefin, type CynefinLayout, type Point } from './index.ts';
 
@@ -450,5 +451,69 @@ describe('cynefin layout: the seed (D362)', () => {
     expect(b.seed).not.toBe(a.seed);
     expect(b.boundaries.fold).not.toEqual(a.boundaries.fold);
     expect(b.boundaries.horizon).not.toEqual(a.boundaries.horizon);
+  });
+});
+
+describe('cynefin layout: labels through the core label handler (#1368)', () => {
+  /** Each line's text, and whether a run of it is bold, for the title, item 0 and transition 0. */
+  const read = (l: MeasuredLabel) =>
+    l.lines.map((line) => ({
+      text: line.map((r) => r.text).join(''),
+      bold: line.some((r) => (r.style & Style.Bold) !== 0),
+    }));
+  const kinds = (src: string, legacyMarkdown = false) => {
+    const { model: m } = parseCynefin(src);
+    const l = layoutCynefin(m, {
+      config: { cynefin: {}, legacyMarkdown } as unknown as ResolvedConfig,
+      measurer: tenPx,
+      theme: createTheme(spec, { diagram: plugin.theme }),
+      idPrefix: 'mermaid-1',
+      warn: () => undefined,
+    });
+    return {
+      title: read(l.title!.text),
+      item: read(l.items[0]!.label.text),
+      transition: read(l.transitions[0]!.label!.text),
+    };
+  };
+  const chart = (title: string, label: string) =>
+    `cynefin-beta\ntitle ${title}\ncomplex\n  ${label}\ncomplex --> clear : ${label}`;
+  const each = (title: string, label: string) => {
+    for (const legacyMarkdown of [false, true]) {
+      const got = kinds(chart(title, label), legacyMarkdown);
+      expect(got.item).toEqual(got.transition);
+      expect(kinds(chart(title, label), !legacyMarkdown)).toEqual(got);
+    }
+    return kinds(chart(title, label));
+  };
+
+  it('reads a quoted markdown string as markdown in every label kind', () => {
+    const got = each('"`**t**`"', '"`**l**`"');
+    expect(got.title).toEqual([{ text: 't', bold: true }]);
+    expect(got.item).toEqual([{ text: 'l', bold: true }]);
+  });
+
+  it('draws bare backticks, plain markdown and a code span as written (D733)', () => {
+    expect(each('`**t**`', '"x"').title).toEqual([{ text: '`**t**`', bold: false }]);
+    expect(each('**t** _i_', '"**l** _i_"').item).toEqual([{ text: '**l** _i_', bold: false }]);
+    expect(each('a `c` b', '"a `c` b"').item).toEqual([{ text: 'a `c` b', bold: false }]);
+    // A backtick inside the outer pair: no markdown string.
+    expect(each('"`a `b` c`"', '"`a `b` c`"')).toEqual({
+      title: [{ text: '"`a `b` c`"', bold: false }],
+      item: [{ text: '`a `b` c`', bold: false }],
+      transition: [{ text: '`a `b` c`', bold: false }],
+    });
+  });
+
+  it('draws tags and breaks at <br> and a written \\n, in a markdown string too', () => {
+    const tags = each('t <i>i</i><br>n', '"l <b>b</b><br>n"');
+    expect(tags.title.map((line) => line.text)).toEqual(['t i', 'n']);
+    expect(tags.item).toEqual([
+      { text: 'l b', bold: true },
+      { text: 'n', bold: false },
+    ]);
+    const written = each('"`t\\nn`"', '"`l\\\\nn`"');
+    expect(written.title.map((line) => line.text)).toEqual(['t', 'n']);
+    expect(written.item.map((line) => line.text)).toEqual(['l', 'n']);
   });
 });

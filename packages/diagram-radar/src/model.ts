@@ -12,6 +12,11 @@ export interface RadarAxis {
   readonly name: string;
   /** The `["…"]` label after v12's string conversion, else the name; `[""]` is an empty label. */
   readonly label: string;
+  /**
+   * Set when the label was written as a markdown string (`["`…`"]`, #1368). `label` then holds
+   * the backticks, as v12's did; the text between them is laid out as markdown.
+   */
+  readonly markdown?: true;
   /** `axis:<name>`; a repeat of the name is `axis:<name>@2`, … (pitfall 9). */
   readonly astId: AstId;
 }
@@ -28,6 +33,8 @@ export interface RadarCurve {
   readonly name: string;
   /** As for `RadarAxis.label`. */
   readonly label: string;
+  /** As for `RadarAxis.markdown`. */
+  readonly markdown?: true;
   /**
    * Positional entries as written; detailed entries reordered to the axes (the first entry per axis
    * wins, one naming no axis is dropped with `RADAR_UNKNOWN_AXIS`). A count other than the axis

@@ -11,7 +11,13 @@
  * the `label.length * 7` width fallback is gone, since v13 always measures.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  labelSource,
+  layoutLabel,
+  Style,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import type { CynefinDomain, CynefinDomainName, CynefinModel } from '../model.ts';
 import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.ts';
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
@@ -55,8 +61,12 @@ interface Env {
   readonly fonts: Fonts;
   /** A fixed text (D363): a plain constant, no markup to read, no extension spans. */
   plain(text: string, font: CynefinFont): MeasuredLabel;
-  /** Author text through core's label layout, unwrapped as v12 drew it (D363). */
-  rich(text: string, font: CynefinFont): MeasuredLabel;
+  /**
+   * Author text through core's label handler and label layout, unwrapped as v12 drew it (D363,
+   * #1368). `markdown`: the parser marked the text as a markdown string, which it holds in its
+   * backticks, without its quotes.
+   */
+  rich(text: string, font: CynefinFont, markdown?: boolean): MeasuredLabel;
 }
 
 /** The canvas's domains: four quadrants and the ellipse, with their AST ids when declared. */
@@ -144,12 +154,12 @@ function environment(
       title: font(lengths.domainFontSize + TITLE.sizeDelta, FONTS.bold),
     },
     plain: (text, f) => layoutLabel(text, key(f), Infinity, ctx.measurer, { style: bits(f) }),
-    rich: (text, f) => {
-      const md = markdownString(text);
-      const style = bits(f);
-      return md === undefined
-        ? layoutLabel(text, key(f), Infinity, ctx.measurer, { ...inline, style })
-        : layoutLabel(md, key(f), Infinity, ctx.measurer, { ...inline, markdown: true, style });
+    // v12 drew every cynefin label with `.text()`, so no kind reads markdown in v12's way.
+    rich: (text, f, markdown = false) => {
+      const written = markdown ? text.slice(1, -1) : text;
+      const source = labelSource(written, { markdown, v12Markdown: false }, ctx.config);
+      const options = { ...inline, ...source, style: bits(f) };
+      return layoutLabel(source.text, key(f), Infinity, ctx.measurer, options);
     },
   };
 }
@@ -164,7 +174,7 @@ function itemLabels(env: Env, declared: ReadonlyMap<CynefinDomainName, CynefinDo
     if (items.length > 0)
       lists.set(
         name,
-        drawnItems(name, items).map((item) => env.rich(item.label, env.fonts.item))
+        drawnItems(name, items).map((item) => env.rich(item.label, env.fonts.item, item.markdown))
       );
   }
   return lists;
@@ -374,7 +384,7 @@ function transition(
   const head = arrowhead(control, end, lengths.arrowWidth);
   const line = { from: t.from, to: t.to, ast: t.ast, start, control, end, head };
   if (!t.label) return [line];
-  const text = env.rich(t.label, env.fonts.transition);
+  const text = env.rich(t.label, env.fonts.transition, t.markdown);
   // The last line's baseline 6 above the control point; more lines grow up.
   const y = control.y + ARROWS.labelDy - text.baseline - extraLines(text);
   const label = { x: control.x - text.width / 2, y, width: text.width, height: text.height, text };
@@ -449,12 +459,3 @@ function centered(text: MeasuredLabel, cx: number, cy: number): PlacedLabel {
 function extraLines(text: MeasuredLabel): number {
   return Math.max(0, text.height - text.lineHeight);
 }
-
-/**
- * The source of a markdown string (D225): a label in backticks, as pie and flowchart read one.
- * The parser has removed the quotes.
- */
-function markdownString(text: string): string | undefined {
-  return RE_MARKDOWN.exec(text.trim())?.[1];
-}
-const RE_MARKDOWN = /^`([^]*)`$/;

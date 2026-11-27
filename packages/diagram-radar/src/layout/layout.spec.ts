@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import type { Measurer } from '@mermaid-js/core/text';
+import { Style, type Measurer, type MeasuredLabel } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { RadarModel } from '../model.ts';
 import { radar as plugin } from '../plugin.ts';
@@ -315,11 +315,72 @@ describe('radar layout: legend and title', () => {
     expect(lay(FIXTURES.multiple!).title).toBeUndefined();
     expect(lay(FIXTURES.simple!, {}, [], { fontSize: '80px' }).fonts.title.size).toBe(80);
   });
+});
 
-  it('lays out a markdown string as markdown', () => {
-    const l = lay(model([axis('A', '`**bold**`')], [], {}, { title: '`*it*`' }));
-    expect(l.spokes[0]!.label.text.lines[0]!.map((r) => r.text).join('')).toBe('bold');
-    expect(l.title!.text.lines[0]!.map((r) => r.text).join('')).toBe('it');
+describe('radar layout: labels through the core label handler (#1368)', () => {
+  /** Each line's text, and whether a run of it is bold, for the title, axis 0 and legend row 0. */
+  const read = (l: MeasuredLabel) =>
+    l.lines.map((line) => ({
+      text: line.map((r) => r.text).join(''),
+      bold: line.some((r) => (r.style & Style.Bold) !== 0),
+    }));
+  const kinds = (src: string, legacyMarkdown = false) => {
+    const { model: m } = parseRadar(src);
+    const l = layoutRadar(m, {
+      config: { radar: {}, legacyMarkdown } as unknown as ResolvedConfig,
+      measurer: tenPx,
+      theme: createTheme(spec, { diagram: plugin.theme }),
+    });
+    return {
+      title: read(l.title!.text),
+      axis: read(l.spokes[0]!.label.text),
+      curve: read(l.legend[0]!.label.text),
+    };
+  };
+  const chart = (title: string, label: string) =>
+    `radar-beta\ntitle ${title}\naxis A[${label}], B, C\ncurve c[${label}]{1, 2, 3}`;
+  const each = (title: string, label: string) => {
+    for (const legacyMarkdown of [false, true]) {
+      const got = kinds(chart(title, label), legacyMarkdown);
+      expect(got.axis).toEqual(got.curve);
+      expect(kinds(chart(title, label), !legacyMarkdown)).toEqual(got);
+    }
+    return kinds(chart(title, label));
+  };
+
+  it('reads a quoted markdown string as markdown in every label kind', () => {
+    const got = each('"`**t**`"', '"`**l**`"');
+    expect(got.title).toEqual([{ text: 't', bold: true }]);
+    expect(got.axis).toEqual([{ text: 'l', bold: true }]);
+    // Either quote: the grammar's strings are one kind of string.
+    expect(each('x', "'`**l**`'").axis).toEqual([{ text: 'l', bold: true }]);
+  });
+
+  it('draws bare backticks, plain markdown and a code span as written (D733)', () => {
+    expect(each('`**t**`', '"x"').title).toEqual([{ text: '`**t**`', bold: false }]);
+    expect(each('**t** _i_', '"**l** _i_"').axis).toEqual([{ text: '**l** _i_', bold: false }]);
+    expect(each('a `c` b', '"a `c` b"').title).toEqual([{ text: 'a `c` b', bold: false }]);
+    // A backtick inside the outer pair: no markdown string.
+    expect(each('"`a `b` c`"', '"`a `b` c`"')).toEqual({
+      title: [{ text: '"`a `b` c`"', bold: false }],
+      axis: [{ text: '`a `b` c`', bold: false }],
+      curve: [{ text: '`a `b` c`', bold: false }],
+    });
+  });
+
+  it('draws tags and breaks at <br> and a written \\n, in a markdown string too', () => {
+    const tags = each('t <b>b</b><br>n', '"l <b>b</b><br>n"');
+    expect(tags.title).toEqual([
+      { text: 't b', bold: true },
+      { text: 'n', bold: false },
+    ]);
+    expect(tags.axis).toEqual([
+      { text: 'l b', bold: true },
+      { text: 'n', bold: false },
+    ]);
+    const written = each('"`t\\nn`"', '"`l\\\\nn`"');
+    expect(written.title.map((line) => line.text)).toEqual(['t', 'n']);
+    expect(written.axis.map((line) => line.text)).toEqual(['l', 'n']);
   });
 });
 

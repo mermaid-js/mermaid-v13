@@ -61,9 +61,9 @@ describe.skipIf(parseCynefin === undefined)('cynefin layout invariants on parsed
         if (v.length > 0) failures.push(`${item.id} ${JSON.stringify(options)}: ${v.join('; ')}`);
       }
     }
-    // The 12 v12 fixtures, the 21 baselines (#469, the review fixes, #845) and #1039's override
-    // fixture.
-    expect(corpus.length).toBe(34);
+    // The 12 v12 fixtures, the 21 baselines (#469, the review fixes, #845), #1039's override
+    // fixture and #1368's label-syntax fixture.
+    expect(corpus.length).toBe(35);
     expect(items).toBeGreaterThan(40);
     expect(failures.slice(0, 10)).toEqual([]);
   });

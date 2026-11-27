@@ -57,7 +57,7 @@ import type {
 } from './ast.ts';
 import { normalise } from './normalise.ts';
 import type { OptionName } from './normalise.ts';
-import { labelValue } from './convert.ts';
+import { isMarkdownString, labelValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
@@ -404,14 +404,16 @@ class RadarParser extends RuleParser<PreprocessResult> {
     this.i++;
   }
 
-  /** `("[" STRING "]")?`: the label, or undefined. */
-  private label(): string | undefined {
+  /** `("[" STRING "]")?`: the label and its markdown-string mark, or nothing. */
+  private label(): Pick<RadarAxisNode, 'label' | 'markdown'> {
     this.tested([T.LBracket]);
-    if (this.kind() !== T.LBracket) return undefined;
+    if (this.kind() !== T.LBracket) return {};
     this.i++;
-    const s = this.expect(T.String);
+    const raw = this.raw(this.expect(T.String));
     this.expect(T.RBracket);
-    return labelValue(this.raw(s));
+    return isMarkdownString(raw)
+      ? { label: labelValue(raw), markdown: true }
+      : { label: labelValue(raw) };
   }
 
   /** One more axis or curve, against the node cap. */
@@ -436,8 +438,7 @@ class RadarParser extends RuleParser<PreprocessResult> {
     const range = { start: nameRange.start, end: this.range(this.i - 1).end };
     const base = `axis:${name}`;
     const id = this.id(base);
-    const node: RadarAxisNode = { id, type: 'Axis', range, name, nameRange };
-    if (label !== undefined) node.label = label;
+    const node: RadarAxisNode = { id, type: 'Axis', range, name, nameRange, ...label };
     this.children.push(node);
     this.axes.push(node);
     this.counted(range);
@@ -459,8 +460,7 @@ class RadarParser extends RuleParser<PreprocessResult> {
     this.expect(T.RBrace);
     this.inBraces = false;
     const range = { start: nameRange.start, end: this.range(this.i - 1).end };
-    const node: RadarCurveNode = { id, type: 'Curve', range, name, nameRange, children };
-    if (label !== undefined) node.label = label;
+    const node: RadarCurveNode = { id, type: 'Curve', range, name, nameRange, ...label, children };
     this.children.push(node);
     this.curves.push(node);
     this.counted(range);

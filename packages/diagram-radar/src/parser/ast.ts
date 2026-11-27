@@ -27,6 +27,8 @@ export interface RadarAxisNode extends AstNode<'Axis'> {
   nameRange: Range;
   /** The `["…"]` label after conversion; absent when there is none. */
   label?: string;
+  /** Set when the label is a markdown string (see `RadarAxis.markdown`). */
+  markdown?: true;
 }
 
 /** One value of a curve: `1` (positional) or `A: 1` / `A 1` (detailed). */
@@ -43,6 +45,8 @@ export interface RadarCurveNode extends AstNode<'Curve'> {
   name: string;
   nameRange: Range;
   label?: string;
+  /** As for `RadarAxisNode.markdown`. */
+  markdown?: true;
   children: RadarEntryNode[];
 }
 

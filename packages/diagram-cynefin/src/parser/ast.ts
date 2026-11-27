@@ -31,6 +31,8 @@ export interface CynefinHeaderNode extends AstNode<'Header'> {
 export interface CynefinItemNode extends AstNode<'Item'> {
   /** The label as v12's DB kept it (see `CynefinItem.label`). */
   label: string;
+  /** Set when the label is a markdown string (see `CynefinItem.markdown`). */
+  markdown?: true;
 }
 
 /** `complex` and the items after it. Its range runs to the last item. */
@@ -49,6 +51,8 @@ export interface CynefinTransitionNode extends AstNode<'Transition'> {
   toRange: Range;
   /** The label, converted; absent without `:`. `""` stays `""` here (the model drops it). */
   label?: string;
+  /** As for `CynefinItemNode.markdown`. */
+  markdown?: true;
   /** The quoted label, quotes included. */
   labelRange?: Range;
 }
