@@ -110,9 +110,10 @@ lineHops?: (false | true | "arc" | "gap")
  * Precedence, per type: a per-edge curve where the type has one, then
  * the type's own key (`flowchart.curve`, `swimlane.curve`,
  * `class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,
- * `usecase.curve`) when set, then this key when set, then the type's
- * default (`rounded` for flowchart, swimlane, class, requirement and
- * agentflow; S-curves for state and usecase).
+ * `usecase.curve`, `eventmodeling.curve`) when set, then this key when
+ * set, then the type's default (`rounded` for flowchart, swimlane, class,
+ * requirement and agentflow; S-curves for state and usecase; today's
+ * routes for eventmodeling). Other diagram types take no curve (D748).
  * 
  */
 curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")

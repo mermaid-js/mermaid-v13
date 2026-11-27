@@ -887,7 +887,7 @@ export const configSchema: ConfigSchema = {
     },
     "curve": {
       "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
-      "description": "How edges are drawn between their route points, for every diagram type\nthat draws edges and has a `curve` key of its own (D733). Unset by\ndefault: each type then draws its own default curve.\n\nPrecedence, per type: a per-edge curve where the type has one, then\nthe type's own key (`flowchart.curve`, `swimlane.curve`,\n`class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,\n`usecase.curve`) when set, then this key when set, then the type's\ndefault (`rounded` for flowchart, swimlane, class, requirement and\nagentflow; S-curves for state and usecase).\n",
+      "description": "How edges are drawn between their route points, for every diagram type\nthat draws edges and has a `curve` key of its own (D733). Unset by\ndefault: each type then draws its own default curve.\n\nPrecedence, per type: a per-edge curve where the type has one, then\nthe type's own key (`flowchart.curve`, `swimlane.curve`,\n`class.curve`, `requirement.curve`, `agentflow.curve`, `state.curve`,\n`usecase.curve`, `eventmodeling.curve`) when set, then this key when\nset, then the type's default (`rounded` for flowchart, swimlane, class,\nrequirement and agentflow; S-curves for state and usecase; today's\nroutes for eventmodeling). Other diagram types take no curve (D748).\n",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
