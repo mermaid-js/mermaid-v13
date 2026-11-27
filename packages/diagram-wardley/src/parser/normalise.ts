@@ -15,6 +15,7 @@ import type { AstId, Diagnostics, Range, RelatedInfo } from '@mermaid-js/core/pa
 import { checkLimits, type WardleyLimitOptions } from './limits.ts';
 import {
   WARDLEY_COORDINATE_AMBIGUOUS,
+  WARDLEY_EVOLVE_PIPELINE_COMPONENT,
   WARDLEY_LINK_DROPPED,
   WARDLEY_OUT_OF_RANGE,
   WARDLEY_PIPELINE_REPLACED,
@@ -53,6 +54,8 @@ import { astName, childId } from './ids.ts';
 
 /** What the parser read, for {@link normalise}. */
 export interface Parsed {
+  /** The source text, which a warning quotes. */
+  src: string;
   /** The statements in source order (only the ones that parsed). */
   statements: readonly WardleyStatementNode[];
   /** Components of pipelines whose name failed to parse (no node; values still checked). */
@@ -142,6 +145,8 @@ interface ReadLink {
   range: Range;
   from: string;
   to: string;
+  /** How the warning quotes the link: `from -> to`, or the source text when it has no arrow. */
+  quoted: string;
 }
 
 /** One place a warning kind was raised. */
@@ -193,6 +198,8 @@ function arrowFlow(arrow: string | undefined): { flow?: WardleyFlow; label?: str
 class Populate {
   private readonly nodes = new WardleyNodes();
   private readonly raised = new Map<string, Raised[]>();
+  /** A pipeline component's name → its first pipeline's parent, for the D745 warning. */
+  private readonly childOf = new Map<string, string>();
 
   constructor(
     private readonly parsed: Parsed,
@@ -395,6 +402,7 @@ class Populate {
       const target = before ?? pipeline;
       for (const c of p.children) {
         const id = childId(parent, c.name.value);
+        if (!this.childOf.has(c.name.value)) this.childOf.set(c.name.value, parent);
         const x = this.percent(c.evolution, `Pipeline component "${c.name.value}" evolution`, c.id);
         this.nodes.add({
           id,
@@ -438,7 +446,10 @@ class Populate {
       ...(flow && { flow }),
       astId: l.id,
     });
-    return { link, range: l.range, from: l.from.value, to: l.to.value };
+    const quoted = arrow
+      ? `${l.from.value} -> ${l.to.value}`
+      : this.parsed.src.slice(l.range.start, l.range.end).trim();
+    return { link, range: l.range, from: l.from.value, to: l.to.value, quoted };
   }
 
   private trends(list: readonly WardleyEvolveNode[]): WardleyTrend[] {
@@ -447,18 +458,36 @@ class Populate {
       const name = e.name.value;
       const node = this.nodes.get(name);
       if (!node) {
-        this.raise(WARDLEY_UNKNOWN_TARGET, {
-          message: `\`evolve ${name}\` names no anchor or component, so it draws nothing. Name a component by its name as written (a pipeline component cannot evolve).`,
-          range: e.name.range,
-          astId: e.id,
-          also: `\`evolve ${name}\` names no node either`,
-        });
+        this.skipped(e);
         continue;
       }
       const targetX = this.percent(e.target, `Evolve target for "${name}"`, e.id);
       byNode.set(name, Object.freeze({ nodeId: name, targetX, targetY: node.y, astId: e.id }));
     }
     return [...byNode.values()];
+  }
+
+  /**
+   * D425, D745: an `evolve` naming no node is skipped. A pipeline component's name gets its own
+   * warning, as it names a component that exists (v12 found a child by its id only).
+   */
+  private skipped(e: WardleyEvolveNode): void {
+    const name = e.name.value;
+    const parent = this.childOf.get(name);
+    const place = { range: e.name.range, astId: e.id };
+    if (parent === undefined) {
+      this.raise(WARDLEY_UNKNOWN_TARGET, {
+        ...place,
+        message: `\`evolve ${name}\` names no anchor or component, so it draws nothing. Name a component by its name as written.`,
+        also: `\`evolve ${name}\` names no node either`,
+      });
+      return;
+    }
+    this.raise(WARDLEY_EVOLVE_PIPELINE_COMPONENT, {
+      ...place,
+      message: `\`${name}\` is a pipeline component of \`${parent}\`; pipeline components cannot evolve.`,
+      also: `\`${name}\` is a pipeline component of \`${parent}\` too`,
+    });
   }
 
   private annotation(a: WardleyAnnotationNode): WardleyAnnotation {
@@ -497,7 +526,7 @@ class Populate {
       if (!s || !t || moved.has(a) || moved.has(b) || children.get(b)?.has(a)) return false;
       return s.x === t.x && s.y === t.y;
     };
-    for (const { link, range, from, to } of links) {
+    for (const { link, range, from, to, quoted } of links) {
       const unknown: string[] = [];
       if (!this.nodes.has(link.source)) unknown.push(`\`${from}\``);
       if (!this.nodes.has(link.target) && to !== from) unknown.push(`\`${to}\``);
@@ -509,10 +538,10 @@ class Populate {
         why = `\`${from}\` and \`${to}\` are at the same place`;
       if (!why) continue;
       this.raise(WARDLEY_LINK_DROPPED, {
-        message: `The link \`${from} -> ${to}\` is not drawn: ${why}.`,
+        message: `The link \`${quoted}\` is not drawn: ${why}.`,
         range,
         astId: link.astId,
-        also: `the link \`${from} -> ${to}\` is not drawn either: ${why}`,
+        also: `the link \`${quoted}\` is not drawn either: ${why}`,
       });
     }
   }

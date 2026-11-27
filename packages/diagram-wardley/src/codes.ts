@@ -11,6 +11,8 @@ export const WARDLEY_UNKNOWN_PARENT = 'WARDLEY_UNKNOWN_PARENT';
 export const WARDLEY_COORDINATE_AMBIGUOUS = 'WARDLEY_COORDINATE_AMBIGUOUS';
 /** D425: an `evolve` naming no node; v12 skipped it. */
 export const WARDLEY_UNKNOWN_TARGET = 'WARDLEY_UNKNOWN_TARGET';
+/** D745: an `evolve` naming a pipeline component by its name; v12 skipped it. */
+export const WARDLEY_EVOLVE_PIPELINE_COMPONENT = 'WARDLEY_EVOLVE_PIPELINE_COMPONENT';
 /**
  * D425: a link with an end that names no node, from a node to itself, or (#490) whose ends are
  * at the same place; not drawn. The parser raises it, the layout only where the parser did not.
