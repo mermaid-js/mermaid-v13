@@ -409,6 +409,7 @@ e2e/diagrams/flowchart/pr-check/7-markdown-label-html-false.mmd 1 30b0651169106e
 e2e/diagrams/flowchart/pr-check/edge-animation.mmd 4 3a939ec45ae30ccb
 e2e/diagrams/flowchart/pr-check/elk-fan-in-arrowheads.mmd 1 bd420347d9a7e15c
 e2e/diagrams/flowchart/pr-check/elk-subgraph-title-edge-crossing.mmd 1 f96ada3a10bb35ff
+e2e/diagrams/flowchart/pr-check/label-syntax.mmd 1 becdb79a775a98b3
 e2e/diagrams/flowchart/pr-check/person-short-label.mmd 3 7df15b6abbbbbc00
 e2e/diagrams/flowchart/visual-check/1-should-render-a-simple-flowchart-no-htmllabels.mmd 1 fbb8eaa0130ef150
 e2e/diagrams/flowchart/visual-check/1-should-render-a-simple-flowchart.mmd 1 bdd36463cac9b858

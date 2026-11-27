@@ -17,6 +17,7 @@ import {
 } from '@mermaid-js/core/svg/folded';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import {
+  labelSource,
   layoutLabel,
   markdownString,
   type FontKey,
@@ -162,19 +163,17 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
+    // Read by core's label handler (D734); no flowchart label kind has a v12 markdown profile.
     // `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
-    label: (text, markdown, f, max, bits = 0) =>
-      layoutLabel(
-        text,
-        f,
-        markdown && ctx.config.markdownAutoWrap === false ? Infinity : max,
-        measurer,
-        {
-          markdown,
-          style: bits,
-          inline,
-        }
-      ),
+    label: (text, markdown, f, max, bits = 0) => {
+      const source = labelSource(text, { markdown, v12Markdown: false }, ctx.config);
+      const unwrapped = source.markup === 'markdown' && ctx.config.markdownAutoWrap === false;
+      return layoutLabel(source.text, f, unwrapped ? Infinity : max, measurer, {
+        ...source,
+        style: bits,
+        inline,
+      });
+    },
     curveOf: curveReporter((w) => ctx.warn(w)),
     styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), ctx.warn),
   };
@@ -271,27 +270,28 @@ function nodeViews(
   const lanes = typeof m.ctx.layoutPart === 'function';
   for (const view of groups) {
     const [f, bits] = textStyle(view.style, m.font);
-    const [title, md] = groupTitle(subgraphs.get(view.id)!, lanes, view.parent);
-    view.label = m.label(title, md, f, Infinity, bits);
+    const sg = subgraphs.get(view.id)!;
+    view.label =
+      lanes && view.parent === undefined
+        ? laneTitle(sg, f, bits, m)
+        : m.label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
   }
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
 }
 
 /**
- * A group's title and whether it is markdown. A lane title reads a markdown string with or
- * without quotes (D710); the parser strips only the quoted form's wrapper, so the bare form is
- * read here. A subgraph title keeps flowchart's reading.
+ * A lane title keeps its own reading until spec #1368 T14 moves it to the label handler: a
+ * markdown string with or without quotes (D710). The parser strips only the quoted form's
+ * wrapper, so the bare form is read here.
  */
-function groupTitle(
-  sg: FlowModelSubgraph,
-  lanes: boolean,
-  parent: string | undefined
-): [string, boolean] {
-  if (sg.labelType === 'markdown' || !lanes || parent !== undefined)
-    return [sg.title, sg.labelType === 'markdown'];
-  const { text, markup } = markdownString(sg.title);
-  return [text, markup === 'markdown'];
+function laneTitle(sg: FlowModelSubgraph, f: FontKey, bits: number, m: Measure): MeasuredLabel {
+  const { text, markup } =
+    sg.labelType === 'markdown'
+      ? { text: sg.title, markup: 'markdown' as const }
+      : markdownString(sg.title);
+  const { measurer, inline } = m.ctx;
+  return layoutLabel(text, f, Infinity, measurer, { markup, style: bits, inline });
 }
 
 /** A size's label shift sideways, none when it has no `dx`. */

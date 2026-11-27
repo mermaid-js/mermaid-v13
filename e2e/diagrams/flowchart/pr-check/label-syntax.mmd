@@ -1,0 +1,39 @@
+---
+description: >-
+  Spec #1368 (D733, D734). Every flowchart label kind (quoted node, unquoted node, edge between
+  pipes, inline edge, subgraph title) written six ways, one subgraph per way. Markdown is read
+  only in a quoted markdown string; plain markers, bare backticks and a code span are drawn as
+  written; the tags draw; a written backslash-n breaks the line in every label.
+---
+flowchart TB
+  subgraph S1["subgraph **bold** _ital_"]
+    direction LR
+    A1["node **bold** _ital_"] -->|"edge **bold** _ital_"| B1(unquoted node **bold** _ital_)
+    B1 -- inline edge **bold** _ital_ --> C1
+  end
+  subgraph S2["`subgraph **bold** _ital_`"]
+    direction LR
+    A2["`node **bold** _ital_`"] -->|"`edge **bold** _ital_`"| B2("`unquoted node **bold** _ital_`")
+    B2 -- "`inline edge **bold** _ital_`" --> C2
+  end
+  subgraph S3[`subgraph **bold** _ital_`]
+    direction LR
+    A3[`node **bold** _ital_`] -->|`edge **bold** _ital_`| B3(`unquoted node **bold** _ital_`)
+    B3 -- `inline edge **bold** _ital_` --> C3
+  end
+  subgraph S4["subgraph a `code` b"]
+    direction LR
+    A4["node a `code` b"] -->|"edge a `code` b"| B4(unquoted node a `code` b)
+    B4 -- inline edge a `code` b --> C4
+  end
+  subgraph S5["subgraph <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+    direction LR
+    A5["node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] -->|"edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"| B5(unquoted node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O)
+    B5 -- inline edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O --> C5
+  end
+  subgraph S6["subgraph one\ntwo"]
+    direction LR
+    A6["node one\ntwo"] -->|"edge one\ntwo"| B6(unquoted node one\ntwo)
+    B6 -- inline edge one\ntwo --> C6
+  end
+  S1 ~~~ S2 ~~~ S3 ~~~ S4 ~~~ S5 ~~~ S6

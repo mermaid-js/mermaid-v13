@@ -1368,6 +1368,7 @@ them keep working.
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
 | `nodeSpacing`/`rankSpacing` below the arrowhead: a subgraph level used its parent's `nodesep` and `ranksep + 25`, so frames were never drawn as tight as asked | Spacing is literal, except a rank gap is never smaller than an arrowhead plus its 6 px lead (13 px classic, 19.5 px neo), so the edge between two subgraphs stays visible | D601, #399 |
 | Icon shape frames (`form` `square`, `rounded`, `circle`): the glyph plus `flowchart.padding` (63 px around a 48 px icon), rounded corners 5; a circle as wide as the glyph's diagonal plus 40, about 108 px | The glyph plus half of `flowchart.padding` (55.5 px), rounded corners 5; a circle as wide as the glyph's diagonal plus half of `flowchart.padding`, about 75 px. The label sits 8 px from the frame, as in v12 | Tighter frames (D685, #1150) |
+| A markdown string (`` "`…`" ``) in a node, edge or subgraph label drew a `\n` written as two characters as text | It breaks the line there, as `<br>` does and as a written `\n` does in every other flowchart label. Markdown is still read only in a markdown string: `**x**`, `_x_` and a label wholly in backticks without quotes (`` `**x**` ``) are drawn as written, as in v12 | D734, #1395 |
 
 ## Sequence SVG structure
 
