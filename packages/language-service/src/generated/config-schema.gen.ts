@@ -7262,6 +7262,15 @@ export const configSchema: ConfigSchema = {
             "reason": "A number, or a numeric string, from the minimum below 10000; anything else draws with the default and adds one `USECASE_CONFIG_IGNORED` warning."
           }
         },
+        "curve": {
+          "$ref": "#/$defs/FlowchartDiagramConfig/properties/curve",
+          "description": "How usecase relationship and note lines are drawn between their route\npoints (D733).\n\nDefaults to S-curves, as `basis` draws them: the curve usecase drew\nbefore this key. Precedence: this key when set, then the top-level\n`curve` when set, then S-curves. A line from a node back to itself\nstays rounded.\n",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D733, #1379): v12's usecase drew a fixed curve and read no curve key. The text output stays on the grid's right angles (D78). A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
+          }
+        },
         "actorFontSize": {
           "description": "Font size for actor labels",
           "type": "number",
