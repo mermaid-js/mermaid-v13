@@ -93,8 +93,10 @@ export interface LayoutEdge {
   heads?: { source: boolean; target: boolean };
   /**
    * The side each end leaves or enters by (D501, architecture's `a:R -- L:b`). In `compass`, an
-   * end with none takes the side `direction` gives (D327). `layered` treats it as a hint (D503):
-   * ranks and node order stay, and only the end's route moves onto the side (not on the grid).
+   * end with none takes the side `direction` gives (D327). `layered` does not read it: a caller
+   * that names sides passes `layered`'s model to `honourSides` of `@mermaid-js/core/layout/sides`
+   * (D503, D718), which keeps ranks, node order and boxes and draws each such route again from its
+   * sides (not on the grid). Architecture does.
    */
   sides?: { source?: Side; target?: Side };
   /**

@@ -59,6 +59,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './layout/box-exit',
         './layout/compass',
         './layout/hops',
+        './layout/sides',
         './layout/swimlane',
         './layout/tree',
         './limits',

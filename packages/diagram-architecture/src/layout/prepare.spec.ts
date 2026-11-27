@@ -5,6 +5,7 @@
 // test.
 import { describe, expect, it } from 'vitest';
 import {
+  layered,
   pxProfile,
   validateLayout,
   type LayoutGraph,
@@ -283,6 +284,21 @@ describe('layoutArchitecture', () => {
     expect(layout.architecture.graph).toBe(graphs[0]);
     expect(layout.nodes.get('a')!.x).toBeLessThan(layout.nodes.get('b')!.x);
     expect(architectureLayoutProblems(graphs[0]!, layout)).toEqual([]);
+  });
+
+  // DESIGN §6.1: the graph is plain data, so it survives a JSON capture (no function on it).
+  it('builds a graph of plain data', async () => {
+    const { graph } = await prepared('service a\nservice b\na:R -- L:b');
+    expect(JSON.parse(JSON.stringify(graph))).toEqual(graph);
+  });
+
+  // D718: under `layered`, architecture draws each line out of the sides it names, after layout.
+  it('draws lines out of their named sides under layered', async () => {
+    const ctx = contextFor(layered, await themeNamed(), { layout: 'layered' });
+    const model = modelOf('architecture-beta\nservice a[A]\nservice b[B]\na:L -- T:b');
+    const laid = layoutArchitecture(model, ctx);
+    const [edge] = laid.edges.values();
+    expect(edge!.ports).toEqual({ source: 'left', target: 'top' });
   });
 
   it('gives the same bytes on every run', async () => {
