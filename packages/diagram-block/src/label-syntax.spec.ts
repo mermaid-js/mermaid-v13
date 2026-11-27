@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Style } from '@mermaid-js/core/text';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
+import { fixtureSource } from './layout/mmd.fixtures.ts';
 import type { BlockLayout } from './layout/types.ts';
 import { parseBlock } from './parser/index.ts';
 import { renderBlockForTest } from './render/harness.ts';
@@ -109,6 +110,13 @@ describe('block labels by the label rule (D734, D736): the layout', () => {
     expect(plain.svg).toMatch(/font-weight="bold"[^>]*>edge</);
     expect(plain.svg).toMatch(/font-weight="bold"[^>]*>group</);
     expect(plain.svg).toContain('**bold** _ital_');
+    expect(compat.svg).toBe(plain.svg);
+  });
+
+  it('draws the compatibility-mode fixture as the default one', async () => {
+    const plain = await renderBlockForTest(fixtureSource('pr-check/label-syntax')!);
+    const compat = await renderBlockForTest(fixtureSource('pr-check/label-syntax-compat')!);
+    expect(plain.rejected || compat.rejected).toBeFalsy();
     expect(compat.svg).toBe(plain.svg);
   });
 });

@@ -135,7 +135,7 @@ function polygonPoints(tree: SvgView): { x: number; y: number }[] {
 
 describe('block render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every shape, composites, edges and labels', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(95);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(96);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(cases.length).toBeGreaterThan(200 * THEMES.length);
     const all = cases.map((c) => c.r.svg).join('');

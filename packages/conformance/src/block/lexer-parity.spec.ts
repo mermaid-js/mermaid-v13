@@ -111,7 +111,7 @@ describe('block lexer parity with mermaid@12 (jison)', () => {
     expect(excluded.filter((id) => !VARIANT.test(id))).toHaveLength(1);
     // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer (the
     // case with an upper-case header and the excluded one aside).
-    expect(e2e).toBe(95);
+    expect(e2e).toBe(96);
     expect(specs).toBe(62);
     expect(cases).toBe(179);
     // The only sources v12 does not lex: the upper-case header and its variants (the detector
