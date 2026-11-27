@@ -16,7 +16,7 @@ import {
  * `grammar/block.ebnf`, weighted by how often the corpus uses each rule, with token texts drawn
  * from the corpus (unclosed directives left out). The hand-written parser must agree with the
  * reference parser on accept/reject and AST shape, and mermaid\@12 on accept/reject of the
- * syntax, asked with each markdown string written as a string (D736).
+ * syntax, asked with each markdown string written as a string (#1401).
  */
 describe('block grammar differential (generated sentences)', () => {
   it('agrees on generated sentences', async () => {

@@ -35,7 +35,7 @@ export interface Mention {
   type: BlockType;
   /** The quoted label, if any. */
   label: string | undefined;
-  /** Set when the label was a markdown string, given without its wrapper (D736). */
+  /** Set when the label was a markdown string, given without its wrapper (#1401). */
   markdown?: true;
   /** The span to keep if the block is new (undefined: 1). */
   span: number | undefined;
@@ -53,7 +53,7 @@ export interface Place {
 export interface LinkText {
   link: string;
   label?: string;
-  /** Set when the label was a markdown string, given without its wrapper (D736). */
+  /** Set when the label was a markdown string, given without its wrapper (#1401). */
   markdown?: true;
 }
 
@@ -186,7 +186,7 @@ export class ModelBuilder {
 
   /**
    * v12's merge into an existing block: a type other than `na`, a label other than the id. The
-   * label's markdown mark goes with it (D736).
+   * label's markdown mark goes with it (#1401).
    */
   private merge(
     existing: OpenBlock,

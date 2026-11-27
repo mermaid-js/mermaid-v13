@@ -22,7 +22,8 @@ import {
 } from '@mermaid-js/core/ascii';
 import { boxForm, drawLineCells, tee, trimmed } from '@mermaid-js/shared/ascii';
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { InlineSpans, LabelConfig } from '@mermaid-js/core/text';
+import type { InlineSpans } from '@mermaid-js/core/text';
+import type { BlockLabelContext } from '../labels.ts';
 import type { BlockArrowType, BlockModel, BlockType } from '../model.ts';
 import type { ArrowSide } from '../shapes/block-arrow.ts';
 import { blockTextGrid, cut, textLabel, type BlockText, type TextBox } from './grid.ts';
@@ -112,8 +113,8 @@ export interface BlockDrawOptions {
   readonly spacing: TextSpacing;
   readonly maxWidth?: number;
   readonly inline?: InlineSpans;
-  /** The render's resolved config, as the label handler takes it (D734). */
-  readonly config?: LabelConfig;
+  /** The render the labels are read for: its config, and where the label warning goes. */
+  readonly labels?: BlockLabelContext;
 }
 
 export interface BlockDrawing {
@@ -361,7 +362,7 @@ export function drawBlock(model: BlockModel, options: BlockDrawOptions): BlockDr
     mark,
     ...(options.maxWidth !== undefined ? { maxWidth: options.maxWidth } : {}),
     ...(options.inline ? { inline: options.inline } : {}),
-    ...(options.config ? { config: options.config } : {}),
+    ...(options.labels ? { labels: options.labels } : {}),
   });
   const M = BLOCK_TEXT_METRICS;
   const A = margin(model.edges.length);

@@ -15,7 +15,7 @@ import {
  * (statement types and source ranges, nested as composites nest), and the grammar agrees with
  * mermaid\@12 on accept/reject of the syntax, over the lexer gate's corpus (v12's TypeError on
  * `style`, which D443 accepts, is not syntax). Unclosed directives are left out, as in the
- * parity suite. The one difference from mermaid\@12 is D736's markdown string in a label, which
+ * parity suite. The one difference from mermaid\@12 is the markdown string in a label (#1401), which
  * 12.2.0's grammar rejected and both v13 sides take: mermaid\@12 is asked about the source with
  * each markdown string written as a string.
  */

@@ -6,14 +6,8 @@
 // keeping its width), but a frame grows to hold its widest row, so no box crosses a frame.
 import { cellMeasurer, cellWidth, type CellRect } from '@mermaid-js/core/ascii';
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import {
-  layoutLabel,
-  Style,
-  type InlineSpans,
-  type LabelConfig,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
-import { blockLabelSource, type Labelled } from '../labels.ts';
+import { layoutLabel, Style, type InlineSpans, type MeasuredLabel } from '@mermaid-js/core/text';
+import { blockLabelSource, type BlockLabelContext, type Labelled } from '../labels.ts';
 import { gridAdvance, gridPosition } from '../layout/grid.ts';
 import { isComposite, type Block, type BlockModel, type BlockType } from '../model.ts';
 import { arrowSides, type ArrowSide } from '../shapes/block-arrow.ts';
@@ -56,12 +50,12 @@ export interface GridOptions {
   /** The cut mark: `…`, or `~` in the `ascii` charset. */
   readonly mark: string;
   readonly inline?: InlineSpans;
-  /** The render's resolved config, as the label handler takes it (D734). */
-  readonly config?: LabelConfig;
+  /** The render the labels are read for: its config, and where the label warning goes. */
+  readonly labels?: BlockLabelContext;
 }
 
 /** What {@link textLabel} reads besides the label. */
-export type TextLabelOptions = Pick<GridOptions, 'inline' | 'config'>;
+export type TextLabelOptions = Pick<GridOptions, 'inline' | 'labels'>;
 
 /** The cell measurer ignores the font; one key serves every label. */
 const FONT = { family: '', size: 1, weight: 400 } as const;
@@ -76,7 +70,7 @@ export interface TextLabel {
 /** A block's or an edge's label in cells, read by the label handler as the px layout reads it. */
 export function textLabel(item: Labelled, options: TextLabelOptions = {}): TextLabel {
   if (item.label === '') return { lines: [], width: 0, emphasis: false };
-  const source = blockLabelSource(item, options.config ?? {});
+  const source = blockLabelSource(item, options.labels);
   const m: MeasuredLabel = layoutLabel(source.text, FONT, Infinity, cellMeasurer, {
     ...source,
     ...(options.inline ? { inline: options.inline } : {}),

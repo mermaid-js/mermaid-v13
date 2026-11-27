@@ -5,7 +5,7 @@ The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` buil
 parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
 decides what is valid, this file is fixed to match, and the parser must match this file
 (DESIGN §4.4). One difference is chosen: a label may be a markdown string, which mermaid@12's
-grammar rejected (D736).
+grammar rejected (#1401).
 
 **Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
 matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
@@ -40,7 +40,7 @@ BLOCK_DIAGRAM_KEY            /block\b/                       :keyword ;
 (** `columns n` or `columns auto`: how many columns the level's grid has; the last one wins. *)
 COLUMNS                      /columns\s+auto\b/              :keyword ;
 COLUMNS                      /columns\s+[\d]+/               :keyword ;
-(** A markdown string, as a label in a shape, a block arrow or an edge (D736). *)
+(** A markdown string, as a label in a shape, a block arrow or an edge (#1401). *)
 -                            /["][`]/                        push(md_string) :string ;
 <md_string> MD_STR           /[^`"]+/                        :string ;
 <md_string> -                /[`]["]/                        pop :string ;
@@ -188,7 +188,7 @@ Sized @Block = node [ SIZE ] ;
 Block @Block = node ;
 node = NODE_ID [ shape ] ;
 shape = NODE_DSTART label NODE_DEND | BLOCK_ARROW_START label DIR { DIR } BLOCK_ARROW_END ;
-(** A label: a string, or a markdown string (D736). *)
+(** A label: a string, or a markdown string (#1401). *)
 label = STR | MD_STR ;
 Edge @Edge = link ;
 (* jison returns no `LINK_LABEL` before a markdown string. *)

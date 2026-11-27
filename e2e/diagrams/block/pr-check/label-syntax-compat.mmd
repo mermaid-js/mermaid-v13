@@ -1,11 +1,13 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd: the same block labels, with
-  legacyMarkdown set. Block has no label kind where v12 read markdown, so the
-  picture is expected to equal the default one: only the markdown strings draw
-  bold and italic.
+  The markdownAlwaysOn twin of label-syntax.mmd: the same block labels with
+  every label read as markdown. The plain rows of shapes, block arrows,
+  composite headers and edge labels draw **bold** and _ital_ as bold and
+  italic, the code-span column draws inline code, and tags and the written
+  backslash-n draw as in the default mode, so the picture differs from
+  label-syntax.mmd.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 block
   columns 5

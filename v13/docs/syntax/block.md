@@ -9,7 +9,7 @@ The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` buil
 parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
 decides what is valid, this file is fixed to match, and the parser must match this file
 (DESIGN §4.4). One difference is chosen: a label may be a markdown string, which mermaid@12's
-grammar rejected (D736).
+grammar rejected (#1401).
 
 **Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
 matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
@@ -70,7 +70,7 @@ shape = NODE_DSTART label NODE_DEND
       | BLOCK_ARROW_START label DIR { DIR } BLOCK_ARROW_END ;
 ```
 
-A label: a string, or a markdown string (D736).
+A label: a string, or a markdown string (#1401).
 
 ```ebnf
 label = STR
@@ -136,7 +136,7 @@ Modes: `INITIAL`, `string`, `md_string`, `NODE`, `BLOCK_ARROW`, `ARROW_DIR`, `LL
 | INITIAL | — | `[\s]+` |  | Blanks and line breaks separate tokens. |
 | INITIAL | COLUMNS | `columns\s+auto\b` |  | `columns n` or `columns auto`: how many columns the level's grid has; the last one wins. |
 | INITIAL | COLUMNS | `columns\s+[\d]+` |  |  |
-| INITIAL | — | `["][`]` | push(md_string) | A markdown string, as a label in a shape, a block arrow or an edge (D736). |
+| INITIAL | — | `["][`]` | push(md_string) | A markdown string, as a label in a shape, a block arrow or an edge (#1401). |
 | md_string | MD_STR | `[^`"]+` |  |  |
 | md_string | — | `[`]["]` | pop |  |
 | INITIAL | — | `["]` | push(string) | A quoted text: a label, in a shape or an edge. |

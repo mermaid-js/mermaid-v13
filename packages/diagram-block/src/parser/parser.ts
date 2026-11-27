@@ -202,7 +202,7 @@ interface Shape {
   /** The opener and closer (`[]`, `<[]>`). */
   typeStr: string;
   label: string;
-  /** Set when the label was a markdown string (D736). */
+  /** Set when the label was a markdown string (#1401). */
   markdown?: true;
   directions?: string[];
   /** Where it ends. */
@@ -215,7 +215,7 @@ interface NodeParts {
   nameAt: number;
   typeStr?: string;
   label?: string;
-  /** Set when the label was a markdown string (D736). */
+  /** Set when the label was a markdown string (#1401). */
   markdown?: true;
   directions?: string[];
   range: Range;
@@ -680,7 +680,7 @@ class BlockParser {
   }
 
   /**
-   * A shape's or block arrow's label: a string, or a markdown string (D736; v12's grammar took
+   * A shape's or block arrow's label: a string, or a markdown string (#1401; v12's grammar took
    * only a string), given without its wrapper and marked.
    */
   private label(): { label: string; markdown?: true } {
@@ -722,7 +722,7 @@ class BlockParser {
   }
 
   /**
-   * `link`: `LINK`, or `START_LINK LINK_LABEL STR LINK`, or `START_LINK MD_STR LINK` (D736; v12's
+   * `link`: `LINK`, or `START_LINK LINK_LABEL STR LINK`, or `START_LINK MD_STR LINK` (#1401; v12's
    * grammar took no markdown string, and its lexer returns no `LINK_LABEL` before one).
    */
   private link(): LinkParts {

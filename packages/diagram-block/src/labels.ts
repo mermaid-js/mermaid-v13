@@ -1,4 +1,6 @@
-import { labelSource, type LabelConfig, type LabelSource } from '@mermaid-js/core/text';
+import type { RenderContext } from '@mermaid-js/core';
+import { labelSource, type LabelSource } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import type { Block, BlockModel } from './model.ts';
 
 /** A block's or an edge's label as the model holds it. */
@@ -7,13 +9,25 @@ export interface Labelled {
   readonly markdown?: true;
 }
 
+/** What a label read takes of the render: the config, and where its warning goes. */
+export type BlockLabelContext = Pick<RenderContext, 'config'> &
+  Partial<Pick<RenderContext, 'warn' | 'inline'>>;
+
+const ignore = (): undefined => undefined;
+
 /**
- * A block's or an edge's label as the label handler reads it (D734): a markdown string the
- * parser marked (D736) is markdown, any other label plain. v12 read markdown in no block label
- * (its grammar rejected markdown strings), so no label kind has `v12Markdown`.
+ * A block's or an edge's label as the label handler reads it (#1368, #1401): a markdown string
+ * the parser marked is markdown, any other label plain, unless `markdownAlwaysOn` makes every
+ * label markdown. A plain label that holds emphasis marks gives the render its one
+ * `MARKDOWN_NOT_READ` warning. Without a render context (a text grid drawn on its own) the label
+ * is read in the default mode, with no warning.
  */
-export const blockLabelSource = (item: Labelled, config: LabelConfig): LabelSource =>
-  labelSource(item.label, { markdown: item.markdown === true, v12Markdown: false }, config);
+export function blockLabelSource(item: Labelled, ctx: BlockLabelContext | undefined): LabelSource {
+  const options = { markdown: item.markdown === true };
+  if (!ctx) return labelSource(item.label, options);
+  const { config, warn = ignore, inline } = ctx;
+  return readLabel(item.label, options, { config, warn, ...(inline ? { inline } : {}) });
+}
 
 /**
  * The label texts the diagram draws, as written (`DiagramPlugin.labels`): each block's but a

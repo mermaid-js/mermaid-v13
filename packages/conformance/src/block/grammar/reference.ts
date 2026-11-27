@@ -150,7 +150,7 @@ function afterDirectives(source: string, i: number): number {
 }
 
 /**
- * `source` as mermaid\@12 is asked about it: each markdown string written as a string. D736
+ * `source` as mermaid\@12 is asked about it: each markdown string written as a string. #1401
  * takes a markdown string wherever v12 took a string, which v12's grammar rejected; everything
  * else stays for v12 to decide. A directive may split a markdown string's quote and backtick
  * (directives are removed before lexing); it stays where it is.

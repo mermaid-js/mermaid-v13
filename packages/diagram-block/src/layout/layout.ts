@@ -139,7 +139,7 @@ function prepare(model: BlockModel, ctx: BlockLayoutContext) {
   const font = fonts(model, ctx);
   const inline = ctx.inline ? { inline: ctx.inline } : {};
   const measure: Measure = (item, f, style) => {
-    const source = blockLabelSource(item, ctx.config);
+    const source = blockLabelSource(item, ctx);
     const t = layoutLabel(source.text, f, Infinity, ctx.measurer, { ...source, ...inline, style });
     return { text: t, font: f, width: t.width, height: t.height };
   };
