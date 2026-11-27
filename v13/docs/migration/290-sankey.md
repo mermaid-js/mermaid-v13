@@ -25,8 +25,10 @@
   `<s>`, `<sub>`, `<sup>` draw and entities decode; `<br>`, a written `\n` and a line break
   inside a quoted name break the line; and a name written as a quoted markdown string,
   `` "`**Revenue**`" `` (CSV quotes around backticks), is drawn as markdown. Plain `**x**`,
-  bare backticks and code spans are still drawn as written, and `legacyMarkdown` changes
-  nothing here: v12 read no markdown in sankey names. The name as written stays the node's
+  bare backticks and code spans are still drawn as written, with one `MARKDOWN_NOT_READ`
+  warning per render when a plain name holds an emphasis pair. `markdownAlwaysOn: true`
+  (globally or as `sankey.markdownAlwaysOn`) draws every name as markdown, quoted or not; the
+  value after it stays plain. The name as written stays the node's
   identity, so `` "`a`" `` and `` `a` `` name the same node, which takes the first one's
   reading. The value after a name stays plain text, on the label's last line. A label of
   several lines is centred on its node as a block, its lines aligned left.

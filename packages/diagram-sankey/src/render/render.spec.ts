@@ -7,6 +7,7 @@
 // `conformance/src/sankey/render.spec.ts`.
 import { describe, expect, it } from 'vitest';
 import { assertInert, styleScope } from '@mermaid-js/core/svg';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { renderSankeyForTest } from './harness.ts';
 import { fixture, sankeyCase } from './sources.fixtures.ts';
 
@@ -160,37 +161,56 @@ describe('labels by the label rule (#1368)', () => {
     );
   const TAGS = 'node:node src <b%3Ebold</b%3E <i%3Eital</i%3E<br%3Enext H<sub%3E2</sub%3EO';
 
-  for (const legacyMarkdown of [false, true])
-    it(`draws markdown only in a quoted markdown string (legacyMarkdown: ${legacyMarkdown})`, async () => {
-      const { svg } = await renderSankeyForTest(SYNTAX, { config: { legacyMarkdown } });
+  it('draws markdown only in a quoted markdown string by default', async () => {
+    const { svg, warnings } = await renderSankeyForTest(SYNTAX);
+    const labels = drawn(svg);
+    // Plain markers, bare backticks and a code span: one text, as written, at v12's anchor.
+    expect(labels.get('node:node src **bold** _ital_')).toBe('node src **bold** _ital_ 10');
+    expect(labels.get('node:`node src bare **bold** _ital_`')).toBe(
+      '`node src bare **bold** _ital_` 10'
+    );
+    expect(labels.get('node:node src a `code` b')).toBe('node src a `code` b 10');
+    // The quoted markdown string: bold and italic runs, the value plain after them.
+    const md = labels.get('node:`node dst md **bold** _ital_`')!;
+    expect(md).toContain('<tspan font-weight="bold">bold</tspan>');
+    expect(md).toContain('<tspan font-style="italic">ital</tspan>');
+    expect(md).toMatch(/<tspan> 10<\/tspan>$/);
+    // Tags draw; <br> and a written \n break the line.
+    const tags = labels.get(TAGS)!;
+    expect(tags.match(/<tspan x=/g)).toHaveLength(2);
+    expect(tags).toContain('<tspan font-weight="bold">bold</tspan>');
+    expect(labels.get('node:node dst one\\ntwo')).toMatch(
+      /^<tspan x="[\d.]+" y="[\d.]+">node dst one<\/tspan><tspan x="[\d.]+" y="[\d.]+">two 10<\/tspan>$/
+    );
+    // The plain names hold markdown the render draws as written: the warning.
+    expect(warnings.some((w) => w.code === MARKDOWN_NOT_READ.code)).toBe(true);
+  });
+
+  const always = [
+    ['globally', { markdownAlwaysOn: true }],
+    ['in the sankey section', { sankey: { markdownAlwaysOn: true } }],
+  ] as const;
+  for (const [where, config] of always)
+    it(`draws every name as markdown with markdownAlwaysOn set ${where}`, async () => {
+      const { svg, warnings } = await renderSankeyForTest(SYNTAX, { config });
       const labels = drawn(svg);
-      // Plain markers, bare backticks and a code span: one text, as written, at v12's anchor.
-      expect(labels.get('node:node src **bold** _ital_')).toBe('node src **bold** _ital_ 10');
-      expect(labels.get('node:`node src bare **bold** _ital_`')).toBe(
-        '`node src bare **bold** _ital_` 10'
-      );
-      expect(labels.get('node:node src a `code` b')).toBe('node src a `code` b 10');
-      // The quoted markdown string: bold and italic runs, the value plain after them.
-      const md = labels.get('node:`node dst md **bold** _ital_`')!;
-      expect(md).toContain('<tspan font-weight="bold">bold</tspan>');
-      expect(md).toContain('<tspan font-style="italic">ital</tspan>');
-      expect(md).toMatch(/<tspan> 10<\/tspan>$/);
-      // Tags draw; <br> and a written \n break the line.
-      const tags = labels.get(TAGS)!;
-      expect(tags.match(/<tspan x=/g)).toHaveLength(2);
-      expect(tags).toContain('<tspan font-weight="bold">bold</tspan>');
-      expect(labels.get('node:node dst one\\ntwo')).toMatch(
-        /^<tspan x="[\d.]+" y="[\d.]+">node dst one<\/tspan><tspan x="[\d.]+" y="[\d.]+">two 10<\/tspan>$/
-      );
+      for (const id of ['node:node src **bold** _ital_', 'node:`node dst md **bold** _ital_`']) {
+        expect(labels.get(id)).toContain('<tspan font-weight="bold">bold</tspan>');
+        expect(labels.get(id)).toContain('<tspan font-style="italic">ital</tspan>');
+        expect(labels.get(id)).toMatch(/<tspan> 10<\/tspan>$/);
+      }
+      expect(labels.get('node:node src a `code` b')).toContain('font-family=');
+      // Tags and a written \n as by default.
+      expect(labels.get(TAGS)!.match(/<tspan x=/g)).toHaveLength(2);
+      expect(labels.get('node:node dst one\\ntwo')).toMatch(/>node dst one<\/tspan>.*>two 10</);
+      expect(warnings.filter((w) => w.code === MARKDOWN_NOT_READ.code)).toEqual([]);
     });
 
-  it('draws the same in both modes: no sankey label kind read markdown in v12', async () => {
-    const a = await renderSankeyForTest(SYNTAX);
-    const b = await renderSankeyForTest(SYNTAX, { config: { legacyMarkdown: true } });
-    expect(b.svg).toBe(a.svg);
-    // The compatibility-mode twin fixture sets the key in its front matter.
+  it('draws the markdownAlwaysOn twin fixture as the setting draws the default one', async () => {
+    const on = await renderSankeyForTest(SYNTAX, { config: { markdownAlwaysOn: true } });
     const twin = await renderSankeyForTest(fixture('pr-check/label-syntax-compat'));
-    expect(twin.svg).toBe(a.svg);
+    expect(twin.svg).toBe(on.svg);
+    expect(twin.svg).not.toBe((await renderSankeyForTest(SYNTAX)).svg);
   });
 });
 

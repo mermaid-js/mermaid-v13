@@ -13,13 +13,8 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import type { SafeColor } from '@mermaid-js/core/svg';
-import {
-  labelSource,
-  layoutLabel,
-  type FontKey,
-  type MeasuredLabel,
-  type Run,
-} from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel, type Run } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { sankeyLayoutConfig, type SankeyLayoutConfig } from '../config.ts';
 import type { SankeyModel } from '../model.ts';
 import { d3Sankey, type D3LinkInput, type D3Node } from './d3-sankey.ts';
@@ -37,7 +32,9 @@ import type {
  * reported (`SANKEY_CONFIG_INVALID`, `SANKEY_COLOR_INVALID`); the plugin always passes it.
  */
 export type SankeyLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn'>>;
+  Partial<Pick<RenderContext, 'warn' | 'inline'>>;
+
+const ignoreWarning = (): void => undefined;
 
 const ROUND = 100;
 
@@ -47,26 +44,32 @@ function valueText(value: number, config: SankeyLayoutConfig): string {
   return ` ${config.prefix}${Math.round(value * ROUND) / ROUND}${config.suffix}`;
 }
 
-// What a label's source may read as more than text, in any mode: written as character
-// references, the value stays plain text after a label in any mode.
-const RE_MARKUP_CHAR = /[&<*_`\\~]/g;
+// What a label's source may read as more than text in any mode (tags, entities, markdown,
+// math): written as character references, the value stays plain text after any label.
+const RE_MARKUP_CHAR = /[&<*_`\\~$]/g;
 const asText = (text: string): string =>
   text.replace(RE_MARKUP_CHAR, (c) => `&#${c.charCodeAt(0)};`);
 
 /**
- * A node's label by the label rule (#1368): the name read by core's handler (a quoted markdown
- * string is markdown, any other name plain, with tags and a written `\n` drawn), then the value
- * as plain text, laid out on unbounded lines as v12 drew them.
+ * A node's label by the label rule (#1368): the name read by core's handler, which gives the
+ * render its warning for markdown it draws as written (a quoted markdown string, or any name
+ * under `markdownAlwaysOn`, is markdown; any other name plain, with tags and a written `\n`
+ * drawn), then the value as plain text, laid out on unbounded lines as v12 drew them.
  */
 function nodeLabel(
   node: SankeyModel['nodes'][number],
   value: string,
   font: FontKey,
-  ctx: SankeyLayoutContext
+  ctx: SankeyLayoutContext,
+  reader: MarkdownWarningContext
 ): MeasuredLabel {
   const written = node.markdown ? node.id.slice(1, -1) : node.id;
-  const source = labelSource(written, { markdown: node.markdown, v12Markdown: false }, ctx.config);
-  return layoutLabel(source.text + asText(value), font, Infinity, ctx.measurer, source);
+  const source = readLabel(written, { markdown: node.markdown }, reader);
+  const inline = ctx.inline ? { inline: ctx.inline } : {};
+  return layoutLabel(source.text + asText(value), font, Infinity, ctx.measurer, {
+    ...source,
+    ...inline,
+  });
 }
 
 /** The text of a label that is one line of one unstyled run, which is drawn as v12 drew it. */
@@ -135,8 +138,13 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
   });
 
   // Measure every label first (pitfall 16): positions do not depend on it, the bounds do.
+  const reader: MarkdownWarningContext = {
+    config: ctx.config,
+    warn: ctx.warn ?? ignoreWarning,
+    inline: ctx.inline,
+  };
   const texts = graph.nodes.map((node, i) =>
-    nodeLabel(model.nodes[i]!, valueText(node.value / graph.scale, config), font, ctx)
+    nodeLabel(model.nodes[i]!, valueText(node.value / graph.scale, config), font, ctx, reader)
   );
   const { ascent, descent } = ctx.measurer.metrics(font);
 

@@ -259,19 +259,23 @@ describe('sankey layout: colours, labels and bounds, worked from v12 sankeyRende
   });
 });
 
-/** Each line of a label as `text` with `*` for a bold run and `_` for an italic one. */
+/**
+ * Each line of a label as `text` with `*` around a bold run, `_` around an italic one and `|`
+ * around inline code.
+ */
 const shown = (l: SankeyLayout, id: string): string[] =>
   node(l, id).label.text.lines.map((line) =>
     line
       .map((r) => {
-        const mark = (r.bold ? '*' : '') + (r.italic ? '_' : '');
+        const code = r.attrs?.['font-family'] === undefined ? '' : '|';
+        const mark = (r.bold ? '*' : '') + (r.italic ? '_' : '') + code;
         return mark + r.text + [...mark].reverse().join('');
       })
       .join('')
   );
 
 describe('sankey layout: labels by the label rule (#1368)', () => {
-  const ways = (legacyMarkdown: boolean) => {
+  const ways = (markdownAlwaysOn: boolean) => {
     const src = [
       'sankey',
       'a **b** _c_,hub,1',
@@ -283,25 +287,41 @@ describe('sankey layout: labels by the label rule (#1368)', () => {
     ].join('\n');
     const { model } = parseSankey(src);
     const ctx = sankeyTestContext(theme, { showValues: false }, tenPx());
-    return layoutSankey(model, { ...ctx, config: { ...ctx.config, legacyMarkdown } });
+    return layoutSankey(model, { ...ctx, config: { ...ctx.config, markdownAlwaysOn } });
   };
 
-  for (const legacyMarkdown of [false, true])
-    it(`reads markdown only in a quoted markdown string (legacyMarkdown: ${legacyMarkdown})`, () => {
-      const l = ways(legacyMarkdown);
-      expect(shown(l, 'a **b** _c_')).toEqual(['a **b** _c_']);
-      expect(shown(l, '`d **e** _f_`')).toEqual(['d *e* _f_']);
-      expect(shown(l, '`g **h**`')).toEqual(['`g **h**`']);
-      expect(shown(l, 'i `j` k')).toEqual(['i `j` k']);
-      expect(shown(l, 'l <b>m</b><br>n')).toEqual(['l *m*', 'n']);
-      expect(shown(l, 'o\\np')).toEqual(['o', 'p']);
-    });
+  it('reads markdown only in a quoted markdown string by default', () => {
+    const l = ways(false);
+    expect(shown(l, 'a **b** _c_')).toEqual(['a **b** _c_']);
+    expect(shown(l, '`d **e** _f_`')).toEqual(['d *e* _f_']);
+    expect(shown(l, '`g **h**`')).toEqual(['`g **h**`']);
+    expect(shown(l, 'i `j` k')).toEqual(['i `j` k']);
+    expect(shown(l, 'l <b>m</b><br>n')).toEqual(['l *m*', 'n']);
+    expect(shown(l, 'o\\np')).toEqual(['o', 'p']);
+  });
 
-  it('appends the value as plain text, after the last line', () => {
+  it('reads every name as markdown with markdownAlwaysOn; tags and \\n as by default', () => {
+    const l = ways(true);
+    expect(shown(l, 'a **b** _c_')).toEqual(['a *b* _c_']);
+    expect(shown(l, '`d **e** _f_`')).toEqual(['d *e* _f_']);
+    expect(shown(l, '`g **h**`')).toEqual(['|g **h**|']);
+    expect(shown(l, 'i `j` k')).toEqual(['i |j| k']);
+    expect(shown(l, 'l <b>m</b><br>n')).toEqual(['l *m*', 'n']);
+    expect(shown(l, 'o\\np')).toEqual(['o', 'p']);
+  });
+
+  it('appends the value as plain text, after the last line, in both modes', () => {
     const src = 'sankey\n"`**a**\\nb`",c,1\nc,d <i>e</i>,1';
-    const l = lay(src, { prefix: '**', suffix: '<b>_</b>' });
+    const sankey = { prefix: '**', suffix: '<b>_</b>' };
+    const l = lay(src, sankey);
     expect(shown(l, '`**a**\\nb`')).toEqual(['*a*', 'b **1<b>_</b>']);
     expect(shown(l, 'd <i>e</i>')).toEqual(['d _e_ **1<b>_</b>']);
+    const ctx = sankeyTestContext(theme, sankey, tenPx());
+    const on = layoutSankey(parseSankey(src).model, {
+      ...ctx,
+      config: { ...ctx.config, markdownAlwaysOn: true },
+    });
+    expect(shown(on, 'd <i>e</i>')).toEqual(['d _e_ **1<b>_</b>']);
   });
 
   it('keeps a one-line plain label on v12 baseline, centres a block of lines on the node', () => {

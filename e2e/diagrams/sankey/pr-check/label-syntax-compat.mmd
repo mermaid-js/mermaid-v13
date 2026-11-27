@@ -1,10 +1,11 @@
 ---
 description: >-
-  The compatibility-mode twin of label-syntax.mmd: the same node labels with legacyMarkdown
-  set. Sankey has no label kind where v12 read markdown, so the picture is expected to equal
-  the default one.
+  The markdownAlwaysOn twin of label-syntax.mmd: the same node labels with the setting on, so
+  every name is markdown. The plain **bold** _ital_ names draw bold and italic, the bare
+  backticks and the code span draw inline code; tags and \n draw as in the default mode, and
+  the value after each label stays plain. The picture differs from label-syntax.mmd.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 sankey-beta
 
