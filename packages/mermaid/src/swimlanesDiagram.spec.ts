@@ -130,8 +130,8 @@ describe('swimlane-beta registration (D534, D535)', () => {
     const plain = await m.prepare(SWIMLANE);
     expect(plain.config.swimlane?.ignoreCrossLaneEdges).toBe(true);
     // Flowchart's own defaults stay in its section, not in swimlane's.
-    expect(plain.config.flowchart?.curve).toBe('rounded');
-    expect((plain.config.swimlane as Record<string, unknown> | undefined)?.curve).toBeUndefined();
+    expect(plain.config.flowchart?.padding).toBe(15);
+    expect((plain.config.swimlane as Record<string, unknown> | undefined)?.padding).toBeUndefined();
     const keyed = `---\nconfig:\n  flowchart:\n    nodeSpacing: 120\n  swimlane:\n    automaticLaneOrdering: true\n---\n${SWIMLANE}`;
     const both = await m.prepare(keyed);
     expect(both.config.flowchart?.nodeSpacing).toBe(120);
