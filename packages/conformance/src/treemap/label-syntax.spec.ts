@@ -13,10 +13,9 @@ import { createMermaid, type InitializeConfig, type Mermaid } from 'mermaid';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 
-const SOURCE = readFileSync(
-  join(REPO_ROOT, 'e2e/diagrams/treemap/pr-check/label-syntax.mmd'),
-  'utf8'
-);
+const fixture = (name: string): string =>
+  readFileSync(join(REPO_ROOT, `e2e/diagrams/treemap/pr-check/${name}.mmd`), 'utf8');
+const SOURCE = fixture('label-syntax');
 
 function api(config: InitializeConfig = {}): Mermaid {
   const m = createMermaid();
@@ -84,5 +83,10 @@ describe('treemap label syntax (#1368)', () => {
     const svg = async (config: InitializeConfig): Promise<string> =>
       (await api(config).render('m', SOURCE)).svg;
     expect(await svg({ legacyMarkdown: true })).toBe(await svg({}));
+  });
+
+  it('draws the compatibility-mode twin fixture as the default one', async () => {
+    const { svg } = await api().render('m', fixture('label-syntax-compat'));
+    expect(svg).toBe((await api().render('m', SOURCE)).svg);
   });
 });

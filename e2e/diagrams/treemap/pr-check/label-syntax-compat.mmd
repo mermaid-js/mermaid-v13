@@ -1,0 +1,20 @@
+---
+description: >-
+  The compatibility-mode twin of label-syntax.mmd (#1368, #1403): the same labels with
+  `legacyMarkdown: true`. No treemap label kind read markdown in v12, so the picture equals the
+  default one: only a quoted markdown string is markdown; tags draw and `\n` breaks.
+config:
+  legacyMarkdown: true
+---
+treemap-beta
+  title title <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  "section **bold** _ital_"
+    "leaf **bold** _ital_": 10
+  "`section **bold** _ital_`"
+    "`leaf **bold** _ital_`": 10
+  "section a `code` b"
+    "leaf a `code` b": 10
+  "section <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+    "leaf <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O": 10
+  "section one\ntwo"
+    "leaf one\ntwo": 10
