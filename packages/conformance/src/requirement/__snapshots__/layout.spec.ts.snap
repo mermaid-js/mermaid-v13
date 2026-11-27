@@ -197,6 +197,8 @@ exports[`requirement layout over parser-produced fixtures > records the crossing
   "e2e/nightly-check/styles-before-definition.mmd": 0,
   "e2e/nightly-check/theme-variables.mmd": 0,
   "e2e/nightly-check/unknown-ends.mmd": 0,
+  "e2e/pr-check/label-syntax-compat.mmd": 0,
+  "e2e/pr-check/label-syntax.mmd": 0,
   "e2e/pr-check/sample.mmd": 0,
   "e2e/pr-check/should-render-a-basic-requirement-diagram-with-relationship-in-classic-look-and-default-theme.mmd": 0,
   "e2e/visual-check/with-a-theme-default.mmd": 0,
