@@ -185,7 +185,7 @@ class Placer {
     private readonly ruleFont: FontKey,
     /**
      * The main-line rule, and the rows below a rule's definition in cells (px: `2 × padding`);
-     * the render's `inline`, which collects the tags a special drops (`HTML_DROPPED`).
+     * the render's `inline`, for its warnings and whole-label provider.
      */
     private readonly cells: Pick<RailroadCellOptions, 'guard'> &
       Partial<RailroadCellOptions> &
@@ -329,7 +329,7 @@ class Placer {
   /**
    * A special, `? text ?` in a dashed box (L473-499). Its text follows the label rule (D710):
    * `<br>`, the drawn tags and character references, and Markdown only in a markdown string;
-   * any other tag is dropped and named in `HTML_DROPPED`. A text that draws formatting is laid
+   * any other tag is drawn as written (#1440). A text that draws formatting is laid
    * out in lines and its box sized from them (in px; the text output draws its plain text). Any
    * other is drawn as one string, the label's text. A plain text with no `<`, which holds no tag,
    * is drawn as before: as written, its entities decoded. The SVG draws a special on one line,
