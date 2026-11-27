@@ -36,6 +36,19 @@ describe('flowchart parse', () => {
     ]);
   });
 
+  // #1368, #1432: v12 read every shape-data label with no `labelType` as markdown.
+  it.each([
+    ['a plain value', '"s **b**"', 's **b**', 'text'],
+    ['a markdown string', '"`s **b**`"', 's **b**', 'markdown'],
+    ['a single-quoted markdown string', "'`s **b**`'", 's **b**', 'markdown'],
+    ['backticks inside a value', '"a `code` b"', 'a `code` b', 'text'],
+    ['a written labelType', '"`s`", labelType: markdown', '`s`', 'markdown'],
+    ['a written text labelType', '"s **b**", labelType: text', 's **b**', 'text'],
+  ])('reads a shape-data label with %s', (_, value, read, labelType) => {
+    const vertex = parse(`flowchart LR\n  a@{ label: ${value} }`).model.vertices[0];
+    expect(vertex).toMatchObject({ text: read, labelType });
+  });
+
   it('puts click callbacks on the Click statement of the AST, not links (DESIGN §12.3)', () => {
     const r = parse(
       'flowchart LR\n  A --> B\n  click A callback "tip"\n  click B call go("x", 2)\n  click A "https://x.example"\n'

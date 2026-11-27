@@ -82,6 +82,21 @@ export function flowLabelType(type: unknown): FlowLabelType {
   return type === 'markdown' || type === 'string' || type === 'text' ? type : 'markdown';
 }
 
+/**
+ * A shape-data label (`@{ label: … }`) as #1368 reads it (#1432), from the value YAML gave. A
+ * value that is a markdown string (`"`…`"`, so after YAML a value in backticks, with no backtick
+ * inside) is markdown without its backticks; any other value is text. A written `labelType` is
+ * read as {@link flowLabelType} reads it.
+ */
+export function shapeDataLabel(
+  text: string,
+  type: unknown
+): { text: string; labelType: FlowLabelType } {
+  const md = type === undefined ? /^`([^`]*)`$/.exec(text.trim())?.[1] : undefined;
+  if (md !== undefined) return { text: md, labelType: 'markdown' };
+  return { text, labelType: type === undefined ? 'text' : flowLabelType(type) };
+}
+
 /** `text` without the quotes around it, if it has both. */
 export function unquoteLabel(text: string): string {
   return text.startsWith('"') && text.endsWith('"') ? text.substring(1, text.length - 1) : text;

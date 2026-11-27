@@ -76,6 +76,19 @@
   needs `@mermaid-js/plugin-interactions` ([Click callbacks](#click-callbacks-and-bindfunctions)).
 - **Hand-drawn**: with `@mermaid-js/plugin-hand-drawn`, vertices, flow frames, collapsed cards
   and edges are sketched, as in v12 ([Hand-drawn look](#hand-drawn-look)).
+- **Labels** (#1368, #1396): markdown is read only in a markdown string (`` "`…`" ``), as in
+  v12: `**x**`, `_x_`, a code span and a label wholly in backticks without quotes (`` `**x**` ``)
+  are drawn as written, and a render whose plain labels hold an emphasis pair warns
+  `MARKDOWN_NOT_READ` once. Two things differ from v12. A `\n` written as two characters inside
+  a markdown string breaks the line, as `<br>` does and as it already did in every other
+  agentflow label, where v12 drew it as text. A connector title written as a markdown string
+  (`` connector c["`**x**`"] ``) is read as markdown, as every other label is, where v12 dropped
+  the string's quotes and backticks and drew `**x**` as text. `markdownAlwaysOn: true` (or
+  `agentflow.markdownAlwaysOn`) draws every label as markdown, quoted or not.
+- **Shape-data labels** (#1368, #1432): v12 read a label written in shape data with no
+  `labelType` (`a@{ label: "**x**" }`) as markdown. Now it follows the rule above: it is plain
+  text unless the value is a markdown string (`` a@{ label: "`**x**`" } ``), read as markdown
+  without its backticks. A written `labelType` is read as before.
 - **Text output** is new (v12 had none, D320, D469): `format: 'ascii'` draws agentflow as text
   from the lazily loaded `@mermaid-js/diagram-agentflow/ascii` entry, in the `unicode` or
   `ascii` charset ([ASCII output](./ascii.md#agentflow-diagrams)). It is the same graph laid out

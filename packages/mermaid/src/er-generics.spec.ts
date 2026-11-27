@@ -1,5 +1,5 @@
 // An ER attribute type with a generic named like an HTML tag is drawn as written (#945), as
-// v12's `erBox` drew it and as class does since D619: no HTML_DROPPED warning.
+// v12's `erBox` drew it and as class does since D619, with no warning.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawn } from './testing/labels.ts';
@@ -16,7 +16,7 @@ describe('ER generics named like HTML tags (#945, D619)', () => {
     expect(drawn(svg)).not.toContain('List');
   });
 
-  it('raises no warning, HTML_DROPPED included', async () => {
+  it('raises no warning', async () => {
     const { warnings } = await svgOf(FIXTURE);
     expect(warnings).toEqual([]);
   });

@@ -1,0 +1,70 @@
+---
+description: >-
+  Spec #1368, #1432. The markdownAlwaysOn twin of label-syntax.mmd: the same source with the
+  setting on, so every label is markdown. The plain rows draw bold and italic, the code-span
+  row draws inline code, and the bare-backtick row is a code span; markdown strings, tags and a
+  written backslash-n draw as in label-syntax.mmd. The picture differs from that fixture.
+config:
+  markdownAlwaysOn: true
+---
+flowchart TB
+  subgraph W1
+    direction LR
+    A1["node **bold** _ital_"] -->|"edge **bold** _ital_"| B1(unquoted node **bold** _ital_)
+    B1 -- inline edge **bold** _ital_ --> C1
+    C1@{ label: "shape data **bold** _ital_" }
+  end
+  subgraph W2
+    direction LR
+    A2["`node **bold** _ital_`"] -->|"`edge **bold** _ital_`"| B2("`unquoted node **bold** _ital_`")
+    B2 -- "`inline edge **bold** _ital_`" --> C2
+    C2@{ label: "`shape data **bold** _ital_`" }
+  end
+  subgraph W3
+    direction LR
+    A3[`node **bold** _ital_`] -->|`edge **bold** _ital_`| B3(`unquoted node **bold** _ital_`)
+    B3 -- `inline edge **bold** _ital_` --> C3
+  end
+  subgraph W4
+    direction LR
+    A4["node a `code` b"] -->|"edge a `code` b"| B4(unquoted node a `code` b)
+    B4 -- inline edge a `code` b --> C4
+    C4@{ label: "shape data a `code` b" }
+  end
+  subgraph W5
+    direction LR
+    A5["node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] -->|"edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"| B5(unquoted node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O)
+    B5 -- inline edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O --> C5
+    C5@{ label: "shape data <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" }
+  end
+  subgraph W6
+    direction LR
+    A6["node one\ntwo"] -->|"edge one\ntwo"| B6(unquoted node one\ntwo)
+    B6 -- inline edge one\ntwo --> C6
+    C6@{ label: 'shape data one\ntwo' }
+  end
+  subgraph S1["subgraph __bold__ _ital_"]
+    direction LR
+    D1[plain] ~~~ E1[drawn as written]
+  end
+  subgraph S2["`subgraph __bold__ _ital_`"]
+    direction LR
+    D2[quoted string] ~~~ E2[read as markdown]
+  end
+  subgraph S3[`subgraph __bold__ _ital_`]
+    direction LR
+    D3[bare backticks] ~~~ E3[drawn as written]
+  end
+  subgraph S4["subgraph a `code` b"]
+    direction LR
+    D4[code span] ~~~ E4[drawn as written]
+  end
+  subgraph S5["subgraph <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+    direction LR
+    D5[tags] ~~~ E5[drawn as formatting]
+  end
+  subgraph S6["subgraph one\ntwo"]
+    direction LR
+    D6[written backslash-n] ~~~ E6[breaks the line]
+  end
+  W1 ~~~ W2 ~~~ W3 ~~~ W4 ~~~ W5 ~~~ W6 ~~~ S1 ~~~ S2 ~~~ S3 ~~~ S4 ~~~ S5 ~~~ S6

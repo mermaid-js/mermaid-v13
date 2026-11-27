@@ -46,18 +46,14 @@ const RE_BULLET_LINE = /^[ \t]*[-*] +\S/m;
 // An HTML tag other than `<br>`: v12's markdownToLines keeps it as words, and its HTML label
 // then draws it. What v13 does with it (R-TEXT-3, D566) is in core's label.spec.ts.
 const RE_HTML = /<\/?(?!br\b)[a-zA-Z][^<>]*>/i;
-// v12's sanitiser removes these with what they hold, to the end of the label with no end tag.
-const RE_RAW = /<(script|style)(?=[\s/>])[^>]*>[^]*?(<\/\1\s*>|$)/gi;
-// Labels v13 draws otherwise on purpose, by the start of their id.
-const BY_DESIGN = [
-  // v12's browser drops an element it does not know; v13 shows `List<T>`, `<foo>` and
-  // `<style.css>` as written (R-TEXT-3, MIGRATION "Labels and text").
-  'flowchart/baseline/text/html-kept.mmd node A',
-  'flowchart/baseline/text/tag-shaped-script-style.mmd',
-  // v12 lost the rest of a label after a `<script>` or `<style>` with no end tag; v13 drops the
-  // tag and keeps the text (D566).
-  'flowchart/nightly-check/html-dropped-unclosed.mmd',
-];
+// A tag v13 does not draw: v12's HTML label rendered or sanitised it, v13 shows it as written
+// (#1440, MIGRATION "Labels and text"), so such a label is not compared.
+const RE_UNDRAWN = /<\/?(?!(?:br|b|strong|i|em|u|ins|s|strike|del|sub|sup)[\s/>])[a-zA-Z][^<>]*>/i;
+// A backtick in a label v12 read as markdown: only a shape-data label keeps one (v12 took the
+// backticks off a markdown string). v12's markdownToLines dropped a code span and its text; v13
+// draws it as inline code, and reads a shape-data value in backticks as a markdown string
+// without them (#1368, #1432), so such a label is not compared.
+const BACKTICK = '`';
 
 const labels: CorpusLabel[] = [];
 let v12: V12Text;
@@ -130,6 +126,7 @@ describe('label layout over the e2e flowchart labels', () => {
     const changed: string[] = [];
     for (const label of labels) {
       if (!label.markdown || RE_BULLET_LINE.test(label.text) || RE_HTML.test(label.text)) continue;
+      if (label.text.includes(BACKTICK)) continue;
       // v12's createText turns the first <br> into <br/> before splitting markdown.
       const expected = v12
         .markdownToLines(label.text.replace('<br>', '<br/>'))
@@ -156,8 +153,8 @@ describe('label layout over the e2e flowchart labels', () => {
 
   it('keeps the text v12 shows for plain labels', () => {
     // v12 draws plain labels as HTML: lines break at \n, the two characters \n and <br>, tags
-    // are elements and character references are decoded. v13 keeps that text; an <img> shows
-    // nothing (labels are text only, R-TEXT-1).
+    // are elements and character references are decoded. v13 keeps that text where it draws
+    // the tags.
     const ENTITIES: Record<string, string> = {
       quot: '"',
       amp: '&',
@@ -179,20 +176,17 @@ describe('label layout over the e2e flowchart labels', () => {
     };
     const changed: string[] = [];
     for (const label of labels) {
-      if (label.markdown || BY_DESIGN.some((id) => label.id.startsWith(id))) continue;
-      const expected = label.text
-        .replace(RE_RAW, '')
-        .split(/\\n|\n|<br\s*\/?>/gi)
-        .map((line) =>
-          line
-            .replace(/<\/?[a-zA-Z][^<>]*>/g, '')
-            .replace(/&(\w+);/g, (all, name: string) => ENTITIES[name] ?? all)
-            .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean)
-            .join(' ')
-        );
+      if (label.markdown || RE_UNDRAWN.test(label.text)) continue;
+      const expected = label.text.split(/\\n|\n|<br\s*\/?>/gi).map((line) =>
+        line
+          .replace(/<\/?[a-zA-Z][^<>]*>/g, '')
+          .replace(/&(\w+);/g, (all, name: string) => ENTITIES[name] ?? all)
+          .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .join(' ')
+      );
       const actual = layout(label, Infinity).lines.map((line) => line.map((r) => r.text).join(''));
       if (JSON.stringify(actual) !== JSON.stringify(expected)) {
         changed.push(

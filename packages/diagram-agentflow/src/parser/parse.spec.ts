@@ -412,10 +412,11 @@ describe('agentflow silent drops (D464)', () => {
       ' e@{ label: x, labelType: string }'
     );
     const { model } = parse(src);
+    // With no `labelType` a label is text, where v12 read markdown (#1368, #1432).
     expect(model.vertices.map((v) => [v.text, v.labelType])).toEqual([
-      ['5', 'markdown'],
-      ['1,2', 'markdown'],
-      ['[object Object]', 'markdown'],
+      ['5', 'text'],
+      ['1,2', 'text'],
+      ['[object Object]', 'text'],
       ['x', 'markdown'],
       ['x', 'string'],
     ]);

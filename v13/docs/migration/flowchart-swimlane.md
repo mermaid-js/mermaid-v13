@@ -57,6 +57,12 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   keep the old look. `<br>`, the drawn tags (`<b>`, `<i>`, `<u>`, `<s>`, `<sub>`, `<sup>` and
   their synonyms) and entity codes work in every lane title. A subgraph nested in a lane, and a
   flowchart subgraph, keep flowchart's reading, where only `` "`…`" `` is a markdown string.
+- **Shape-data labels are plain text** (#1368, #1432), as in flowchart. v12 read a node label
+  written in shape data with no `labelType` as Markdown, so `a@{ label: "**Bold**" }` drew
+  `Bold` bold. Now the value is read as Markdown only when it is a markdown string
+  (`` a@{ label: "`**Bold**`" } ``), without its backticks; otherwise `**`, `_` and a code span
+  are drawn as written, with one `MARKDOWN_NOT_READ` warning. A written `labelType` is read as
+  before, and `markdownAlwaysOn: true` draws every label as Markdown.
 - **Long lane titles.** v12 let a lane title wider than its lane run past it; v13 widens the
   lane across the flow to the title plus 20px each side.
 - **Warnings** (D226, D536), raised at layout and only when the `swimlane` engine lays the

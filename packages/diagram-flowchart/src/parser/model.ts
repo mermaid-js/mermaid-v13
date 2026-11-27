@@ -16,6 +16,7 @@ import {
   countChar,
   FlowBuilderBase,
   flowLabelType,
+  shapeDataLabel,
   unquoteLabel,
 } from '@mermaid-js/shared/parser/flow';
 import type {
@@ -487,12 +488,16 @@ function applyAssetSize(vertex: FlowVertex, doc: YamlMap): void {
   if (doc.h && Number.isFinite(h)) vertex.assetHeight = h;
 }
 
-/** The metadata `label`, `icon` and `img`; an icon or image with no label drops the id text. */
+/**
+ * The metadata `label`, `icon` and `img`; an icon or image with no label drops the id text. A
+ * label is text unless it is a markdown string or has a `labelType` (#1368, #1432).
+ */
 function applyDocLabel(vertex: FlowVertex, doc: YamlMap): void {
   const docLabel = typeof doc.label === 'string' ? doc.label : undefined;
   if (doc.label) {
-    vertex.text = String(doc.label);
-    vertex.labelType = flowLabelType(doc.labelType);
+    const label = shapeDataLabel(String(doc.label), doc.labelType);
+    vertex.text = label.text;
+    vertex.labelType = label.labelType;
   }
   for (const key of ['icon', 'img'] as const) {
     if (!doc[key]) continue;

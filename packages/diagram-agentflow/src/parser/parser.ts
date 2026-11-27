@@ -292,7 +292,7 @@ class AgentflowParser extends FlowParser<AgentflowBuilder, AgentflowParseOptions
     const ast = this.ids.node(name);
     if (name !== '')
       st.symbol(name, 'node', nameRange, db.vertices.has(name) && !replacing ? 'ref' : 'def');
-    const sid = db.addConnector(name, title?.text ?? '', ast, nameRange);
+    const sid = db.addConnector(name, title, ast, nameRange);
     if (data !== undefined && sid !== '') db.addVertex(sid, ast, data.range, { data: data.value });
     const r = this.span(from);
     st.statement('connector', r);
