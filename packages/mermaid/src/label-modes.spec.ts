@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawnRuns } from './testing/labels.ts';
 
-const { drawnBy, svgOf, textOf } = corpusLabels(readFileSync);
+const { drawnBy, textOf } = corpusLabels(readFileSync);
 
 const render = (path: string): Promise<string[]> => drawnBy(path, drawnRuns);
 
@@ -52,18 +52,17 @@ describe('label modes per diagram type (#763, D564)', () => {
     ]);
   });
 
-  it('requirement: markdown only in a markdown string, plain markers drawn as written (D731)', async () => {
-    const { svg, warnings } = await svgOf('requirement/baseline/text/backticks-and-emphasis.mmd');
-    expect(warnings.map((w) => w.code)).toEqual(['MARKDOWN_NOT_READ']);
-    expect(drawnRuns(svg)).toEqual([
+  it('requirement: markdown only in a markdown string, tags in every label (D731)', async () => {
+    const texts = await render('requirement/baseline/text/backticks-and-emphasis.mmd');
+    expect(texts).toEqual([
       '<<Requirement>>',
       '<b>bold</b>',
       'ID: 1',
       'Text: <i>it</i>',
       '<<Requirement>>',
-      '<b>**strong** name</b>',
+      '<b>strong name</b>',
       'ID: 2',
-      'Text: - not a *bullet*',
+      'Text: - not a <i>bullet</i>',
       '<<Element>>',
       '<b>`code` element</b>',
       'Type: sim',
@@ -123,7 +122,13 @@ describe('label modes per diagram type (#763, D564)', () => {
 
   it('requirement: text output draws what the SVG draws (D731)', async () => {
     const r = await textOf('requirement/baseline/text/backticks-and-emphasis.mmd');
-    for (const text of [' bold ', '**strong** name', 'Text: it', 'Type: sim', '`code` element'])
+    for (const text of [
+      ' bold ',
+      'strong name',
+      'Text: - not a bullet',
+      'Type: sim',
+      '`code` element',
+    ])
       expect(r.text).toContain(text);
     expect(r.text).not.toContain('`**bold**`');
   });

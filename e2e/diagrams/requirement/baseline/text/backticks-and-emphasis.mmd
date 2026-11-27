@@ -1,17 +1,18 @@
 ---
 description: >-
   a name or text value written as a markdown string ("`…`") is read as
-  markdown; without backticks bold and italic are drawn as written, and so is
-  a code span inside plain text (D731, #1368; was #763, D564)
+  markdown; any other label is plain: its tags draw, and a code span or a list
+  marker in it is drawn as written (D731, #1368; was #763, D564). Plain
+  **markers** drawn as written are in pr-check/label-syntax.mmd, which warns.
 ---
 requirementDiagram
 requirement "`**bold**`" {
 id: 1
 text: "`*it*`"
 }
-requirement "**strong** name" {
+requirement "<b>strong</b> name" {
 id: 2
-text: "- not a *bullet*"
+text: "- not a <i>bullet</i>"
 }
 element "`code` element" {
 type: "`sim`"
