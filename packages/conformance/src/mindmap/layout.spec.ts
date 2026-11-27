@@ -59,14 +59,9 @@ const ENGINES: readonly [string, () => LayoutEngine][] = [
 
 /**
  * The sources with a plain label holding an emphasis pair, which give `MARKDOWN_NOT_READ`
- * (#1368): the label fixture, whose plain rows show it, and two bare-backtick labels over two
- * lines, whose code span the warning does not see across the line break.
+ * (#1368): only the label fixture, whose plain rows show it.
  */
-const MARKDOWN_SOURCES = [
-  'e2e/baseline/text/backtick-label-on-two-lines.mmd',
-  'e2e/pr-check/formatted-label-with-linebreak-and-a-wrapping-label-and-emojis.mmd',
-  'e2e/pr-check/label-syntax.mmd',
-];
+const MARKDOWN_SOURCES = ['e2e/pr-check/label-syntax.mmd'];
 
 async function laidOut(f: Fixture, engine: LayoutEngine) {
   const warnings: string[] = [];
