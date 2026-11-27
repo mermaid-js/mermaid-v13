@@ -221,8 +221,9 @@ export function animateEdge(w: SvgWriter, edge: AnimatedEdge): boolean {
 // to hold it with the diagram's padding around it. The title is read by the label rule, as any
 // label is (#1368, #1406): a quoted markdown string in the string YAML gives is markdown, and so
 // is every title under `markdownAlwaysOn`; anything else is plain, and markdown in it gives the
-// render's `MARKDOWN_NOT_READ` warning. Tags draw and a written `\n` breaks. Inline boxes are not
-// drawn in it. It is not the accessible name (D133).
+// render's `MARKDOWN_NOT_READ` warning. A written `\n` breaks; a tag in it is drawn as written
+// unless it is a drawn tag (#1440). Inline boxes are not drawn in it. It is not the accessible
+// name (D133).
 
 /** A laid-out title and its centre. */
 export interface PlacedTitle {

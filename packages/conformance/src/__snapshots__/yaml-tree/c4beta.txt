@@ -37,7 +37,7 @@ e2e/diagrams/c4beta/pr-check/context-diagram.mmd 1 377fc4fd1bbcb81d
 e2e/diagrams/c4beta/pr-check/dynamic-steps.mmd 1 801312d3c0c9d3bc
 e2e/diagrams/c4beta/pr-check/legend-kinds.mmd 1 e6f5c36e64d8282f
 e2e/diagrams/c4beta/pr-check/legend-tag-styles.mmd 1 f87e23d1d3bd6305
-e2e/diagrams/c4beta/pr-check/markup-and-quotes-in-every-text.mmd 1 5fd8ab5f450f1858
+e2e/diagrams/c4beta/pr-check/markup-and-quotes-in-every-text.mmd 1 0b7f1e015ab525ec
 e2e/diagrams/c4beta/pr-check/nested-boundaries.mmd 1 41d5ef82037ab03a
 e2e/diagrams/c4beta/pr-check/style-colour-alpha.mmd 1 c7d9f09e2bdc13a6
 e2e/diagrams/c4beta/pr-check/style-colour-forms.mmd 1 4aa6795ac0bcbceb
