@@ -43,7 +43,7 @@ export function renderKanban(
   for (const item of model.items) items.set(item.ast, item);
   // Every theme variable is read before the root, so its style declares them.
   const scene: Scene = { w, layout, ctx, paint: paints(ctx.theme, layout), items };
-  openRoot(scene);
+  openRoot(scene, model);
   drawColumns(scene);
   drawCards(scene);
   w.close();
@@ -53,10 +53,11 @@ export function renderKanban(
 }
 
 /**
- * The `<svg>` root, in the layout's font (pitfall 16). Kanban has no title or description (its
- * grammar has none, and v12 draws no front-matter title, D218), so it writes no element id.
+ * The `<svg>` root, in the layout's font (pitfall 16), with the `accTitle` and `accDescr`
+ * values as its `<title>` and `<desc>` (D742, R-A11Y-1): the only element ids it writes. v12
+ * draws no front-matter title (D218).
  */
-function openRoot({ w, layout, ctx }: Scene): void {
+function openRoot({ w, layout, ctx }: Scene, model: KanbanModel): void {
   const { theme, config } = ctx;
   // Read before the root style and the auto sheet are written, so they declare its aliases.
   const font = fontAttrs(layout.font, theme);
@@ -64,6 +65,8 @@ function openRoot({ w, layout, ctx }: Scene): void {
     name: 'kanban',
     viewBox: layout.bounds,
     maxWidth: config.kanban?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: { ...font },
   });
 }
