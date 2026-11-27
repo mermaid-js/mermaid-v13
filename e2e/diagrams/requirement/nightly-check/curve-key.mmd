@@ -1,0 +1,29 @@
+---
+description: >-
+  `requirement.curve` (D733, #1378) draws every relation: straight segments here (`linear`),
+  where the default draws rounded right angles. `flowchart.curve` no longer reaches a
+  requirement diagram, so the `basis` it sets here changes nothing.
+config:
+  requirement:
+    curve: linear
+  flowchart:
+    curve: basis
+---
+requirementDiagram
+  requirement a {
+    id: 1
+    text: first
+    risk: low
+    verifymethod: test
+  }
+  requirement b {
+    id: 2
+    text: second
+    risk: low
+    verifymethod: test
+  }
+  element e {
+    type: simulation
+  }
+  e - satisfies -> a
+  e - satisfies -> b

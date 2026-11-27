@@ -158,6 +158,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/nightly-check/classic/02-39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd": 0,
   "flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd": 0,
   "flowchart/nightly-check/clickable-callback.mmd": 0,
+  "flowchart/nightly-check/curve-global.mmd": 0,
   "flowchart/nightly-check/curve-unknown-interpolate.mmd": 0,
   "flowchart/nightly-check/curve-unknown.mmd": 0,
   "flowchart/nightly-check/dagre/01-7-dagre-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd": 0,

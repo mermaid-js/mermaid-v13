@@ -1,5 +1,5 @@
 /**
- * Spec #1368 T7 (#1395): flowchart reads its labels through core's label handler (D733, D734),
+ * Spec #1368 T7 (#1395): flowchart reads its labels through core's label handler (#1368),
  * through the public render(). In the default mode markdown is read only in a quoted markdown
  * string, bare backticks are drawn as written, and a plain label holding an emphasis pair gives
  * one `MARKDOWN_NOT_READ` warning per render. With `markdownAlwaysOn` every label is markdown.

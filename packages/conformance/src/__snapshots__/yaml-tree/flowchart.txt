@@ -149,6 +149,7 @@ e2e/diagrams/flowchart/nightly-check/classic/01-38-should-render-a-flowchart-whe
 e2e/diagrams/flowchart/nightly-check/classic/02-39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd 1 b7bda6ad684b0a63
 e2e/diagrams/flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd 4 a720be3f1f0ac906
 e2e/diagrams/flowchart/nightly-check/clickable-callback.mmd 1 2a19cdc575f3290b
+e2e/diagrams/flowchart/nightly-check/curve-global.mmd 1 fdb51ad624f3cfe3
 e2e/diagrams/flowchart/nightly-check/curve-unknown-interpolate.mmd 1 97a58f467d81dcbe
 e2e/diagrams/flowchart/nightly-check/curve-unknown.mmd 1 72a917fcd34e9243
 e2e/diagrams/flowchart/nightly-check/dagre/01-7-dagre-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd 1 b899a033ded3e544

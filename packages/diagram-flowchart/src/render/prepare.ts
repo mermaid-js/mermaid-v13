@@ -26,7 +26,8 @@ import {
 import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveReporter, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { curveResolver, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { configCurve, FLOWCHART_CURVE } from './curve.ts';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
@@ -134,8 +135,11 @@ interface Measure {
     max: number,
     bits?: number
   ) => MeasuredLabel;
-  /** `curveKind` for this render: an unknown name warns once (D602). */
-  readonly curveOf: (curve: string | undefined) => CurveKind;
+  /**
+   * The curve for the given names, strongest first, then the global `curve`, then `rounded`
+   * (D733). An unknown name warns once per render (D602).
+   */
+  readonly curveOf: (...own: readonly (string | undefined)[]) => CurveKind;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
 }
 
@@ -164,7 +168,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
-    // Read by core's label handler (D734), which also warns of markdown outside a markdown
+    // Read by core's label handler (#1368), which also warns of markdown outside a markdown
     // string. `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
     label: (text, markdown, f, max, bits = 0) => {
       const source = readLabel(text, { markdown }, ctx);
@@ -175,7 +179,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
         inline,
       });
     },
-    curveOf: curveReporter((w) => ctx.warn(w)),
+    curveOf: curveResolver(ctx.config.curve, FLOWCHART_CURVE, (w) => ctx.warn(w)),
     styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), ctx.warn),
   };
   const rootDir = dirOf(model.direction) ?? 'TB';
@@ -381,7 +385,6 @@ function edgeViews(
   views: ReadonlyMap<string, NodeView>,
   m: Measure
 ): EdgeView[] {
-  const flow = m.ctx.config.flowchart ?? {};
   const edgeWrap = (m.ctx.units ?? pxProfile).builder.edgeWrap;
   const edges: EdgeView[] = [];
   const ids = new Set<string>();
@@ -411,7 +414,9 @@ function edgeViews(
       style,
       start,
       end,
-      curve: m.curveOf(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
+      // The edge's own curve, then the diagram's: a swimlane-beta's `swimlane.curve`, then
+      // `flowchart.curve` (D761), then the global `curve`.
+      curve: m.curveOf(e.interpolate, model.defaultInterpolate, configCurve(model, m.ctx.config)),
     });
   }
   return edges;
@@ -448,7 +453,7 @@ function layoutGraph(
   );
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.
-  const curve = m.curveOf(model.defaultInterpolate ?? flow.curve);
+  const curve = m.curveOf(model.defaultInterpolate, configCurve(model, m.ctx.config));
   const titleAt = titlePositions(m.cells ? undefined : flow.subGraphTitlePosition, (w) =>
     m.ctx.warn(w)
   );

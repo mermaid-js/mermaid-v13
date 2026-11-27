@@ -1,4 +1,4 @@
-// How flowchart reads its labels (spec #1368 T7, D733, D734): node texts, edge texts and
+// How flowchart reads its labels (spec #1368 T7): node texts, edge texts and
 // subgraph titles all go through core's label handler. Markdown is
 // read only in a quoted markdown string, or in every label with `markdownAlwaysOn`; a written `\n`
 // breaks the line in every label.
@@ -113,7 +113,7 @@ const ALWAYS_ON: Readonly<Record<string, string[]>> = {
   'bare backticks subgraph': ['**t**'],
 };
 
-describe('flowchart labels through the core label handler (#1395, D733, D734)', () => {
+describe('flowchart labels through the core label handler (#1395, #1368)', () => {
   it.each(CASES)('%s', async (_, src, read, lines) => {
     expect(read(await prepared(src))).toEqual(lines);
   });

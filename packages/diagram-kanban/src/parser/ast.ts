@@ -6,6 +6,8 @@
  * | --------------------------------- | ----------- |
  * | item `a`, `a[…]` or `[a]`         | `n:a`       |
  * | the k-th item with the id `a`     | `n:a@k`     |
+ * | the k-th `accTitle: …`            | `accTitle:k` |
+ * | the k-th `accDescr …`             | `accDescr:k` |
  *
  * Columns and cards share the scheme. An id-less item's id is its text; blanks around the id
  * are dropped. The `@{ … }` data, `:::` and `::icon()` lines after an item belong to it, not
@@ -43,6 +45,13 @@ export interface KanbanItemNode extends AstNode<'Item'> {
   decorations: KanbanDecoration[];
 }
 
+/** `accTitle: …`, `accDescr: …` or `accDescr { … }` (D742); `text` is the value as set. */
+export interface KanbanAccNode extends AstNode<'AccTitle' | 'AccDescr'> {
+  text: string;
+}
+
+export type KanbanStatementNode = KanbanItemNode | KanbanAccNode;
+
 export interface KanbanDocument extends AstNode<'Document'> {
-  children: KanbanItemNode[];
+  children: KanbanStatementNode[];
 }

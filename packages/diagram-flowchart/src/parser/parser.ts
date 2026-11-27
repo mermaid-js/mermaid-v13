@@ -36,6 +36,7 @@ import type {
   FlowStatementNode,
   FlowSubgraph,
 } from './ast.ts';
+import { detectFlowchart } from './detect.ts';
 import { flowSourceView, lex } from './lexer.ts';
 import { destructLink, FlowBuilder } from './model.ts';
 import type { FlowModel } from './model.ts';
@@ -144,6 +145,7 @@ class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowOwnS
     const result = this.result(db.model(warnings));
     const title = this.pre.frontMatter?.title;
     if (title) result.model.title = title;
+    if (detectFlowchart(this.src, this.pre) === 'swimlane') result.model.swimlane = true;
     if (db.embeds.length > 0) result.embeds = db.embeds;
     result.edgeCount = result.model.edges.length;
     return result;
