@@ -102,5 +102,93 @@
     "reason": "core's parseYaml rejects a tab-indented plain scalar document (`tabs are not allowed for indentation`), where js-yaml 4, which v12 used, read it as text; v12 then ignored the non-mapping data. Only the generated tabs variant writes it (core YAML, not kanban; #453).",
     "owner": "#453",
     "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-theme/dark-with-darkMode",
+    "inputHash": "sha256:ede6c86614a50297",
+    "kind": "model",
+    "reason": "A colour difference, not a parse one: under `theme: dark` with `themeVariables.darkMode: true` v13 lightens the columns (`lightenHsl(cScale<n>, 10%)`), as `theme: dark` alone does in both, where v12's adjuster darkened them on the author's darkMode (D741, amends D374). Source: `---\\nconfig:\\n  theme: dark\\n  themeVariables:\\n    darkMode: true\\n---\\nkanban\\n  todo[Todo]\\n    a[Card]\\n`. No corpus item has this id, so the parity runner never observes it; `packages/conformance/src/kanban/theme.spec.ts` checks it against v12's style sheet (MIGRATION 220-kanban).",
+    "owner": "D741",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/kanban/baseline/accessibility/acc-title-descr.mmd",
+    "inputHash": "sha256:4302b1d74e307ce4",
+    "kind": "accept",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: …`, `accDescr: …` and `accDescr { … }` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and rejects the `{` of the block form as a lexical error (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-cases/accessibility-words-are-columns",
+    "inputHash": "sha256:959308440d9767af",
+    "kind": "model",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: x` and `accDescr: y` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and drew each line as a column (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/accessibility/acc-title-descr.mmd (commented)",
+    "inputHash": "sha256:a32815dc45a3e319",
+    "kind": "accept",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: …`, `accDescr: …` and `accDescr { … }` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and rejects the `{` of the block form as a lexical error (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/accessibility-words-are-columns (commented)",
+    "inputHash": "sha256:42eefef274643cee",
+    "kind": "model",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: x` and `accDescr: y` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and drew each line as a column (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/accessibility/acc-title-descr.mmd (CRLF)",
+    "inputHash": "sha256:5ae5ebc7e0b1d587",
+    "kind": "accept",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: …`, `accDescr: …` and `accDescr { … }` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and rejects the `{` of the block form as a lexical error (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/accessibility-words-are-columns (CRLF)",
+    "inputHash": "sha256:5d63ee94b1c9c469",
+    "kind": "model",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: x` and `accDescr: y` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and drew each line as a column (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/accessibility/acc-title-descr.mmd (tabs)",
+    "inputHash": "sha256:3c282f4c8066675a",
+    "kind": "accept",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: …`, `accDescr: …` and `accDescr { … }` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and rejects the `{` of the block form as a lexical error (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/accessibility-words-are-columns (tabs)",
+    "inputHash": "sha256:81d7f553810a90b2",
+    "kind": "model",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: x` and `accDescr: y` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and drew each line as a column (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-gate/e2e/baseline/accessibility/acc-title-descr.mmd (mid-line directive)",
+    "inputHash": "sha256:0e8ad320d14a2274",
+    "kind": "accept",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: …`, `accDescr: …` and `accDescr { … }` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and rejects the `{` of the block form as a lexical error (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/accessibility-words-are-columns (mid-line directive)",
+    "inputHash": "sha256:fd07378260406c05",
+    "kind": "model",
+    "reason": "accTitle and accDescr (D742): v13 reads `accTitle: x` and `accDescr: y` as the SVG's <title> and <desc> and draws no card, as the other types do; v12's kanban grammar has no such statements and drew each line as a column (MIGRATION 220-kanban, #1300).",
+    "owner": "D742",
+    "since": "2026-11-27"
   }
 ]
