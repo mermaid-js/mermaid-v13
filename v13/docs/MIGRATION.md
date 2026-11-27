@@ -1609,7 +1609,9 @@ Legend entries carry `data-id="a:<name>"` only.
   `redux-color` and `dark`); in `neo` and `neo-dark` only `cScaleLabel` counts (box text, and
   slot 11 for the axis and connectors). This follows v12's redux and neo timeline paint (D227,
   D257), but v12's default theme was `default`, so a v12 diagram that set them without a `theme`
-  needs `theme: 'default'` to keep its colours.
+  needs `theme: 'default'` to keep its colours. An override the active theme does not read raises
+  one `TIMELINE_PALETTE_IGNORED` warning per render, naming every such key and suggesting
+  `theme: 'default'`; the drawing does not change (D766).
 
 ## Mindmap
 
