@@ -28,6 +28,7 @@ import {
   type ScheduledTask,
   type ScheduleInput,
   type ScheduleTask,
+  type UnknownRef,
 } from './types.ts';
 
 /** v12 `getTasks`: one pass, then up to ten more while a task is unresolved. */
@@ -75,7 +76,13 @@ class Scheduler {
   private readonly hasExcludes: boolean;
   private readonly weekendStart: number;
   private readonly unknown = new Set<string>();
+  /** `${kind} ${id}` → the reference; its milestone flag only ever turns on. */
+  private readonly unknownRefs = new Map<
+    string,
+    { id: string; kind: UnknownRef['kind']; milestone: boolean }
+  >();
   private readonly bad = new Set<string>();
+  private readonly milestoneBad = new Set<string>();
 
   /** What each walked day costs (`steps.ts`). */
   private readonly cost: number;
@@ -123,7 +130,9 @@ class Scheduler {
     return {
       tasks,
       unknownIds: [...this.unknown],
+      unknownRefs: [...this.unknownRefs.values()],
       badDurations: [...this.bad],
+      milestoneBadDurations: [...this.milestoneBad],
       steps: this.steps.taken,
     };
   }
@@ -154,7 +163,7 @@ class Scheduler {
       if (start !== undefined) s.start = start;
     }
     if (s.start === undefined) return s.processed;
-    const end = this.endDate(s.start, task.end);
+    const end = this.endDate(i, s.start, task.end);
     if (end === undefined) return s.processed;
     s.end = end;
     s.processed = true;
@@ -164,15 +173,25 @@ class Scheduler {
   }
 
   /** The tasks `list` names (space-separated), unknown ones noted. */
-  private referenced(list: string): number[] {
+  private referenced(list: string, kind: UnknownRef['kind'], by: number): number[] {
     const out: number[] = [];
     for (const id of list.split(' ')) {
       if (id === '') continue;
       const at = this.byId.get(id);
-      if (at === undefined) this.unknown.add(id);
+      if (at === undefined) this.noteUnknown(id, kind, by);
       else out.push(at);
     }
     return out;
+  }
+
+  /** Notes an id no task has, with the statement and whether a milestone (task `by`) named it. */
+  private noteUnknown(id: string, kind: UnknownRef['kind'], by: number): void {
+    this.unknown.add(id);
+    const key = `${kind} ${id}`;
+    const milestone = this.tasks[by]!.tags.includes('milestone');
+    const seen = this.unknownRefs.get(key);
+    if (seen === undefined) this.unknownRefs.set(key, { id, kind, milestone });
+    else if (milestone) seen.milestone = true;
   }
 
   /** v12 `getStartDate`. */
@@ -183,7 +202,7 @@ class Scheduler {
       // The first task named, then any whose end is later; an unresolved first one wins (v12).
       let latest: number | undefined;
       let found = false;
-      for (const at of this.referenced(after[1]!)) {
+      for (const at of this.referenced(after[1]!, 'after', i)) {
         const end = this.state[at]!.end;
         if (!found || (end !== undefined && latest !== undefined && end > latest)) latest = end;
         found = true;
@@ -202,13 +221,13 @@ class Scheduler {
   }
 
   /** v12 `getEndDate`. */
-  private endDate(start: number, raw: string): number | undefined {
+  private endDate(i: number, start: number, raw: string): number | undefined {
     const str = raw.trim();
     const until = RE_UNTIL.exec(str);
     if (until !== null) {
       let earliest: number | undefined;
       let found = false;
-      for (const at of this.referenced(until[1]!)) {
+      for (const at of this.referenced(until[1]!, 'until', i)) {
         const begin = this.state[at]!.start;
         if (!found || (begin !== undefined && earliest !== undefined && begin < earliest))
           earliest = begin;
@@ -222,11 +241,17 @@ class Scheduler {
     }
     const [value, unit] = parseDuration(str);
     if (Number.isNaN(value)) {
-      this.bad.add(str);
+      this.noteBadDuration(i, str);
       return start;
     }
     const end = add(new Date(start), value, unit);
     return isValid(end) ? end.getTime() : start;
+  }
+
+  /** Notes an end field that is no date or duration, and whether a milestone (task `i`) wrote it. */
+  private noteBadDuration(i: number, text: string): void {
+    this.bad.add(text);
+    if (this.tasks[i]!.tags.includes('milestone')) this.milestoneBad.add(text);
   }
 
   /** v12 `checkTaskDates` and `fixTaskDates`: each excluded day pushes the end one day. */

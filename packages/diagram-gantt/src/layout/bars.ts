@@ -74,7 +74,22 @@ function rectOf(c: Chart, s: Span): Rect {
   return { x: s.start + lp, y, width: Math.max(0, s.renderEnd - s.start), height: env.barHeight };
 }
 
-/** v12's label rule: inside when it fits, else right of the bar unless that passes `w`. */
+/**
+ * Where the bar the side is judged against ends. A bar's is its drawn end, `renderEnd`, as the
+ * label's position reads it: v12's class rule read `endTime`, so with excludes a label wider than
+ * the shortened bar but not than its whole span was called `inside` and drawn across the bar's
+ * end (#1249, D729). A milestone is `barHeight` wide from its start; a `vert` marker keeps
+ * `endTime` (its label is never on it).
+ */
+function sideEnd(c: Chart, s: Span): number {
+  if (s.milestone) return s.start + c.env.barHeight;
+  return s.kind === 'vert' ? s.end : s.renderEnd;
+}
+
+/**
+ * v12's label rule: inside when it fits the drawn bar, else right of it unless that passes `w`
+ * (then left). The side follows the drawn width, which v12's class rule did not (D729).
+ */
 function labelOf(c: Chart, s: Span): GanttTaskLabel {
   const { env } = c;
   const { m } = env;
@@ -86,14 +101,13 @@ function labelOf(c: Chart, s: Span): GanttTaskLabel {
   const tw = text.width;
   const outside = (endX: number): 'left' | 'right' =>
     endX + tw + m.labelRightRoom * lp > c.w ? 'left' : 'right';
-  // The class rule reads `endTime`; a milestone is `barHeight` wide from its start.
-  const classEnd = milestone ? s.start + env.barHeight : s.end;
+  const classEnd = sideEnd(c, s);
   const side: LabelSide = tw > classEnd - s.start ? outside(classEnd) : 'inside';
   if (s.kind === 'vert') {
     const y = env.gridLineStartPadding + c.plain.length * c.gap + m.vertLabelGap;
     return { x: s.start + lp, y, anchor: 'middle', side, text };
   }
-  // The position rule reads `renderEndTime`, and puts a milestone at its square.
+  // The position reads `renderEndTime`, and puts a milestone at its square.
   let startX = s.start;
   let endX = s.renderEnd;
   if (milestone) {

@@ -28,7 +28,7 @@ e2e/diagrams/gantt/baseline/themes/redux-color.mmd 1 4e653031f5228a2c
 e2e/diagrams/gantt/baseline/themes/redux-dark-color.mmd 1 73b8f8b1861c851f
 e2e/diagrams/gantt/baseline/themes/redux-dark.mmd 1 7c2f0fcd1d82eb21
 e2e/diagrams/gantt/baseline/themes/redux.mmd 1 3528919122d990ba
-e2e/diagrams/gantt/nightly-check/default-theme-base-colour-overrides.mmd 1 c149706f99db43ba
+e2e/diagrams/gantt/nightly-check/default-theme-base-colour-overrides.mmd 1 4dfd7b8e15f30dd0
 e2e/diagrams/gantt/nightly-check/handle-multiline-section-titles-with-different-line-breaks.mmd 1 9c4d856ca06c4c4d
 e2e/diagrams/gantt/nightly-check/should-add-1-day-even-on-days-with-25-hours.mmd 1 d1d444f35e6c6ff1
 e2e/diagrams/gantt/nightly-check/should-automatically-add-one-day-to-all-end-dates.mmd 1 e0e09e2172b8c08f
@@ -71,6 +71,7 @@ e2e/diagrams/gantt/nightly-check/should-render-when-theres-a-semicolon-in-a-sect
 e2e/diagrams/gantt/nightly-check/should-render-when-theres-a-semicolon-in-the-task-data.mmd 1 f73e053e7d535964
 e2e/diagrams/gantt/nightly-check/should-render-when-theres-a-semicolon-in-the-title.mmd 1 2ae898146c21bf49
 e2e/diagrams/gantt/nightly-check/should-style-today-marker.mmd 1 c7a272a941c6663d
+e2e/diagrams/gantt/nightly-check/should-warn-about-a-reserved-id-in-a-click.mmd 1 cb9493b108788522
 e2e/diagrams/gantt/nightly-check/should-warn-about-unknown-ids-in-an-after-statement-issue-4121.mmd 1 b1739f3ba0363086
 e2e/diagrams/gantt/nightly-check/should-warn-about-unknown-ids-in-an-until-statement.mmd 1 1c5aebeb1b7c881d
 e2e/diagrams/gantt/nightly-check/should-warn-when-a-milestone-is-declared-without-a-duration-issue-4121.mmd 1 f443ce8392dd39cb

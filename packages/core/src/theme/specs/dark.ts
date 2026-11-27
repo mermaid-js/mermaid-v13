@@ -44,8 +44,7 @@ const theme: ThemeSpec = {
     // colour moves them (#773, #798): the node fill, the borders, the tertiary ink and the link
     // (its lightgrey). Not the arrowhead: v12's `.marker` draws it in lineColor (D575).
     mainBkg: '#1f2020',
-    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
-    bandBkg: '#201f1f',
+    // v12's constructor line colour (`guideLineColor` in vocabulary.ts).
     guideLineColor: '#d3d3d3',
     border1: '#cccccc',
     primaryBorderColor: '#cccccc',

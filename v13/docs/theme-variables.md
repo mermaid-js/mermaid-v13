@@ -103,7 +103,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `canvasItemBkg` | `--mermaid-canvasItemBkg` | derived | color | `primaryColor` | `primaryColor` | default | quadrant, venn |
 | `canvasItemBkg3` | `--mermaid-canvasItemBkg3` | derived | color | `tertiaryColor` | `tertiaryColor` | default | sequence, venn |
 | `canvasNodeBkg` | `--mermaid-canvasNodeBkg` | derived | color | `mainBkg` | `mainBkg` | default | state |
-| `bandBkg` | `--mermaid-bandBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | gantt |
 | `guideLineColor` | `--mermaid-guideLineColor` | derived | color | `lineColor` | `lineColor` | default, dark, forest, neutral | gantt |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
@@ -251,9 +250,9 @@ flags and opacities, which are read literally.
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `sectionBkgColor` | | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#f9ffec` | `#201f1f` | `#e1efc0` | `#eeeeee` | `#f6f9ff` | `#ffffff` | `#201f1f` |
+| `sectionBkgColor` | | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#9898d1` | `#000000` | `#98b25c` | `#aeaeae` | `#d1bb8b` | `#ffffff` | `#201f1f` |
 | `altSectionBkgColor` | | color | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` |
-| `sectionBkgColor2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `sectionBkgColor2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#9898d1` | `#000000` | `#98b25c` | `#aeaeae` | `#d1bb8b` | `#cccccc` | `#1f2020` |
 | `excludeBkgColor` | | color | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` |
 | `gridColor` | | color | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` |
 | `todayLineColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |

@@ -2038,10 +2038,12 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   2,000 tasks of `9000y` with any `excludes` fit in the source limit. The largest corpus chart
   walks 689 days. Raise it with `initialize({ limits: { maxLayoutWork } })` or a per-call
   `config.limits`.
-- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click names
-  only a task written before it, as v12 bound it while reading the line) and data that
+- **Warnings (D276, D727):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click
+  names only a task written before it, as v12 bound it while reading the line) and data that
   is neither a date nor a duration (`GANTT_BAD_DURATION`), one each per render, where v12 only
-  logged. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
+  logged. The unknown-id text has one clause for each statement involved and says only what
+  that statement did (`after` starts and `until` ends at midnight today, a click does nothing);
+  `__proto__` is reported as a reserved id; the milestone hint appears for a milestone's own `after`/`until`, and when an unknown id is the one a milestone wrote where its duration goes. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
   10,000 ticks: automatic ticks instead), `GANTT_EXCLUDES_NOT_DRAWN` (a chart over five years
   draws no excluded days, as v12) and `GANTT_CONFIG_IGNORED`.
 - **Nothing at NaN (D277, R-LAYOUT-3):** a chart with nothing to schedule draws its title and
@@ -2062,6 +2064,11 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   shown as written, as v12 drew them with `.text()`. A reference typed with `&` (`&amp;`) is
   decoded too; v12 showed it as written. A `#name;` Mermaid does not know stays as written
   (D561).
+- **A label wider than its bar goes outside it (D729, provisional):** with `excludes`, a task's
+  bar is drawn shorter than its span. v12 chose the label's side from the whole span and placed
+  it from the drawn bar, so a label wider than the drawn bar but not than the span was centred on
+  the bar's end, across the bar. v13 chooses the side from the drawn bar: such a label goes right
+  of the bar, or left near the chart's edge. Labels that fit are unchanged.
 
 ### Config
 
@@ -2099,15 +2106,31 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
 - **Under a `themeVariables` override (D656, D657):** in the classic family the task bars,
-  the active bar and the third section band (`taskBkgColor`, `activeTaskBkgColor`,
-  `sectionBkgColor2`) read `mainBkg`, the first section band (`sectionBkgColor`) reads
-  `bandBkg`, and the active bar's outline and the `vert` marker read `guideLineColor`.
-  `default`, `dark`, `forest` and `neutral` pin all three to their own primary, tertiary and
-  line colours, so an author's `primaryColor`, `tertiaryColor` or `lineColor` leaves the bars,
-  the band and the outline alone there, as in v12. In `base` they derive from `primaryColor`,
-  `tertiaryColor` and `lineColor`, so they follow them, as in v12, except that the active
-  outline and the `vert` marker follow `lineColor` where v12's followed `primaryColor` and
-  stayed navy (D574). Set `bandBkg` or `guideLineColor` in `themeVariables` to move them.
+  the active bar and the section bands (`taskBkgColor`, `activeTaskBkgColor`, and through
+  `sectionBkgColor`, `sectionBkgColor2`) read `mainBkg`, and the active bar's outline and the `vert` marker read
+  `guideLineColor`. `default`, `dark`, `forest` and `neutral` pin both to their own primary and
+  line colours, so an author's `primaryColor` or `lineColor` leaves the bars and the outline
+  alone there, as in v12. In `base` they derive from `primaryColor` and `lineColor`, so they
+  follow them, as in v12, except that the active outline and the `vert` marker follow
+  `lineColor` where v12's followed `primaryColor` and stayed navy (D574). Set
+  `guideLineColor` in `themeVariables` to move the outline and the marker.
+- **The first section band is visible in every classic theme (D726, #1249):** `sectionBkgColor`
+  is the theme's `mainBkg` darkened (to black under `dark`). Bands are drawn at opacity 0.2,
+  as in v12, and the band as drawn reads at least 1.1:1 against the page, the grid lines and
+  the done bars at least 1.2:1 against it, and the text written on it at AA. v12's `default` drew a lavender `rgba(102, 102, 255, 0.49)`; v13's is
+  `#9898d1` (v13 used the near-white `#f9ffec` before). `neutral` is `#aeaeae` (v12 `#bdbdbd`),
+  `forest` `#98b25c` (v12 `#6eaa49`), `base` `#d1bb8b` (v12 `#f6f9ff`) and `dark` `#000000`
+  (v12 `#b4ac76`). An author's `sectionBkgColor` wins in
+  every theme; an author's `mainBkg` also moves the band, and `base`'s band no longer follows
+  `tertiaryColor`. The v13-only `bandBkg` variable is removed (it never existed in v12): a
+  `themeVariables.bandBkg` is ignored without a warning, like any unknown name; set
+  `sectionBkgColor`.
+- **Zebra section bands (D730):** the third band (`sectionBkgColor2`) repeats the first, so the
+  tinted rows alternate with `altSectionBkgColor` like zebra rows, in every classic theme. v12
+  gave the third band its own colour (`default` `#fff400`, `neutral` and `forest` the first
+  band's, `dark` `#eae8d9`, `base` `#fff4dd`); in v13 it was `mainBkg`, which at opacity 0.2 was
+  barely apart from the page. An author's `sectionBkgColor` moves both tinted bands; set
+  `sectionBkgColor2` as well to colour the third band on its own.
 - **A `mainBkg` override moves the bars (D657):** an author's `mainBkg` recolours the task
   bars, the active bar and the third band in every classic theme, where v12's `default`,
   `forest` and `neutral` kept their own; under `dark` the text on the active bar follows that
