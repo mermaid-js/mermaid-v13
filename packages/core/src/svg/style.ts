@@ -123,11 +123,11 @@ const RE_FUNC = /^[a-z-]+\s*\(.*\)$/i;
 // A channel function, or `color()` with a CSS colour space: the channels are group 1.
 // cspell:ignore prophoto
 const RE_CHANNEL_FUNC =
-  /^(?:(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\s*\(|color\s*\(\s*(?:srgb(?:-linear)?|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz(?:-d50|-d65)?)\s)(.*)\)$/i;
-const RE_CHANNEL = /^(?:[+-]?(?:\d{1,10}(?:\.\d{0,10})?|\.\d{1,10})(?:%|deg|g?rad|turn)?|none)$/i;
+  /^(?:(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(|color\(\s*(?:srgb(?:-linear)?|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz(?:-d50|-d65)?)\s)(.*)\)$/i;
+const RE_CHANNEL = /^(?:[+-]?(?:\d{1,10}(?:\.\d{1,10})?|\.\d{1,10})(?:%|deg|g?rad|turn)?|none)$/i;
 // `color-mix(in <space> [<word> hue],` or `light-dark(`: the two colours are group 1.
 const RE_TWO_COLOURS =
-  /^(?:color-mix\s*\(\s*in\s+[a-z\d-]+(?:\s+[a-z]+\s+hue)?\s*,|light-dark\s*\()(.*)\)$/i;
+  /^(?:color-mix\(\s*in\s+[a-z\d-]+(?:\s+[a-z]+\s+hue)?\s*,|light-dark\()(.*)\)$/i;
 
 /** One colour that `checkCssColor` keeps, after or before at most one percentage if `pct`. */
 function mixArg(arg: string, pct: boolean): boolean {
@@ -151,7 +151,7 @@ function argsKnown(v: string): boolean {
   m = RE_TWO_COLOURS.exec(v);
   const args = m && splitTopLevel(m[1]!, 'comma');
   if (args) return args.length === 2 && args.every((a) => mixArg(a, /^c/i.test(v)));
-  return /^var\s*\(/i.test(v);
+  return /^var\(/i.test(v);
 }
 
 /**
@@ -161,12 +161,14 @@ function argsKnown(v: string): boolean {
  * (#1195). A colour function's arguments are read too (D737).
  */
 export function checkCssColor(value: string): SafeColor | undefined {
-  const v = value.trim();
+  // checkColor first: its length and depth limits bound the recursion through argsKnown.
+  const v = checkColor(value);
+  if (v === undefined) return undefined;
   const known =
     COLOR_KEYWORDS.has(v.toLowerCase()) ||
     parseColor(v) !== undefined ||
     (RE_FUNC.test(v) && argsKnown(v));
-  return known ? checkColor(v) : undefined;
+  return known ? v : undefined;
 }
 
 const RE_SHADOW_LENGTH = /^(-?)(\d{1,6}(?:\.\d{1,6})?|\.\d{1,6})(px|em|rem)?$/i;

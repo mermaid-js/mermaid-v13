@@ -189,6 +189,28 @@ describe('checkStyle', () => {
       expect(checkCssColor(v), v).toBeUndefined();
   });
 
+  it('refuses a colour nested past the depth limit without reading its arguments', () => {
+    let v = 'red';
+    for (let i = 0; i < 2000; i++) v = `light-dark(${v}, red)`;
+    expect(checkCssColor(v)).toBeUndefined();
+  });
+
+  it('refuses a space between a colour function and its parenthesis, as CSS does', () => {
+    for (const v of [
+      'rgb (1 2 3)',
+      'light-dark (red, blue)',
+      'color-mix (in srgb, red, blue)',
+      'color (srgb 1 0 0)',
+      'var (--mermaid-primaryColor)',
+    ])
+      expect(checkCssColor(v), v).toBeUndefined();
+  });
+
+  it('refuses a channel that ends in a dot', () => {
+    expect(checkCssColor('rgb(1. 2 3)')).toBeUndefined();
+    expect(checkCssColor('rgb(1.5 2 .3)')).toBe('rgb(1.5 2 .3)');
+  });
+
   it('keeps an earlier colour when a later one is misspelt, as CSS does', () => {
     expect(checkStyle(['fill:red', 'fill:redd']).shape).toEqual({ fill: 'red' });
   });
