@@ -48,14 +48,16 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   attributes. An author's `style` or `classDef` still wins. Lanes have no drop shadow (v12
   turned it off), and a lane without a slot is stroked `clusterBorder`, never the neo gradient.
   No new theme variables. With the hand-drawn plugin both halves are sketched (D301).
-- **Markdown in lane titles only in markdown strings** (D710). v12 read a lane title as
-  Markdown, so `subgraph lane1 ["**Bold** lane"]` drew `Bold` bold. Now only a title wholly in
-  backticks is read as Markdown, with or without double quotes around them
-  (`` ["`**Bold** lane`"] `` or `` [`**Bold** lane`] ``), and is drawn without its backticks; in
-  any other title `**`, `_` and backticks are drawn as written. Wrap the title in `` "`…`" `` to
-  keep the old look. `<br>`, the drawn tags (`<b>`, `<i>`, `<u>`, `<s>`, `<sub>`, `<sup>` and
-  their synonyms) and entity codes work in every lane title. A subgraph nested in a lane, and a
-  flowchart subgraph, keep flowchart's reading, where only `` "`…`" `` is a markdown string.
+- **Markdown in lane titles only in markdown strings** (#1368, #1407). v12 read a lane title as
+  Markdown, so `subgraph lane1 ["**Bold** lane"]` drew `Bold` bold. Now a lane title is read as
+  every flowchart label is: only a quoted markdown string (`` ["`**Bold** lane`"] ``) is read as
+  Markdown, and is drawn without its quotes and backticks; in any other title `**`, `_`, a code
+  span and bare backticks (`` [`**Bold** lane`] ``, which earlier v13 builds read as Markdown)
+  are drawn as written, with one `MARKDOWN_NOT_READ` warning per render. Wrap the title in
+  `` "`…`" ``, or set `markdownAlwaysOn: true` (global, `swimlane.markdownAlwaysOn` or
+  `flowchart.markdownAlwaysOn`), which draws every lane title, node and edge label as Markdown,
+  to keep the old look. `<br>`, a written `\n`, the drawn tags (`<b>`, `<i>`, `<u>`, `<s>`,
+  `<sub>`, `<sup>` and their synonyms) and entity codes work in every lane title.
 - **Long lane titles.** v12 let a lane title wider than its lane run past it; v13 widens the
   lane across the flow to the title plus 20px each side.
 - **Warnings** (D226, D536), raised at layout and only when the `swimlane` engine lays the

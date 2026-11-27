@@ -1,0 +1,28 @@
+---
+description: >-
+  The markdownAlwaysOn twin of label-syntax.mmd: the same kanban labels
+  with the setting on, so every label is markdown. The plain **bold**
+  _ital_ column, card and quoted card labels draw bold and italic, the bare
+  backticks and the code span draw inline code; tags, \n and quoted
+  markdown strings draw as in the default picture, which this one differs
+  from.
+config:
+  markdownAlwaysOn: true
+---
+kanban
+  c1[column **bold** _ital_]
+    k1[card **bold** _ital_]
+    q1["quoted card **bold** _ital_"]
+  c2["`column **bold** _ital_`"]
+    k2["`card **bold** _ital_`"]
+  c3[`column **bold** _ital_`]
+    k3[`card **bold** _ital_`]
+  c4[column a `code` b]
+    k4[card a `code` b]
+    q4["quoted card a `code` b"]
+  c5[column <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+    k5[card <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+    q5["quoted card <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+  c6[column one\ntwo]
+    k6[card one\ntwo]
+    q6["quoted card one\ntwo"]

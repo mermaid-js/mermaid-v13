@@ -1,0 +1,30 @@
+---
+description: >-
+  The markdownAlwaysOn twin of label-syntax.mmd: the same architecture
+  labels with the setting on, so every label is markdown. The plain
+  **bold** _ital_ group, service and edge labels draw bold and italic, the
+  bare backticks and the code span draw inline code; tags, \n and quoted
+  markdown strings draw as in the default picture, which this one differs
+  from.
+config:
+  markdownAlwaysOn: true
+---
+architecture-beta
+  group g1(cloud)[group **bold** _ital_]
+  group g2(cloud)["`group **bold** _ital_`"]
+  group g3(cloud)[`group **bold** _ital_`]
+  group g4(cloud)[group a `code` b]
+  group g5(cloud)[group <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+  group g6(cloud)[group one\ntwo]
+  service s1(server)[service **bold** _ital_] in g1
+  service s2(database)["`service **bold** _ital_`"] in g2
+  service s3(disk)[`service **bold** _ital_`] in g3
+  service s4(internet)[service a `code` b] in g4
+  service s5(server)[service <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O] in g5
+  service s6(database)[service one\ntwo] in g6
+  s1:R -[edge **bold** _ital_]- L:s2
+  s2:R -["`edge **bold** _ital_`"]- L:s3
+  s1:B -[`edge **bold** _ital_`]- T:s4
+  s4:R -[edge a `code` b]- L:s5
+  s5:R -[edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]- L:s6
+  s3:B -[edge one\ntwo]- T:s6

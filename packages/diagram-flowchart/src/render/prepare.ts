@@ -16,14 +16,8 @@ import {
   foldedTypeText,
 } from '@mermaid-js/core/svg/folded';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import {
-  labelSource,
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
-import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveResolver, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
@@ -271,36 +265,15 @@ function nodeViews(
       turnBar(view, nest, m.cells);
     }
   }
-  // Under the swimlane engine a top-level subgraph is a lane (`ctx.layoutPart`, render.ts).
-  const lanes = typeof m.ctx.layoutPart === 'function';
-  for (const view of groups) view.label = groupTitle(view, subgraphs.get(view.id)!, lanes, m);
+  // A subgraph's title, a swimlane's lane title included, is read by the label handler as every
+  // other flowchart label (#1368).
+  for (const view of groups) {
+    const sg = subgraphs.get(view.id)!;
+    const [f, bits] = textStyle(view.style, m.font);
+    view.label = m.label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
+  }
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
-}
-
-/**
- * A group's title, measured. A subgraph title is read by the label handler, as every other
- * flowchart label. A lane title keeps its own reading until spec #1368 T14 moves it: a markdown
- * string with or without quotes (D710). The parser strips only the quoted form's wrapper, so
- * the bare form is read here. Any other lane title goes to the handler when that reads it as
- * markdown (`markdownAlwaysOn`), and is drawn as written otherwise.
- */
-function groupTitle(
-  view: NodeView,
-  sg: FlowModelSubgraph,
-  lanes: boolean,
-  m: Measure
-): MeasuredLabel {
-  const [f, bits] = textStyle(view.style, m.font);
-  const md = sg.labelType === 'markdown';
-  if (!lanes || view.parent !== undefined) return m.label(sg.title, md, f, Infinity, bits);
-  const { text, markup } = md
-    ? { text: sg.title, markup: 'markdown' as const }
-    : markdownString(sg.title);
-  const { measurer, inline, config } = m.ctx;
-  if (markup === 'plain' && labelSource(text, undefined, config).markup === 'markdown')
-    return m.label(text, false, f, Infinity, bits);
-  return layoutLabel(text, f, Infinity, measurer, { markup, style: bits, inline });
 }
 
 /** A size's label shift sideways, none when it has no `dx`. */

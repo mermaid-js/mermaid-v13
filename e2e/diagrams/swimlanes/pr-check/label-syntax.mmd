@@ -1,0 +1,35 @@
+---
+description: >-
+  Every swimlane label kind (lane title, node text and edge label) written
+  the six ways of spec #1368: plain markdown, a quoted markdown string,
+  bare backticks, a code span in plain text, the common tags and a written
+  \n. Only the quoted markdown string reads markdown; the bare backticks
+  and the code span are drawn as written, the tags draw and \n breaks the
+  line. Each lane holds a node written the same way, and the edge into it
+  too.
+---
+swimlane-beta LR
+  subgraph L1[lane **bold** _ital_]
+    A[node **bold** _ital_]
+  end
+  subgraph L2["`lane **bold** _ital_`"]
+    B["`node **bold** _ital_`"]
+  end
+  subgraph L3[`lane **bold** _ital_`]
+    C[`node **bold** _ital_`]
+  end
+  subgraph L4[lane a `code` b]
+    D[node a `code` b]
+  end
+  subgraph L5[lane <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+    E[node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+  end
+  subgraph L6[lane one\ntwo]
+    F[node one\ntwo]
+  end
+  A -->|edge **bold** _ital_| B
+  B -->|"`edge **bold** _ital_`"| C
+  C -->|`edge **bold** _ital_`| D
+  D -->|edge a `code` b| E
+  E -->|edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O| F
+  F -->|edge one\ntwo| A

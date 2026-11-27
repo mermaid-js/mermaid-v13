@@ -54,6 +54,8 @@ e2e/diagrams/swimlanes/pr-check/issue-7802-3.mmd 2 a6fb82c7308a67de
 e2e/diagrams/swimlanes/pr-check/issue-7802-4.mmd 2 dc8ba0db813cf3af
 e2e/diagrams/swimlanes/pr-check/issue-7802-5.mmd 2 71a1bbedcd737019
 e2e/diagrams/swimlanes/pr-check/issue-7802-6.mmd 2 5f9e2553016ce806
+e2e/diagrams/swimlanes/pr-check/label-syntax-compat.mmd 1 e556aa167aa50e72
+e2e/diagrams/swimlanes/pr-check/label-syntax.mmd 1 3adf6bb6520a2d1b
 e2e/diagrams/swimlanes/pr-check/lane-title-bands-bt.mmd 1 4fed5acb5dedf523
 e2e/diagrams/swimlanes/pr-check/lane-title-bands-rl.mmd 1 b393983432b4bf48
 e2e/diagrams/swimlanes/pr-check/line-hops-gap.mmd 1 a9667c43cf6d4bca

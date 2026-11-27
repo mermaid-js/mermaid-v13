@@ -1,8 +1,9 @@
 /**
  * The kanban custom layout (spec #424 T3): v12's placement (`kanbanRenderer.ts:42-89`,
  * `shapes/kanbanItem.ts:32-152`, `clusters.js:308-418`) without its drawing or module state
- * (R-ARCH-4). Every label is measured first, through core's label layout: a markdown string as
- * markdown, any other label plain (D710, D712, amending D372); every length comes from the metrics table, through the render's unit profile
+ * (R-ARCH-4). Every label is measured first, read by core's label handler (#1368): a markdown
+ * string as markdown, any other label plain unless `markdownAlwaysOn` is set (D712, amending
+ * D372); every length comes from the metrics table, through the render's unit profile
  * (pitfall 13).
  *
  * Kept from v12: columns `W` wide and `W + 5` apart, each its own height; one title row,
@@ -17,12 +18,8 @@
 import type { Warning } from '@mermaid-js/core';
 import { KANBAN_CONFIG_IGNORED } from '../codes.ts';
 import { fromPx, growRect, type UnitProfile } from '@mermaid-js/core/layout';
-import {
-  layoutLabel,
-  markdownString,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { isBarPriority } from '../priority.ts';
 import type { KanbanLayoutContext } from './context.ts';
 import { drawnRects, union } from './extent.ts';
@@ -67,9 +64,10 @@ interface Env {
   /**
    * Lays out `text` wrapped at `wrap`; undefined when there is no text. In px a word wider than
    * `wrap` stays whole and overflows, as in v12 (spec #424); in cells it is split, as the text
-   * output draws a label inside its box.
+   * output draws a label inside its box. Read by core's label handler (#1368): `markdown` marks
+   * a markdown string the parser unwrapped.
    */
-  measure(text: string | undefined, wrap: number): MeasuredLabel | undefined;
+  measure(text: string | undefined, wrap: number, markdown?: true): MeasuredLabel | undefined;
 }
 
 /**
@@ -120,11 +118,11 @@ function envOf(ctx: KanbanLayoutContext): Env {
     sectionWidth,
     padding: convert(config.padding, 'x'),
     font,
-    measure: (text, wrap) => {
+    measure: (text, wrap, markdown) => {
       if (text === undefined) return undefined;
-      const { text: source, markup } = markdownString(text);
-      const label = layoutLabel(source, font, wrap, ctx.measurer, {
-        markup,
+      const source = readLabel(text, { markdown }, ctx);
+      const label = layoutLabel(source.text, font, wrap, ctx.measurer, {
+        ...source,
         keepWords,
         ...(ctx.inline ? { inline: ctx.inline } : {}),
       });
@@ -154,7 +152,7 @@ function cardOf(
 ): CardLayout {
   const { lengths } = env;
   const wrap = env.sectionWidth - lengths.wrapInset;
-  const title = env.measure(source.title, wrap);
+  const title = env.measure(source.title, wrap, source.markdown);
   const ticket = env.measure(source.ticket, wrap);
   const assignee = env.measure(source.assigned, wrap);
   const width = env.sectionWidth - lengths.cardInset;
@@ -223,7 +221,7 @@ export function layoutKanban(input: KanbanLayoutInput, ctx: KanbanLayoutContext)
   const { lengths, sectionWidth: W } = env;
   const top = -COLUMN_TOP * W;
   // Titles first: the tallest sets the row every column shares.
-  const titles = input.columns.map((c) => env.measure(c.title, W - lengths.titleInset));
+  const titles = input.columns.map((c) => env.measure(c.title, W - lengths.titleInset, c.markdown));
   const room = titleRoom(env);
   const titleRow = Math.max(lengths.titleRow, ...titles.map((t) => heightOf(t) + room));
   const columns: ColumnLayout[] = [];

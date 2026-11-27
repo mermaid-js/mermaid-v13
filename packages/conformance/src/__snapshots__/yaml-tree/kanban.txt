@@ -33,7 +33,7 @@ e2e/diagrams/kanban/nightly-check/knsv2-45-kanban-tickets.mmd 2 3d5930ccaa227636
 e2e/diagrams/kanban/nightly-check/knsv2-46-kanban-tickets.mmd 6 160f3c62fc55a9cf
 e2e/diagrams/kanban/nightly-check/long-ticket-and-assignee.mmd 2 e6b769e3d63d4c44
 e2e/diagrams/kanban/nightly-check/misplaced-indent.mmd 1 f04c1a5dd2dc84be
-e2e/diagrams/kanban/nightly-check/plain-vs-markdown.mmd 2 14237b12d2bab514
+e2e/diagrams/kanban/nightly-check/plain-vs-markdown.mmd 2 dca5a7e5c1d2cda1
 e2e/diagrams/kanban/nightly-check/priority-other-values.mmd 5 ca93afd3415fd547
 e2e/diagrams/kanban/nightly-check/section-width.mmd 1 686817f8f5338f44
 e2e/diagrams/kanban/nightly-check/shape-data-multi-line.mmd 5 42700e8dde8f0a2c
@@ -55,3 +55,5 @@ e2e/diagrams/kanban/pr-check/7-should-handle-external-tickets.mmd 3 5be8048f446c
 e2e/diagrams/kanban/pr-check/8-should-handle-assignments-prioritization-and-tickets-ids-in-the-same-item.mmd 2 e6cb1eb56c462c8e
 e2e/diagrams/kanban/pr-check/columns-only-full-example.mmd 6 bc733a54bb9326db
 e2e/diagrams/kanban/pr-check/columns-only-multiple-sections.mmd 1 808a7769bf18bdea
+e2e/diagrams/kanban/pr-check/label-syntax-compat.mmd 1 d34a6fe3418756f1
+e2e/diagrams/kanban/pr-check/label-syntax.mmd 1 ab998c7b0f222b1e

@@ -502,10 +502,12 @@ describe('label markup (D710)', () => {
     expect(s!.tspans.find((x) => x.text === 'it')?.style).toBe('italic');
   });
 
-  it('renders a special in backticks as markdown; without them, asterisks stay', async () => {
-    const [md, literal] = await specials('`**bold** *it*`', '**x**');
+  it('renders a special in a quoted markdown string as markdown; bare backticks and asterisks stay (#1368)', async () => {
+    const [md, bare, literal] = await specials('"`**bold** *it*`"', '`**bold** *it*`', '**x**');
     expect(md!.text).toBe('? bold it ?');
     expect(md!.tspans.find((x) => x.text === 'bold')?.weight).toBe('bold');
+    expect(bare!.text).toBe('? `**bold** *it*` ?');
+    expect(bare!.tspans).toEqual([]);
     expect(literal!.text).toBe('? **x** ?');
     expect(literal!.tspans).toEqual([]);
   });

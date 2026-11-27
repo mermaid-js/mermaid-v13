@@ -1,0 +1,28 @@
+---
+description: >-
+  Every architecture label kind (group title, service title and edge label)
+  written the six ways of spec #1368: plain markdown, a quoted markdown
+  string, bare backticks, a code span in plain text, the common tags and a
+  written \n. Only the quoted markdown string reads markdown; the bare
+  backticks and the code span are drawn as written, the tags draw and \n
+  breaks the line.
+---
+architecture-beta
+  group g1(cloud)[group **bold** _ital_]
+  group g2(cloud)["`group **bold** _ital_`"]
+  group g3(cloud)[`group **bold** _ital_`]
+  group g4(cloud)[group a `code` b]
+  group g5(cloud)[group <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+  group g6(cloud)[group one\ntwo]
+  service s1(server)[service **bold** _ital_] in g1
+  service s2(database)["`service **bold** _ital_`"] in g2
+  service s3(disk)[`service **bold** _ital_`] in g3
+  service s4(internet)[service a `code` b] in g4
+  service s5(server)[service <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O] in g5
+  service s6(database)[service one\ntwo] in g6
+  s1:R -[edge **bold** _ital_]- L:s2
+  s2:R -["`edge **bold** _ital_`"]- L:s3
+  s1:B -[`edge **bold** _ital_`]- T:s4
+  s4:R -[edge a `code` b]- L:s5
+  s5:R -[edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]- L:s6
+  s3:B -[edge one\ntwo]- T:s6

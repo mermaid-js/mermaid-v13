@@ -1,0 +1,26 @@
+---
+description: >-
+  Every kanban label kind (column title, card text and a card in a quoted
+  string) written the six ways of spec #1368: plain markdown, a quoted
+  markdown string, bare backticks, a code span in plain text, the common
+  tags and a written \n. Only the quoted markdown string reads markdown;
+  the bare backticks and the code span are drawn as written, the tags draw
+  and \n breaks the line.
+---
+kanban
+  c1[column **bold** _ital_]
+    k1[card **bold** _ital_]
+    q1["quoted card **bold** _ital_"]
+  c2["`column **bold** _ital_`"]
+    k2["`card **bold** _ital_`"]
+  c3[`column **bold** _ital_`]
+    k3[`card **bold** _ital_`]
+  c4[column a `code` b]
+    k4[card a `code` b]
+    q4["quoted card a `code` b"]
+  c5[column <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+    k5[card <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+    q5["quoted card <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+  c6[column one\ntwo]
+    k6[card one\ntwo]
+    q6["quoted card one\ntwo"]

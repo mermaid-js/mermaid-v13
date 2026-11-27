@@ -33,7 +33,7 @@ e2e/diagrams/railroad/nightly-check/ir-empty-diagram.mmd 1 6b701bf96fab9668
 e2e/diagrams/railroad/nightly-check/ir-railroad-config.mmd 1 4ac55e5430e30310
 e2e/diagrams/railroad/nightly-check/ir-specials-quotes-and-escapes.mmd 1 6262d930fea737f3
 e2e/diagrams/railroad/nightly-check/ir-title-and-accessibility.mmd 1 273fcbfa583afa04
-e2e/diagrams/railroad/nightly-check/label-markup.mmd 1 154b6bc253626b9a
+e2e/diagrams/railroad/nightly-check/label-markup.mmd 1 cc0327b012c066dc
 e2e/diagrams/railroad/nightly-check/peg-base-theme.mmd 1 9c0c67b390783c92
 e2e/diagrams/railroad/nightly-check/peg-comments-and-titles.mmd 1 8e52e4cad02591b5
 e2e/diagrams/railroad/nightly-check/peg-empty-diagram.mmd 1 941d40bef39ec28c
@@ -46,4 +46,6 @@ e2e/diagrams/railroad/pr-check/ir-dark-theme.mmd 1 7f4622985f4b54a1
 e2e/diagrams/railroad/pr-check/ir-multiple-rules-in-one-diagram.mmd 1 c5e6e5294e585f2e
 e2e/diagrams/railroad/pr-check/ir-optional-and-repetition-operators.mmd 1 66c457b115988fb9
 e2e/diagrams/railroad/pr-check/ir-sequences-and-choices.mmd 1 121f85767fd3fed5
+e2e/diagrams/railroad/pr-check/label-syntax-compat.mmd 1 6f28ffd0bf280b19
+e2e/diagrams/railroad/pr-check/label-syntax.mmd 1 3263e4e11e20d3db
 e2e/diagrams/railroad/pr-check/peg-ordered-choice-and-suffixes.mmd 1 331dfe0389d68624

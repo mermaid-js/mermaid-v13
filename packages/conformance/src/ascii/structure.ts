@@ -145,9 +145,12 @@ export function readStructure(text: string, charset: Charset, expected: Expected
       if (want && !d.find(want, TEXT, true)) d.find(want, TEXT);
     }
   }
-  // Words, not lines: v13 may wrap a label where mermaid-ascii does not.
-  const missingEdgeLabels = expected.edgeLabels
-    .flatMap((label) => label.split(/\s+/).filter(Boolean))
+  // A label line as drawn, else its words: v13 may wrap a label where mermaid-ascii does not.
+  // Lines first, so that labels sharing words (`a **b**` and `` `a **b**` ``) find their own.
+  const lines = expected.edgeLabels.flatMap((label) => label.split('\n').map((l) => l.trim()));
+  const unfound = lines.filter((line) => line && !d.find(line, WILD));
+  const missingEdgeLabels = unfound
+    .flatMap((line) => line.split(/\s+/).filter(Boolean))
     .filter((word) => !d.find(word, WILD));
   const { heads, dangling } = d.traceLines();
   return { boxes, heads, missingNodes, missingEdgeLabels, dangling };
@@ -159,6 +162,11 @@ class Drawing {
   private kind: number[][] = [];
   /** Cells of titles written on a border (`y,x`): text, though ASCII `-`, `.` or `I` are lines. */
   private readonly titled = new Set<string>();
+  /**
+   * Cells of the titles `find` took as one (`y,x`), frame borders included: an edge label's
+   * word is not looked for there (a lane `lane one` and an edge `edge one`).
+   */
+  private readonly titles = new Set<string>();
 
   constructor(
     text: string,
@@ -170,6 +178,12 @@ class Drawing {
 
   private at(x: number, y: number): string | null | undefined {
     return this.grid[y]?.[x];
+  }
+
+  /** Whether (x, y) holds text: a glyph that is no blank and no line. */
+  private textAt(x: number, y: number): boolean {
+    const c = this.at(x, y);
+    return !!c && c.trim() !== '' && !this.armsOf(x, y);
   }
 
   /** The line arms of the glyph at (x, y); 0 for text, space or nothing. */
@@ -313,16 +327,23 @@ class Drawing {
     for (let y = 0; y < this.grid.length; y++) {
       const row = this.grid[y]!;
       const kind = this.kind[y]!;
-      const free = (i: number) => kind[i] !== INTERIOR && kind[i] !== TEXT && kind[i] !== WILD;
+      const free = (i: number) =>
+        kind[i] !== INTERIOR &&
+        kind[i] !== TEXT &&
+        kind[i] !== WILD &&
+        !this.titles.has(`${y},${i}`);
       for (let x = 0; x + want.length <= row.length; x++) {
         if (!want.every((c, i) => row[x + i] === c && free(x + i))) continue;
         if (titled && !this.titled.has(`${y},${x}`)) continue;
+        // A label's text is whole: no letter of other text right before or after it.
+        if (mark === WILD && (this.textAt(x - 1, y) || this.textAt(x + want.length, y))) continue;
         // A label line is centred in its block: the spaces padding it join the line too.
         let from = x;
         let to = x + want.length - 1;
         for (let i = 0; mark === WILD && i < PAD && row[from - 1] === ' '; i++) from--;
         for (let i = 0; mark === WILD && i < PAD && row[to + 1] === ' '; i++) to++;
         for (let i = from; i <= to; i++) if (kind[i] !== BORDER) kind[i] = mark;
+        if (mark === TEXT) for (let i = x; i < x + want.length; i++) this.titles.add(`${y},${i}`);
         return true;
       }
     }

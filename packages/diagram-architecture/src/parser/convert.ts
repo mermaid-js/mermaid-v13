@@ -27,3 +27,13 @@ export function labelValue(image: string): string {
   }
   return result.trim();
 }
+
+const RE_MARKDOWN_STRING = /^"`[^`]*`"$/;
+
+/**
+ * Whether an ARCH_TITLE (`[…]`) or a text icon's STRING (`"…"`) is written as a quoted markdown
+ * string, `"`…`"` (#1368). Its conversion takes the quotes off and leaves bare backticks, which
+ * are drawn as written, so the parser marks it.
+ */
+export const isMarkdownString = (image: string): boolean =>
+  RE_MARKDOWN_STRING.test(image.trim()) || RE_MARKDOWN_STRING.test(image.slice(1, -1).trim());

@@ -30,6 +30,8 @@ export interface ArchitectureName {
 export interface ArchitectureText {
   value: string;
   range: Range;
+  /** Set when a label or text icon was written as a quoted markdown string (#1368). */
+  markdown?: true;
 }
 
 /** `architecture-beta`. */

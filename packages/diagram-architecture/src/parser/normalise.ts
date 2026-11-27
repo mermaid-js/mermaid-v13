@@ -43,6 +43,7 @@ import type {
   ArchitectureGroupNode,
   ArchitectureJunctionNode,
   ArchitectureServiceNode,
+  ArchitectureText,
 } from './ast.ts';
 
 /** What a declaration declares, in v12's words. */
@@ -307,7 +308,7 @@ class Normaliser {
         freeze({
           id: n.name.value,
           ...(n.icon && { icon: n.icon.value }),
-          ...(n.label && { title: n.label.value }),
+          ...(n.label && titleOf(n.label)),
           ...(parent !== undefined && { in: parent }),
           astId: n.id,
         })
@@ -325,8 +326,11 @@ class Normaliser {
         freeze({
           id: n.name.value,
           ...(n.icon && { icon: n.icon.value }),
-          ...(n.iconText && { iconText: n.iconText.value }),
-          ...(n.label && { title: n.label.value }),
+          ...(n.iconText && {
+            iconText: n.iconText.value,
+            ...(n.iconText.markdown && { iconTextMarkdown: true as const }),
+          }),
+          ...(n.label && titleOf(n.label)),
           ...(parent !== undefined && { in: parent }),
           astId: n.id,
         })
@@ -433,7 +437,7 @@ class Normaliser {
       rhsDir: rhs.side,
       rhsInto: rhs.into,
       rhsGroup: this.groupFlag(rhs, n.id),
-      ...(n.label && { title: n.label.value }),
+      ...(n.label && titleOf(n.label)),
       astId: n.id,
     });
   }
@@ -468,6 +472,10 @@ class Normaliser {
     this.diagnostics.error(p.code, p.message, range);
   }
 }
+
+/** A `[…]` label as the model's `title`, marked when written as a markdown string (#1368). */
+const titleOf = (label: ArchitectureText): { title: string; titleMarkdown?: true } =>
+  label.markdown ? { title: label.value, titleMarkdown: true } : { title: label.value };
 
 function freeze<T extends object>(value: T): T {
   return Object.freeze(value);

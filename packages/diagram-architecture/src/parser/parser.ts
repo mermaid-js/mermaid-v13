@@ -63,7 +63,7 @@ import type {
   ArchitectureStatementNode,
   ArchitectureText,
 } from './ast.ts';
-import { iconValue, labelValue, stringValue } from './convert.ts';
+import { iconValue, isMarkdownString, labelValue, stringValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { checkLimits } from './limits.ts';
 import type { ArchitectureLimitOptions } from './limits.ts';
@@ -541,7 +541,15 @@ class ArchitectureParser extends RuleParser<PreprocessResult> {
     convert: (image: string) => string
   ): ArchitectureText | undefined {
     const j = this.accept(kind, want);
-    return j === undefined ? undefined : { value: convert(this.raw(j)), range: this.range(j) };
+    return j === undefined ? undefined : this.converted(j, convert);
+  }
+
+  /** Token `j` converted, marked when it is a label or text icon written as a markdown string. */
+  private converted(j: number, convert: (image: string) => string): ArchitectureText {
+    const raw = this.raw(j);
+    const text: ArchitectureText = { value: convert(raw), range: this.range(j) };
+    if (convert !== iconValue && isMarkdownString(raw)) text.markdown = true;
+    return text;
   }
 
   /** `("in" ID)?` */
@@ -646,7 +654,7 @@ class ArchitectureParser extends RuleParser<PreprocessResult> {
     if (this.accept(T.DashDash, lhsInto ? [T.DashDash, T.Dash] : AFTER_LHS_SIDE) === undefined) {
       this.expectOf(T.Dash, lhsInto ? [T.DashDash, T.Dash] : AFTER_LHS_SIDE);
       const j = this.expect(T.Label);
-      label = { value: labelValue(this.raw(j)), range: this.range(j) };
+      label = this.converted(j, labelValue);
       this.expect(T.Dash);
     }
     const rhsInto = this.accept(T.ArrowInto, AFTER_ARROW) !== undefined;

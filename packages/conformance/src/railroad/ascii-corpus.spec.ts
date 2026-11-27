@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { cellMeasurer, graphemes } from '@mermaid-js/core/ascii';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { cellProfile } from '@mermaid-js/core/layout';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import {
   parseRailroad,
@@ -49,13 +49,19 @@ const failed: Record<string, string> = {};
 let rejected = 0;
 let theme: Theme;
 
-/** The layout the hook draws: the plugin's, in cells under `padding`'s profile. */
-function cellLayout(
-  model: RailroadModel,
-  section: Record<string, unknown>,
-  padding: Padding
-): RailroadLayout {
-  const config = { railroad: section, ascii: { padding } } as unknown as ResolvedConfig;
+/**
+ * The layout the hook draws: the plugin's, in cells under `padding`'s profile, with the front
+ * matter's `markdownAlwaysOn` (global or in the section), which the label handler reads (#1368).
+ */
+function cellLayout(model: RailroadModel, pre: PreprocessResult, padding: Padding): RailroadLayout {
+  const section = railroadSectionOf(pre);
+  const markdownAlwaysOn =
+    section.markdownAlwaysOn === true || pre.frontMatter?.config?.markdownAlwaysOn === true;
+  const config = {
+    railroad: section,
+    ascii: { padding },
+    markdownAlwaysOn,
+  } as unknown as ResolvedConfig;
   return layoutInCells(model, {
     config,
     measurer: cellMeasurer,
@@ -88,7 +94,7 @@ beforeAll(async () => {
           out[charset] = await first.render('mermaid-0', item.source, call);
           again[charset] = (await fresh.render('mermaid-0', item.source, call)).text;
         }
-        const layout = cellLayout(parse.model, railroadSectionOf(pre), padding);
+        const layout = cellLayout(parse.model, pre, padding);
         cases.push({
           id: `${padding} ${item.id}`,
           model: parse.model,
