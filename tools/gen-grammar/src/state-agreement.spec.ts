@@ -26,6 +26,9 @@ const FIXTURES: [string, string][] = [
   ['note', 'stateDiagram-v2\n  note left of A\n    two\n    lines\n  end note\n  A --> B'],
   // An entity's `;` does not end a description.
   ['entity', 'stateDiagram-v2\n  A --> B: x#colon; y\n  B --> C'],
+  // A `;` ends a note's text: it and what follows are state ids, and the line after is read
+  // again (#1356: TextMate's chain opened the note's id and text again at the `;`).
+  ['note-semicolon', 'stateDiagram-v2\n  note right of A : raw &lt; x\n  B --> C'],
   ['multi-line directive', 'stateDiagram-v2\n  %%{\n    init: {}\n  }%%\n  A --> B'],
 ];
 
