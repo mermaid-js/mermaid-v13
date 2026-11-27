@@ -104,7 +104,8 @@ export interface XyBarPlotLayout {
   readonly bars: readonly XyBar[];
   /**
    * `showDataLabel`: one label per bar with room for it, each the plot's own value (D382), all
-   * at one font size, the smallest that fits them (D611); none when no bar has room
+   * at one font size for every bar plot of the chart, the smallest that fits them (D611, D748);
+   * none when no bar has room
    * (`XYCHART_LABEL_TOO_SMALL`).
    */
   readonly dataLabels: readonly XyText[];
