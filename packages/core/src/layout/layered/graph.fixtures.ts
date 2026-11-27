@@ -62,6 +62,8 @@ export function graphOf(spec: GraphSpec): { g: Graph; nodes: LNode[] } {
     real: n,
     maxRank: spec.ranks.length - 1,
     W: Float64Array.from(widths),
+    LEFT: Float64Array.from(widths, (w) => w / 2),
+    RIGHT: Float64Array.from(widths, (w) => w / 2),
     KIND,
     RANK,
     EF,

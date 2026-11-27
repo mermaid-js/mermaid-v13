@@ -1,0 +1,7 @@
+classDiagram
+  %% Each class's loops alternate sides, and each side holds the room of its own loops only
+  %% (#1173): Node, with one loop, has no empty band on its left; Tree, with two, has one loop on
+  %% each side and no band beyond either.
+  Node --> Node : children
+  Tree --> Tree : left
+  Tree --> Tree : right

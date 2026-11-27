@@ -53,6 +53,9 @@ export interface LNode {
   key: number;
   // How much of the side that edges meet may be shared out between them; 0 keeps them all at its middle.
   span: number;
+  // How far the middle of the room `w` lies from the node's middle `x`, across the flow: a room
+  // that holds more on one side than the other (a self-loop's, which is drawn on one side).
+  bias: number;
   x: number;
   y: number;
   rank: number;
@@ -130,6 +133,7 @@ export const NODE_INPUTS = [
   'hint',
   'key',
   'span',
+  'bias',
 ] as const satisfies readonly (keyof LNode)[];
 export const EDGE_INPUTS = [
   'tail',
@@ -150,7 +154,7 @@ export const EDGE_INPUTS = [
 export function layoutInputs(nodes: readonly LNode[], edges: readonly LEdge[]): number[] {
   // The fields of NODE_INPUTS and EDGE_INPUTS, in that order, read directly (inputs.spec.ts).
   const inputs: number[] = [];
-  for (const n of nodes) inputs.push(n.w, n.h, n.kind, n.pin, n.hint, n.key, n.span);
+  for (const n of nodes) inputs.push(n.w, n.h, n.kind, n.pin, n.hint, n.key, n.span, n.bias);
   for (const e of edges)
     inputs.push(
       e.tail,
@@ -170,7 +174,7 @@ export function layoutInputs(nodes: readonly LNode[], edges: readonly LEdge[]): 
 }
 
 export function lnode(w: number, h: number, kind: Kind = Kind.Node): LNode {
-  return { w, h, kind, pin: 0, hint: NaN, key: NaN, span: 0, x: 0, y: 0, rank: 0 };
+  return { w, h, kind, pin: 0, hint: NaN, key: NaN, span: 0, bias: 0, x: 0, y: 0, rank: 0 };
 }
 
 export function ledge(tail: number, head: number, minlen = 1, labelW = 0, labelH = 0): LEdge {
@@ -362,7 +366,7 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
   if (real === 1 && m === 0 && nodes[0]!.kind === Kind.Node) {
     const node = nodes[0]!;
     node.rank = 0;
-    node.x = node.w / 2;
+    node.x = node.w / 2 - node.bias;
     node.y = node.h / 2;
     return { width: node.w, height: node.h };
   }
@@ -621,11 +625,14 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
   };
   setPositions();
 
+  const [LEFT, RIGHT] = reachOf(nodes, W, real, n);
   const g: Graph = {
     n,
     real,
     maxRank,
     W,
+    LEFT,
+    RIGHT,
     KIND,
     RANK,
     EF,
@@ -844,12 +851,12 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
     return gridRow ? gridRow(r, count, onTrack) : trackAt(r, count, onTrack);
   };
 
+  // How far the rooms of the nodes reach each way.
   let minX = Infinity;
   let maxX = -Infinity;
   for (let i = 0; i < n; i++) {
-    const half = W[i]! / 2;
-    if (xs[i]! - half < minX) minX = xs[i]! - half;
-    if (xs[i]! + half > maxX) maxX = xs[i]! + half;
+    if (xs[i]! - LEFT[i]! < minX) minX = xs[i]! - LEFT[i]!;
+    if (xs[i]! + RIGHT[i]! > maxX) maxX = xs[i]! + RIGHT[i]!;
   }
   if (hooks) {
     minX = hooks.floor(minX);
@@ -1032,6 +1039,10 @@ export interface Graph {
   real: number;
   maxRank: number;
   W: Float64Array;
+  // How far each node's room reaches left and right of its middle: `W` / 2 less and plus its
+  // `LNode.bias`.
+  LEFT: Float64Array;
+  RIGHT: Float64Array;
   KIND: Uint8Array;
   RANK: Int32Array;
   // Segment endpoints, and where each segment attaches on them.
@@ -1368,108 +1379,140 @@ function alignLabels(
   opt: LayeredOptions,
   empty: Uint8Array | undefined
 ): void {
-  const sep = opt.edgeSep;
-  const {
-    n,
-    real,
-    maxRank,
-    KIND,
-    RANK,
-    W,
-    EF,
-    ET,
-    EFD,
-    ETD,
-    succStart,
-    succE,
-    predStart,
-    predE,
-    layerStart,
-    order,
-    pos,
-  } = g;
-  const placed = (v: number): boolean =>
-    KIND[v]! === Kind.Label ||
-    (KIND[v]! === Kind.Dummy && !(empty !== undefined && empty[RANK[v]!]! === 1));
-  // Where segment `e` ends on the way up (side 0) or down, and how many ends share that side of
-  // the node there: none for a point that is not on a node.
-  const end = (e: number, side: number): [number, number] => {
-    const u = side === 0 ? EF[e]! : ET[e]!;
-    const x = side === 0 ? xs[u]! + EFD[e]! : xs[u]! + ETD[e]!;
-    return [x, u < real && nodes[u]!.kind === Kind.Node ? free[1 - side]![u]! : 0];
-  };
-  // The room the neighbours in its rank leave a label or bend: a full gap from a node or between
-  // two labels, half of one between a label and a line that passes it.
-  const room = (v: number): [number, number] => {
-    const s = layerStart[RANK[v]!]!;
-    const i = s + pos[v]!;
-    const clear = (other: number): number =>
-      W[other]! / 2 + W[v]! / 2 + gapBetween(KIND[other]!, KIND[v]!, opt.nodeSep, sep);
-    return [
-      i > s ? xs[order[i - 1]!]! + clear(order[i - 1]!) : -Infinity,
-      i + 1 < layerStart[RANK[v]! + 1]! ? xs[order[i + 1]!]! - clear(order[i + 1]!) : Infinity,
-    ];
-  };
-  // The place between `lo` and `hi` that is in line with one of two ends, or else nearest the first choice.
-  const choose = (
-    x: number,
-    up: [number, number],
-    down: [number, number],
-    lo: number,
-    hi: number
-  ): number => {
-    const upFirst =
-      up[1] !== down[1] ? up[1] < down[1] : Math.abs(up[0] - x) <= Math.abs(down[0] - x);
-    const choices = upFirst ? [up[0], down[0]] : [down[0], up[0]];
-    return (
-      choices.find((choice) => choice >= lo && choice <= hi) ??
-      Math.max(lo, Math.min(hi, choices[0]!))
-    );
-  };
-  const done = u8(n);
-  const chain: number[] = [];
+  const { n, maxRank, layerStart, order } = g;
+  const a: Align = { g, nodes, xs, free, opt, empty, done: u8(n), chain: [] };
   for (let r = 1; r < maxRank; r++) {
     for (let i = layerStart[r]!; i < layerStart[r + 1]!; i++) {
-      if (!placed(order[i]!) || done[order[i]!]!) continue;
-      // The edge's labels and bends from its first node to its last, and the room they share.
-      let top = order[i]!;
-      while (isDummy(KIND[EF[predE[predStart[top]!]!]!]!)) top = EF[predE[predStart[top]!]!]!;
-      let bottom = top;
-      let lo = -Infinity;
-      let hi = Infinity;
-      chain.length = 0;
-      for (let d = top; isDummy(KIND[d]!); d = ET[succE[succStart[d]!]!]!) {
-        bottom = d;
-        if (!placed(d)) continue;
-        done[d] = 1;
-        chain.push(d);
-        const [least, most] = room(d);
-        if (least > lo) lo = least;
-        if (most < hi) hi = most;
-      }
-      if (lo <= hi) {
-        const x = choose(
-          xs[chain[0]!]!,
-          end(predE[predStart[top]!]!, 0),
-          end(succE[succStart[bottom]!]!, 1),
-          lo,
-          hi
-        );
-        for (const d of chain) xs[d] = x;
-        continue;
-      }
-      for (const d of chain) {
-        const [least, most] = room(d);
-        if (least > most) continue;
-        xs[d] = choose(
-          xs[d]!,
-          end(follow(g, empty, predE[predStart[d]!]!, 0), 0),
-          end(follow(g, empty, succE[succStart[d]!]!, 1), 1),
-          least,
-          most
-        );
-      }
+      if (!inPlace(a, order[i]!) || a.done[order[i]!]!) continue;
+      alignEdge(a, order[i]!);
     }
+  }
+}
+
+// What `alignLabels` works on: the labels and bends already lined up (`done`), and those of the
+// edge at hand (`chain`).
+interface Align {
+  g: Graph;
+  nodes: LNode[];
+  xs: Float64Array;
+  free: [Int32Array, Int32Array];
+  opt: LayeredOptions;
+  empty: Uint8Array | undefined;
+  done: Uint8Array;
+  chain: number[];
+}
+
+// Whether `v` is a label, or a bend in a rank that holds something besides bends.
+function inPlace({ g, empty }: Align, v: number): boolean {
+  const { KIND, RANK } = g;
+  return (
+    KIND[v]! === Kind.Label ||
+    (KIND[v]! === Kind.Dummy && !(empty !== undefined && empty[RANK[v]!]! === 1))
+  );
+}
+
+// Where segment `e` ends on the way up (side 0) or down, and how many ends share that side of
+// the node there: none for a point that is not on a node.
+function endOf({ g, nodes, xs, free }: Align, e: number, side: number): [number, number] {
+  const { real, EF, ET, EFD, ETD } = g;
+  const u = side === 0 ? EF[e]! : ET[e]!;
+  const x = side === 0 ? xs[u]! + EFD[e]! : xs[u]! + ETD[e]!;
+  return [x, u < real && nodes[u]!.kind === Kind.Node ? free[1 - side]![u]! : 0];
+}
+
+// The room the neighbours in its rank leave a label or bend: a full gap from a node or between
+// two labels, half of one between a label and a line that passes it. A label or bend has no bias
+// of its own; a neighbour's room reaches `side` (-1 left, 1 right) of it.
+function roomOf({ g, xs, opt }: Align, v: number): [number, number] {
+  const { KIND, RANK, W, LEFT, RIGHT, layerStart, order, pos } = g;
+  const s = layerStart[RANK[v]!]!;
+  const i = s + pos[v]!;
+  const clear = (other: number, reach: number): number =>
+    reach + W[v]! / 2 + gapBetween(KIND[other]!, KIND[v]!, opt.nodeSep, opt.edgeSep);
+  const left = order[i - 1]!;
+  const right = order[i + 1]!;
+  return [
+    i > s ? xs[left]! + clear(left, RIGHT[left]!) : -Infinity,
+    i + 1 < layerStart[RANK[v]! + 1]! ? xs[right]! - clear(right, LEFT[right]!) : Infinity,
+  ];
+}
+
+// The place between `lo` and `hi` that is in line with one of two ends, or else nearest the first choice.
+function choose(
+  x: number,
+  up: [number, number],
+  down: [number, number],
+  lo: number,
+  hi: number
+): number {
+  const upFirst =
+    up[1] !== down[1] ? up[1] < down[1] : Math.abs(up[0] - x) <= Math.abs(down[0] - x);
+  const choices = upFirst ? [up[0], down[0]] : [down[0], up[0]];
+  return (
+    choices.find((choice) => choice >= lo && choice <= hi) ??
+    Math.max(lo, Math.min(hi, choices[0]!))
+  );
+}
+
+// Lines up the labels and bends of the edge through `v`: all on one line where they share room
+// for one, else each with the nearest point above or below that is held in place.
+function alignEdge(a: Align, v: number): void {
+  const { g, xs, chain } = a;
+  const { succE, succStart, predE, predStart } = g;
+  const top = topOf(g, v);
+  const { bottom, lo, hi } = chainFrom(a, top);
+  if (!(lo <= hi)) {
+    alignEach(a);
+    return;
+  }
+  const up = endOf(a, predE[predStart[top]!]!, 0);
+  const x = choose(xs[chain[0]!]!, up, endOf(a, succE[succStart[bottom]!]!, 1), lo, hi);
+  for (const d of chain) xs[d] = x;
+}
+
+// The first bend or label of the edge through `v`, going up.
+function topOf(g: Graph, v: number): number {
+  const { KIND, EF, predE, predStart } = g;
+  let top = v;
+  while (isDummy(KIND[EF[predE[predStart[top]!]!]!]!)) top = EF[predE[predStart[top]!]!]!;
+  return top;
+}
+
+// Gathers the edge's labels and bends from `top` down into `chain`, marks them done, and gives
+// the last bend and the room they share.
+function chainFrom(a: Align, top: number): { bottom: number; lo: number; hi: number } {
+  const { KIND, ET, succE, succStart } = a.g;
+  let bottom = top;
+  let lo = -Infinity;
+  let hi = Infinity;
+  a.chain.length = 0;
+  for (let d = top; isDummy(KIND[d]!); d = ET[succE[succStart[d]!]!]!) {
+    bottom = d;
+    if (!inPlace(a, d)) continue;
+    a.done[d] = 1;
+    a.chain.push(d);
+    const [least, most] = roomOf(a, d);
+    if (least > lo) lo = least;
+    if (most < hi) hi = most;
+  }
+  return { bottom, lo, hi };
+}
+
+// Brings each label and bend of the chain into line with the nearest point above or below that
+// is held in place, within its own room.
+function alignEach(a: Align): void {
+  const { g, xs, empty } = a;
+  const { succE, succStart, predE, predStart } = g;
+  for (const d of a.chain) {
+    const [least, most] = roomOf(a, d);
+    if (least > most) continue;
+    xs[d] = choose(
+      xs[d]!,
+      endOf(a, follow(g, empty, predE[predStart[d]!]!, 0), 0),
+      endOf(a, follow(g, empty, succE[succStart[d]!]!, 1), 1),
+      least,
+      most
+    );
   }
 }
 
@@ -1597,91 +1640,139 @@ function snap(
   empty: Uint8Array | undefined,
   opt: LayeredOptions
 ): void {
-  const { n, KIND, RANK, EF, ET, EFD, ETD, layerStart, order, pos, M } = g;
+  const s: Snap = { g, xs, opt, ...snapEnds(g, empty), ...blocksOf(g.n) };
+  const near = nearEnds(s);
+  for (const k of near) snapOne(s, k);
+}
+
+// What `snap` works on: each edge from one point that is held in place to the next (`a` to `b`,
+// with the offsets of its ends), and the blocks of nodes that are in line and move as one.
+interface Snap {
+  g: Graph;
+  xs: Float64Array;
+  opt: LayeredOptions;
+  a: number[];
+  b: number[];
+  da: number[];
+  db: number[];
+  block: Int32Array;
+  members: number[][];
+}
+
+// Each edge from one point that is held in place to the next, past the bends in ranks that hold
+// nothing else.
+function snapEnds(g: Graph, empty: Uint8Array | undefined): Pick<Snap, 'a' | 'b' | 'da' | 'db'> {
+  const { KIND, RANK, EF, ET, EFD, ETD } = g;
   const passed = (u: number): boolean =>
     empty !== undefined && KIND[u]! === Kind.Dummy && empty[RANK[u]!]! === 1;
-  // Each edge from one point that is held in place to the next, past the bends in ranks that hold nothing else.
-  const a: number[] = [];
-  const b: number[] = [];
-  const da: number[] = [];
-  const db: number[] = [];
+  const ends: Pick<Snap, 'a' | 'b' | 'da' | 'db'> = { a: [], b: [], da: [], db: [] };
   for (let e = 0; e < EF.length; e++) {
     if (passed(EF[e]!)) continue;
     const f = follow(g, empty, e, 1);
-    a.push(EF[e]!);
-    b.push(ET[f]!);
-    da.push(EFD[e]!);
-    db.push(ETD[f]!);
+    ends.a.push(EF[e]!);
+    ends.b.push(ET[f]!);
+    ends.da.push(EFD[e]!);
+    ends.db.push(ETD[f]!);
   }
-  const off = (k: number): number => xs[b[k]!]! + db[k]! - xs[a[k]!]! - da[k]!;
-  // The nodes in line with each other move as one.
+  return ends;
+}
+
+// Every node a block of its own, to begin with.
+function blocksOf(n: number): Pick<Snap, 'block' | 'members'> {
   const block = i32(n);
   const members: number[][] = [];
   for (let i = 0; i < n; i++) {
     block[i] = i;
     members.push([i]);
   }
-  const join = (x: number, y: number): void => {
-    let keep = block[x]!;
-    let drop = block[y]!;
-    if (keep === drop) return;
-    if (members[keep]!.length < members[drop]!.length) [keep, drop] = [drop, keep];
-    for (const v of members[drop]!) {
-      block[v] = keep;
-      members[keep]!.push(v);
-    }
-    members[drop] = [];
-  };
+  return { block, members };
+}
+
+// How far edge `k` is from straight.
+function offAt(s: Snap, k: number): number {
+  return s.xs[s.b[k]!]! + s.db[k]! - s.xs[s.a[k]!]! - s.da[k]!;
+}
+
+// Puts the blocks of `x` and `y` together, the smaller into the larger.
+function join(s: Snap, x: number, y: number): void {
+  const { block, members } = s;
+  let keep = block[x]!;
+  let drop = block[y]!;
+  if (keep === drop) return;
+  if (members[keep]!.length < members[drop]!.length) [keep, drop] = [drop, keep];
+  for (const v of members[drop]!) {
+    block[v] = keep;
+    members[keep]!.push(v);
+  }
+  members[drop] = [];
+}
+
+// Joins the ends of each straight edge, and gives the edges near enough to straight to snap,
+// nearest first.
+function nearEnds(s: Snap): number[] {
+  const { M } = s.g;
   const near: number[] = [];
-  for (let k = 0; k < a.length; k++) {
-    const d = Math.abs(off(k));
-    if (d < 0.01) join(a[k]!, b[k]!);
+  for (let k = 0; k < s.a.length; k++) {
+    const d = Math.abs(offAt(s, k));
+    if (d < 0.01) join(s, s.a[k]!, s.b[k]!);
     else if (d <= M.bendSnap) near.push(k);
   }
-  if (near.length === 0) return;
-  near.sort((x, y) => Math.abs(off(x)) - Math.abs(off(y)) || x - y);
-  const gap = (v: number): number => halfRoom(g, opt, v);
-  // Whether every node of a block can move by `shift` and keep its room from those beside it.
-  const free = (id: number, shift: number): boolean => {
-    for (const v of members[id]!) {
-      const s = layerStart[RANK[v]!]!;
-      const end = layerStart[RANK[v]! + 1]!;
-      const i = s + pos[v]!;
-      if (
-        i > s &&
-        block[order[i - 1]!]! !== id &&
-        xs[v]! + shift - xs[order[i - 1]!]! < gap(v) + gap(order[i - 1]!) - 0.01
-      )
-        return false;
-      if (
-        i + 1 < end &&
-        block[order[i + 1]!]! !== id &&
-        xs[order[i + 1]!]! - xs[v]! - shift < gap(v) + gap(order[i + 1]!) - 0.01
-      )
-        return false;
-    }
-    return true;
-  };
-  for (const k of near) {
-    const d = off(k);
-    if (Math.abs(d) < 0.01) {
-      join(a[k]!, b[k]!);
-      continue;
-    }
-    if (Math.abs(d) > M.bendSnap || block[a[k]!]! === block[b[k]!]!) continue;
-    // The smaller of the two blocks moves, if it can; else the other.
-    const upper = block[a[k]!]!;
-    const lower = block[b[k]!]!;
-    const first = members[upper]!.length <= members[lower]!.length ? upper : lower;
-    for (const id of [first, first === upper ? lower : upper]) {
-      const shift = id === upper ? d : -d;
-      if (Math.abs(d) > M.snap && !members[id]!.every((v) => KIND[v]! === Kind.Dummy)) continue;
-      if (!free(id, shift)) continue;
-      for (const v of members[id]!) xs[v]! += shift;
-      join(a[k]!, b[k]!);
-      break;
+  return near.sort((x, y) => Math.abs(offAt(s, x)) - Math.abs(offAt(s, y)) || x - y);
+}
+
+// Snaps edge `k` straight if it is still near: the smaller of the two blocks moves, if it can;
+// else the other.
+function snapOne(s: Snap, k: number): void {
+  const { block, members } = s;
+  const d = offAt(s, k);
+  if (Math.abs(d) < 0.01) {
+    join(s, s.a[k]!, s.b[k]!);
+    return;
+  }
+  if (Math.abs(d) > s.g.M.bendSnap || block[s.a[k]!]! === block[s.b[k]!]!) return;
+  const upper = block[s.a[k]!]!;
+  for (const id of moveOrder(members, upper, block[s.b[k]!]!)) {
+    if (shiftBlock(s, id, id === upper ? d : -d, d)) {
+      join(s, s.a[k]!, s.b[k]!);
+      return;
     }
   }
+}
+
+// The two blocks an edge joins, the smaller first.
+function moveOrder(members: number[][], upper: number, lower: number): [number, number] {
+  return members[upper]!.length <= members[lower]!.length ? [upper, lower] : [lower, upper];
+}
+
+// Moves block `id` by `shift`, if it may: a block with a node in it only by `snap`'s small
+// distance, and only where those beside it keep their room. `d` is the edge's offset.
+function shiftBlock(s: Snap, id: number, shift: number, d: number): boolean {
+  const { KIND, M } = s.g;
+  const members = s.members[id]!;
+  if (Math.abs(d) > M.snap && !members.every((v) => KIND[v]! === Kind.Dummy)) return false;
+  if (!members.every((v) => roomBeside(s, id, v, shift))) return false;
+  for (const v of members) s.xs[v]! += shift;
+  return true;
+}
+
+// Whether node `v` of block `id` can move by `shift` and keep its room from those beside it.
+function roomBeside(s: Snap, id: number, v: number, shift: number): boolean {
+  const { RANK, layerStart, order, pos } = s.g;
+  const start = layerStart[RANK[v]!]!;
+  const end = layerStart[RANK[v]! + 1]!;
+  const i = start + pos[v]!;
+  return (
+    (i === start || roomTo(s, id, v, order[i - 1]!, -1, shift)) &&
+    (i + 1 === end || roomTo(s, id, v, order[i + 1]!, 1, shift))
+  );
+}
+
+// Whether node `v` keeps its room from its neighbour `w` on `side` (-1 left, 1 right) once it has
+// moved by `shift`; a neighbour in its own block moves with it.
+function roomTo(s: Snap, id: number, v: number, w: number, side: number, shift: number): boolean {
+  if (s.block[w]! === id) return true;
+  const gap = halfRoom(s.g, s.opt, v, side) + halfRoom(s.g, s.opt, w, -side);
+  return !(side * (s.xs[w]! - s.xs[v]! - shift) < gap - 0.01);
 }
 
 // Marks the ranks that hold nothing but the bends of edges, if there are any.
@@ -2523,10 +2614,31 @@ export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   return [best, declared];
 }
 
-// Half the room a node, bend or port takes across the flow, with its share of the gap beside it.
-// A port on a group's border is a point that an edge passes through, and needs no more than a bend.
-function halfRoom(g: Graph, opt: LayeredOptions, v: number): number {
-  return g.W[v]! / 2 + (g.KIND[v]! === Kind.Node ? opt.nodeSep : opt.edgeSep) / 2;
+// How far each node's room reaches left and right of its middle (`Graph.LEFT`, `RIGHT`), from
+// its width `W` and, for the first `real`, its bias.
+function reachOf(
+  nodes: LNode[],
+  W: Float64Array,
+  real: number,
+  n: number
+): [Float64Array, Float64Array] {
+  const left = f64(n);
+  const right = f64(n);
+  for (let i = 0; i < n; i++) {
+    const half = W[i]! / 2;
+    const bias = i < real ? nodes[i]!.bias : 0;
+    left[i] = half - bias;
+    right[i] = half + bias;
+  }
+  return [left, right];
+}
+
+// The room a node, bend or port takes across the flow from its middle towards `side` (-1 left, 1
+// right), with its share of the gap beside it. A port on a group's border is a point that an
+// edge passes through, and needs no more than a bend.
+function halfRoom(g: Graph, opt: LayeredOptions, v: number, side: number): number {
+  const sep = g.KIND[v]! === Kind.Node ? opt.nodeSep : opt.edgeSep;
+  return (side < 0 ? g.LEFT[v]! : g.RIGHT[v]!) + sep / 2;
 }
 
 // Pulls what leads to a held end towards it (#650, new in v13). Brandes-Köpf lines up only one
@@ -2549,7 +2661,8 @@ function pullToHeld(
   const { maxRank, KIND, EF, ET, EFD, ETD, succStart, succE, predStart, predE } = g;
   const { layerStart, order } = g;
   const pulled = u8(g.n);
-  const gap = (i: number): number => halfRoom(g, opt, order[i - 1]!) + halfRoom(g, opt, order[i]!);
+  const gap = (i: number): number =>
+    halfRoom(g, opt, order[i - 1]!, 1) + halfRoom(g, opt, order[i]!, -1);
   const sweep = (bit: number): void => {
     const down = bit > 1;
     // The side the pull comes from, and the one a node must have no edges on to be pulled.
@@ -2615,7 +2728,8 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   const {
     n,
     maxRank,
-    W,
+    LEFT,
+    RIGHT,
     KIND,
     EF,
     ET,
@@ -2630,8 +2744,13 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
     pos,
   } = g;
   const segments = EF.length;
-  const gap = f64(n);
-  for (let i = 0; i < n; i++) gap[i] = halfRoom(g, opt, i);
+  // The room each node takes towards its left and right neighbour.
+  const gapL = f64(n);
+  const gapR = f64(n);
+  for (let i = 0; i < n; i++) {
+    gapL[i] = halfRoom(g, opt, i, -1);
+    gapR[i] = halfRoom(g, opt, i, 1);
+  }
 
   // The neighbours are in left-to-right order (`sortNeighbours`), so the medians are read off
   // directly.
@@ -2739,7 +2858,7 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
       for (let i = s + 1; i < end; i++) {
         const a = right ? order[i]! : order[i - 1]!;
         const b = right ? order[i - 1]! : order[i]!;
-        const sep = gap[a]! + gap[b]!;
+        const sep = gapR[order[i - 1]!]! + gapL[order[i]!]!;
         eFrom[blockEdges] = root[a]!;
         eTo[blockEdges] = root[b]!;
         eW[blockEdges] = right ? sep - shift[a]! + shift[b]! : sep + shift[a]! - shift[b]!;
@@ -2783,13 +2902,13 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   const mins: number[] = [];
   const maxs: number[] = [];
   for (let k = 0; k < 4; k++) {
+    // How far the rooms of this placement reach each way.
+    const placed = results[k]!;
     let lo = Infinity;
     let hi = -Infinity;
-    const xs = results[k]!;
     for (let i = 0; i < n; i++) {
-      const half = W[i]! / 2;
-      if (xs[i]! - half < lo) lo = xs[i]! - half;
-      if (xs[i]! + half > hi) hi = xs[i]! + half;
+      if (placed[i]! - LEFT[i]! < lo) lo = placed[i]! - LEFT[i]!;
+      if (placed[i]! + RIGHT[i]! > hi) hi = placed[i]! + RIGHT[i]!;
     }
     mins.push(lo);
     maxs.push(hi);

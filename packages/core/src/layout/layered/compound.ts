@@ -43,6 +43,10 @@ export interface CNode {
   // Room kept clear around a group's box in its parent, each way (a self-loop's, on the grid).
   loopW: number;
   loopH: number;
+  // How far the middle of the room `w` by `h` lies from the node's middle `x`, `y`: a node whose
+  // self-loops take more room on one side than on the other.
+  biasX: number;
+  biasY: number;
   x: number;
   y: number;
 }
@@ -130,6 +134,8 @@ export function cnode(w: number, h: number, parent = -1): CNode {
     span: 0,
     loopW: 0,
     loopH: 0,
+    biasX: 0,
+    biasY: 0,
     x: 0,
     y: 0,
   };
