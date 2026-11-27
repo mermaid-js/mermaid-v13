@@ -69,6 +69,24 @@ describe('timelines through the public API (#315)', () => {
 });
 
 /** The SVG of `text` with `config` in an init directive, and its warnings. */
+describe('timeline label markup through the public API (D710, D711)', () => {
+  it('draws the label tags and markdown strings, and warns once for other HTML', async () => {
+    const src = [
+      'timeline',
+      '  2002 : <b>bold</b> and <i>italic</i> : <span>x</span>',
+      '  2004 : "`**md**`"',
+      '',
+    ].join('\n');
+    const result = await createMermaid().render('tm', src);
+    expect(result.svg).toMatch(/font-weight="bold">bold<\/tspan>/);
+    expect(result.svg).toContain('<tspan font-style="italic">italic</tspan>');
+    expect(result.svg).not.toContain('&lt;b&gt;');
+    expect(result.svg).not.toContain('**md**');
+    expect(result.warnings.map((w) => w.code)).toEqual(['HTML_DROPPED']);
+    assertInert(result.svg);
+  });
+});
+
 async function withInit(
   config: object,
   text = TEXT

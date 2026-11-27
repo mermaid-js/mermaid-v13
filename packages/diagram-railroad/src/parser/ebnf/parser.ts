@@ -120,11 +120,15 @@ export class EbnfParser extends RailroadParser {
     const range = this.range();
     if (k === T.String) {
       this.i++;
-      return leaf('terminal', stringValue('railroadEbnf', this.raw(j)), range);
+      return leaf(
+        'terminal',
+        this.written(j, (s) => stringValue('railroadEbnf', s)),
+        range
+      );
     }
     if (k === T.Id) {
       this.i++;
-      const name = this.raw(j);
+      const name = this.written(j);
       this.reference(name, range);
       return leaf('nonterminal', name, range);
     }

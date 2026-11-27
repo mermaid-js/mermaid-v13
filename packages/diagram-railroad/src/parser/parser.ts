@@ -22,6 +22,7 @@ import { Kind, kindSet } from '@mermaid-js/core/parser-kit';
 import type { ExpectedTable, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { displayText } from '@mermaid-js/shared/parser/display-text';
 import { RuleParser, textProbeMode, textStatements } from '@mermaid-js/shared/parser/rule';
 import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
 import { STOP } from '@mermaid-js/shared/parser/support';
@@ -226,6 +227,16 @@ export abstract class RailroadParser extends RuleParser<PreprocessResult> {
     return { start: this.range(from).start, end: this.range(to).end };
   }
 
+  /**
+   * Token `j`'s text as a terminal, nonterminal or rule name draws it, which is as written (D710,
+   * amending D563): each `#name;` code is its character, as v12 drew it, and an `&name;` the
+   * author typed stays as written. `convert` is a string's value conversion.
+   */
+  protected written(j = this.i, convert?: (cooked: string) => string): string {
+    const { start, end } = this.range(j);
+    return displayText(this.src, start, end, this.view, convert);
+  }
+
   /** Whether token `j` is a name followed by the notation's `=`: the start of a rule. */
   protected startsRule(j = this.i): boolean {
     return this.kind(j) === T.Id && this.defines.includes(this.kind(j + 1));
@@ -412,15 +423,18 @@ export abstract class RailroadParser extends RuleParser<PreprocessResult> {
     const k = this.kind();
     const r = this.range();
     if (this.notation !== 'railroad') {
-      if (k === T.Id) this.reference(this.raw(), r);
+      if (k === T.Id) this.reference(this.written(), r);
     } else if (k === T.String) {
       if (this.kind(this.i - 1) === T.LParen && this.kind(this.i - 2) === T.KwNonterminal)
-        this.reference(stringValue('railroad', this.raw()), {
-          start: r.start + 1,
-          end: Math.max(r.start + 1, r.end - 1),
-        });
+        this.reference(
+          this.written(this.i, (s) => stringValue('railroad', s)),
+          {
+            start: r.start + 1,
+            end: Math.max(r.start + 1, r.end - 1),
+          }
+        );
     } else if (k === T.Id) {
-      this.reference(this.raw(), { start: Math.max(0, r.start - 1), end: r.end });
+      this.reference(this.written(), { start: Math.max(0, r.start - 1), end: r.end });
     }
   }
 
@@ -532,7 +546,7 @@ export abstract class RailroadParser extends RuleParser<PreprocessResult> {
 
   private ruleBody(): void {
     const n = this.i++;
-    const name = this.raw(n);
+    const name = this.written(n);
     const nameRange = this.range(n);
     this.st.symbol(name, RULE_SYMBOL, nameRange, 'def');
     this.tested(this.defines);

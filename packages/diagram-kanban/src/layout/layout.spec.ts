@@ -264,6 +264,27 @@ describe('kanban layout: a ticket and an assignee that do not fit side by side (
   });
 });
 
+describe('kanban layout: tags in a ticket and an assignee (D710, D712)', () => {
+  it('sizes their boxes and the card by the measured labels, without the tags', () => {
+    const tagged = lay(
+      board('  Todo', "    a[Card]@{ ticket: '<b>T-1</b>', assigned: '<i>knsv</i>' }")
+    ).cards[0]!;
+    const plain = lay(board('  Todo', "    a[Card]@{ ticket: 'T-1', assigned: 'knsv' }")).cards[0]!;
+    // The grid measurer gives every character 8 px, bold or italic alike.
+    expect(tagged.ticket!.width).toBe(3 * 8);
+    expect(tagged.assignee!.width).toBe(4 * 8);
+    expect(tagged.ticket!.text.lines[0]!.map((r) => [r.text, !!r.bold])).toEqual([['T-1', true]]);
+    expect(tagged.assignee!.text.lines[0]!.map((r) => [r.text, !!r.italic])).toEqual([
+      ['knsv', true],
+    ]);
+    for (const k of ['x', 'y', 'width', 'height'] as const) {
+      expect(tagged.ticket![k]).toBe(plain.ticket![k]);
+      expect(tagged.assignee![k]).toBe(plain.assignee![k]);
+    }
+    expect(tagged.height).toBe(plain.height);
+  });
+});
+
 describe('kanban layout: font', () => {
   it('carries the font it measured in, for the renderer to draw in (pitfall 16)', () => {
     const theme = createTheme(spec);

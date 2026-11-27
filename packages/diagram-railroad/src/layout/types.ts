@@ -9,7 +9,7 @@
  * whose origin is `origin` in the diagram.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey } from '@mermaid-js/core/text';
+import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
 import type { Rect } from '@mermaid-js/shared/layout';
 import type { RailroadConfig } from '../config.ts';
 import type { RailroadNodeKind } from '../model.ts';
@@ -59,6 +59,12 @@ export interface PlacedText {
   readonly anchor: 'middle' | 'start';
   /** The measured box around the text, for the bounds. */
   readonly box: Rect;
+  /**
+   * A special's text laid out by the label rule (D710) when it draws formatting (a `<br>`, a
+   * drawn tag, a markdown string's emphasis): the renderer draws its lines centred on the anchor,
+   * and `text` is its plain text. Absent for text drawn as one plain string.
+   */
+  readonly label?: MeasuredLabel;
 }
 
 /** A terminal's, nonterminal's or special's `rect`, at (0, 0) in its expression. */

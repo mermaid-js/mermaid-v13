@@ -1,8 +1,8 @@
 /**
  * The kanban custom layout (spec #424 T3): v12's placement (`kanbanRenderer.ts:42-89`,
  * `shapes/kanbanItem.ts:32-152`, `clusters.js:308-418`) without its drawing or module state
- * (R-ARCH-4). Every label is measured first, through core's label layout with markdown on
- * (D372); every length comes from the metrics table, through the render's unit profile
+ * (R-ARCH-4). Every label is measured first, through core's label layout: a markdown string as
+ * markdown, any other label plain (D710, D712, amending D372); every length comes from the metrics table, through the render's unit profile
  * (pitfall 13).
  *
  * Kept from v12: columns `W` wide and `W + 5` apart, each its own height; one title row,
@@ -17,7 +17,12 @@
 import type { Warning } from '@mermaid-js/core';
 import { KANBAN_CONFIG_IGNORED } from '../codes.ts';
 import { fromPx, growRect, type UnitProfile } from '@mermaid-js/core/layout';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import { isBarPriority } from '../priority.ts';
 import type { KanbanLayoutContext } from './context.ts';
 import { drawnRects, union } from './extent.ts';
@@ -117,8 +122,9 @@ function envOf(ctx: KanbanLayoutContext): Env {
     font,
     measure: (text, wrap) => {
       if (text === undefined) return undefined;
-      const label = layoutLabel(text, font, wrap, ctx.measurer, {
-        markdown: true,
+      const { text: source, markup } = markdownString(text);
+      const label = layoutLabel(source, font, wrap, ctx.measurer, {
+        markup,
         keepWords,
         ...(ctx.inline ? { inline: ctx.inline } : {}),
       });

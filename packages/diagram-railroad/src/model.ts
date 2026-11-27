@@ -23,7 +23,11 @@ interface NodeBase<K extends string> {
   readonly astId: AstId;
 }
 
-/** A literal: a quoted string (escapes decoded), an ABNF `%x…` value as written, or EBNF's `-`. */
+/**
+ * A literal: a quoted string (escapes decoded), an ABNF `%x…` value as written, or EBNF's `-`.
+ * A terminal's value, a nonterminal's name and a rule's name are drawn as they are here (D710):
+ * each `#name;` code is already its character, and an `&name;` the author typed stays as written.
+ */
 export interface RailroadTerminal extends NodeBase<'terminal'> {
   readonly value: string;
 }
@@ -67,6 +71,11 @@ export interface RailroadRepetition extends NodeBase<'repetition'> {
  */
 export interface RailroadSpecial extends NodeBase<'special'> {
   readonly text: string;
+  /**
+   * Set on a special made from tokens (PEG's predicates and `.`): its text draws as written, as
+   * a terminal's does. Any other special's text follows the label rule (D710).
+   */
+  readonly literal?: true;
 }
 
 export type RailroadNode =

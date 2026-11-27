@@ -2,21 +2,29 @@
 // references cover the rest. Unknown names stay literal text.
 
 const NAMED: Readonly<Record<string, string>> = {
+  // HTML's legacy names, which it also reads without `;` (D709): `LEGACY` takes the first 20.
   amp: '&',
   lt: '<',
   gt: '>',
   quot: '"',
-  apos: "'",
   nbsp: '\u00a0',
   shy: '\u00ad',
   copy: '©',
   reg: '®',
-  trade: '™',
   deg: '°',
   plusmn: '±',
   times: '×',
   divide: '÷',
   middot: '·',
+  sect: '§',
+  para: '¶',
+  pound: '£',
+  yen: '¥',
+  cent: '¢',
+  laquo: '«',
+  raquo: '»',
+  apos: "'",
+  trade: '™',
   bull: '•',
   hellip: '…',
   ndash: '–',
@@ -25,14 +33,7 @@ const NAMED: Readonly<Record<string, string>> = {
   rsquo: '’',
   ldquo: '“',
   rdquo: '”',
-  laquo: '«',
-  raquo: '»',
-  sect: '§',
-  para: '¶',
   euro: '€',
-  pound: '£',
-  yen: '¥',
-  cent: '¢',
   larr: '←',
   rarr: '→',
   uarr: '↑',
@@ -75,30 +76,54 @@ const NAMED: Readonly<Record<string, string>> = {
   ast: '*',
 };
 
-const RE_ENTITY = /&(?:#(\d{1,7})|#[xX]([\da-fA-F]{1,6})|([A-Za-z][A-Za-z\d]{1,31}));/y;
+// The names of `NAMED` that HTML also decodes without `;`, in text even as the start of a longer
+// word (D709). The longest are six letters.
+const LEGACY = new Set(Object.keys(NAMED).slice(0, 20));
+
+const RE_ENTITY = /&(?:#(\d+)|#[xX]([\da-fA-F]+)|([A-Za-z][A-Za-z\d]*))(;?)/y;
 
 /**
- * Decodes the character reference starting at `at`, if there is one. Returns the text and the
- * length it replaces.
+ * Decodes the character reference starting at `at`, if there is one, as HTML does in text
+ * (D709): a numeric reference or a legacy name needs no `;`. With `xml`, as XML does: every
+ * reference needs its `;` and a name is read whole. Returns the text and the length it replaces.
  */
-export function entityAt(source: string, at: number): [string, number] | undefined {
+export function entityAt(source: string, at: number, xml?: boolean): [string, number] | undefined {
   RE_ENTITY.lastIndex = at;
   const m = RE_ENTITY.exec(source);
-  if (!m) return undefined;
-  const [all, dec, hex, name] = m;
-  if (name !== undefined) {
-    return Object.hasOwn(NAMED, name) ? [NAMED[name] as string, all.length] : undefined;
-  }
-  const code = dec !== undefined ? parseInt(dec, 10) : parseInt(hex as string, 16);
-  // NUL, surrogates and out-of-range code points become U+FFFD, as in HTML.
-  const valid = code > 0 && code <= 0x10ffff && (code < 0xd800 || code > 0xdfff);
-  return [String.fromCodePoint(valid ? code : 0xfffd), all.length];
+  if (!m || (xml && !m[4])) return undefined;
+  const [all, dec, hex, name, semi] = m;
+  if (name !== undefined) return namedAt(name, all.length, semi !== '', xml);
+  return [numeric(dec !== undefined ? parseInt(dec, 10) : parseInt(hex as string, 16)), all.length];
 }
+
+/** A named reference: the whole name with its `;`, or else the longest legacy name it starts with. */
+function namedAt(
+  name: string,
+  length: number,
+  semi: boolean,
+  xml: boolean | undefined
+): [string, number] | undefined {
+  if (semi && Object.hasOwn(NAMED, name)) return [NAMED[name] as string, length];
+  for (let n = xml ? 0 : name.length; n > 1; n--) {
+    const legacy = name.slice(0, n);
+    if (LEGACY.has(legacy)) return [NAMED[legacy] as string, n + 1];
+  }
+  return undefined;
+}
+
+// NUL, surrogates and out-of-range code points become U+FFFD, as in HTML.
+const numeric = (code: number): string =>
+  String.fromCodePoint(
+    code > 0 && code <= 0x10ffff && (code < 0xd800 || code > 0xdfff) ? code : 0xfffd
+  );
 
 /**
  * `text` with every character reference decoded, for text that is drawn without `layoutLabel`.
  * A reference `entityAt` does not know stays as written.
  */
 export function decodeEntities(text: string): string {
-  return text.replace(/&[#\w]+;/g, (all) => entityAt(all, 0)?.[0] ?? all);
+  return text.replace(/&[#\w]+;?/g, (all) => {
+    const entity = entityAt(all, 0);
+    return entity ? entity[0] + all.slice(entity[1]) : all;
+  });
 }

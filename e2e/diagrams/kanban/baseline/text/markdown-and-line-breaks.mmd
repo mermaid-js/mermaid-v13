@@ -1,9 +1,9 @@
 ---
-description: markdown in every label kind (column titles, card titles, tickets and assignees), a <br> break, a raw line break in a quoted label and an entity, through core's label layout (D372)
+description: markdown strings in column and card titles, a ticket in <b> and an assignee in <i> drawn bold and italic by the label rule (D710, D712), a <br> break, a raw line break in a quoted label and an entity, through core's label layout (D372)
 ---
 kanban
   todo["`**Todo** this _week_`"]
-    a["`A **bold** card with _italic_ words`"]@{ ticket: '**T-1**', assigned: '_knsv_' }
+    a["`A **bold** card with _italic_ words`"]@{ ticket: '<b>T-1</b>', assigned: '<i>knsv</i>' }
     b[Line one<br>line two]
     c["A quoted label
 with a line break"]

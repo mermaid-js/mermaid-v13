@@ -263,7 +263,7 @@ describe('kanban boards through the public API (#459)', () => {
       "    ticketBaseUrl: 'https://example.com/#TICKET#'",
       '---',
       'kanban',
-      '  todo[**Todo**]',
+      '  todo["`**Todo**`"]',
       "    a[Docs]@{ ticket: MC-1, priority: 'Urgent' }",
       '  done[Done]',
       '  :::urgent',

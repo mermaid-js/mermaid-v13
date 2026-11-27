@@ -56,6 +56,7 @@ e2e/diagrams/venn/nightly-check/layout/text-in-undrawn-areas.mmd 1 712a72b8bba3b
 e2e/diagrams/venn/nightly-check/layout/tiny-sizes.mmd 1 ea78eb86f58d3e0d
 e2e/diagrams/venn/nightly-check/layout/too-large-size.mmd 1 81a285c5503caeab
 e2e/diagrams/venn/nightly-check/long-labels.mmd 1 cc599c17fe07ac70
+e2e/diagrams/venn/nightly-check/markdown-labels.mmd 1 444bb96bee461311
 e2e/diagrams/venn/nightly-check/quoted-title.mmd 1 31da334c61516a08
 e2e/diagrams/venn/nightly-check/rgb-colours.mmd 1 d2a3877f04601081
 e2e/diagrams/venn/nightly-check/stroke-styles.mmd 1 33d19e34913c1506

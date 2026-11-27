@@ -268,6 +268,62 @@ describe('priority (D375)', () => {
   });
 });
 
+describe('label markup (D710, D712)', () => {
+  /** The `<text>` of the label group of `ast`'s first `<text>` after its `data-ast`. */
+  const textOf = (svg: string, ast: string): string => {
+    const at = svg.indexOf(`data-ast="${ast}"`);
+    return /<text[^>]*>(.*?)<\/text>/.exec(svg.slice(at))![1]!;
+  };
+
+  it('draws plain card text as written and only markdown strings as markdown (#1230)', async () => {
+    const { svg } = await renderKanbanForTest(
+      'kanban\n  todo[Todo]\n    a[Use `npm ci` first]\n    b[- not a list]\n    c["`**bold** card`"]\n    d[1. not a list]\n    e[**stars**]\n'
+    );
+    expect(textOf(svg, 'n:a')).toContain('Use `npm ci` first');
+    expect(textOf(svg, 'n:b')).toContain('- not a list');
+    expect(textOf(svg, 'n:c')).toMatch(/font-weight="bold"[^>]*>bold<\/tspan><tspan[^>]*> card</);
+    expect(textOf(svg, 'n:d')).toContain('1. not a list');
+    expect(textOf(svg, 'n:e')).toContain('**stars**');
+  });
+
+  it('draws two code spans as written: the label is not one markdown string', async () => {
+    const { svg } = await renderKanbanForTest('kanban\n  todo[Todo]\n    a[`npm` or `pnpm`]\n');
+    expect(textOf(svg, 'n:a')).toContain('`npm` or `pnpm`');
+  });
+
+  it('draws <br>, the tags and entities in plain labels of every kind', async () => {
+    const { svg } = await renderKanbanForTest(
+      "kanban\n  todo[To<br>do]\n    a[<b>bold</b> &amp; <i>it</i>]@{ ticket: '<u>T</u>', assigned: '`**md**`' }\n"
+    );
+    expect(textOf(svg, 'n:todo').match(/<tspan[^>]* x=/g)).toHaveLength(2);
+    const card = svg.slice(svg.indexOf('data-ast="n:a"'));
+    expect(card).toMatch(/font-weight="bold"[^>]*>bold<\/tspan><tspan[^>]*> &amp; <\/tspan>/);
+    expect(card).toMatch(/font-style="italic"[^>]*>it</);
+    expect(card).toMatch(/text-decoration="underline"[^>]*>T</);
+    expect(card).toMatch(/font-weight="bold"[^>]*>md</);
+    expect(card).not.toContain('**md**');
+  });
+
+  it('draws a ticket in <b> bold and an assignee in <i> italic, without their tags', async () => {
+    const { svg } = await renderKanbanForTest(
+      "kanban\n  todo[Todo]\n    a[Card]@{ ticket: '<b>T-1</b>', assigned: '<i>knsv</i>' }\n"
+    );
+    const [ticket, assignee] = svg
+      .slice(svg.indexOf('data-ast="n:a"'))
+      .match(/<text[^>]*>.*?<\/text>/g)!
+      .slice(-2);
+    expect(ticket).toMatch(/<tspan[^>]*font-weight="bold"[^>]*>T-1<\/tspan>/);
+    expect(assignee).toMatch(/<tspan[^>]*font-style="italic"[^>]*>knsv<\/tspan>/);
+    expect(svg).not.toMatch(/&lt;\/?[bi]&gt;/);
+  });
+
+  it('reads a column title by the same rule', async () => {
+    const { svg } = await renderKanbanForTest('kanban\n  a["`**md**`"]\n  b[**plain**]\n');
+    expect(textOf(svg, 'n:a')).toMatch(/font-weight="bold"[^>]*>md</);
+    expect(textOf(svg, 'n:b')).toContain('**plain**');
+  });
+});
+
 describe('ticket links (D377)', () => {
   const board = (base: string | undefined, ticket: string) =>
     `${base === undefined ? '' : `---\nconfig:\n  kanban:\n    ticketBaseUrl: '${base}'\n---\n`}kanban\n  todo\n    a@{ ticket: '${ticket}' }\n`;
@@ -290,6 +346,18 @@ describe('ticket links (D377)', () => {
     ]);
     expect(svg).toMatch(/<a [^>]*><g class="label"[^>]*><text[^>]*>MC-1<\/text><\/g><\/a>/);
     expect(refused(warnings)).toBe(0);
+  });
+
+  it('links a ticket with drawn tags by its text without them (D712)', async () => {
+    const { svg } = await renderKanbanForTest(
+      board('https://example.com/browse/#TICKET#', '<b>T-1</b>')
+    );
+    expect(links(svg)[0]!.href).toBe('https://example.com/browse/T-1');
+    const mixed = await renderKanbanForTest(
+      board('https://example.com/#TICKET#', '<U>T</U>-<sub>1</sub><Strike>2</Strike>')
+    );
+    expect(links(mixed.svg)[0]!.href).toBe('https://example.com/T-12');
+    expect(svg).toMatch(/<a [^>]*><g class="label"[^>]*><text[^>]*><tspan[^>]*font-weight="bold"/);
   });
 
   it('keeps $& and $` in a ticket literal (a function replacer)', async () => {

@@ -203,7 +203,7 @@ const KEYWORDS: { readonly [K in AllowedAttr]?: readonly Extract<AttrTypes[K], s
   'font-style': ['normal', 'italic'],
   'text-anchor': ['start', 'middle', 'end'],
   'dominant-baseline': ['auto', 'middle', 'central', 'hanging', 'alphabetic', 'text-before-edge'],
-  'text-decoration': ['underline', 'line-through', 'none'],
+  'text-decoration': ['underline', 'line-through', 'underline line-through', 'none'],
   'xml:space': ['preserve'],
   target: ['_self', '_blank', '_parent', '_top'],
   rel: ['noopener noreferrer'],

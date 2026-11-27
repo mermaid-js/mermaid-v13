@@ -22,7 +22,12 @@
  *   unwrapped where `compass` placed it.
  */
 import type { LayoutModelEdge, LayoutModelNode, Point, Side } from '@mermaid-js/core/layout';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import { ARCHITECTURE_METRICS, type ArchitectureSizes } from '../layout/metrics.ts';
 import type { ArchitectureEdge, ArchitectureSide } from '../model.ts';
 import type { ArchitectureRenderContext } from './context.ts';
@@ -303,8 +308,10 @@ function placeLabel(
   const dy = Math.abs(start.y - end.y);
   const axis = axisOf(lhs, rhs);
   const wrap = wrapWidth(axis, dx, dy);
-  const box = layoutLabel(edge.title!, font, wrap > 0 ? wrap : Infinity, ctx.measurer, {
-    markdown: true,
+  // A markdown string is laid out as markdown without its wrapper, any other label plain (D710).
+  const { text, markup } = markdownString(edge.title!);
+  const box = layoutLabel(text, font, wrap > 0 ? wrap : Infinity, ctx.measurer, {
+    markup,
     inline: ctx.inline,
   });
   if (box.lines.length === 0) return undefined;

@@ -276,6 +276,7 @@ e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-subgraphs.mmd 1 03c
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-style-nodes-via-a-class.mmd 1 de0a44f694319a42
 e2e/diagrams/flowchart/nightly-check/handdrawn/testing-the-label-width-in-percy.mmd 1 ea628a04dea44c25
 e2e/diagrams/flowchart/nightly-check/handdrawn/text-color-from-classes.mmd 1 f7d784e5df1e23b5
+e2e/diagrams/flowchart/nightly-check/html-drawn-tags.mmd 1 c4c9895222db236d
 e2e/diagrams/flowchart/nightly-check/html-dropped-links.mmd 3 fb09a59f1b3f56f4
 e2e/diagrams/flowchart/nightly-check/icon/01-should-render-registered-icons-on-theme-default.mmd 1 f54a6f7eec0e5d54
 e2e/diagrams/flowchart/nightly-check/icon/02-should-render-icons-from-fontawesome-library-on-theme-default.mmd 1 f1f40325ab7c7688

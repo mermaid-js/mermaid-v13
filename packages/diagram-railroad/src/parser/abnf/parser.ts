@@ -99,12 +99,13 @@ export class AbnfParser extends RailroadParser {
     const range = this.range();
     if (k === T.String || k === T.NumVal) {
       this.i++;
-      const raw = this.raw(j);
-      return leaf('terminal', k === T.String ? stringValue('railroadAbnf', raw) : raw, range);
+      const text =
+        k === T.String ? this.written(j, (s) => stringValue('railroadAbnf', s)) : this.written(j);
+      return leaf('terminal', text, range);
     }
     if (k === T.Id) {
       this.i++;
-      const name = this.raw(j);
+      const name = this.written(j);
       this.reference(name, range);
       return leaf('nonterminal', name, range);
     }

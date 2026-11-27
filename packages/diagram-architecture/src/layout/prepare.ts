@@ -26,7 +26,12 @@ import {
   type Side,
   type Size,
 } from '@mermaid-js/core/layout';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import { configLengths } from '@mermaid-js/shared/config/readers';
 import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
@@ -130,11 +135,13 @@ export function prepareArchitecture(
     size: ctx.theme.number('fontSize'),
     weight: ARCHITECTURE_METRICS.fontWeight,
   };
-  // v12's `createText` reads markdown in every label.
-  const measure = (text: string | undefined, maxWidth: number): MeasuredLabel | undefined =>
-    text === undefined || text.trim() === ''
-      ? undefined
-      : layoutLabel(text, font, maxWidth, ctx.measurer, { markdown: true, inline: ctx.inline });
+  // A markdown string is laid out as markdown without its wrapper; any other label is plain
+  // (D710, a break with v12, whose `createText` read markdown in every label).
+  const measure = (text: string | undefined, maxWidth: number): MeasuredLabel | undefined => {
+    if (text === undefined || text.trim() === '') return undefined;
+    const { text: source, markup } = markdownString(text);
+    return layoutLabel(source, font, maxWidth, ctx.measurer, { markup, inline: ctx.inline });
+  };
 
   const nodes: ArchitectureNodeView[] = [];
   const layoutNodes: LayoutNode[] = [];

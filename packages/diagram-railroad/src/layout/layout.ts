@@ -19,16 +19,24 @@
  * choices v12 overshot change.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { decodeEntities, type FontKey, type Measurer } from '@mermaid-js/core/text';
+import {
+  decodeEntities,
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+  type Measurer,
+} from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import {
   railroadConfig,
   railroadConfigWarning,
   railroadSection,
   type RailroadLayoutConfig,
 } from '../config.ts';
-import type { RailroadModel, RailroadNode, RailroadRule } from '../model.ts';
+import type { RailroadModel, RailroadNode, RailroadRule, RailroadSpecial } from '../model.ts';
 import { Box, shifted, Track, visitRule } from './geometry.ts';
-import { drawnText, isBlankText } from './text.ts';
+import { drawnText, isBlankText, isFormatted, oneLine, plainText } from './text.ts';
 import { BOLD_WEIGHT, NORMAL_WEIGHT, RAILROAD_METRICS, type RailroadMetrics } from './metrics.ts';
 import type {
   PlacedText,
@@ -44,7 +52,7 @@ import type {
  * (`units.id` `cell`) it does not warn: text draws none of those values.
  */
 export type RailroadLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn' | 'units'>>;
+  Partial<Pick<RenderContext, 'warn' | 'units' | 'inline'>>;
 
 /**
  * A choice's main line and its branches' tops (`tops`, moved in place) from v12's stacking:
@@ -103,7 +111,10 @@ export function layoutRailroad(
     return { ...canvas, units, metrics: m, config, fonts, rules: [], bounds: canvas };
   }
 
-  const place = new Placer(options, m, measurer, text, ruleName, cells ?? { guard: pxGuard });
+  const place = new Placer(options, m, measurer, text, ruleName, {
+    ...(cells ?? { guard: pxGuard }),
+    ...(ctx.inline ? { inline: ctx.inline } : {}),
+  });
   const rules: RailroadRuleLayout[] = [];
   let y = options.padding;
   let widest = 0;
@@ -172,8 +183,13 @@ class Placer {
     private readonly measurer: Measurer,
     private readonly font: FontKey,
     private readonly ruleFont: FontKey,
-    /** The main-line rule, and the rows below a rule's definition in cells (px: `2 × padding`). */
-    private readonly cells: Pick<RailroadCellOptions, 'guard'> & Partial<RailroadCellOptions>
+    /**
+     * The main-line rule, and the rows below a rule's definition in cells (px: `2 × padding`);
+     * the render's `inline`, which collects the tags a special drops (`HTML_DROPPED`).
+     */
+    private readonly cells: Pick<RailroadCellOptions, 'guard'> &
+      Partial<RailroadCellOptions> &
+      Pick<RenderContext, 'inline'>
   ) {
     this.lineHeight = measurer.metrics(font).lineHeight;
   }
@@ -191,7 +207,7 @@ class Placer {
   /** v12's `renderRule` (L535-604): the rule's parts in its own coordinates. */
   rule(rule: RailroadRule, y: number): RailroadRuleLayout {
     const { padding, markerRadius: mR } = this.o;
-    const name = `${decodeEntities(rule.name)} =`;
+    const name = `${rule.name} =`;
     const nameWidth = this.measurer.width(name, this.ruleFont, 0);
     const markerX = nameWidth + this.m.nameGap;
     const defX = markerX + this.m.definitionGap;
@@ -240,7 +256,7 @@ class Placer {
       case 'nonterminal':
         return this.leaf(node, node.name, 0);
       case 'special':
-        return this.leaf(node, `? ${node.text} ?`, 0, this.m.specialDash);
+        return this.special(node);
       case 'sequence':
         return this.sequence(
           node,
@@ -260,23 +276,21 @@ class Placer {
 
   /**
    * A terminal, nonterminal or special: its text padded on every side (L98-162, L473-499).
-   * Entity codes in `written` are decoded (D563), so the box is sized for, and the SVG and the
-   * text output draw, the characters.
+   * A token is drawn as written (D710, amending D563): the parser has already turned each
+   * `#name;` code into its character, and a tag, an `&name;` or Markdown the author typed is
+   * text. A special's `drawn` text is laid out by the label rule.
    */
   private leaf(
     node: RailroadNode,
     written: string,
     cornerRadius: number,
-    dash?: readonly [number, number]
+    dash?: readonly [number, number],
+    drawn?: { readonly text: string; readonly label?: MeasuredLabel }
   ): Sized {
-    const text = decodeEntities(written);
+    const text = drawn?.text ?? written;
+    const label = drawn?.label;
     const { padding } = this.o;
-    // A terminal in px is measured as the SVG draws it (#774): a blank one as nothing, so its
-    // box is the padding alone (v12's empty bbox). The text output keeps its cell of room.
-    const literal = node.type === 'terminal' && this.cells.measurer === undefined;
-    const blank = literal && isBlankText(text);
-    const tw = blank ? 0 : this.width(literal ? drawnText(text) : text);
-    const th = blank ? 0 : this.lineHeight;
+    const [tw, th] = label ? [label.width, label.height] : this.textSize(node, text);
     const width = tw + 2 * padding;
     const h = th + 2 * padding;
     return {
@@ -296,8 +310,47 @@ class Placer {
         y: h / 2,
         anchor: 'middle',
         box: { x: width / 2 - tw / 2, y: h / 2 - th / 2, width: tw, height: th },
+        ...(label ? { label } : {}),
       },
     };
+  }
+
+  /**
+   * A one-line text's width and height. A terminal in px is measured as the SVG draws it (#774):
+   * a blank one as nothing, so its box is the padding alone (v12's empty bbox). The text output
+   * keeps its cell of room.
+   */
+  private textSize(node: RailroadNode, text: string): [number, number] {
+    const literal = node.type === 'terminal' && this.cells.measurer === undefined;
+    if (literal && isBlankText(text)) return [0, 0];
+    return [this.width(literal ? drawnText(text) : text), this.lineHeight];
+  }
+
+  /**
+   * A special, `? text ?` in a dashed box (L473-499). Its text follows the label rule (D710):
+   * `<br>`, the drawn tags and character references, and Markdown only in a markdown string;
+   * any other tag is dropped and named in `HTML_DROPPED`. A text that draws formatting is laid
+   * out in lines and its box sized from them (in px; the text output draws its plain text). Any
+   * other is drawn as one string, the label's text. A plain text with no `<`, which holds no tag,
+   * is drawn as before: as written, its entities decoded. The SVG draws a special on one line,
+   * so a line break or tab written in it is a space. A special made from tokens (PEG's `&X`,
+   * `!X` and `.`, `literal`) is drawn as written, as a token is.
+   */
+  private special(node: RailroadSpecial): Sized {
+    if (node.literal) return this.leaf(node, `? ${oneLine(node.text)} ?`, 0, this.m.specialDash);
+    const { text: source, markup } = markdownString(node.text);
+    const written = `? ${source} ?`;
+    const inline = tagsOnly(this.cells.inline);
+    const label = layoutLabel(oneLine(written), this.font, Infinity, this.measurer, {
+      markup,
+      ...(inline ? { inline } : {}),
+    });
+    const dash = this.m.specialDash;
+    const formatted = isFormatted(label);
+    const asWritten = !formatted && markup === 'plain' && !source.includes('<');
+    const text = asWritten ? decodeEntities(written) : plainText(label);
+    const drawn = formatted && !this.cells.measurer ? { text, label } : { text };
+    return this.leaf(node, written, 0, dash, drawn);
   }
 
   /** Elements in a row on one track, `horizontalSeparation` apart (L167-217). */

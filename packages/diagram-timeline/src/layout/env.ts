@@ -3,7 +3,13 @@
  * v12's box height, colour slots, grouping by section (D251), arrowheads and bounding boxes.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  fontSizePx,
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import type { TimelineModel, TimelinePeriod } from '../model.ts';
 import { TIMELINE_METRICS, type TimelineMetrics } from './metrics.ts';
 import type { Arrowhead, PlacedLabel, Point, Rect, TimelineLine } from './types.ts';
@@ -45,7 +51,9 @@ export interface Env {
   readonly titleReferenceFont: FontKey;
   /**
    * `text` laid out to `wrap` px (D225). A word wider than `wrap` stays whole, as v12 kept it
-   * (#649), and the layouts widen its box to hold it (D558).
+   * (#649), and the layouts widen its box to hold it (D558). A markdown string (core's
+   * `markdownString`) is laid out as markdown without its wrapper; any other label is plain, so
+   * `<br>`, the drawn tags and character references apply (D710, D711).
    */
   measure(text: string, wrap: number, font?: FontKey): MeasuredLabel;
   /** v12 `drawNode`'s height: the label, `heightEm` font sizes and the padding once. */
@@ -79,11 +87,6 @@ export function boxStrokes(theme: TimelineLayoutContext['theme']): BoxStrokes {
     : { outline: 0, rule: ruleWidth };
 }
 
-// Labels are plain text, as v12 drew them with `.text()` (spec #291): only core's line breaks
-// (D225) apply, so every `<` but a `<br>` is escaped before core's label layout reads markup.
-const RE_NOT_BREAK = /<(?!br\s*\/?>)/gi;
-const plain = (text: string): string => text.replace(RE_NOT_BREAK, '&lt;');
-
 export function envOf(ctx: TimelineLayoutContext): Env {
   const m = TIMELINE_METRICS;
   const conf = ctx.config.timeline ?? {};
@@ -112,11 +115,14 @@ export function envOf(ctx: TimelineLayoutContext): Env {
     font,
     titleFont: { family, size: titleSize, weight: m.common.titleFontWeight },
     titleReferenceFont: { family, size: titleRefSize, weight: m.common.titleFontWeight },
-    measure: (text, wrap, f = font) =>
-      layoutLabel(plain(text), f, Math.max(wrap, m.common.minWrap), ctx.measurer, {
+    measure: (text, wrap, f = font) => {
+      const { text: source, markup } = markdownString(text);
+      return layoutLabel(source, f, Math.max(wrap, m.common.minWrap), ctx.measurer, {
         inline: ctx.inline,
         keepWords: true,
-      }),
+        markup,
+      });
+    },
     boxHeight: (label, padding) => label.height + formulaSize * m.common.heightEm + padding,
   };
 }

@@ -392,6 +392,32 @@ describe('journey layout: labels (D225)', () => {
     expect(layout.tasks[0]!.label).toBeUndefined();
     expect(layout.tasks[1]!.label).toBeDefined();
   });
+
+  it('lays out markdown strings as markdown, and other names as written (D225, D710, #1292)', () => {
+    const runs = (l: {
+      text: { lines: readonly (readonly { text: string; style: number }[])[] };
+    }) => l.text.lines[0]!.map((r) => [r.text, r.style] as const);
+    const layout = lay(
+      journey('"`**T** y`"', section('`*S*`'), task('"`**md**`"', 3, '`**A**`'), task('**md**', 3))
+    );
+    for (const label of [
+      layout.title!,
+      layout.bands[0]!.label!,
+      layout.tasks[0]!.label!,
+      layout.legend[0]!.label,
+    ]) {
+      const [first] = runs(label);
+      expect(first![0]).toMatch(/^[TSmA]/);
+      expect(first![1]).not.toBe(0);
+      expect(
+        runs(label)
+          .map(([t]) => t)
+          .join('')
+      ).not.toMatch(/[`"*]/);
+    }
+    // Not a markdown string: kept as written.
+    expect(runs(layout.tasks[1]!.label!)).toEqual([['**md**', 0]]);
+  });
 });
 
 describe('journey layout: long words stay whole (#649, D558)', () => {

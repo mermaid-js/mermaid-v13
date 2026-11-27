@@ -1,0 +1,12 @@
+---
+description: Label markup (D710). Terminals and rule names are drawn as written, a typed entity too; special sequences draw <br>, the tags, entities and a markdown string, and drop other tags with HTML_DROPPED. Title and comments are not drawn (D218).
+---
+railroad-ebnf-beta
+title Label <b>markup</b>
+(* A comment with <b>tags</b> is skipped. *)
+literal = "<b>bold</b>" | "**not bold**" | "a<br>b" | "`**md**`" | "<i>&lt x&gt</i> &amp &#60" ;
+tags = ? <b>bold</b> and <i>italic</i> ? , ? first<br>second ? ;
+more = ? <u>under</u> <s>struck</s> H<sub>2</sub>O x<sup>2</sup> ? ;
+markdown = ? `**bold** and *italic*` ? | ? **stays literal** ? ;
+entities = ? a &lt b &amp c, <b>&#60b&#62</b> ? ;
+dropped = ? <span>kept</span> text ? | ? <span>kept</span> <b>bold</b> ? ;

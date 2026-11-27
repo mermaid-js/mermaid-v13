@@ -1,0 +1,11 @@
+architecture-beta
+    group g(cloud)["`**Cloud** *group*`"]
+    service a(server)["`**bold** *italic*`"] in g
+    service b(server)[Line one<br>Line two] in g
+    service c(database)[<b>Bold</b> <i>it</i> <u>under</u>]
+    service d(disk)[**literal** *stars*]
+    service t "`**T**`"[Text icon]
+    a:R -["`**edge** label`"]- L:b
+    b:B -[x<br>y]- T:c
+    c:R -- L:d
+    d:R -- L:t

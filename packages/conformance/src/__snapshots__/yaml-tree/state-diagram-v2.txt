@@ -79,6 +79,7 @@ e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-start-end-edge-centering.mmd
 e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-between-nested-composites-written-in-the-inner.mmd 1 cbf50d69bf1fdbf9
 e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-from-a-child-to-its-own-composite.mmd 1 a09cb2110193c6e2
 e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-from-a-composite-to-its-own-child.mmd 1 ce3f82b6d4b2d361
+e2e/diagrams/state-diagram-v2/nightly-check/entity-without-semicolon.mmd 1 eb6df7f54157cc5a
 e2e/diagrams/state-diagram-v2/nightly-check/forest-theme.mmd 1 24814ef5ce393448
 e2e/diagrams/state-diagram-v2/nightly-check/monospace-font-family-issue-759.mmd 1 0f7a70d0cc0f00f4
 e2e/diagrams/state-diagram-v2/nightly-check/nested-composite-containers-handdrawn-look-redux-color-theme.mmd 1 ee588f5ef1b9cd5f

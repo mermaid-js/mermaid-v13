@@ -10,7 +10,12 @@
  */
 import type { PieDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  markdownString,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import type { PieModel } from '../model.ts';
 import { pieSum } from '../shares.ts';
 import { centroid, pieAngles } from './arc.ts';
@@ -42,13 +47,12 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     legend: font(ctx.theme.number('pieLegendTextSize')),
   };
   // Title and legend go through core's label layout (D225), unwrapped as v12 drew them; a
-  // markdown string is laid out as markdown, without its backticks. `suffix` is plain text.
+  // markdown string (core's `markdownString`, D710) is laid out as markdown, without its
+  // backticks. `suffix` is plain text.
   const inline = ctx.inline ? { inline: ctx.inline } : {};
   const measure = (text: string, f: FontKey, suffix = ''): MeasuredLabel => {
-    const md = markdownString(text);
-    return md === undefined
-      ? layoutLabel(text + suffix, f, Infinity, ctx.measurer, inline)
-      : layoutLabel(md + suffix, f, Infinity, ctx.measurer, { ...inline, markdown: true });
+    const { text: source, markup } = markdownString(text);
+    return layoutLabel(source + suffix, f, Infinity, ctx.measurer, { ...inline, markup });
   };
 
   const outerStrokeWidth = ctx.theme.number('pieOuterStrokeWidth');
@@ -273,16 +277,6 @@ function legendPlace(position: LegendPosition, size: LegendSize): LegendPlace {
       return { ...base, rowX: m.rightLegendX, rowY: middle, chartWidth: side };
   }
 }
-
-/**
- * The source of a markdown string (D225), written as in flowcharts: a backtick and a double
- * quote around it. A section label comes without its quotes, so the backticks are enough; the
- * title may keep them.
- */
-function markdownString(text: string): string | undefined {
-  return RE_MARKDOWN.exec(text.trim())?.[2];
-}
-const RE_MARKDOWN = /^("?)`([^]*)`\1$/;
 
 /** How much taller than one line a label is: 0 for one line (or none), as v12 drew every label. */
 function extraLines(text: MeasuredLabel): number {

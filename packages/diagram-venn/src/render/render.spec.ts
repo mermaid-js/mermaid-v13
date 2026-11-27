@@ -136,6 +136,34 @@ describe('structure (spec #429 Renderer)', () => {
   });
 });
 
+describe('label markup (D710, spec #1333 T5)', () => {
+  /** The whole `<text>` element whose characters hold `word`. */
+  const textWith = (svg: string, word: string): string =>
+    [...svg.matchAll(/<text\b[^>]*>.*?<\/text>/g)]
+      .map((m) => m[0])
+      .find((t) => t.replace(/<[^>]+>/g, '').includes(word)) ?? '';
+
+  it('lays a set, union or text-node label in backticks out as markdown, without them', async () => {
+    const { svg } = await render('nightly-check/markdown-labels');
+    expect(textWith(svg, 'bold')).toMatch(/font-weight="bold">bold<\/tspan><tspan[^>]*> set</);
+    expect(textWith(svg, 'both')).toMatch(/font-weight="bold">both</);
+    expect(textWith(svg, 'italic')).toMatch(
+      /font-style="italic">italic<\/tspan><tspan[^>]*> node</
+    );
+    // The characters drawn; a text node's `data-id` keeps its text as written.
+    for (const word of ['bold', 'both', 'italic'])
+      expect(textWith(svg, word).replace(/<[^>]+>/g, '')).not.toMatch(/`|\*/);
+  });
+
+  it('keeps markdown syntax literal in any other label, and draws its tags and breaks', async () => {
+    const { svg, warnings } = await render('nightly-check/markdown-labels');
+    expect(textWith(svg, 'literal')).toContain('**literal**');
+    expect(textWith(svg, 'literal')).not.toContain('font-weight');
+    expect(textWith(svg, 'Plain')).toMatch(/font-weight="bold">tag<\/tspan><tspan[^>]*>two lines</);
+    expect(warnings).toEqual([]);
+  });
+});
+
 describe('colours (spec #429 Renderer, D415)', () => {
   // vennRenderer.spec.ts "applies theme colors to circles".
   it('gives the circles venn-set-<i mod 8> and slot colours venn1, venn2, …', async () => {

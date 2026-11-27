@@ -75,6 +75,19 @@ describe('kanban parser: columns and cards', () => {
     ]);
   });
 
+  it('marks a label written as a markdown string, which it holds without its wrapper (D712)', () => {
+    const m = model(
+      'kanban\n  a["`**md**`"]\n    b["**plain**"]\n    c[`ticks`]\n    d@{ label: "`**data**`" }\n    e["`x`"]@{ label: y }'
+    );
+    expect(m.items.map((i) => [i.label, i.markdown])).toEqual([
+      ['**md**', true],
+      ['**plain**', undefined],
+      ['`ticks`', undefined],
+      ['`**data**`', undefined],
+      ['y', undefined],
+    ]);
+  });
+
   it('decodes entities to their `&…;` form and keeps raw line breaks in labels', () => {
     const m = model('kanban\n  a[#59; #quot;x#quot;]\n    #amp; b\n    c["d\n e"]');
     expect(m.items.map((i) => [i.id, i.label])).toEqual([
