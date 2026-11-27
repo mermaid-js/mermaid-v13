@@ -23,6 +23,10 @@ error once another item follows it. `@{ … }` after an item is its YAML data. A
 statement where one may start, so an item right after two of them in a row, or one right after
 `kanban`, is an error, as in mermaid@12.
 
+`accTitle: …`, `accDescr: …` and `accDescr { … }` on a line of their own, at any indent, set the
+diagram's accessible title and description and are no items (D742). mermaid@12 read them as
+items; `accTitle[x]` or a bare `accTitle` is still an item.
+
 ## Grammar
 
 EBNF: `[ x ]` is optional, `{ x }` repeats zero or more times, `x+` one or more times, `|` separates alternatives. Upper-case names and `subgraph`, `end`, `acc_…`, `direction_…` are tokens (see below). A rule marked `@Type` builds an AST node of that type.
@@ -39,11 +43,13 @@ stop = ( NL | EOF | SPACELINE ) { NL | EOF } ;
 ```
 
 ```ebnf
-statement = SPACELIST [ Item | Icon | Class ]
+statement = SPACELIST [ Item | Icon | Class | AccTitle | AccDescr ]
           | SPACELINE
           | Item
           | Icon
-          | Class ;
+          | Class
+          | AccTitle
+          | AccDescr ;
 ```
 
 An item, a column or a card by its indent: an id, a shape with its text, or both (`todo`,
@@ -80,11 +86,23 @@ Icon = ICON ;
 Class = CLASS ;
 ```
 
+`accTitle: …`: the accessible title, on a line of its own; a later one replaces it.
+
+```ebnf
+AccTitle @AccTitle = ACC_TITLE ;
+```
+
+`accDescr: …` or `accDescr { … }`: the accessible description; a later one replaces it.
+
+```ebnf
+AccDescr @AccDescr = ACC_DESCR ;
+```
+
 ## Tokens
 
 The lexer works in modes (`INITIAL` and the ones below). In each mode it tries the rules in this order and takes the first that matches; a rule may push a mode or pop back to the previous one. Rules without a token emit nothing.
 
-Modes: `INITIAL`, `class`, `icon`, `node`, `nstr`, `nstr2`, `shapeData`, `shapeDataStr`.
+Modes: `INITIAL`, `acc`, `accBlock`, `class`, `icon`, `node`, `nstr`, `nstr2`, `shapeData`, `shapeDataStr`.
 
 Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 
@@ -96,6 +114,13 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | shapeDataStr | SHAPE_DATA | `(?:<\w+\b(?:[^<>"=]\|=(?!")\|="[^<>"]*")*>\|[^"])+` | fold |  |
 | shapeData | SHAPE_DATA | `(?:<\w+\b(?:[^<>"}^=]\|=(?!")\|="[^<>"}^]*")*>\|[^}^"])+` |  |  |
 | shapeData | — | `\}` | pop |  |
+| INITIAL | SPACELIST | `(?<=^\|\n)[\t ]+(?=accTitle[\t ]*:\|accDescr[\t ]*[:{])` | push(acc) | At a line start, `accTitle:`, `accDescr:` or `accDescr {`: the indent, then the statement read in its own mode (D742). |
+| INITIAL | — | `(?<=^\|\n)(?=accTitle[\t ]*:\|accDescr[\t ]*[:{])` | push(acc) |  |
+| acc | ACC_TITLE | `accTitle[\t ]*:[^\n\u2028\u2029]*` | pop | `accTitle: …`: the accessible title, the rest of the line. |
+| acc | ACC_DESCR | `accDescr[\t ]*:[^\n\u2028\u2029]*` | pop | `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to the first `}`, or to the end of the text when there is none): the accessible description. |
+| acc | — | `accDescr[\t ]*\{` | pop push(accBlock) |  |
+| accBlock | ACC_DESCR | `[^}]*\}` | pop |  |
+| accBlock | ACC_DESCR | `[^}]+` |  |  |
 | INITIAL | SPACELINE | `\s*%%.*` |  | A `%%` comment v12's comment removal left (after text on a line, or a bare `%%`), with the blanks and line breaks before it: a blank line. |
 | INITIAL | KANBAN | `kanban\b` |  | `kanban`: starts a kanban board; its columns and cards follow, one per line. |
 | INITIAL | — | `:::` | push(class) | `:::class …`: the classes of the last item, the rest of the line. |

@@ -11,4 +11,4 @@
   step value 2:31-2:33 "ba" -> "step"
   stepAfter value 2:31-2:33 "ba" -> "stepAfter"
   stepBefore value 2:31-2:33 "ba" -> "stepBefore"
-  rounded value (default) 2:31-2:33 "ba" -> "rounded"
+  rounded value 2:31-2:33 "ba" -> "rounded"

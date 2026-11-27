@@ -89,7 +89,41 @@ describe('the kanban facet', () => {
   it('completes nothing on a line v12 rejects, and goes on after it', () => {
     // A blank line right after `kanban` is an error at the item after it.
     expect(complete('kanban\n\n  ¦todo\n    a')).toEqual([]);
-    expect(complete('kanban\n\n  todo\n    ¦')).toEqual(['::icon()', ':::']);
+    expect(complete('kanban\n\n  todo\n    ¦')).toEqual([
+      '::icon()',
+      ':::',
+      'accTitle',
+      'accDescr',
+    ]);
+  });
+
+  it('completes `accTitle` and `accDescr` at a statement start, before any item too (D742)', () => {
+    expect(complete('kanban\n  acc¦')).toEqual(['accTitle', 'accDescr']);
+    expect(complete('kanban\n  todo\n  acc¦')).toEqual(['accTitle', 'accDescr']);
+    expect(complete('kanban\n  todo\n    accD¦')).toEqual(['accDescr']);
+    // Not after an item on its line, nor in an acc statement's text.
+    expect(complete('kanban\n  todo[x] acc¦')).toEqual([]);
+    expect(complete('kanban\n  accTitle: a¦')).toEqual([]);
+  });
+
+  it('hovers the keyword of an acc statement with its doc, and records no symbol for it', () => {
+    const text = 'kanban\n  accTitle: My board\n  accDescr {\n    d\n  }\n  todo';
+    const result = kanbanLanguage.parse(text, { keepTokens: true });
+    const hoverAt = (offset: number) => {
+      const t = result.tokens!;
+      let j = 0;
+      while ((t.end[j] ?? 0) <= offset) j++;
+      const token = { kind: t.kind[j] ?? 0, range: { start: t.start[j] ?? 0, end: t.end[j] ?? 0 } };
+      return kanbanLanguage.hover({ offset, token }, { text, result });
+    };
+    const hover = hoverAt(text.indexOf('Title'));
+    expect(hover?.contents).toMatch(/^\*\*`accTitle`\*\*\n\n`accTitle: …`: the accessible title/);
+    expect(hover?.range).toEqual({ start: 9, end: 17 });
+    expect(hoverAt(text.indexOf('Descr'))?.contents).toMatch(/^\*\*`accDescr`\*\*/);
+    // Not on the value, nor anywhere in the block.
+    expect(hoverAt(text.indexOf('board'))).toBeUndefined();
+    expect(hoverAt(text.indexOf('d\n  }'))).toBeUndefined();
+    expect(symbols(text)).toEqual(['node def todo = todo']);
   });
 });
 
