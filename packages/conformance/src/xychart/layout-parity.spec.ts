@@ -46,8 +46,9 @@ import { v12DataLabels, type V12Rect } from './v12-data-labels.ts';
  *   v13 keeps one space between them, `spacedWords`).
  * - `v12: a negative titlePadding …`: a value outside the schema, taken as v12 takes it; v12
  *   itself then draws the title over the plot, which the invariant reports.
- * Data labels use each bar plot's own values (D382; v12 used plot 0's), and legend swatches get
- * none (a maintainer choice; v12 labelled every `rect`).
+ * Data labels use each bar plot's own values (D382; v12 used plot 0's) at one size for every
+ * bar plot (D748; v12 sized each plot on its own), and legend swatches get none (a maintainer
+ * choice; v12 labelled every `rect`).
  */
 
 /** v12's headless text measure: `length × fontSize` by `fontSize`. */
@@ -175,7 +176,35 @@ async function v12Drawn(
       const own = plots[index]!.data.map((d) => d[1]);
       dataLabels.set(index, v12DataLabels(e.data, own, config));
     }
-  return { elems, dataLabels };
+  return { elems, dataLabels: oneLabelSize(dataLabels) };
+}
+
+/**
+ * Whether difference `d` in bar plot `index` comes from data labels v12 wrote at a size under 1
+ * (D383): that plot's labels, and the size of every other plot's, since the one size (D748) is
+ * then taken from the bars of that plot with room, which v12 does not give.
+ */
+function tooSmall(d: string, index: number, tiny: readonly [number, unknown][]): boolean {
+  if (!d.includes('/data-labels')) return false;
+  return tiny.some(([i]) => i === index) || (tiny.length > 0 && d.includes('.size: '));
+}
+
+/**
+ * D748: v13 draws every bar plot's labels at one size, the smallest of the plots' sizes. v12
+ * sized each plot on its own. A plot whose v12 size is under 1 (D383) is left as it is.
+ */
+function oneLabelSize(
+  dataLabels: Map<number, ReturnType<typeof v12DataLabels>>
+): Map<number, ReturnType<typeof v12DataLabels>> {
+  const sizes = [...dataLabels.values()].flatMap((ls) => ls.map((l) => l.fontSize));
+  const size = Math.min(...sizes.filter((s) => s > 0));
+  const one = new Map<number, ReturnType<typeof v12DataLabels>>();
+  for (const [index, ls] of dataLabels)
+    one.set(
+      index,
+      ls.map((l) => (l.fontSize > 0 ? { ...l, fontSize: size } : l))
+    );
+  return one;
 }
 
 /** The v13 parser's model of `source`, or undefined when it rejects it. */
@@ -409,8 +438,7 @@ async function compare(
     for (const d of differences(v13Shape(layout), v12Shape(drawn))) {
       const bar = /^plot\/bar-plot-(\d+)/.exec(d);
       if (bar && held.has(Number(bar[1]))) list('bar held in the plot box', item.id);
-      else if (bar && d.includes('/data-labels') && tiny.some(([i]) => i === Number(bar[1])))
-        list('D383 label too small', item.id);
+      else if (bar && tooSmall(d, Number(bar[1]), tiny)) list('D383 label too small', item.id);
       else problems.push(`${tag}: ${d}`);
     }
     // v12 itself puts the title over the plot when `titlePadding` is negative.

@@ -271,7 +271,7 @@ describe('layoutXyChart: D383, never NaN or Infinity, one warning per kind', () 
 describe('layoutXyChart: data labels', () => {
   const src = 'xychart\n  x-axis [a, b]\n  y-axis 0 --> 100\n  bar [50, 100]\n  bar [10, 20]\n';
 
-  it('labels each bar plot with its own values (D382), at one font size per plot', () => {
+  it('labels each bar plot with its own values (D382), at one font size', () => {
     const { layout } = lay(src, { showDataLabel: true });
     expect(bars(layout, 0).dataLabels.map((t) => t.text)).toEqual(['50', '100']);
     expect(bars(layout, 1).dataLabels.map((t) => t.text)).toEqual(['10', '20']);
@@ -353,6 +353,49 @@ describe('layoutXyChart: data labels', () => {
     expect(10 + sizes[0]!).toBeLessThanOrEqual(short.height);
     expect(10 + sizes[0]! + 2).toBeGreaterThan(short.height);
     expect(warnings).toEqual([]);
+  });
+
+  it('gives every bar plot one label size, the smallest any of them fits (D748)', () => {
+    // Alone, the plot of short bars fits smaller labels than the plot of tall ones (the 3 is
+    // the shortest bar with room in either); together, both plots take that smaller size.
+    const plotOf = (values: string) =>
+      `xychart\n  x-axis [a, b, c]\n  y-axis 0 --> 40\n  bar [${values}]\n`;
+    const sizeOf = (p: XyBarPlotLayout) => [...new Set(p.dataLabels.map((t) => t.font.size))];
+    const tall = sizeOf(bars(lay(plotOf('30, 35, 40'), { showDataLabel: true }).layout));
+    const short = sizeOf(bars(lay(plotOf('3, 6, 9'), { showDataLabel: true }).layout));
+    expect(tall).toHaveLength(1);
+    expect(short).toHaveLength(1);
+    expect(short[0]!).toBeLessThan(tall[0]!);
+    for (const orientation of ['vertical', 'horizontal']) {
+      const both = `${plotOf('30, 35, 40')}  bar [3, 6, 9]\n  line [5, 10, 15]\n`;
+      const { layout, warnings } = lay(both, {
+        showDataLabel: true,
+        chartOrientation: orientation,
+      });
+      const sizes = [0, 1].flatMap((i) => bars(layout, i).dataLabels.map((t) => t.font.size));
+      expect(sizes, orientation).toHaveLength(6);
+      expect(new Set(sizes).size, orientation).toBe(1);
+      if (orientation === 'vertical') expect(sizes[0]).toBe(short[0]);
+      expect(warnings, orientation).toEqual([]);
+    }
+  });
+
+  it('warns XYCHART_LABEL_TOO_SMALL only when no bar of any plot has room (D748)', () => {
+    // The first plot's bars are under the 10 px margin; the second plot's have room. Without y
+    // labels the y axis has no outer padding, so the bars start at 0.
+    const src2 = 'xychart\n  x-axis [a, b]\n  y-axis 0 --> 100\n  bar [1, 2]\n  bar [80, 90]\n';
+    const { layout, warnings } = lay(src2, { showDataLabel: true, yAxis: { showLabel: false } });
+    expect(bars(layout, 0).bars.every((b) => b.height > 0 && b.height < 10)).toBe(true);
+    expect(bars(layout, 0).dataLabels).toEqual([]);
+    expect(bars(layout, 1).dataLabels.map((t) => t.text)).toEqual(['80', '90']);
+    expect(warnings).toEqual([]);
+    // Neither plot has room: one warning, naming both plots.
+    const none = lay('xychart\n  x-axis [a, b]\n  bar [1, 2]\n  bar [2, 1]\n', {
+      showDataLabel: true,
+      height: 16,
+    });
+    expect(none.warnings.map((w) => w.code)).toEqual([XYCHART_LABEL_TOO_SMALL]);
+    expect(none.warnings[0]!.astIds).toHaveLength(2);
   });
 
   it('draws no data labels without showDataLabel', () => {
