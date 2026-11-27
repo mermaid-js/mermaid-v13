@@ -11,7 +11,7 @@ import { createMermaid, type MermaidConfig } from 'mermaid';
 import { REPO_ROOT } from './index.ts';
 
 /** One drawn `<text>`: its lines, and the lines joined with a blank. */
-interface DrawnText {
+export interface DrawnText {
   readonly lines: readonly string[];
   readonly flat: string;
 }
@@ -90,7 +90,7 @@ function expectedLabels(
 }
 
 /** A type's label-syntax fixtures and how its labels read (#1368). */
-interface LabelSyntaxSuite {
+export interface LabelSyntaxSuite {
   /** The fixtures' folder under `e2e/diagrams`. */
   readonly folder: string;
   /** The config section that may set `markdownAlwaysOn` for the type. */
