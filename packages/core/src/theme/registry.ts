@@ -82,7 +82,7 @@ export function resolveThemeName(theme: unknown, warn?: (w: ThemeWarning) => voi
 }
 
 function own(o: object, k: string): boolean {
-  return Object.prototype.hasOwnProperty.call(o, k);
+  return Object.hasOwn(o, k);
 }
 
 /** Loads a built-in theme spec. */

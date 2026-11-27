@@ -152,19 +152,22 @@ function acyclic(parents: ReadonlyMap<string, string>): boolean {
 
 /**
  * `f(id)` = `base` at a root, else `step(parent, f(parent))`, memoised and without recursion.
- * Only for `parents` with no cycle.
+ * Only for `parents` with no cycle. `T` excludes `undefined`, so no memoised value is one and
+ * `memo.get` giving `undefined` is a miss. (Were one `undefined`, it would only be worked out
+ * again, to the same value: the walk ends at a root, as `parents` has no cycle.)
  */
-function upward<T>(
+function upward<T extends NonNullable<unknown>>(
   parents: ReadonlyMap<string, string>,
   base: T,
   step: (parent: string, above: T) => T
 ): (id: string) => T {
+  if (parents.size === 0) return () => base;
   const memo = new Map<string, T>();
   return (id) => {
     const chain: string[] = [];
     let x = id;
     let value = memo.get(x);
-    while (!memo.has(x)) {
+    while (value === undefined) {
       const p = parents.get(x);
       if (p === undefined) {
         value = base;
@@ -175,7 +178,7 @@ function upward<T>(
       x = p;
       value = memo.get(x);
     }
-    let v = value as T;
+    let v = value;
     for (let i = chain.length - 1; i >= 0; i--) {
       const c = chain[i]!;
       v = step(parents.get(c)!, v);

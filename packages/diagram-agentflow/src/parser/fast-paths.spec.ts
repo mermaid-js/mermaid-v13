@@ -1,10 +1,12 @@
 /**
  * Agentflow on the flow family's small paths (first-character INITIAL dispatch, the token
- * range fast path, edges indexed on lookup, class styles without the `§§§` swap) against the
- * reference implementations: each generated text parses to the same result both ways.
+ * range fast path, token text sliced without cooking, edges indexed on lookup, class styles
+ * without the `§§§` swap) against the reference implementations: each generated text parses to
+ * the same result both ways.
  */
 import { describe, expect, it } from 'vitest';
 import { referencePaths } from '@mermaid-js/shared/testing/parser-reference';
+import { agentflowLanguage } from '../language.ts';
 import { parseAgentflow } from './parser.ts';
 
 // prettier-ignore
@@ -55,6 +57,31 @@ describe('agentflow on the small paths', () => {
   it('gives the reference result on generated texts', () => {
     for (const src of texts(2500, 7)) {
       expect(parse(src), JSON.stringify(src)).toEqual(referencePaths(() => parse(src)));
+    }
+  });
+});
+
+describe('agentflow token text without cooking', () => {
+  // CRLF and CR, entities, a token straight after `}`, errors whose messages read tokens behind
+  // the one at fault, and lexing again after an unclosed label; at every probe offset too.
+  const sources = [
+    'agentflow-beta TB\r\nA --> B\r\nB -- t --> C\r\n',
+    'agentflow-beta TB\rA["x\r\ny"] --> B\r',
+    'agentflow-beta TB\nA["#35; #quot;q#quot; #nope;"] -->|#35;| B\nstyle A fill:#f9f;',
+    'agentflow-beta TB\nA{t}B\nC{t}-->D\nE@{ shape: tool }F\nflow F\n}x\nend',
+    'agentflow-beta TB\nA --> B C -->\nD["unclosed\nE --> F\n}G\r\nH(x --> I',
+    'agentflow-beta TB\n%% c\nA --> B\n\nC{x}D',
+  ];
+
+  it('gives the reference result', () => {
+    const run = (src: string, probe?: number) =>
+      agentflowLanguage.parse(src, { keepTokens: true, ...(probe === undefined ? {} : { probe }) });
+    for (const src of sources) {
+      expect(parse(src), JSON.stringify(src)).toEqual(referencePaths(() => parse(src)));
+      for (let at = 0; at <= src.length; at++)
+        expect(run(src, at), `${JSON.stringify(src)} at ${at}`).toEqual(
+          referencePaths(() => run(src, at))
+        );
     }
   });
 });

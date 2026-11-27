@@ -113,7 +113,7 @@ export function parseRule(source: string): Expr {
     if (m[2] !== undefined) return { k: 'lit', text: m[2] };
     const word = m[1] ?? fail('expected a value');
     if (peekSymbol() !== '(') return { k: 'ref', name: word };
-    if (!Object.prototype.hasOwnProperty.call(ARITY, word)) fail(`unknown function ${word}`);
+    if (!Object.hasOwn(ARITY, word)) fail(`unknown function ${word}`);
     const fn = word as Fn;
     next();
     const args: Expr[] = [];

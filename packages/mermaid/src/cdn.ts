@@ -9,6 +9,7 @@
  */
 import type { Mermaid } from './api.ts';
 import { setCdnBase, setDefaultBase } from './cdn-base.ts';
+import { isPlain as isObject } from './config-snapshot.ts';
 import mermaid, {
   createMermaid as createSite,
   initialize as initializeSite,
@@ -17,9 +18,6 @@ import mermaid, {
 import { connectPluginQueue, queueOwnedElsewhere, warnTwoCopies } from './plugin-queue.ts';
 
 export * from './index.ts';
-
-const isObject = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Marks the default API object of a CDN build copy, as `globalThis.mermaid`. */
 const CDN_COPY = 'mermaid:cdnCopy';

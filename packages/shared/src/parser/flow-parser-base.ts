@@ -47,6 +47,12 @@ import type { FlowKinds } from './flow-kinds.ts';
 import type { FlowTables } from './flow-tables.ts';
 
 /**
+ * The characters `cook` may read other than they are. `}` counts only with `braceNewline`, but
+ * one search serves every dialect: without it a token near a `}` is merely cooked.
+ */
+const COOKED = /[\r#}]/g;
+
+/**
  * The parse options every dialect has. `maxDepth` caps block nesting, core's
  * `DEFAULT_LIMITS.maxDepth` when unset.
  */
@@ -271,9 +277,28 @@ export abstract class FlowParserBase<
     return this.tokens.end[j] ?? 0;
   }
 
+  /**
+   * Without removed spans or a mask, `src[lo, hi)` holds none of {@link COOKED}, so a token
+   * whose text and the character before it lie inside reads as it is (`isPlainRange`).
+   * `hi` is the first such character at or after `lo` (the end without one): a token past it
+   * searches again from the character before it, so each part of the source is searched once.
+   */
+  private lo = 0;
+  private hi = 0;
+
   /** A token's text as v12 saw it (removed spans dropped, entities decoded). */
   protected raw(j = this.i): string {
-    return cook(this.src, this.start(j), this.end(j), this.view);
+    const { src, view } = this;
+    const s = this.start(j);
+    const e = this.end(j);
+    if (view.holes.length === 0 && !view.mask) {
+      if (s > this.hi) {
+        COOKED.lastIndex = this.lo = s - 1;
+        this.hi = COOKED.test(src) ? COOKED.lastIndex - 1 : src.length;
+      }
+      if (s > this.lo && e <= this.hi) return src.slice(s, e);
+    }
+    return cook(src, s, e, view);
   }
 
   /**

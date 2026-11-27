@@ -202,7 +202,7 @@ const BLACK: Rgba = [0, 0, 0, 1];
 const WHITE: Rgba = [255, 255, 255, 1];
 const AA = 4.5;
 
-const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
+const own = (o: object, k: string): boolean => Object.hasOwn(o, k);
 
 /**
  * An opacity: a plain number from 0 to 1 (D221), `RE_SIZE` without its `px`, or a percentage from
