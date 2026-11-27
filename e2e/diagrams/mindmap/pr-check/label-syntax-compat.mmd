@@ -1,9 +1,11 @@
 ---
 description: >-
-  label-syntax.mmd with legacyMarkdown: every node form reads plain markdown
-  as v12 did; everything else draws as in the default mode (#1368)
+  label-syntax.mmd with markdownAlwaysOn: every label is markdown, so the
+  plain rows of every node form draw bold and italic and the code-span and
+  bare-backtick rows draw inline code; tags and \n draw as in the default mode
+  (#1368)
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 mindmap
   root((root **bold** _ital_))

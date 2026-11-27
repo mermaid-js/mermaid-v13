@@ -1667,14 +1667,15 @@ Legend entries carry `data-id="a:<name>"` only.
   (`` "`…`" ``) only, as in every diagram type (#1368). v12 read bold and italic in every node
   label without backticks; v13 draws plain `**bold**` and `_italic_` as written, and the render
   gives one `MARKDOWN_NOT_READ` warning. Write the label as a markdown string, or set
-  `legacyMarkdown: true` to read plain labels as v12 did: then bold and italic are read, a label
-  that starts with `- `, `* ` or `+ ` is drawn as written (D564, #763), and a code span is
-  drawn as written, backticks included, with bold and italic outside it read (D610, #836). A
-  label wholly in backticks without quotes (``[`a **b**`]``) is drawn as written in both modes,
+  `markdownAlwaysOn: true` (or `mindmap.markdownAlwaysOn`), which draws every label as
+  markdown, read like a markdown string. That is not v12's reading: a code span
+  (``[`a **b**`]``, or ``a `code` b``) is then drawn as inline code, and a label that starts
+  with `- `, `* ` or `+ ` as a list item, where v12 drew both as written (D564, D610, #763,
+  #836). Without the setting, a label wholly in backticks without quotes is drawn as written,
   as in v12. A markdown string written as a whole node line, with no shape
   (`` "`a **b**`" ``), is read as markdown too, where v12 drew its quotes and backticks; the
-  node's id is still the line as written. Only a markdown string has bullet lists and inline
-  code, which v12 did not draw (D56). `<br>`, `<b>`, `<i>`, `<u>`, `<s>`, `<sub>` and `<sup>`
+  node's id is still the line as written. Only markdown has bullet lists and inline code,
+  which v12 did not draw (D56). `<br>`, `<b>`, `<i>`, `<u>`, `<s>`, `<sub>` and `<sup>`
   draw, and a written `\n` breaks the line in every label, markdown string or not, where v12
   showed it as text. A word wider than `maxNodeWidth` stays whole and the node grows to hold
   it, as v12's HTML labels did (#649).
@@ -1700,7 +1701,7 @@ class names are kept where the element still exists: `mindmap-node`, `section-<n
 | --- | --- | --- |
 | Root `id="<render id>"`, `class="mindmapDiagram"`, a `<style>` scoped by the id; colours from CSS rules per section | No root `id`; `class="mermaid mermaid-mindmap"`, `role="img"`, `aria-roledescription="mindmap"`, `data-mermaid-version`; colours are presentation attributes, theme variables as `var(--_x)` aliases and palette slots as literal colours | Inert output (R-SEC-2), D152 |
 | Node `<g id="node_<n>" class="mindmap-node section-<n>" data-look>` placed by `transform`, the shape inside with `id`; edges in `g.edgePaths`, nodes in `g.nodes` | `<g class="mindmap-node section-<n> <author classes>" data-id="n:<id>" data-ast="n:<id>">` (the root `section-root section--1`), coordinates absolute, no `transform`, no ids, no `data-look`; edges in `g.mindmap-edges` under nodes in `g.mindmap-nodes`. An edge is `<path class="edge section-edge-<n> edge-depth-<d>" data-id="edge:n:<child>">` | One element per node maps it to its source (R-PARSE-8, D289); D308 |
-| Labels in `<foreignObject>` HTML (`htmlLabels`), every label markdown | `<text class="mindmap-node-label">` with a `<tspan>` per line from core's label layout; markdown in a markdown string, or in every label with `legacyMarkdown` (D225, #1368) | No `foreignObject` (R-SEC-2) |
+| Labels in `<foreignObject>` HTML (`htmlLabels`), every label markdown | `<text class="mindmap-node-label">` with a `<tspan>` per line from core's label layout; markdown in a markdown string, or in every label with `markdownAlwaysOn` (D225, #1368) | No `foreignObject` (R-SEC-2) |
 | `edge-depth-<d>` from the parent's raw indent plus 1 (two-space indents give 1, 3, 5 …); widths from CSS: classic `17 − 3i`, so 11, 8, 5, 2 and 3 px from class 5 on (the browser drops the negative ones), neo `max(10 − 2d, 2)` | The same class numbering and widths, written as `stroke-width` on each edge; with two-space indents classic edges are 11, 5 and 3 px wide, not 11, 8, 5 | P2: author CSS for `edge-depth-<d>` keeps matching (GAPS #388) |
 | Edges `curve: 'basis'` through cose-bilkent's three points, or tidy-tree's elbows | `tree`'s port-to-port routes as one cubic leaving and entering along the ports; `layered` and ELK routes as the basis spline through their points | D280–D282 |
 | A plain node: `defaultMindmapNode` (four rounded corners, flat bottom under `look: neo`) with a `line.node-line-` rule, except `rounded` when the theme name had `redux` | The `mindmapRoundedNodes` and `mindmapOutlinedNodes` theme flags ([Theme geometry](#theme-geometry)); the rule is `line.node-line-<n>` in `cScaleInv<n>`, not drawn under the gradient | D288, D152 |

@@ -23,8 +23,24 @@ const spans = (svg: string): string[] =>
     return `${bold}${italic}${text!}`;
   });
 
+// The mindmap fixture sets `markdownAlwaysOn`, so every label is markdown (#1368): the emphasis
+// outside a span is read and the span is inline code, the stars inside it as written.
+describe('emphasis beside a code span in mindmap, with markdownAlwaysOn (#836, #1368)', () => {
+  it('reads the emphasis outside the span and draws the span as inline code', async () => {
+    const { svg, warnings } = await createMermaid().render('d', fixture('mindmap'));
+    expect(warnings).toEqual([]);
+    assertInert(svg);
+    const drawn = spans(svg);
+    expect(drawn).toContain('b:bold');
+    expect(drawn).toContain('i:italic');
+    const code = [...svg.matchAll(/<tspan[^>]*font-family="[^"]*mono[^"]*"[^>]*>([^<]*)</gi)];
+    expect(code.map((m) => m[1])).toEqual(['code', '**not bold**', 'x_1', 'y']);
+    expect(svg).not.toContain('`');
+    expect(svg).not.toMatch(/&amp;#(42|95);|&#(42|95);/);
+  });
+});
+
 describe.each([
-  { type: 'mindmap', dir: 'mindmap' },
   { type: 'state', dir: 'state-diagram-v2' },
   { type: 'requirement', dir: 'requirement' },
   { type: 'class', dir: 'class-diagram' },

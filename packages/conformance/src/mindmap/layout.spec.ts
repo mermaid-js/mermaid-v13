@@ -57,6 +57,17 @@ const ENGINES: readonly [string, () => LayoutEngine][] = [
   ['elk', () => elk],
 ];
 
+/**
+ * The sources with a plain label holding an emphasis pair, which give `MARKDOWN_NOT_READ`
+ * (#1368): the label fixture, whose plain rows show it, and two bare-backtick labels over two
+ * lines, whose code span the warning does not see across the line break.
+ */
+const MARKDOWN_SOURCES = [
+  'e2e/baseline/text/backtick-label-on-two-lines.mmd',
+  'e2e/pr-check/formatted-label-with-linebreak-and-a-wrapping-label-and-emojis.mmd',
+  'e2e/pr-check/label-syntax.mmd',
+];
+
 async function laidOut(f: Fixture, engine: LayoutEngine) {
   const warnings: string[] = [];
   const layout = layoutMindmap(f.model, {
@@ -65,10 +76,7 @@ async function laidOut(f: Fixture, engine: LayoutEngine) {
     units: pxProfile,
     theme: createTheme(await loadTheme(f.theme), { diagram: mindmap.theme }),
     layout: (graph) => engine(graph, { config: f.config }),
-    // Markdown in a plain label is the label's warning (#1368), checked in `labels.spec.ts`.
-    warn: (w) => {
-      if (w.code !== MARKDOWN_NOT_READ.code) warnings.push(w.code);
-    },
+    warn: (w) => warnings.push(w.code),
   });
   return { layout, warnings };
 }
@@ -89,13 +97,18 @@ describe('mindmap layout over parser-produced fixtures', () => {
     '%s: no NaN or overlaps, edges on their boxes, labels and icons inside their shapes',
     async (name, engineOf) => {
       const engine = engineOf();
+      const markdown: string[] = [];
       for (const f of fixtures) {
         const { layout, warnings } = await laidOut(f, engine);
         expect(validateLayout(layout.mindmap.graph, layout), f.id).toEqual([]);
         expect(mindmapProblems(layout), f.id).toEqual([]);
         if (name === 'tree') expect(treeProblems(layout.mindmap.graph, layout), f.id).toEqual([]);
-        expect(warnings, f.id).toEqual([]);
+        const other = warnings.filter((code) => code !== MARKDOWN_NOT_READ.code);
+        expect(other, f.id).toEqual([]);
+        if (other.length < warnings.length) markdown.push(f.id);
       }
+      // Markdown in a plain label warns (#1368): only these sources hold it.
+      expect(markdown).toEqual(MARKDOWN_SOURCES);
     },
     120_000
   );

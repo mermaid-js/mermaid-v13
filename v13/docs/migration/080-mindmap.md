@@ -54,14 +54,15 @@
   (`` "`…`" ``) only, as in every diagram type (#1368). v12 read bold and italic in every node
   label without backticks; v13 draws plain `**bold**` and `_italic_` as written, and the render
   gives one `MARKDOWN_NOT_READ` warning. Write the label as a markdown string, or set
-  `legacyMarkdown: true` to read plain labels as v12 did: then bold and italic are read, a label
-  that starts with `- `, `* ` or `+ ` is drawn as written (D564, #763), and a code span is
-  drawn as written, backticks included, with bold and italic outside it read (D610, #836). A
-  label wholly in backticks without quotes (``[`a **b**`]``) is drawn as written in both modes,
+  `markdownAlwaysOn: true` (or `mindmap.markdownAlwaysOn`), which draws every label as
+  markdown, read like a markdown string. That is not v12's reading: a code span
+  (``[`a **b**`]``, or ``a `code` b``) is then drawn as inline code, and a label that starts
+  with `- `, `* ` or `+ ` as a list item, where v12 drew both as written (D564, D610, #763,
+  #836). Without the setting, a label wholly in backticks without quotes is drawn as written,
   as in v12. A markdown string written as a whole node line, with no shape
   (`` "`a **b**`" ``), is read as markdown too, where v12 drew its quotes and backticks; the
-  node's id is still the line as written. Only a markdown string has bullet lists and inline
-  code, which v12 did not draw (D56). `<br>`, `<b>`, `<i>`, `<u>`, `<s>`, `<sub>` and `<sup>`
+  node's id is still the line as written. Only markdown has bullet lists and inline code,
+  which v12 did not draw (D56). `<br>`, `<b>`, `<i>`, `<u>`, `<s>`, `<sub>` and `<sup>`
   draw, and a written `\n` breaks the line in every label, markdown string or not, where v12
   showed it as text. A word wider than `maxNodeWidth` stays whole and the node grows to hold
   it, as v12's HTML labels did (#649).
