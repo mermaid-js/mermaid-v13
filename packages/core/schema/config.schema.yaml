@@ -5949,6 +5949,20 @@ $defs:
         $ref: '#/$defs/FlowchartDiagramConfig/properties/minNodeWidth'
         default: 120
         x-mermaid: *usecaseLength
+      curve:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/curve'
+        description: |
+          How usecase relationship and note lines are drawn between their route
+          points (D733).
+
+          Defaults to S-curves, as `basis` draws them: the curve usecase drew
+          before this key. Precedence: this key when set, then the top-level
+          `curve` when set, then S-curves. A line from a node back to itself
+          stays rounded.
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: "New in v13 (D733, #1379): v12's usecase drew a fixed curve and read no curve key. The text output stays on the grid's right angles (D78). A name outside the list is drawn with `rounded` and warns `CURVE_UNKNOWN` once per render (D602, D681)."
       actorFontSize:
         description: Font size for actor labels
         type: number

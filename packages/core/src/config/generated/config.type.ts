@@ -2676,6 +2676,17 @@ wrappingWidth?: number
  */
 minNodeWidth?: number
 /**
+ * How usecase relationship and note lines are drawn between their route
+ * points (D733).
+ * 
+ * Defaults to S-curves, as `basis` draws them: the curve usecase drew
+ * before this key. Precedence: this key when set, then the top-level
+ * `curve` when set, then S-curves. A line from a node back to itself
+ * stays rounded.
+ * 
+ */
+curve?: ("basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded")
+/**
  * Font size for actor labels
  */
 actorFontSize?: number
