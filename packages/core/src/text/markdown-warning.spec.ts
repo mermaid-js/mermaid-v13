@@ -26,6 +26,8 @@ const COUNTED = [
   '(*i*)',
   'line one\\n**two**',
   'a<br>*b*',
+  '`a span\nover two lines` and **b**',
+  '**b** then `a span\nover two lines`',
 ];
 const NOT_COUNTED = [
   'snake_case',
@@ -47,6 +49,8 @@ const NOT_COUNTED = [
   'a `**b**` c',
   'a `_i_` c',
   'a lone ` backtick',
+  '`**Start** with\n  a second line`',
+  'a `code over\ntwo **lines**` b',
   '$$a_b + c_d$$',
   '$$x*y*z$$',
   '- a note that starts like a list',
