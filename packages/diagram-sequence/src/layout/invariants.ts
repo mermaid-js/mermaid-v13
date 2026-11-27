@@ -3,10 +3,10 @@
  * graph engine's `validateLayout`. Each is a property of the output that the layout code does
  * not build by construction: no NaN; every message and note of the model laid out; messages
  * inside their participants' span and columns; frames holding their members (lines, labels,
- * notes, nested frames), their tab, title and section labels; notes clear of participant
- * boxes; a wrapped label between neighbouring participants clear of both lifelines; activation
- * bars on their lifeline or touching the bar they stack on. Each violation is one readable line.
- * Comparisons allow a float tolerance.
+ * notes, nested frames), their tab, title and section labels; a frame title right of its tab;
+ * notes clear of participant boxes; a wrapped label between neighbouring participants clear of
+ * both lifelines; activation bars on their lifeline or touching the bar they stack on. Each
+ * violation is one readable line. Comparisons allow a float tolerance.
  *
  * Not checked: that `bounds` holds everything, because the layout grows it to do so.
  */
@@ -147,6 +147,18 @@ function framesHold(
         out.push(`frame ${f.ast} does not contain a section label`);
     }
   }
+}
+
+/**
+ * A frame's title starts at or right of its tab's right edge, so the two never overlap (#1361,
+ * D734: a `critical` tab wider than `labelBoxWidth` ran into the title). Not in cells, where the
+ * keyword is written on the top border and the title on a row below it.
+ */
+function titlesClearTabs(layout: SequenceLayout, out: string[]): void {
+  if (layout.units === 'cell') return;
+  for (const f of layout.fragments)
+    if (f.title && f.title.x < f.tab.x + f.tab.width - EPS)
+      out.push(`the title of frame ${f.ast} overlaps its tab`);
 }
 
 function notesClear(layout: SequenceLayout, out: string[]): void {
@@ -343,6 +355,7 @@ export function sequenceLayoutViolations(
   allLaidOut(model, rectsOf, out);
   messagesInSpan(layout, parts, out);
   framesHold(model, layout, rectsOf, out);
+  titlesClearTabs(layout, out);
   notesClear(layout, out);
   numbersClear(layout, out);
   labelsAboveLines(layout, out);

@@ -67,7 +67,7 @@ describe('sequence lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture reaches the sequence lexer.
-    expect(e2e).toBe(237);
+    expect(e2e).toBe(238);
     expect(compared).toBeGreaterThan(800);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
