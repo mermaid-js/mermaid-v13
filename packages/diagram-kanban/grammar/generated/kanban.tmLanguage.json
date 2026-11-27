@@ -60,9 +60,9 @@
         }
       }
     },
-    "switch-10": {
-      "begin": "(?i)accDescr[\\t ]*\\{",
-      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)[^}]*\\})",
+    "switch-acc-10": {
+      "begin": "(?!(?i)accTitle[\\t ]*:[^\\n\\u2028\\u2029]*|(?i)accDescr[\\t ]*:[^\\n\\u2028\\u2029]*)(?:\\G|(?!(?i)[^}]*\\}))(?i)accDescr[\\t ]*\\{",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)[^}]*\\})",
       "patterns": [
         {
           "include": "#mode-accBlock"
@@ -72,38 +72,43 @@
         "0": {
           "name": "keyword.control.mermaid-kanban"
         }
-      },
+      }
+    },
+    "rule-6": {
+      "begin": "(?i)(?<=^|\\n)[\\t ]+(?=accTitle[\\t ]*:|accDescr[\\t ]*[:{])",
+      "end": "(?!\\G)((?i)[^}]*\\})|(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-acc"
+        },
+        {
+          "include": "#switch-acc-10"
+        }
+      ],
       "endCaptures": {
         "1": {
           "name": "keyword.control.mermaid-kanban"
         }
       }
     },
-    "rule-6": {
-      "begin": "(?i)(?<=^|\\n)[\\t ]+(?=accTitle[\\t ]*:|accDescr[\\t ]*[:{])",
-      "end": "(?!\\G)",
-      "applyEndPatternLast": 1,
-      "patterns": [
-        {
-          "include": "#phase-acc"
-        },
-        {
-          "include": "#switch-10"
-        }
-      ]
-    },
     "rule-7": {
       "begin": "(?i)(?<=^|\\n)(?=accTitle[\\t ]*:|accDescr[\\t ]*[:{])",
-      "end": "(?!\\G)",
+      "end": "(?!\\G)((?i)[^}]*\\})|(?!\\G)",
       "applyEndPatternLast": 1,
       "patterns": [
         {
           "include": "#phase-acc"
         },
         {
-          "include": "#switch-10"
+          "include": "#switch-acc-10"
         }
-      ]
+      ],
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-kanban"
+        }
+      }
     },
     "rule-13": {
       "match": "(?i)\\s*%%.*",
