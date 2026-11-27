@@ -10,16 +10,15 @@ import type { LabelConfig, LabelSource, LabelSourceOptions } from './label-sourc
 /** The warning a render gives, once, for markdown in a label that is no markdown string. */
 export const MARKDOWN_NOT_READ = {
   code: 'MARKDOWN_NOT_READ',
-  message:
-    'Markdown is read only in a markdown string: write "`…`", or set markdownAlwaysOn: true.',
+  message: 'Markdown is read only in "`…`" or with markdownAlwaysOn: true.',
 } as const;
 
-// Math and code spans, passed over; or a pair of `**`, `__`, `*` or `_` around text in one line
+// Read on the handler's text, where a written `\n` is already `<br>`. Math and code spans, over
+// any line breaks, are passed over; or a pair of `**`, `__`, `*` or `_` around text in one line
 // (group 1): the opening mark not after a letter, digit or `_`, the closing one not before them
-// or a file extension, and neither next to a blank or another mark. So `snake_case`, `my_file_name.ts`,
-// `__init__.py`, `2*3*4`, `a * b * c`, `[*]` and a lone `*` are text.
-const RE_PAIR =
-  /\$\$[\s\S]*?\$\$|`[^`\n]*`|(?<!\w)(\*\*?|__?)(?=[^\s*_])[^\n]*?[^\s*_]\1(?!\.?\w)/g;
+// or a file extension, and neither next to a blank or another mark. So `snake_case`,
+// `my_file_name.ts`, `__init__.py`, `2*3*4`, `a * b * c`, `[*]` and a lone `*` are text.
+const RE_PAIR = /\$\$[\s\S]*?\$\$|`[^`]*`|(?<!\w)(\*\*?|__?)[^\s*_][^\n]*?(?<![\s*_])\1(?!\.?\w)/g;
 
 const hasPair = (text: string): boolean => [...text.matchAll(RE_PAIR)].some((m) => m[1]);
 
