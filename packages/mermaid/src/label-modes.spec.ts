@@ -68,8 +68,8 @@ describe('label modes per diagram type (#763, D564)', () => {
     ]);
   });
 
-  // The fixture sets `legacyMarkdown: true`: v12's reading of plain labels (#1368, #1389).
-  it('class with legacyMarkdown: emphasis in every label but cardinalities, list markers and backticks as written', async () => {
+  // The fixture sets `markdownAlwaysOn: true`: every label is markdown (#1368, #1389).
+  it('class with markdownAlwaysOn: every label is markdown, cardinalities as written', async () => {
     const texts = await render(
       'class-diagram/baseline/text/list-markers-backticks-and-entities.mmd'
     );
@@ -78,11 +78,21 @@ describe('label modes per diagram type (#763, D564)', () => {
       '1..*',
       '*',
       '<b>An important class</b>',
-      '+run() : `fast`',
+      '+run() : <code>fast</code>',
       '<b>B</b>',
-      '- a note item / unknown #bogus; stays, : draws',
-      '`code` in a note',
+      '• a note item / unknown #bogus; stays, : draws',
+      '<code>code</code> in a note',
     ]);
+  });
+
+  it('class with markdownAlwaysOn: plain markdown of every label kind is read (#1389)', async () => {
+    const texts = await render('class-diagram/pr-check/label-syntax-compat.mmd');
+    for (const kind of ['relation', 'note', 'namespace', '+member'])
+      expect(texts).toContain(`${kind} <b>bold</b> <i>ital</i>`);
+    expect(texts).toContain('+method <b>bold</b> <i>ital</i>()');
+    expect(texts).toContain('<b>class bold </b><b><i>ital</i></b>');
+    // Marks stay only inside code spans (bare backticks and the method's markdown string).
+    expect(texts.filter((t) => t.includes('**') && !t.includes('<code>'))).toEqual([]);
   });
 
   it('class: plain markdown drawn as written, markdown strings read, \\n breaks (#1389)', async () => {

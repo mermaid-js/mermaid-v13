@@ -18,8 +18,8 @@ import { memberLabel } from '../parser/member.ts';
 
 /**
  * Reads one label of a class box as written, with core's label handler (#1368): `markdown`
- * when the parser marked it as a markdown string and gives it without its backticks. Every
- * label of a box is of a kind v12 read markdown in (`v12Markdown`).
+ * when the parser marked it as a markdown string and gives it without its backticks. It also
+ * gives the render's warning for markdown outside a markdown string.
  */
 export type ReadLabel = (label: string, markdown?: boolean) => LabelSource;
 
@@ -118,10 +118,9 @@ function readMember(text: string, read: ReadLabel): LabelSource {
 /**
  * Measures one class box. Text is read by `read` (core's label handler, #1368) and laid out by
  * core's label layout: tags and a written `\n` are read everywhere, markdown in a markdown
- * string, and v12's markdown reading of plain text (`**bold**`, `_italic_`) only with
- * `legacyMarkdown`. A generic's brackets come as `&lt;` and `&gt;`, so `List~Data~`
- * is text whatever the type's name (D619); a `<T>` the author types stays text unless `T` is a
- * known tag.
+ * string, and in every label with `markdownAlwaysOn`. A generic's brackets come as `&lt;` and
+ * `&gt;`, so `List~Data~` is text whatever the type's name (D619); a `<T>` the author types stays
+ * text unless `T` is a known tag.
  *
  * Heights follow v12's `classBox` (P = padding, rows = the compartment's text):
  * - header: P, the annotation and the name, P;

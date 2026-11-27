@@ -20,13 +20,12 @@ import {
   type CurveKind,
 } from '@mermaid-js/shared/svg/route';
 import {
-  labelSource,
   layoutLabel,
   type FontKey,
   type LabelSource,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
-import { warnMarkdownOutside } from '@mermaid-js/core/text/markdown-warning';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import {
   namespaceGroups,
   type ClassInterface,
@@ -69,7 +68,7 @@ export interface NoteView {
   readonly note: ClassNote;
   readonly width: number;
   readonly height: number;
-  /** Not wrapped, drawn left-aligned (v12). A label kind v12 read markdown in. */
+  /** Not wrapped, drawn left-aligned (v12). */
   readonly label: MeasuredLabel;
   readonly parent?: string;
 }
@@ -127,7 +126,7 @@ export interface ClassEdgeView {
   /** Marker at each end; always `none` on a note edge. */
   readonly startMarker: RelationType;
   readonly endMarker: RelationType;
-  /** The `: label` (a label kind v12 read markdown in). */
+  /** The `: label`. */
   readonly label?: MeasuredLabel;
   /** The multiplicities (`"1"`, `"many"`), placed by the engine (D102). */
   readonly startLabel?: MeasuredLabel;
@@ -174,18 +173,14 @@ interface Build {
   readonly ctx: ClassLayoutContext;
   readonly units: UnitProfile;
   /**
-   * Reads a label of a kind v12 read markdown in (a class box's text, a note, a relation
-   * label), and gives the render's warning for markdown outside a markdown string (#1368).
+   * Reads a label with core's label handler (#1368), giving the render's warning for markdown
+   * outside a markdown string. Every label of the diagram is read so: class box text, notes,
+   * relation labels, multiplicities, namespace titles and interface names.
    */
   readonly read: ReadLabel;
-  /** A note or a relation label, as a class box's text is read. */
+  /** A note, relation label, namespace title or interface name. */
   readonly label: (text: string, max?: number, markdown?: boolean) => MeasuredLabel;
-  /**
-   * A namespace title or a lollipop interface's name: v12 drew them without its markdown
-   * reader, so a markdown string is their only markdown, in either mode (#1368).
-   */
-  readonly plain: (text: string, markdown?: boolean) => MeasuredLabel;
-  /** A multiplicity, in `classTerminalFontSize` (v12 `.edgeTerminals`, 11px). Plain, as in v12. */
+  /** A multiplicity, in `classTerminalFontSize` (v12 `.edgeTerminals`, 11px). */
   readonly terminal: (text: string) => MeasuredLabel;
   readonly px: (value: number, axis: 'x' | 'y') => number;
   /** Layout id of the group a class's or note's `parent` namespace is drawn as. */
@@ -223,25 +218,16 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     conf.hierarchicalNamespaces !== false
   );
   const warnCtx = { config: ctx.config, inline: ctx.inline, warn: (w: Warning) => ctx.warn?.(w) };
-  const read: ReadLabel = (text, markdown = false) => {
-    const kind = { markdown, v12Markdown: true } as const;
-    warnMarkdownOutside(text, kind, warnCtx);
-    return labelSource(text, kind, ctx.config);
-  };
-  const lay = (source: LabelSource, max: number): MeasuredLabel =>
-    layoutLabel(source.text, font, max, ctx.measurer, { ...source, inline: ctx.inline });
+  const read: ReadLabel = (text, markdown = false) => readLabel(text, { markdown }, warnCtx);
+  const lay = (source: LabelSource, max: number, key = font): MeasuredLabel =>
+    layoutLabel(source.text, key, max, ctx.measurer, { ...source, inline: ctx.inline });
   const build: Build = {
     model,
     ctx,
     units,
     read,
     label: (text, max = Infinity, markdown = false) => lay(read(text, markdown), max),
-    plain: (text, markdown = false) =>
-      lay(labelSource(text, { markdown, v12Markdown: false }, ctx.config), Infinity),
-    terminal: (text) =>
-      layoutLabel(text, { ...font, size: terminalSize(ctx, font.size) }, Infinity, ctx.measurer, {
-        inline: ctx.inline,
-      }),
+    terminal: (text) => lay(read(text), Infinity, { ...font, size: terminalSize(ctx, font.size) }),
     px: (value, axis) => fromPx(units, value, axis),
     groupOf: (ns) => {
       const g = parentOf(ns);
@@ -288,7 +274,7 @@ function groupViews(nsGroups: readonly NamespaceGroup[], build: Build): Namespac
       layoutId: `s:${g.id}`,
       id: g.id,
       ...(g.ast !== undefined ? { ast: g.ast } : {}),
-      label: g.markdown ? build.plain(g.label.slice(1, -1), true) : build.plain(g.label),
+      label: g.markdown ? build.label(g.label.slice(1, -1), Infinity, true) : build.label(g.label),
       ...withParent(g.parent === undefined ? undefined : `s:${g.parent}`),
       depth,
     };
@@ -352,7 +338,7 @@ function noteViews(pad: number, build: Build, edges: ClassEdgeView[]): NoteView[
 
 function interfaceView(iface: ClassInterface, build: Build): InterfaceView {
   const patch = build.units.builder.labelPatch;
-  const text = build.plain(iface.label);
+  const text = build.label(iface.label);
   const owner = build.classIds.get(iface.classId);
   const view: InterfaceView = {
     kind: 'interface',

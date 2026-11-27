@@ -1,11 +1,14 @@
 ---
 description: >-
-  label-syntax.mmd with legacyMarkdown: plain markdown in class labels,
-  members, methods, relation labels and notes is read as v12 read it; the
-  namespace title stays as written. Everything else draws as in
-  label-syntax.mmd (#1368, #1389).
+  label-syntax.mmd with markdownAlwaysOn: every label is markdown, so the
+  plain **bold** _ital_ rows of every kind (namespace title, class label,
+  member, method, relation label and note) draw bold and italic, the
+  code-span and bare-backtick rows draw inline code, and the method written
+  with a markdown string draws its backticks as a code span. Tags, \n and
+  the markdown strings draw as in label-syntax.mmd, so the picture differs
+  from it (#1368, #1389).
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 classDiagram
   direction LR

@@ -1,6 +1,5 @@
 // How each label kind of a class diagram is read (#1368, #1389): markdown only in a markdown
-// string, tags and a written `\n` everywhere; `legacyMarkdown` brings back v12's markdown
-// reading of plain text in the kinds v12 read it in (class labels, members, relations, notes).
+// string, tags and a written `\n` everywhere; `markdownAlwaysOn` reads every label as markdown.
 import type { DiagramPlugin } from '@mermaid-js/core';
 import { describe, expect, it } from 'vitest';
 import { Style, tableMeasurer, type MeasuredLabel } from '@mermaid-js/core/text';
@@ -14,7 +13,7 @@ const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlug
 let theme: Theme | undefined;
 
 const DEFAULT = {};
-const LEGACY = { legacyMarkdown: true };
+const ALWAYS = { markdownAlwaysOn: true };
 
 async function lay(src: string, config: Record<string, unknown>): Promise<ClassLayout> {
   theme ??= createTheme(await loadTheme('default'), { diagram: diagramTheme });
@@ -124,7 +123,17 @@ describe('class labels, default mode (#1389)', () => {
         ],
       ],
     });
-    expect(await labels(MD, LEGACY)).toEqual(read);
+    // With markdownAlwaysOn the same, but for the method: all of its text is markdown, so its
+    // backticks are a code span.
+    const always = await labels(MD, ALWAYS);
+    expect({ ...always, method: read.method }).toEqual(read);
+    expect(always.method).toEqual([
+      [
+        ['+"', 0],
+        ['met **b** _i_', Style.Mono],
+        ['"()', 0],
+      ],
+    ]);
   });
 
   it('draws a code span in plain text, and a member visibility, as written', async () => {
@@ -180,9 +189,9 @@ note for A "A note\\nwith two lines"`,
   });
 });
 
-describe('class labels, legacyMarkdown (#1389)', () => {
-  it('reads plain markdown where v12 did, and not in the namespace title', async () => {
-    expect(await labels(PLAIN, LEGACY)).toEqual({
+describe('class labels, markdownAlwaysOn (#1389)', () => {
+  it('reads plain markdown in every label kind', async () => {
+    expect(await labels(PLAIN, ALWAYS)).toEqual({
       // The name is bold already: only the italic shows.
       name: [
         [
@@ -223,12 +232,35 @@ describe('class labels, legacyMarkdown (#1389)', () => {
           ['i', I],
         ],
       ],
-      namespace: [[['ns **b** _i_', 0]]],
+      namespace: [
+        [
+          ['ns ', 0],
+          ['b', B],
+          [' ', 0],
+          ['i', I],
+        ],
+      ],
     });
   });
 
+  it('reads a code span, a multiplicity and an interface name as markdown', async () => {
+    const out = (
+      await lay('class A {\n  -a `code` b\n}\nA "*one*" --> "_many_" C\nI ()-- A', ALWAYS)
+    ).class!;
+    expect(runs(out.boxes[0]!.compartments[0]!.rows[0]!.label)).toEqual([
+      [
+        ['-a ', 0],
+        ['code', Style.Mono],
+        [' b', 0],
+      ],
+    ]);
+    const rel = out.edges.find((e) => e.kind === 'relation')!;
+    expect([runs(rel.startLabel), runs(rel.endLabel)]).toEqual([[[['one', I]]], [[['many', I]]]]);
+    expect(out.interfaces.map((i) => runs(i.label))).toEqual([[[['I', 0]]]]);
+  });
+
   it('breaks a written \\n as in the default mode', async () => {
-    const read = await labels('class A\nnote for A "A note\\nwith two lines"', LEGACY);
+    const read = await labels('class A\nnote for A "A note\\nwith two lines"', ALWAYS);
     expect(read.note).toEqual([[['A note', 0]], [['with two lines', 0]]]);
   });
 });
