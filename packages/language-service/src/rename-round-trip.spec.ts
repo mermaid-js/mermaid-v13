@@ -172,18 +172,33 @@ function apply(text: string, edits: readonly TextEdit[]): string {
 const isRange = (v: unknown): v is Range =>
   typeof v === 'object' && v !== null && Object.keys(v).length === 2 && 'start' in v && 'end' in v;
 
-/** `value` with source ranges dropped and `from` written as `to` in every string. */
-function modulo(value: unknown, from: string, to: string): unknown {
+/**
+ * `value` with source ranges dropped and `from` written as `to` in every string, or as `idTo`
+ * in an `ast` id.
+ */
+function modulo(value: unknown, from: string, to: string, idTo = to): unknown {
   if (typeof value === 'string') return value.split(from).join(to);
-  if (Array.isArray(value)) return value.map((v) => modulo(v, from, to));
+  if (Array.isArray(value)) return value.map((v) => modulo(v, from, to, idTo));
   if (typeof value === 'object' && value !== null)
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
         .filter(([, v]) => !isRange(v))
-        .map(([k, v]) => [k, modulo(v, from, to)])
+        .map(([k, v]) => [k, k === 'ast' ? modulo(v, from, idTo) : modulo(v, from, to, idTo)])
     );
   return value;
 }
+
+/**
+ * A name as a type's `ast` ids write it, where that is not the name itself, read from the model
+ * before the rename: sankey percent-encodes `%`, `>`, `@` and `#` in its ids (D397), so a node
+ * named `<b>x</b>` is `node:<b%3Ex</b%3E` (#1402).
+ */
+const ID_NAME: Readonly<Record<string, (model: unknown, name: string) => string | undefined>> = {
+  sankey: (model, name) =>
+    (model as { nodes: { id: string; ast: string }[] }).nodes
+      .find((n) => n.id === name)
+      ?.ast.slice('node:'.length),
+};
 
 /** One position per distinct symbol: the first occurrence the service can rename. */
 function symbolPositions(doc: DocumentSnapshot): { at: number; kind: string }[] {
@@ -250,7 +265,8 @@ describe('rename, re-parse, same model modulo the name', () => {
         renamed++;
         if (fresh !== FRESH) otherwise++;
         const next = service.update(`corpus:///${file}#renamed`, apply(text, result.edits));
-        const after = order(modulo(contextOf(next).result?.model, fresh, name));
+        const idName = ID_NAME[doc.facet.id]?.(contextOf(doc).result?.model, name) ?? name;
+        const after = order(modulo(contextOf(next).result?.model, fresh, name, idName));
         if (JSON.stringify(after) !== JSON.stringify(before)) problems.push(`${where}: model`);
         const codes = (d: DocumentSnapshot) => d.diagnostics().map((x) => x.code);
         if (JSON.stringify(codes(next)) !== JSON.stringify(codes(doc)))
