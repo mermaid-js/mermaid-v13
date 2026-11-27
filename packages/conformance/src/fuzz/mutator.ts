@@ -1,7 +1,6 @@
 /**
- * Seeded mutation fuzzing (R-SEC-7, R-TEST-8). Ported from Pele, tests/support/corpus.ts and the
- * FRAGMENTS list of tests/flowchart/oracle.test.ts @ 3a2f075. The generator and the edit mix
- * are Pele's; the fragments add v13's own hostile strings.
+ * Seeded mutation fuzzing (R-SEC-7, R-TEST-8). The generator and the edit mix are Pele's; the
+ * fragments add v13's own hostile strings.
  */
 import { PAYLOADS } from '@mermaid-js/core/svg/testing';
 

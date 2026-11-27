@@ -1,6 +1,5 @@
 /**
- * The C4 relation router (D455), ported from Pele's `src/diagrams/c4/route.ts`
- * (at commit 3a2f075): a straight line where it
+ * The C4 relation router (D455): a straight line where it
  * crosses no other shape; past a shape, an orthogonal elbow through a free lane in the gap
  * between columns or rows, or a detour lane round the shapes in the way; ports spread along a
  * side, reverse pairs shifted apart, self-loops on the right side.

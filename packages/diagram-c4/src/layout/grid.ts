@@ -1,6 +1,5 @@
 /**
- * The C4 grid (D454), ported from Pele's `src/diagrams/c4/layout.ts`
- * (at commit 3a2f075): v12's model, each
+ * The C4 grid (D454): v12's model, each
  * boundary's elements in rows of `c4ShapeInRow` in statement order and then the boundaries inside
  * it in rows of `c4BoundaryInRow`, each boundary sized bottom-up around its contents with its
  * header reserved inside its frame, then placed top-down.

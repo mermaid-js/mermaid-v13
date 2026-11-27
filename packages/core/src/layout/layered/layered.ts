@@ -1,4 +1,3 @@
-// Ported from Pele, src/layout/layered.ts at 3a2f075.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
 // noUncheckedIndexedAccess. `NODE_INPUTS`/`EDGE_INPUTS`/`layoutInputs` are new. Length
 // constants come from `opt.metrics` (D77), and `opt.grid` puts the layout on a grid (D140).

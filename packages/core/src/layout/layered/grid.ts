@@ -1,5 +1,3 @@
-// Ported from Pele, src/layout/layered.ts, src/layout/compound.ts
-// and src/layout/index.ts at 3a2f075.
 // Changes from Pele: the grid mode (D78, D140) is one `GridHooks` object that `layered`,
 // `compoundLayout` and the engine call where a mode differs. The algorithm is unchanged.
 // cspell:ignore cnode cnodes

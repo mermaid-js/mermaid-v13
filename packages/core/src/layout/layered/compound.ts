@@ -1,4 +1,3 @@
-// Ported from Pele, src/layout/compound.ts at 3a2f075.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
 // noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed arrays, and the
 // layout cache keys on `layoutInputs`. Length constants come from `opt.metrics` (D77). The

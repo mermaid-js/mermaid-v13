@@ -1,4 +1,3 @@
-// Ported from Pele, src/layout/index.ts at 3a2f075.
 // Changes from Pele: the grid mode (D78, D140) lives here, split out of `index.ts`, which reaches
 // it through `GridHooks` (grid.ts). The algorithm is unchanged.
 // cspell:ignore cnode cnodes

@@ -1,7 +1,6 @@
 // cspell:words kinsoku
 // Label layout (DESIGN §5.3, R-TEXT-1…3, R-TEXT-8, R-TEXT-11). Turns label source into lines of
 // styled runs, measured through the injected Measurer, ready to emit as <text>/<tspan>.
-// Fast path, CJK pieces and soft-hyphen fitting are based on Pele's text/label.ts.
 import type { LabelBox, LabelBoxSpan, LabelSpan } from '../svg/writer.ts';
 import type { Attrs, SafeValue } from '../svg/types.ts';
 import { entityAt } from './entities.ts';

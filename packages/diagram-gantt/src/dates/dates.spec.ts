@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { autoTicks, intervalTicks, timeFormat } from './axis.ts';
 import { add, format, parseDuration, parseStrict, readEndDate, readStartDate } from './dates.ts';
 
-// Ported from Pele's tests/gantt/dates.test.ts at 3a2f075 (spec #293, D271), with v13's cases for
+// Gantt's date code (spec #293, D271), with v13's cases for
 // the v12 quirks and the time zones below. Pele's cases build dates with the local-time Date
 // constructor, so they hold in any zone; vitest runs this file under TZ=UTC and under
 // TZ=America/Los_Angeles (root vitest.config.ts), where the DST cases bite.

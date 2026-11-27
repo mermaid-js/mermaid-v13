@@ -1,4 +1,3 @@
-// Ported from Pele, src/layout/compound.ts at 3a2f075.
 // Changes from Pele: split out of `compound.ts` (D596): the levels of the group tree, the port
 // budget and the sorting of edges into levels. The algorithm is unchanged.
 //

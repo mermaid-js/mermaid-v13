@@ -7,9 +7,8 @@
  * `w.outline` (D301, D302): the outline as `node`, inner lines as `divider`, the card's dots as
  * `mark`; a flow's frame as `group` (`render.ts`).
  *
- * The shared drawers are ported from Pele's `src/svg/shapes.ts` at 3a2f075, as the three here are.
- * Changed: the task box's radius is the layout's, the refdoc's rule runs down to its wave, and the
- * card is v12's `flow` style, its trimmings drawn apart.
+ * Changed from the shared drawers: the task box's radius is the layout's, the refdoc's rule runs
+ * down to its wave, and the card is v12's `flow` style, its trimmings drawn apart.
  */
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
 import { lines, RULE, wave, WAVE } from '@mermaid-js/shared/shapes/kit';

@@ -4,7 +4,7 @@
  * flow collections, quoted and plain scalars, and block scalars. Used for front matter and for
  * flowchart shape data (`@{ … }`).
  *
- * Ported from Pele's `src/util/yaml.ts` @ 3a2f075. Changes from Pele:
+ * Changes from Pele:
  * - it reads a range of the original source in place, so every diagnostic has a real range;
  * - errors are diagnostics, not exceptions; the first error stops the read (as in js-yaml);
  * - `__proto__`, `constructor` and `prototype` keys are dropped with a warning;

@@ -8,8 +8,8 @@
  * before layout (DESIGN §6.1), each length from the unit profile, the theme, config or the
  * metrics table (pitfall 13). Written from a copy of v13 flowchart's builder (D446).
  *
- * Flowchart's builder is ported from Pele's `src/diagrams/flowchart/graph.ts` at 3a2f075. Changed:
- * flows and collapsed cards instead of subgraphs, agentflow's config section and shapes, as above.
+ * Changed from flowchart's builder: flows and collapsed cards instead of subgraphs, agentflow's
+ * config section and shapes, as above.
  */
 import type {
   Dir,

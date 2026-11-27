@@ -1,7 +1,7 @@
 // The shapes v12.2 added by name (`@{ shape: … }`) and the ones it draws for other diagrams' nodes,
 // which only flowchart draws (those another diagram shares are `basic.ts`'s): each one's size from
-// its label, its drawer, and how far its outline sits inside the layout box. Ported from Pele's
-// src/svg/shapes.ts @ 3a2f075, with v12's shape names and the theme's padding and radius tokens.
+// its label, its drawer, and how far its outline sits inside the layout box, with
+// v12's shape names and the theme's padding and radius tokens.
 import { checkStyle, translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
 import { drawCylinder, rhombusInset, rhombusPoints, waveInset } from './basic.ts';
 import { cloudOutline, outlineBox, outlinePoints, type Box, type Outline } from './outline.ts';

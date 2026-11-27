@@ -1,5 +1,3 @@
-// Ported from Pele, src/layout/layered.ts and
-// src/layout/compound.ts at 3a2f075.
 // Changes from Pele: the grid mode (D78, D140) lives here, split out of `layered.ts` and
 // `compound.ts`, which reach it through `GridHooks` (grid.ts). The algorithm is unchanged.
 // cspell:ignore lnode

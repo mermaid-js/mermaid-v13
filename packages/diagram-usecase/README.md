@@ -11,7 +11,5 @@ import { usecase } from '@mermaid-js/diagram-usecase';
 const mermaid = createMermaid({ diagrams: [usecase] });
 ```
 
-The edge route drawing is ported from Pele (MIT); see `THIRD_PARTY_NOTICES`.
-
 > [!WARNING]
 > Alpha: APIs can change between builds. Pin an exact version.

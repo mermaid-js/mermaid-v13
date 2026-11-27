@@ -1,8 +1,7 @@
 /**
  * The flow family's lexer: a state machine mirroring the start conditions of v12's `flow.jison`
  * (DESIGN §4.3), for flowchart and the diagrams whose jison grammar was cut from flowchart's
- * (agentflow). Ported from Pele's `src/diagrams/flowchart/lexer.ts` at 3a2f075, which is checked
- * token by token against the jison lexer. Changes from Pele:
+ * (agentflow). It is checked token by token against the jison lexer. Changes from Pele:
  * - it lexes the text v12 lexed, with what v12 removed cut out (`sourceView`), and maps each
  *   token back to its range in the source, which is never rewritten. A token that runs over a
  *   removed span is one token whose range covers it;

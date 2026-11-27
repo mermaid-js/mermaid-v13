@@ -1,4 +1,3 @@
-// Ported from Pele, src/layout/compound.ts at 3a2f075.
 // Changes from Pele: split out of `compound.ts` (D596): the types and the state record the phases of `compoundLayout` share. The algorithm is unchanged.
 // cspell:ignore lnode lnodes cnode
 //

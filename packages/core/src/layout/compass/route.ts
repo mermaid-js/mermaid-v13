@@ -1,7 +1,7 @@
-// `compass`'s orthogonal router, ported from Pele (src/diagrams/architecture/render.ts:106-170,
-// `route` and `simplify`). Each end leaves along its side's normal: straight when the ends face and
-// are in line, one bend when the sides are perpendicular and the corner is ahead of both, a turn
-// midway when they face but are offset, and otherwise a detour between or around the two boxes.
+// `compass`'s orthogonal router. Each end leaves along its side's normal: straight when the ends
+// face and are in line, one bend when the sides are perpendicular and the corner is ahead of both,
+// a turn midway when they face but are offset, and otherwise a detour between or around the two
+// boxes.
 //
 // Changed from Pele: `route` split into one function per case, with the same cases in the same
 // order; route points with an axis; `clearSpot`, which moves an edge label off any node; and

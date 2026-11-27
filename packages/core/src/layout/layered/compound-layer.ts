@@ -1,4 +1,3 @@
-// Ported from Pele, src/layout/compound.ts at 3a2f075.
 // Changes from Pele: split out of `compound.ts` (D596): the graph `layered` gets for one level, the
 // flat layout that orders the levels together, and the cache of levels laid out. The algorithm is unchanged.
 // cspell:ignore lnode lnodes cnode

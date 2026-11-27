@@ -1,10 +1,9 @@
 /**
- * The flow family's model builder base: what v12's `FlowDB` did with the statements every
- * dialect has (links, `linkStyle`, `classDef`, `class`, `click`, the direction and the
- * accessibility fields), in v12's order. Ported from Pele's `src/diagrams/flowchart/db.ts` at
- * 3a2f075 and checked against
- * v12.2's `flowDb.ts`. A diagram's builder extends {@link FlowBuilderBase} with its vertices
- * and containers (`addVertex`, subgraphs or flows) and builds its model.
+ * The flow family's model builder base: what v12's `FlowDB` did with the statements every dialect
+ * has (links, `linkStyle`, `classDef`, `class`, `click`, the direction and the accessibility
+ * fields), in v12's order, checked against v12.2's `flowDb.ts`. A diagram's builder extends {@link
+ * FlowBuilderBase} with its vertices and containers (`addVertex`, subgraphs or flows) and builds
+ * its model.
  *
  * Differences from v12's FlowDB: text is kept as written (no sanitising: that happens when SVG
  * is written), links keep the URL as written (checked at render time), callbacks are recorded

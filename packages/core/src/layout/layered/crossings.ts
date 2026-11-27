@@ -1,4 +1,3 @@
-// Ported from Pele, src/layout/compound.ts at 3a2f075.
 // Changes from Pele: split out of `compound.ts` (D596): `crossingsOf` runs as separate phases
 // that share one `Segs` record. Its scratch arrays are taken from the same frame. The algorithm is unchanged.
 // cspell:ignore segs

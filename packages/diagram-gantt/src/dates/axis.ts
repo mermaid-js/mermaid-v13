@@ -1,4 +1,3 @@
-// Ported from Pele, src/diagrams/gantt/axis.ts at 3a2f075.
 // Changes from Pele: index reads carry `!` for noUncheckedIndexedAccess; `intervalTicks`'
 // estimate takes a month as 365 / 12 days, as v12's `dayjs.duration` did (#379; d3's automatic
 // ticks keep their 30-day month). The axis code is otherwise unchanged.

@@ -1,8 +1,7 @@
 // The `compass` engine (D326, D327, D501): LayoutGraph → LayoutModel by Pele's grid placement
-// (`grid.ts`), its pixel pass (here) and its orthogonal router (`route.ts`), ported from Pele
-// (src/diagrams/architecture/render.ts:27-32 and 214-410). Empty rows and columns rank away, cells
-// are sized from the node boxes and edge labels, groups are inset for their padding and titles, and
-// each edge end sits on the side it names.
+// (`grid.ts`), its pixel pass (here) and its orthogonal router (`route.ts`). Empty rows and columns
+// rank away, cells are sized from the node boxes and edge labels, groups are inset for their
+// padding and titles, and each edge end sits on the side it names.
 //
 // Changed from Pele: plain LayoutGraph input with measured sizes (no label layout, icons or
 // drawing here), the lengths in `metrics.ts` (v12's `iconSize` 80 and `padding` 40), group
