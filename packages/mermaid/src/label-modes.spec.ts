@@ -33,21 +33,23 @@ describe('label modes per diagram type (#763, D564)', () => {
     ]);
   });
 
-  it('state: emphasis only, and none in a state with several description lines', async () => {
+  // The fixture sets markdownAlwaysOn (#1368): every state label is markdown, list items and
+  // inline code included, also in a state with several description lines.
+  it('state: with markdownAlwaysOn, list items, inline code and emphasis in every label', async () => {
     const texts = await render('state-diagram-v2/baseline/text/list-markers-and-backticks.mmd');
     expect(texts).toEqual([
-      '- item',
-      '`code`',
+      '• item',
+      '<code>code</code>',
       '<b>bold</b> and <i>italic</i>',
-      '- one',
-      '* two',
+      '• one',
+      '• two',
       'C',
       'D',
       'E',
       'first line',
-      'second **line**',
-      '- note item',
-      'a `note` in backticks',
+      'second <b>line</b>',
+      '• note item',
+      'a <code>note</code> in backticks',
     ]);
   });
 

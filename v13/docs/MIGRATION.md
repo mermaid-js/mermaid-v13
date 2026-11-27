@@ -3438,25 +3438,26 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
   `stroke:hsl(210, 60%, 40%)` and `font-family:Georgia, "Times New Roman", serif` keep the
   whole value. v12 split the statement at every comma, so the colour was lost and the font list
   kept only its first name, without a warning.
-- **Markdown only in a markdown string** (#1368, D733): state text, descriptions, transition
-  text and notes read markdown only in a markdown string (`` "`…`" ``), as in every type. v12
-  read `**bold**` and `_italic_` in them without one; v13 draws those markers as written and
-  the render gives one `MARKDOWN_NOT_READ` warning. Write the label as `` "`…`" ``, or set
-  `legacyMarkdown: true` to draw them as v12 did. A markdown string, which v12 drew with its
-  backticks, now draws as markdown in every label, `state "`…`" as X` and composite titles
-  included. Bare backticks (`` A --> B : `code` ``) and a code span in plain text are drawn as
-  written. Tags (`<b>`, `<br>`, …) draw in every label, as before.
-- **A written `\n` breaks the line** (#1368, #1330): in state text, descriptions, transition
-  text, notes and composite titles, `\n` written as two characters breaks the line, as `<br>`
-  does (`S1 --> S4: long line using \nshould work`). v12 drew it as text everywhere but in a
-  composite title and in the lines of a state with several descriptions.
-- **Composite titles are plain** (#1368): a composite's title draws `**x**` as written, as v12
-  drew it, also with `legacyMarkdown: true`. Earlier v13 builds read bold and italic there.
-- **Label text with `legacyMarkdown: true`** (D564, D610, #763, #836): state text,
-  descriptions, transition text and notes read bold and italic, as in v12. A label that starts
-  with `- `, `* ` or `+ ` is drawn as written: no bullet. A code span is drawn as written,
-  backticks included and no monospace, and bold and italic outside it are still read. The
-  title and rows of a state with several description lines are plain text, as v12 drew them.
+- **Markdown only in a markdown string** (#1368, D733): every state label (state text,
+  descriptions, the lines of a state with several descriptions, transition text, notes and
+  composite titles) reads markdown only in a markdown string (`` "`…`" ``), as in every type.
+  v12 read `**bold**` and `_italic_` in most of them without one; v13 draws those markers as
+  written and the render gives one `MARKDOWN_NOT_READ` warning. Write the label as
+  `` "`…`" ``, or set `markdownAlwaysOn: true` (globally or as `state.markdownAlwaysOn`) to
+  draw every label as markdown. A markdown string, which v12 drew with its backticks, now
+  draws as markdown in every label, `state "`…`" as X` and composite titles included. Bare
+  backticks (`` A --> B : `code` ``) and a code span in plain text are drawn as written. Tags
+  (`<b>`, `<br>`, …) draw in every label, as before.
+- **A written `\n` breaks the line** (#1368, #1330): in every state label, `\n` written as two
+  characters breaks the line, as `<br>` does (`S1 --> S4: long line using \nshould work`). v12
+  drew it as text everywhere but in a composite title and in the lines of a state with several
+  descriptions.
+- **`markdownAlwaysOn: true` draws every label as markdown** (#1368): every state label, the
+  composite title included, is read as a markdown string is: bold, italic, inline code (a code
+  span draws in monospace without its backticks) and list items (a label that starts with
+  `- `, `* ` or `+ `). v12 drew list markers and code spans as written, and never read
+  markdown in a composite title or in the lines of a state with several descriptions. Tags
+  and a written `\n` draw as without the setting.
 - **A transition written inside a composite that names the composite** (D555):
   `state Boot { Running; Boot --> Running }`, the reverse, and `Outer --> Inner` written inside
   `Inner`. v12 filed the composite under itself (or under a state inside it) and then never

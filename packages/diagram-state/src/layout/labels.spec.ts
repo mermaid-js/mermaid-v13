@@ -8,9 +8,8 @@ import { layoutState, parseState, type StateRenderContext, type StateWarning } f
 import { state as diagramPlugin } from '../plugin.ts';
 
 // Label handling (#1368, T2 #1390): every label goes through core's label handler. Markdown is
-// read only in a markdown string; a written `\n` breaks every label. With `legacyMarkdown`, the
-// four label kinds where v12 read markdown in plain text (state text, descriptions, transitions
-// and notes) draw plain `**b**` and `_i_` as emphasis again; a composite title never does.
+// read only in a markdown string; a written `\n` breaks every label. With `markdownAlwaysOn`,
+// every label of every kind is markdown, read as a markdown string is.
 
 const { theme: diagramTheme }: Pick<DiagramPlugin, 'theme'> = diagramPlugin;
 let spec: ThemeSpec;
@@ -18,7 +17,7 @@ beforeAll(async () => {
   spec = await loadTheme('redux');
 });
 
-const LEGACY: ConfigInput = { legacyMarkdown: true };
+const ALWAYS_ON: ConfigInput = { markdownAlwaysOn: true };
 
 /** Every label of the layout by what it labels: `node:<id>`, `group:<id>`, `edge:<label>`. */
 function labels(src: string, config?: ConfigInput): Map<string, MeasuredLabel> {
@@ -42,7 +41,7 @@ function labels(src: string, config?: ConfigInput): Map<string, MeasuredLabel> {
   return out;
 }
 
-/** A label's lines as text, with `<b>…</b>` around a bold run and `<i>…</i>` around an italic one. */
+/** A label's lines as text, with `<b>`, `<i>` and `<code>` around bold, italic and code runs. */
 const shown = (label: MeasuredLabel | undefined): string[] =>
   (label?.lines ?? []).map((line) =>
     line
@@ -50,6 +49,7 @@ const shown = (label: MeasuredLabel | undefined): string[] =>
         let t = r.text;
         if (r.style & Style.Italic) t = `<i>${t}</i>`;
         if (r.style & Style.Bold) t = `<b>${t}</b>`;
+        if (r.style & Style.Mono) t = `<code>${t}</code>`;
         return t;
       })
       .join('')
@@ -62,6 +62,8 @@ D: desc **b** _i_
 DM: "\`desc **b**\`"
 DB: \`desc **b**\`
 N: one\\ntwo
+R: rows title **b**
+R: row **b** _i_
 T --> D: tr **b** _i_
 D --> DM: "\`tr **b**\`"
 DM --> DB: \`code\`
@@ -120,27 +122,32 @@ describe('state labels (#1368): default mode', () => {
   });
 });
 
-describe('state labels (#1368): legacyMarkdown', () => {
+describe('state labels (#1368): markdownAlwaysOn', () => {
   let got: Map<string, MeasuredLabel>;
   beforeAll(() => {
-    got = labels(SRC, LEGACY);
+    got = labels(SRC, ALWAYS_ON);
   });
 
-  it('draws plain markdown as emphasis in state text, descriptions, transitions and notes', () => {
+  it('draws plain markdown as markdown in every label kind', () => {
     expect(shown(got.get('node:T'))).toEqual(['text <b>b</b> <i>i</i>']);
     expect(shown(got.get('node:D'))).toEqual(['desc <b>b</b> <i>i</i>']);
     expect(shown(got.get('edge:T-D'))).toEqual(['tr <b>b</b> <i>i</i>']);
     const note = [...got].find(([k]) => k.startsWith('node:note'))?.[1];
     expect(shown(note)).toEqual(['note <b>b</b> <i>i</i>']);
+    expect(shown(got.get('group:C'))).toEqual(['comp <b>b</b> <i>i</i>']);
+    expect(shown(got.get('node:R'))).toEqual(['rows title <b>b</b>']);
+    expect(shown(got.get('rows:R'))).toEqual(['row <b>b</b> <i>i</i>']);
   });
 
-  it('keeps a composite title plain, as v12 did', () => {
-    expect(shown(got.get('group:C'))).toEqual(['comp **b** _i_']);
+  it('reads backticks as a code span, as in a markdown string', () => {
+    expect(shown(got.get('edge:DM-DB'))).toEqual(['<code>code</code>']);
   });
 
-  it('draws everything else as the default mode does', () => {
+  it('draws markdown strings, tags and a written \\n as the default mode does', () => {
     const plain = labels(SRC);
-    for (const key of ['node:TM', 'node:DM', 'node:DB', 'node:N', 'edge:DM-DB', 'group:CN'])
+    for (const key of ['node:TM', 'node:DM', 'edge:D-DM', 'group:CM', 'node:N', 'group:CN'])
       expect([key, shown(got.get(key))]).toEqual([key, shown(plain.get(key))]);
+    const tags = labels('stateDiagram-v2\nA: a <b>b</b><br>c', ALWAYS_ON);
+    expect(shown(tags.get('node:A'))).toEqual(['a <b>b</b>', 'c']);
   });
 });

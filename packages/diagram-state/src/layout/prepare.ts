@@ -9,14 +9,8 @@ import { graphSpacing, labelledEdge, sideways } from '@mermaid-js/shared/layout'
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
-import {
-  labelSource,
-  layoutLabel,
-  type FontKey,
-  type LabelSourceOptions,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
-import { warnMarkdownOutside } from '@mermaid-js/core/text/markdown-warning';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import type { StateRenderContext } from './context.ts';
@@ -134,12 +128,6 @@ const rowsText = (s: StateNode): Text =>
 const labelText = (s: StateNode): Text =>
   s.descriptions.length === 1 ? description(s, 0) : { text: s.id };
 
-// How each label kind is read (#1368): `v12Markdown` where v12 read markdown in plain text (state
-// text, a state's one description, transitions and notes). v12 drew a composite's title and a
-// described state's lines without its markdown reader; an embedded block's title is v13's own.
-const V12_MARKDOWN = { v12Markdown: true } as const;
-const NO_MARKDOWN = { v12Markdown: false } as const;
-
 interface Measure {
   readonly units: UnitProfile;
   readonly sm: StateMetrics;
@@ -148,13 +136,11 @@ interface Measure {
   /** State label wrap width and least label width, in units. */
   readonly wrap: number;
   readonly minWidth: number;
-  /** A measured label of a kind where v12 read markdown in plain text (`V12_MARKDOWN`). */
-  readonly label: (text: string | Text, style: CheckedStyle, max: number) => MeasuredLabel;
   /**
-   * A measured label of a kind v12 drew without its Markdown reader: a composite's title, the
-   * title and rows of a state with several description lines, a block's title.
+   * A measured label, read by core's label handler (#1368): markdown only in a markdown string
+   * (or everywhere with `markdownAlwaysOn`), with the render's warning for markdown outside one.
    */
-  readonly plain: (text: string | Text, style: CheckedStyle, max: number) => MeasuredLabel;
+  readonly label: (text: string | Text, style: CheckedStyle, max: number) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
   readonly embed: StateRenderContext['embed'];
   /** A folded block's type label (#670): small capitals, measured at their size. */
@@ -175,18 +161,11 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
   const length = configLengths('state', 'STATE_CONFIG_IGNORED', cfg, stateConfigDefaults, (w) =>
     ctx.warn(w)
   );
-  const measure = (
-    written: string | Text,
-    kind: typeof V12_MARKDOWN | typeof NO_MARKDOWN,
-    style: CheckedStyle,
-    max: number
-  ): MeasuredLabel => {
+  const measure = (written: string | Text, style: CheckedStyle, max: number): MeasuredLabel => {
     const { text, markdown } = typeof written === 'string' ? { text: written } : written;
     // A marked markdown string still holds its backticks: the handler takes it without them.
     const label = markdown ? text.trim().slice(1, -1) : text;
-    const options: LabelSourceOptions = { markdown: markdown === true, ...kind };
-    const source = labelSource(label, options, ctx.config);
-    warnMarkdownOutside(label, options, ctx);
+    const source = readLabel(label, { markdown: markdown === true }, ctx);
     const [f, bits] = textStyle(style, m.font);
     return layoutLabel(source.text, f, max, ctx.measurer, {
       ...source,
@@ -207,8 +186,7 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
     },
     wrap: fromPx(units, length('wrappingWidth') ?? stateConfigDefaults.wrappingWidth!, 'x'),
     minWidth: fromPx(units, length('minNodeWidth') ?? stateConfigDefaults.minNodeWidth!, 'x'),
-    label: (text, style, max) => measure(text, V12_MARKDOWN, style, max),
-    plain: (text, style, max) => measure(text, NO_MARKDOWN, style, max),
+    label: measure,
     styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), (w) => ctx.warn(w)),
     embed: ctx.embed,
     typeLabel: (type) =>
@@ -236,7 +214,7 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
         id: s.id,
         ast: s.ast,
         region: false,
-        label: m.plain(labelText(s), style, Infinity),
+        label: m.label(labelText(s), style, Infinity),
         parent: parentOf(s.id),
         depth: depthOf(s.id),
         flow: flowOf(s.id),
@@ -417,7 +395,7 @@ function folded(
   style: CheckedStyle,
   m: Measure
 ): StateNodeView {
-  const label = m.plain(s.title || s.id, style, Infinity);
+  const label = m.label(s.title || s.id, style, Infinity);
   const type = m.foldedType?.(s.id) ?? '';
   const fold = { type, label: m.typeLabel(type) };
   // In cells: the title rows, a divider and the type row, padded in a border (a text-form box).
@@ -451,7 +429,7 @@ function measureState(
     case 'embed': {
       if (s.folded) return folded(base, s, style, m);
       // The title stays on one line: the strip is as wide as the inner diagram allows.
-      const label = m.plain(s.title ?? '', style, Infinity);
+      const label = m.label(s.title ?? '', style, Infinity);
       const embed = m.embed?.(s.id) ?? null;
       const { width: w, height: h } = framedSize(embed, label);
       return { ...base, shape: 'embed', block: 'embed', label, embed, w, h };
@@ -463,8 +441,8 @@ function measureState(
   if (s.descriptions.length > 1) {
     // v12 `rectWithTitle`: the first description as the title, a divider, then the other
     // description lines (v12 stateDb `label[0]` and `label.slice(1)`). The id is not drawn.
-    const label = m.plain(description(s, 0), style, m.wrap);
-    const rows = m.plain(rowsText(s), style, m.wrap);
+    const label = m.label(description(s, 0), style, m.wrap);
+    const rows = m.label(rowsText(s), style, m.wrap);
     const wide = label.width > rows.width ? label : rows;
     const box = boxOf(wide, sm.statePad, m, m.cells ? 0 : m.minWidth);
     const tall = m.cells ? label.lines.length + rows.lines.length : label.height + rows.height;

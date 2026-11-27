@@ -1,12 +1,13 @@
 ---
 description: >-
-  label-syntax.mmd with legacyMarkdown (spec #1368, #1390): plain markdown
-  markers draw as emphasis again in state text, descriptions, transitions and
-  notes, as v12 drew them, but not in a composite title, which v12 drew as
-  written. Markdown strings, bare backticks, code spans, tags and the written
-  backslash-n draw as without the key.
+  label-syntax.mmd with markdownAlwaysOn (spec #1368, #1390): every label is
+  markdown, read as a markdown string is, so the plain **bold** _ital_ rows
+  draw bold and italic in every label kind (composite title, state text,
+  description, transition, note), bare backticks and the code span draw
+  inline code, and the picture differs from label-syntax.mmd. Markdown
+  strings, tags and the written backslash-n draw as without the setting.
 config:
-  legacyMarkdown: true
+  markdownAlwaysOn: true
 ---
 stateDiagram-v2
   state "composite **bold** _ital_" as C1 {
