@@ -92,19 +92,30 @@ export function entityAt(source: string, at: number, xml?: boolean): [string, nu
   const m = RE_ENTITY.exec(source);
   if (!m || (xml && !m[4])) return undefined;
   const [all, dec, hex, name, semi] = m;
-  if (name !== undefined) {
-    if (semi && Object.hasOwn(NAMED, name)) return [NAMED[name] as string, all.length];
-    for (let n = xml ? 0 : name.length; n > 1; n--) {
-      const legacy = name.slice(0, n);
-      if (LEGACY.has(legacy)) return [NAMED[legacy] as string, n + 1];
-    }
-    return undefined;
-  }
-  const code = dec !== undefined ? parseInt(dec, 10) : parseInt(hex as string, 16);
-  // NUL, surrogates and out-of-range code points become U+FFFD, as in HTML.
-  const valid = code > 0 && code <= 0x10ffff && (code < 0xd800 || code > 0xdfff);
-  return [String.fromCodePoint(valid ? code : 0xfffd), all.length];
+  if (name !== undefined) return namedAt(name, all.length, semi !== '', xml);
+  return [numeric(dec !== undefined ? parseInt(dec, 10) : parseInt(hex as string, 16)), all.length];
 }
+
+/** A named reference: the whole name with its `;`, or else the longest legacy name it starts with. */
+function namedAt(
+  name: string,
+  length: number,
+  semi: boolean,
+  xml: boolean | undefined
+): [string, number] | undefined {
+  if (semi && Object.hasOwn(NAMED, name)) return [NAMED[name] as string, length];
+  for (let n = xml ? 0 : name.length; n > 1; n--) {
+    const legacy = name.slice(0, n);
+    if (LEGACY.has(legacy)) return [NAMED[legacy] as string, n + 1];
+  }
+  return undefined;
+}
+
+// NUL, surrogates and out-of-range code points become U+FFFD, as in HTML.
+const numeric = (code: number): string =>
+  String.fromCodePoint(
+    code > 0 && code <= 0x10ffff && (code < 0xd800 || code > 0xdfff) ? code : 0xfffd
+  );
 
 /**
  * `text` with every character reference decoded, for text that is drawn without `layoutLabel`.
