@@ -13,12 +13,7 @@ import {
   type UnitProfile,
 } from '@mermaid-js/core/layout';
 import { graphSpacing } from '@mermaid-js/shared/layout';
-import {
-  curveKind,
-  curveRouting,
-  DEFAULT_CURVE,
-  type CurveKind,
-} from '@mermaid-js/shared/svg/route';
+import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import {
   layoutLabel,
   type FontKey,
@@ -38,6 +33,7 @@ import {
   type RelationType,
 } from '../parser/model.ts';
 import { MARKER_ACROSS } from '../render/markers.ts';
+import { CLASS_CURVE } from './curve.ts';
 import { measureBox, type BoxMetrics, type ClassBoxGeometry, type ReadLabel } from './box.ts';
 import { configDefaults } from '../config-defaults.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
@@ -146,8 +142,9 @@ export interface ClassPrepared {
   /** Every node and group view by layout id. */
   readonly views: ReadonlyMap<string, ClassNodeView | NamespaceView>;
   /**
-   * How to draw the edges between route points: `flowchart.curve` (v12 drew class edges with
-   * it), `rounded` when unset. The graph's `routing` follows it.
+   * How to draw the edges between route points: `class.curve`, else the top-level `curve`, else
+   * {@link CLASS_CURVE} (D733; v12 drew class edges with `flowchart.curve`). The graph's
+   * `routing` follows it.
    */
   readonly curve: ClassCurve;
 }
@@ -162,10 +159,8 @@ const NOTE_PAD = 6;
 /** `class.padding ?? 16`: room between a namespace's border and its content, every side. */
 const GROUP_PAD = 16;
 
-/** How class edges are drawn: v12 drew them with `flowchart.curve` (flowchart's names). */
+/** How class edges are drawn: one of flowchart's curve names (D733). */
 export type ClassCurve = CurveKind;
-
-export const classCurve = curveKind;
 
 /** What the view builders share. */
 interface Build {
@@ -253,7 +248,7 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
   const notes = noteViews(padding ?? NOTE_PAD, build, edges);
   const interfaces = model.interfaces.map((iface) => interfaceView(iface, build));
   edges.push(...relationEdges(build));
-  const curve = classCurve(ctx.config.flowchart?.curve ?? DEFAULT_CURVE, (w) => ctx.warn?.(w));
+  const curve = curveResolver(ctx.config.curve, CLASS_CURVE, (w) => ctx.warn?.(w))(conf.curve);
   const graph = layoutGraph(model, ctx, units, curve, length, {
     boxes,
     notes,

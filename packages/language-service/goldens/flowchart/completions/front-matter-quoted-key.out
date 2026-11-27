@@ -3,6 +3,7 @@
   themeVariables property (object) 3:4-3:6 "th" -> "themeVariables"
   layout property (string) 3:4-3:6 "th" -> "layout"
   lineHops property (boolean | string) 3:4-3:6 "th" -> "lineHops"
+  curve property (string) 3:4-3:6 "th" -> "curve"
   ascii property (object) 3:4-3:6 "th" -> "ascii"
   darkMode property (boolean) 3:4-3:6 "th" -> "darkMode"
   fontFamily property (string) 3:4-3:6 "th" -> "fontFamily"
@@ -31,7 +32,7 @@
   step value 5:14-5:14 "" -> "step"
   stepAfter value 5:14-5:14 "" -> "stepAfter"
   stepBefore value 5:14-5:14 "" -> "stepBefore"
-  rounded value (default) 5:14-5:14 "" -> "rounded"
+  rounded value 5:14-5:14 "" -> "rounded"
 @ 6:15  "darkMode": |
   true value 6:15-6:15 "" -> "true"
   false value (default) 6:15-6:15 "" -> "false"

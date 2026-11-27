@@ -6,6 +6,7 @@
   markdownAlwaysOn property (boolean) 4:5-4:5 "" -> "markdownAlwaysOn: "
   wrappingWidth property (number) 4:5-4:5 "" -> "wrappingWidth: "
   minNodeWidth property (number) 4:5-4:5 "" -> "minNodeWidth: "
+  curve property (string) 4:5-4:5 "" -> "curve: "
   titleTopMargin property (integer) 4:5-4:5 "" -> "titleTopMargin: "
   arrowMarkerAbsolute property (boolean) 4:5-4:5 "" -> "arrowMarkerAbsolute: "
   dividerMargin property (number) 4:5-4:5 "" -> "dividerMargin: "

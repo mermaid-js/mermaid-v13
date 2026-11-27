@@ -84,7 +84,7 @@ export function ascii(model: UsecaseModel, layout: UsecaseLayout, ctx: TextRende
   const prepared = laid.usecase!;
   const glyphs = options.charset === 'ascii' ? asciiGlyphs : unicode;
   const { routes, unresolved } = repairRoutes(prepared.graph, laid);
-  for (const w of asciiWarnings(model, prepared, ctx.ast)) ctx.warn(w);
+  for (const w of asciiWarnings(model, prepared, ctx.ast, ctx.config)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which lines cross or share.
   const views = new Map(prepared.edges.map((e) => [e.id, e]));
   const routeWarning: AsciiRouteWarning | undefined = asciiRoute(

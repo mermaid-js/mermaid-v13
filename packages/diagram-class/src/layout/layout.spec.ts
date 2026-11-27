@@ -7,6 +7,7 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { parseClass } from '../index.ts';
 import { layoutClass, type ClassLayout, type ClassLayoutContext } from './index.ts';
 import { MARKER_ROOM } from './prepare.ts';
+import { CLASS_CURVE } from './curve.ts';
 import type { RelationType } from '../parser/model.ts';
 import { classDiagram as diagramPlugin } from '../plugin.ts';
 
@@ -16,7 +17,11 @@ const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlug
 let theme: Theme | undefined;
 
 /** Lays `src` out with the table measurer (16 px trebuchet: line height 18.576). */
-async function lay(src: string, config: Record<string, unknown> = {}): Promise<ClassLayout> {
+async function lay(
+  src: string,
+  config: Record<string, unknown> = {},
+  warn?: ClassLayoutContext['warn']
+): Promise<ClassLayout> {
   theme ??= createTheme(await loadTheme('default'), { diagram: diagramTheme });
   const parse = parseClass(src);
   expect(parse.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
@@ -24,6 +29,7 @@ async function lay(src: string, config: Record<string, unknown> = {}): Promise<C
     config: config as ResolvedConfig,
     measurer: tableMeasurer,
     theme,
+    ...(warn ? { warn } : {}),
   };
   return layoutClass(parse.model, ctx);
 }
@@ -281,19 +287,47 @@ note "floating"`);
     expect(padded.padding).toEqual({ top: 5, right: 5, bottom: 5, left: 5 });
   });
 
-  it('routes and draws edges with flowchart.curve, rounded right angles by default', async () => {
+  it('names the default curve, rounded right angles (D733)', () => {
+    expect(CLASS_CURVE).toBe('rounded');
+  });
+
+  it('routes and draws edges with class.curve, rounded right angles by default', async () => {
     const src = 'classDiagram\nA --> B';
     const plain = (await lay(src)).class!;
-    expect([plain.curve, plain.graph.routing]).toEqual(['rounded', 'stepped']);
-    const linear = (await lay(src, { flowchart: { curve: 'linear' } })).class!;
+    expect([plain.curve, plain.graph.routing]).toEqual([CLASS_CURVE, 'stepped']);
+    const linear = (await lay(src, { class: { curve: 'linear' } })).class!;
     expect([linear.curve, linear.graph.routing]).toEqual(['linear', 'straight']);
-    const basis = (await lay(src, { flowchart: { curve: 'basis' } })).class!;
+    const basis = (await lay(src, { class: { curve: 'basis' } })).class!;
     expect([basis.curve, basis.graph.routing]).toEqual(['curved', 'curved']);
-    const step = (await lay(src, { flowchart: { curve: 'stepAfter' } })).class!;
+    const step = (await lay(src, { class: { curve: 'stepAfter' } })).class!;
     expect([step.curve, step.graph.routing]).toEqual(['stepAfter', 'stepped']);
-    // An unknown name is drawn as an unset one (D681).
-    const bogus = (await lay(src, { flowchart: { curve: 'bogus' } })).class!;
-    expect([bogus.curve, bogus.graph.routing]).toEqual([plain.curve, plain.graph.routing]);
+  });
+
+  it('draws class.curve over the top-level curve, and that over the default (D733)', async () => {
+    const src = 'classDiagram\nA --> B';
+    const both = (await lay(src, { curve: 'basis', class: { curve: 'linear' } })).class!;
+    expect([both.curve, both.graph.routing]).toEqual(['linear', 'straight']);
+    const global = (await lay(src, { curve: 'linear' })).class!;
+    expect([global.curve, global.graph.routing]).toEqual(['linear', 'straight']);
+  });
+
+  it('is not changed by flowchart.curve (D733)', async () => {
+    const src = 'classDiagram\nA --> B';
+    const plain = (await lay(src)).class!;
+    const flowchart = (await lay(src, { flowchart: { curve: 'linear' } })).class!;
+    expect([flowchart.curve, flowchart.graph.routing]).toEqual([plain.curve, plain.graph.routing]);
+    expect(flowchart.edges).toEqual(plain.edges);
+  });
+
+  it('draws an unknown curve name as the default and warns CURVE_UNKNOWN once (D681)', async () => {
+    const src = 'classDiagram\nA --> B\nB --> C';
+    const plain = (await lay(src)).class!;
+    for (const config of [{ class: { curve: 'bogus' } }, { curve: 'bogus' }]) {
+      const codes: string[] = [];
+      const bogus = (await lay(src, config, (w) => codes.push(w.code))).class!;
+      expect([bogus.curve, bogus.graph.routing]).toEqual([plain.curve, plain.graph.routing]);
+      expect(codes.filter((c) => c === 'CURVE_UNKNOWN')).toHaveLength(1);
+    }
   });
 
   it('keeps an interface in the namespace of its class', async () => {
