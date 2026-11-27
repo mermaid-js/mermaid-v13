@@ -16,7 +16,7 @@ import { wardleyGateCorpus } from './corpus.ts';
  * what parsed), laid out at five `wardley-beta` configs, gives no `wardleyLayoutViolations`: no
  * NaN and never nothing (D424), every node in the chart, pipeline children on their parent's
  * line and in their box, link ends off the node circles, trends horizontal (but from a moved
- * pipeline parent, GAPS "Spec corrections"), every text one literal line, everything inside
+ * pipeline parent, GAPS "Spec corrections"), every text the size of its lines, everything inside
  * the bounds. The ten `pr-check` maps, the spec's corpus, also stack no labels. Then the
  * checker itself, on the tea shop and pipeline maps: broken layouts it must catch.
  */
@@ -74,7 +74,7 @@ describe('wardley layout invariants on parser-produced fixtures', () => {
         const v = wardleyLayoutViolations(model, layout);
         if (v.length > 0) failures.push(`${id} ${JSON.stringify(section)}: ${v.join('; ')}`);
       }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(67);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(68);
     expect(nodes).toBeGreaterThan(1000);
     expect(links).toBeGreaterThan(400);
     expect(failures.slice(0, 10)).toEqual([]);
@@ -89,19 +89,19 @@ describe('wardley layout invariants on parser-produced fixtures', () => {
     expect(failures).toEqual([]);
   });
 
-  it('measures labels as v12 drew them, one literal line', () => {
-    // v12's DB (12.2.0, probed): "a\nb", "a<br>b", "x &lt; y" as written; `.text()` draws them
-    // as one line, the newline as a space. Its `#name;` codes show as their characters, a
-    // literal `&amp;` as written (GAPS #493).
+  it('reads labels by the label rule: breaks, tags and entities (#1368)', () => {
+    // v12 drew these as written with `.text()` (12.2.0, probed). The label rule breaks the line
+    // at a `\n` (here a quoted one, a real line break) and at `<br>`, decodes entities and
+    // draws `#name;` codes as their characters.
     const { layout } = lay(item('wardley-cases/layout-label-literal').source);
     expect(layout.nodes.map((n) => n.label.text)).toEqual([
-      'a b',
-      'a<br>b',
-      'x &lt; y',
+      'a\nb',
+      'a\nb',
+      'x < y',
       'Tea & "Cups"',
     ]);
-    expect(layout.notes[0]!.label.text).toBe('♥ love<br/>x');
-    expect(layout.links[0]!.label!.text).toBe('x &amp; *y* <br> z');
+    expect(layout.notes[0]!.label.text).toBe('♥ love\nx');
+    expect(layout.links[0]!.label!.text).toBe('x & *y*\nz');
   });
 
   it('draws decreasing stage boundaries backwards, as v12', () => {
@@ -190,13 +190,13 @@ describe('wardley layout checker', () => {
     );
   });
 
-  it('catches a text of several lines, and labels on top of one another', () => {
+  it('catches a text whose box is not its lines, and labels on top of one another', () => {
     const model = tea();
     const layout = layOut(model);
     const [first, ...rest] = layout.nodes;
     const nodes = [{ ...first!, label: { ...first!.label, text: 'a\nb' } }, ...rest];
     expect(wardleyLayoutViolations(model, { ...layout, nodes }).join()).toMatch(
-      /one collapsed line/
+      /not the size of its lines/
     );
     const stacked = parseWardley('wardley-beta\ncomponent A [0.5, 0.5]\ncomponent B [0.51, 0.5]\n');
     expect(wardleyLabelOverlaps(layOut(stacked.model))).toEqual(['node A and node B overlap']);

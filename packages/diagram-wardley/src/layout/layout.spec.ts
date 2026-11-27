@@ -4,7 +4,7 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { parseWardley } from '../parser/index.ts';
-import { layoutWardley, type WardleyLayout } from './index.ts';
+import { layoutWardley, type PlacedText, type WardleyLayout } from './index.ts';
 
 let theme: Theme;
 beforeAll(async () => {
@@ -27,13 +27,14 @@ const tenPx: Measurer = {
 function lay(
   body: string,
   section: Record<string, unknown> = {},
-  warnings: Warning[] = []
+  warnings: Warning[] = [],
+  top: Record<string, unknown> = {}
 ): WardleyLayout {
   const { model, diagnostics } = parseWardley(`wardley-beta\n${body}\n`);
   const errors = diagnostics.filter((d) => d.severity === 'error');
   if (errors.length > 0) throw new Error(errors.map((d) => d.message).join('; '));
   return layoutWardley(model, {
-    config: { 'wardley-beta': section } as unknown as ResolvedConfig,
+    config: { ...top, 'wardley-beta': section } as unknown as ResolvedConfig,
     measurer: tenPx,
     theme,
     warn: (w) => warnings.push(w),
@@ -408,15 +409,87 @@ describe('wardley layout: annotations, notes, accelerators', () => {
   });
 });
 
-describe('wardley layout: text as v12’s .text() drew it', () => {
-  it('measures one literal line: no markup, entity or break, white space collapsed', () => {
-    const l = lay(
-      'component "a\\nb" [0.5, 0.2]\ncomponent "a<br>b" [0.3, 0.5]\ncomponent "x &lt; y" [0.7, 0.5]'
+describe('wardley layout: labels follow the label rule (#1368)', () => {
+  /** Each line of a text as `text`, `*text*` (bold) or `_text_` (italic) runs. */
+  const runs = (t: PlacedText): string[] =>
+    t.label.lines.map((line) =>
+      line
+        .map((r) => {
+          if (r.bold) return `*${r.text}*`;
+          return r.italic ? `_${r.text}_` : r.text;
+        })
+        .join('')
     );
-    const [ab, br, lt] = l.nodes.map((n) => n.label);
-    expect([ab!.text, ab!.width, ab!.height]).toEqual(['a b', 30, 12]);
-    expect([br!.text, br!.width]).toEqual(['a<br>b', 60]);
-    expect([lt!.text, lt!.width]).toEqual(['x &lt; y', 80]);
+
+  // Every label kind, written the ways of the label fixture (`pr-check/label-syntax.mmd`).
+  const SOURCE = [
+    'title t **b** "`x`" `y`',
+    'evolution "`**G**`" -> "s **b**" -> "s <b>b</b>" -> "s one\\ntwo"',
+    'component "`c **b** _i_`" [0.9, 0.1]',
+    "component 'q **b**' [0.8, 0.3]",
+    'anchor "a <b>b</b><br>n H<sub>2</sub>O" [0.95, 0.6]',
+    'component "c one\\ntwo" [0.5, 0.5]',
+    'component "c a `code` b" [0.3, 0.7]',
+    'component "#lt;b#gt;lit#lt;/b#gt; #92;n" [0.2, 0.2]',
+    '"`c **b** _i_`" -> \'q **b**\' ; l `x` one\\ntwo',
+    'pipeline "c one\\ntwo" {\n  component "`p **b**`" [0.6]\n}',
+    'note "`n **b**`" [0.1, 0.9]',
+    'annotations [0.05, 0.4]',
+    'annotation 1, [0.5, 0.9] "`a **b**`"',
+    'annotation 2, [0.6, 0.9] "a one\\ntwo"',
+    'accelerator "x <i>i</i>" [0.4, 0.4]',
+  ].join('\n');
+
+  it('reads each label kind: markdown strings, plain text, tags, entities and \\n', () => {
+    const l = lay(SOURCE);
+    // The title keeps its text: a markdown string inside it is not the whole label.
+    expect(runs(l.title!)).toEqual(['t **b** "`x`" `y`']);
+    expect(l.stages.map((s) => runs(s.label))).toEqual([
+      ['*G*'],
+      ['s **b**'],
+      ['s *b*'],
+      ['s one', 'two'],
+    ]);
+    const label = (id: string) => runs(node(l, id).label);
+    expect(label('`c **b** _i_`')).toEqual(['c *b* _i_']);
+    // Single quotes make no markdown string; neither do bare backticks or a code span.
+    expect(label('q **b**')).toEqual(['q **b**']);
+    expect(label('c a `code` b')).toEqual(['c a `code` b']);
+    expect(label('a <b>b</b><br>n H<sub>2</sub>O')).toEqual(['a *b*', 'n H2O']);
+    expect(label('c one\ntwo')).toEqual(['c one', 'two']);
+    // `#name;` codes are text: never a tag, never a written `\n`.
+    const coded = l.nodes.find((n) => n.id.startsWith('<b>lit'))!.label;
+    expect(runs(coded)).toEqual(['<b>lit</b> \\n']);
+    expect(label('c one\ntwo_`p **b**`')).toEqual(['p *b*']);
+    expect(runs(l.links[0]!.label!)).toEqual(['l `x` one', 'two']);
+    expect(runs(l.notes[0]!.label)).toEqual(['n *b*']);
+    expect(l.annotationsBox!.lines.map(runs)).toEqual([['1. a *b*'], ['2. a one', 'two']]);
+    expect(runs(l.accelerators[0]!.label)).toEqual(['x _i_']);
+  });
+
+  it('reads them the same with legacyMarkdown: no wardley label kind read markdown in v12', () => {
+    const plain = lay(SOURCE);
+    const legacy = lay(SOURCE, {}, [], { legacyMarkdown: true });
+    expect(legacy).toEqual(plain);
+  });
+
+  it('keeps the first line where v12 drew its one line, the others below it', () => {
+    const one = node(lay('component "ab" [0.5, 0.5]'), 'ab').label;
+    const two = node(lay('component "ab\\ncd" [0.5, 0.5]'), 'ab\ncd').label;
+    expect([two.x, two.y, two.at, two.width]).toEqual([one.x, one.y, one.at, one.width]);
+    expect([one.height, two.height]).toEqual([12, 24]);
+  });
+
+  it('grows the annotations box by the further lines of an annotation', () => {
+    const box = (text: string) =>
+      lay(
+        `annotations [0.5, 0.5]\nannotation 1, [0.1, 0.1] "${text}"\nannotation 2, [0.2, 0.2] "z"`
+      ).annotationsBox!;
+    const one = box('a');
+    const two = box('a\\nb');
+    const line = one.lines[0]!.label.lineHeight;
+    expect(two.box.height - one.box.height).toBeCloseTo(line);
+    expect(two.lines[1]!.y - one.lines[1]!.y).toBeCloseTo(line);
   });
 });
 

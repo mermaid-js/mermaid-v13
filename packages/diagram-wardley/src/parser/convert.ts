@@ -7,6 +7,9 @@
  * The scans are linear (R-PARSE-7, pitfall 5): v12's `/\s+$/gm` backtracks over a long blank
  * run inside a line, so it is written out by hand here.
  */
+import { stringValue } from '@mermaid-js/shared/parser/rule';
+import type { WardleyLabel } from '../model.ts';
+
 export {
   accDescrValue,
   accTitleValue,
@@ -14,6 +17,20 @@ export {
   titleValue,
 } from '@mermaid-js/shared/parser/rule';
 export { displayText } from '@mermaid-js/shared/parser/display-text';
+
+const RE_MARKDOWN_VALUE = /^`([^`]*)`$/;
+
+/**
+ * A quoted string as the label rule reads it (#1368): the value of the cooked token (`cook()`,
+ * whose codes are character references), and, for a double-quoted markdown string
+ * (`"`…`"`), the mark and the text without its backticks. A single-quoted one is no markdown
+ * string, as everywhere.
+ */
+export function quotedLabel(cooked: string, quote: string): WardleyLabel {
+  const text = stringValue(cooked);
+  const md = quote === '"' ? RE_MARKDOWN_VALUE.exec(text)?.[1] : undefined;
+  return md === undefined ? { text } : { text: md, markdown: true };
+}
 
 /** `;` and the rest of the line: v12's wardley value converter, `substring(1).trim()`. */
 export function linkLabelValue(image: string): string {

@@ -480,13 +480,56 @@ describe('wardley render: what is drawn', () => {
     expect(lines.map((n) => textOf(tree, n))).toEqual(['1. First', '2. Second']);
   });
 
-  it("draws v12's #name; codes as their characters and a literal &name; as written (GAPS #493)", async () => {
+  it("draws v12's #name; codes and entities as their characters (GAPS #493, #1368)", async () => {
+    // v12 showed a literal `&amp;` as written; the label rule decodes entities in every label.
     const { tree, svg } = await render(probe('entities'));
-    expect(textOf(tree, byClass(tree, 'wardley-title')[0]!)).toBe('A & B &amp; C');
-    expect(textOf(tree, byClass(tree, 'wardley-node-label')[0]!)).toBe('Tea & &amp; "Cups"');
+    expect(textOf(tree, byClass(tree, 'wardley-title')[0]!)).toBe('A & B & C');
+    expect(textOf(tree, byClass(tree, 'wardley-node-label')[0]!)).toBe('Tea & & "Cups"');
     const [notes] = byClass(tree, 'wardley-notes');
-    expect(textOf(tree, notes!)).toBe('♥ love &lt;3');
-    expect(svg).toContain('>Tea &amp; &amp;amp; &quot;Cups&quot;</text>');
+    expect(textOf(tree, notes!)).toBe('♥ love <3');
+    expect(svg).toContain('>Tea &amp; &amp; &quot;Cups&quot;</text>');
+  });
+
+  it('draws labels by the label rule, the same with legacyMarkdown (#1368)', async () => {
+    const src = [
+      'wardley-beta',
+      'title t <b>b</b>',
+      'component "`c **b**`" [0.5, 0.5]',
+      'component "c **b**" [0.7, 0.7]',
+      'component "one\\ntwo" [0.3, 0.3]',
+      '"`c **b**`" -> "c **b**" ; l <i>i</i>',
+    ].join('\n');
+    const { tree, svg } = await render(src);
+    const tspans = (n: SvgElement) =>
+      tree.children(n).map((c) => [textOf(tree, c), attr(tree, c, 'font-weight') ?? '']);
+    const [title] = byClass(tree, 'wardley-title');
+    expect(tspans(title!)).toEqual([
+      ['t ', ''],
+      ['b', 'bold'],
+    ]);
+    const [md, plain, lines] = byClass(tree, 'wardley-node-label');
+    expect(tspans(md!)).toEqual([
+      ['c ', ''],
+      ['b', 'bold'],
+    ]);
+    // One plain line is written as v12 wrote it, with no <tspan>.
+    expect(textOf(tree, plain!)).toBe('c **b**');
+    expect(tree.children(plain!).every((c) => c.text !== undefined)).toBe(true);
+    expect(tree.children(lines!).map((c) => [textOf(tree, c), attr(tree, c, 'x')])).toEqual([
+      ['one', attr(tree, lines, 'x')],
+      ['two', attr(tree, lines, 'x')],
+    ]);
+    // A turned label keeps its anchor as the <text>'s x and y, the centre of its turn.
+    const [link] = byClass(tree, 'wardley-link-label');
+    expect(attr(tree, link, 'transform')).toBe(
+      `rotate(${/rotate\(([^,]+),/.exec(attr(tree, link, 'transform') ?? '')?.[1]},${attr(tree, link, 'x')},${attr(tree, link, 'y')})`
+    );
+    expect(tree.children(link!).map((c) => attr(tree, c, 'font-style') ?? '')).toEqual([
+      '',
+      'italic',
+    ]);
+    const legacy = await api.render('x', `---\nconfig:\n  legacyMarkdown: true\n---\n${src}`);
+    expect(legacy.svg).toBe(svg);
   });
 
   it('draws the in-text title with data-ast, a front-matter one without (D218)', async () => {

@@ -25,6 +25,7 @@ import type {
   WardleyAccelerator,
   WardleyAnnotation,
   WardleyFlow,
+  WardleyLabel,
   WardleyLink,
   WardleyModel,
   WardleyNode,
@@ -42,10 +43,12 @@ import type {
   WardleyEvolutionNode,
   WardleyEvolveNode,
   WardleyLinkNode,
+  WardleyName,
   WardleyNoteNode,
   WardleyNumber,
   WardleyPipelineComponentNode,
   WardleyPipelineNode,
+  WardleyStage,
   WardleyStatementNode,
 } from './ast.ts';
 import { toPercent } from './convert.ts';
@@ -60,6 +63,8 @@ export interface Parsed {
   /** The last in-text values (`''` when none). */
   title: string;
   titleAstId: AstId | undefined;
+  /** The last in-text title as the label rule reads it (with `title`). */
+  drawnTitle: WardleyLabel | undefined;
   accTitle: string;
   accDescr: string;
   frontMatterTitle: string | undefined;
@@ -71,6 +76,8 @@ export interface Parsed {
 export interface NodeDraft {
   id: string;
   label: string;
+  /** `label` as the label rule reads it: it goes with the label. */
+  drawn: WardleyLabel;
   x: number;
   y: number;
   className?: WardleyNodeClass;
@@ -99,6 +106,7 @@ export class WardleyNodes {
     const existing: NodeDraft = this.byId.get(node.id) ?? {
       id: node.id,
       label: node.label,
+      drawn: node.drawn,
       x: 0,
       y: 0,
     };
@@ -176,7 +184,7 @@ function portFlow(port: string | undefined): WardleyFlow | undefined {
  * v12 `extractFlowFromArrow`: the label of a `+'…'` arrow, and its flow from the `<>`, `<` or
  * `>` anywhere in the arrow (the label's text included, as v12 tested the whole arrow).
  */
-function arrowFlow(arrow: string | undefined): { flow?: WardleyFlow; label?: string } {
+export function arrowFlow(arrow: string | undefined): { flow?: WardleyFlow; label?: string } {
   if (!arrow?.startsWith('+')) return {};
   const q = arrow.charAt(1) === "'" ? arrow.indexOf("'", 2) : -1;
   const label = q > 0 ? arrow.slice(2, q) : undefined;
@@ -184,6 +192,27 @@ function arrowFlow(arrow: string | undefined): { flow?: WardleyFlow; label?: str
   if (arrow.includes('<')) return { flow: 'backward', label };
   if (arrow.includes('>')) return { flow: 'forward', label };
   return { label };
+}
+
+/** A name as the label rule reads it, its value trimmed as the stage label trims it. */
+const trimmed = (name: WardleyName): WardleyLabel =>
+  name.drawn.markdown ? name.drawn : { text: name.drawn.text.trim() };
+
+/** A name's drawn text as written: a markdown string with its backticks again. */
+const written = (label: WardleyLabel): string =>
+  label.markdown ? `\`${label.text}\`` : label.text;
+
+/**
+ * A stage label as the label rule reads it: `<name> / <second name>` is a markdown string only
+ * when both names are one; otherwise each name is drawn as written.
+ */
+function stageLabel({ name, secondName }: WardleyStage): WardleyLabel {
+  const first = trimmed(name);
+  if (!secondName) return first;
+  const second = trimmed(secondName);
+  if (first.markdown && second.markdown)
+    return { text: `${first.text} / ${second.text}`, markdown: true };
+  return { text: `${written(first)} / ${written(second)}` };
 }
 
 /**
@@ -235,7 +264,7 @@ class Populate {
     const links = read.map((r) => r.link);
     this.flush();
 
-    const { title, titleAstId, frontMatterTitle } = this.parsed;
+    const { title, titleAstId, drawnTitle, frontMatterTitle } = this.parsed;
     const model: Omit<WardleyModel, 'warnings'> = {
       nodes: Object.freeze([...this.nodes.values()].map(freezeNode)),
       links: Object.freeze(links),
@@ -251,8 +280,15 @@ class Populate {
       accTitle: this.parsed.accTitle,
       accDescr: this.parsed.accDescr,
     };
-    if (title !== '') return { ...model, title, ...(titleAstId && { titleAstId }) };
-    if (frontMatterTitle) return { ...model, title: frontMatterTitle };
+    if (title !== '')
+      return {
+        ...model,
+        title,
+        drawnTitle: drawnTitle ?? { text: title },
+        ...(titleAstId && { titleAstId }),
+      };
+    if (frontMatterTitle)
+      return { ...model, title: frontMatterTitle, drawnTitle: { text: frontMatterTitle } };
     return model;
   }
 
@@ -302,6 +338,7 @@ class Populate {
     for (const s of e.stages) if (s.boundary) boundaries.push(s.boundary.value);
     return Object.freeze({
       stages: Object.freeze(stages),
+      drawn: Object.freeze(e.stages.map(stageLabel)),
       boundaries: Object.freeze(boundaries),
       astId: e.id,
     });
@@ -313,6 +350,7 @@ class Populate {
     this.nodes.add({
       id: name,
       label: name,
+      drawn: a.name.drawn,
       x,
       y,
       className: 'anchor',
@@ -329,6 +367,7 @@ class Populate {
     this.nodes.add({
       id: name,
       label: name,
+      drawn: c.name.drawn,
       x,
       y,
       className: 'component',
@@ -342,6 +381,7 @@ class Populate {
   private note(n: WardleyNoteNode): WardleyNote {
     return Object.freeze({
       text: n.text,
+      drawn: n.drawn,
       ...this.at(n, `Note "${n.text}"`),
       astId: n.id,
     });
@@ -399,6 +439,7 @@ class Populate {
         this.nodes.add({
           id,
           label: c.name.value,
+          drawn: c.name.drawn,
           x,
           y: parentY,
           className: 'pipeline-component',
@@ -434,7 +475,7 @@ class Populate {
       source: this.nodes.resolve(l.from.value),
       target: this.nodes.resolve(l.to.value),
       dashed,
-      ...(label !== undefined && { label }),
+      ...(label !== undefined && { label, drawn: l.drawnLabel ?? { text: label } }),
       ...(flow && { flow }),
       astId: l.id,
     });
@@ -467,6 +508,7 @@ class Populate {
       number: n,
       ...this.at(a, `Annotation ${n}`),
       text: a.text,
+      drawn: a.drawn,
       astId: a.id,
     });
   }
@@ -475,6 +517,7 @@ class Populate {
     const name = a.name.value;
     return Object.freeze({
       name,
+      drawn: a.name.drawn,
       ...this.at(a, `${context} "${name}"`),
       astId: a.id,
     });
@@ -562,6 +605,7 @@ function freezeNode(n: NodeDraft): WardleyNode {
   const node: WardleyNode = {
     id: n.id,
     label: n.label,
+    drawn: n.drawn,
     x: n.x,
     y: n.y,
     className: n.className ?? 'component',

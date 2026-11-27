@@ -168,9 +168,9 @@ describe('wardley lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =
     expect(unreached.sort()).toEqual([...NOT_REACHED.keys()].sort());
     expect(headerKept).toEqual([]);
     // Every e2e fixture reaches the wardley lexer: the 10 of `pr-check/`, the parser's 33 of
-    // `nightly-check/` (#489, #493), the renderer's 11 (#493), the 12 baselines (#497) and
-    // #1039's override fixture.
-    expect(e2e).toBe(67);
+    // `nightly-check/` (#489, #493), the renderer's 11 (#493), the 12 baselines (#497),
+    // #1039's override fixture and the label fixture (#1404).
+    expect(e2e).toBe(68);
     expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
 });

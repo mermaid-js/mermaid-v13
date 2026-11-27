@@ -15,6 +15,19 @@
  */
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
+/**
+ * A drawn text as the label rule reads it (#1368): as written, with v12's `#name;` codes as
+ * character references (`&lt;`), so that a code is never read as markup or as a line break, and
+ * a quoted string without its quotes. `markdown` marks a double-quoted markdown string
+ * (`"`…`"`), whose backticks `text` leaves out; a text whose quotes the parser keeps (a title, a
+ * link label) has no mark, as the rule finds the string itself. Names keep their own value as
+ * the identifier; only what is drawn is read by the rule.
+ */
+export interface WardleyLabel {
+  readonly text: string;
+  readonly markdown?: true;
+}
+
 /** A component's `(build)`, `(buy)`, `(outsource)` or `(market)`. */
 export type WardleyStrategy = 'build' | 'buy' | 'outsource' | 'market';
 
@@ -34,6 +47,8 @@ export interface WardleyNode {
   readonly id: string;
   /** The name as written (converted). */
   readonly label: string;
+  /** `label` as the label rule reads it. */
+  readonly drawn: WardleyLabel;
   /** Evolution, 0–100. */
   readonly x: number;
   /** Visibility, 0–100. A pipeline child has its parent's. */
@@ -63,6 +78,8 @@ export interface WardleyLink {
   readonly dashed: boolean;
   /** The `+'label'` of the arrow, else the `; label` after the link. */
   readonly label?: string;
+  /** `label` as the label rule reads it; set with `label`. */
+  readonly drawn?: WardleyLabel;
   /** From the source's port, else the target's port, else the arrow's `+'…'` form. */
   readonly flow?: WardleyFlow;
   /** `link:<a>-><b>` with the names as written. */
@@ -92,6 +109,8 @@ export interface WardleyPipeline {
 /** `note "text" [visibility, evolution]`. */
 export interface WardleyNote {
   readonly text: string;
+  /** `text` as the label rule reads it. */
+  readonly drawn: WardleyLabel;
   readonly x: number;
   readonly y: number;
   readonly astId: AstId;
@@ -103,12 +122,16 @@ export interface WardleyAnnotation {
   readonly x: number;
   readonly y: number;
   readonly text: string;
+  /** `text` as the label rule reads it. */
+  readonly drawn: WardleyLabel;
   readonly astId: AstId;
 }
 
 /** `accelerator Name [visibility, evolution]` or `deaccelerator …`. */
 export interface WardleyAccelerator {
   readonly name: string;
+  /** `name` as the label rule reads it. */
+  readonly drawn: WardleyLabel;
   readonly x: number;
   readonly y: number;
   readonly astId: AstId;
@@ -118,6 +141,11 @@ export interface WardleyAccelerator {
 export interface WardleyEvolution {
   /** Stage labels: the name trimmed, or `<name> / <second name>`, both trimmed. */
   readonly stages: readonly string[];
+  /**
+   * Each stage label as the label rule reads it. `<name> / <second name>` is a markdown string
+   * only when both names are; otherwise a name written as one keeps its backticks.
+   */
+  readonly drawn: readonly WardleyLabel[];
   /** The `@n` of the stages that have one, raw (fractions, not clamped), in order. */
   readonly boundaries: readonly number[];
   readonly astId: AstId;
@@ -143,6 +171,8 @@ export interface WardleyModel {
   readonly size?: { readonly width: number; readonly height: number; readonly astId: AstId };
   /** The last in-text `title` if non-empty, else the front-matter `title` (D218); absent when neither. */
   readonly title?: string;
+  /** `title` as the label rule reads it; set with `title`. */
+  readonly drawnTitle?: WardleyLabel;
   /** The AST id of the `title` statement the title comes from; absent for a front-matter title. */
   readonly titleAstId?: AstId;
   /** The last `accTitle: …` (`''` when none). */

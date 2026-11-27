@@ -30,7 +30,7 @@
     TitleAndAccessibilities: ((ACC_DESCR | ACC_TITLE | TITLE) EOL)+     EOL: NEWLINE+ | EOF
     Name: STRING | ID | NAME_WITH_SPACES     WN: WARDLEY_NUMBER     C: WN | INT
 */
-import { formatExpected, Kind } from '@mermaid-js/core/parser-kit';
+import { cook, formatExpected, Kind } from '@mermaid-js/core/parser-kit';
 import { foundText, STOP } from '@mermaid-js/shared/parser/support';
 import {
   accessibilityAsName,
@@ -42,7 +42,7 @@ import type { AstId, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import type { WardleyModel, WardleyStrategy } from '../model.ts';
+import type { WardleyLabel, WardleyModel, WardleyStrategy } from '../model.ts';
 import type {
   WardleyAcceleratorNode,
   WardleyComponentNode,
@@ -55,7 +55,7 @@ import type {
   WardleyStage,
   WardleyStatementNode,
 } from './ast.ts';
-import { displayText, linkLabelValue, stringValue } from './convert.ts';
+import { displayText, linkLabelValue, quotedLabel, stringValue } from './convert.ts';
 import { astName, childId, linkName } from './ids.ts';
 import { lex } from './lexer.ts';
 import {
@@ -67,7 +67,7 @@ import {
   pipelineHint,
   SIZE_HINT,
 } from './messages.ts';
-import { normalise } from './normalise.ts';
+import { arrowFlow, normalise } from './normalise.ts';
 import type { WardleyParseOptions } from './options.ts';
 import { resolveSymbols } from './symbols.ts';
 import {
@@ -143,6 +143,8 @@ class WardleyParser extends RuleParser<PreprocessResult> {
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
   private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
   private titleAstId: AstId | undefined;
+  /** The last in-text title as the label rule reads it. */
+  private drawnTitle: WardleyLabel | undefined;
 
   constructor(
     src: string,
@@ -178,6 +180,20 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     return displayText(this.src, start, end, this.view);
   }
 
+  /**
+   * A token's text as v12's lexer read it, with v12's `#name;` codes as character references:
+   * what the label rule reads where the token is drawn (#1368).
+   */
+  private cooked(j = this.i): string {
+    const { start, end } = this.range(j);
+    return cook(this.src, start, end, this.view);
+  }
+
+  /** A quoted string token as the label rule reads it (`quotedLabel`). */
+  private quoted(j: number): WardleyLabel {
+    return quotedLabel(this.cooked(j), this.src.charAt(this.range(j).start));
+  }
+
   /** Whether the current token is `kind` (tested for `kinds`, what may come here); consume it if so. */
   private accept(kind: number, kinds: readonly number[]): boolean {
     this.tested(kinds);
@@ -200,9 +216,11 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     this.tested(NAMES);
     const k = this.kind();
     if (NAME_SET[k] !== 1) this.fail(NAMES);
-    const range = this.range(this.i);
-    const shown = this.displayed(this.i++);
-    return { value: k === T.String ? stringValue(shown) : shown, range };
+    const j = this.i++;
+    const range = this.range(j);
+    const shown = this.displayed(j);
+    if (k === T.String) return { value: stringValue(shown), range, drawn: this.quoted(j) };
+    return { value: shown, range, drawn: { text: this.cooked(j) } };
   }
 
   /** A token of `kind` (a decimal or an integer) as a number. */
@@ -586,8 +604,11 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     this.tested(AFTER_FROM);
     if (this.kind() === T.LinkPort) node.fromPort = this.displayed(this.i++);
     this.tested(node.fromPort ? AFTER_PORT : AFTER_FROM);
-    if (this.kind() === T.LinkArrow || this.kind() === T.Arrow)
-      node.arrow = this.displayed(this.i++);
+    let arrow: number | undefined;
+    if (this.kind() === T.LinkArrow || this.kind() === T.Arrow) {
+      arrow = this.i++;
+      node.arrow = this.displayed(arrow);
+    }
     if (node.arrow) this.tested(NAMES);
     if (NAME_SET[this.kind()] !== 1) {
       if (node.arrow) this.fail(NAMES);
@@ -597,7 +618,12 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     this.tested(AFTER_TO);
     if (this.kind() === T.LinkPort) node.toPort = this.displayed(this.i++);
     this.tested(node.toPort ? AFTER_TO_PORT : AFTER_TO);
-    if (this.kind() === T.LinkLabel) node.linkLabel = linkLabelValue(this.displayed(this.i++));
+    if (this.kind() === T.LinkLabel) {
+      node.linkLabel = linkLabelValue(this.displayed(this.i));
+      node.drawnLabel = { text: linkLabelValue(this.cooked(this.i++)) };
+    }
+    const arrowLabel = arrow === undefined ? undefined : arrowFlow(this.cooked(arrow)).label;
+    if (arrowLabel !== undefined) node.drawnLabel = { text: arrowLabel };
     node.range.end = this.end();
     if (node.linkLabel !== undefined) this.eol();
     else this.eol(node.toPort ? AFTER_TO_PORT : AFTER_TO);
@@ -801,11 +827,12 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     if (this.kind() !== T.String) {
       this.fail([T.String], undefined, ['a text in quotes, such as `"Note"`']);
     }
+    const drawn = this.quoted(this.i);
     const text = stringValue(this.displayed(this.i++));
     const at = this.coordinates();
     const range = { start, end: this.end() };
     this.eol();
-    this.done({ id: `note:${++this.notes}`, type: 'Note', range, text, ...at }, 'note');
+    this.done({ id: `note:${++this.notes}`, type: 'Note', range, text, drawn, ...at }, 'note');
   }
 
   /** `Annotations: "annotations" "[" C "," C "]" EOL` */
@@ -841,11 +868,15 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     if (this.kind() !== T.String) {
       this.fail([T.String], undefined, ['a text in quotes, such as `"Annotation"`']);
     }
+    const drawn = this.quoted(this.i);
     const text = stringValue(this.displayed(this.i++));
     const range = { start, end: this.end() };
     this.eol();
     const id = this.id(astName('annotation', String(number.value)));
-    this.done({ id, type: 'Annotation', range, number, visibility, evolution, text }, 'annotation');
+    this.done(
+      { id, type: 'Annotation', range, number, visibility, evolution, text, drawn },
+      'annotation'
+    );
   }
 
   /** `(Accelerator | Deaccelerator): kw Name "[" WN "," WN "]" EOL` */
@@ -869,7 +900,10 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     const range = this.range(j);
     const text = (this.texts[word] = textValue(type, this.displayed(j)));
     const id = this.id(word);
-    if (type === 'Title') this.titleAstId = id;
+    if (type === 'Title') {
+      this.titleAstId = id;
+      this.drawnTitle = { text: textValue(type, this.cooked(j)) };
+    }
     this.eol(LINE_END, '`title`, `accTitle` and `accDescr` end their line');
     this.done({ id, type, range, text }, word);
   }
@@ -891,6 +925,7 @@ class WardleyParser extends RuleParser<PreprocessResult> {
         orphans: this.orphans,
         title: this.texts.title,
         titleAstId: this.titleAstId,
+        drawnTitle: this.drawnTitle,
         accTitle: this.texts.accTitle,
         accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
