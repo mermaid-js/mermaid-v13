@@ -266,6 +266,8 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/pr-check/dagre-1-1-should-render-a-simple-class-diagram-without-htmllabels.mmd": 0,
   "class/pr-check/dagre-1-should-render-a-simple-class-diagram.mmd": 0,
   "class/pr-check/hd-8-should-render-a-simple-class-diagram-with-generic-class-and-relations.mmd": 0,
+  "class/pr-check/label-syntax-compat.mmd": 0,
+  "class/pr-check/label-syntax.mmd": 0,
   "class/pr-check/layout-swimlane-namespaces.mmd": 0,
   "class/pr-check/line-hops.mmd": 1,
   "class/pr-check/math-should-render-tex-in-every-class-label.mmd": 0,

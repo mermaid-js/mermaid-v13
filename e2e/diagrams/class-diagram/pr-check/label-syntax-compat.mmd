@@ -1,0 +1,58 @@
+---
+description: >-
+  label-syntax.mmd with legacyMarkdown: plain markdown in class labels,
+  members, methods, relation labels and notes is read as v12 read it; the
+  namespace title stays as written. Everything else draws as in
+  label-syntax.mmd (#1368, #1389).
+config:
+  legacyMarkdown: true
+---
+classDiagram
+  direction LR
+  namespace N1["namespace **bold** _ital_"] {
+    class A1["class **bold** _ital_"] {
+      +member **bold** _ital_
+      +method **bold** _ital_()
+    }
+  }
+  A1 --> B1 : relation **bold** _ital_
+  note for A1 "note **bold** _ital_"
+  namespace N2["`namespace **bold** _ital_`"] {
+    class A2["`class **bold** _ital_`"] {
+      +"`member **bold** _ital_`"
+      +"`method **bold** _ital_`"()
+    }
+  }
+  A2 --> B2 : "`relation **bold** _ital_`"
+  note for A2 "`note **bold** _ital_`"
+  namespace N3 {
+    class A3 {
+      +`member **bold** _ital_`
+      +`method **bold** _ital_`()
+    }
+  }
+  A3 --> B3 : `relation **bold** _ital_`
+  namespace N4["namespace a `code` b"] {
+    class A4["class a `code` b"] {
+      +member a `code` b
+      +method a `code` b()
+    }
+  }
+  A4 --> B4 : relation a `code` b
+  note for A4 "note a `code` b"
+  namespace N5["namespace <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] {
+    class A5["class <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] {
+      +member <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+      +method <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O()
+    }
+  }
+  A5 --> B5 : relation <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  note for A5 "note <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  namespace N6["namespace one\ntwo"] {
+    class A6["class one\ntwo"] {
+      +member one\ntwo
+      +method one\ntwo()
+    }
+  }
+  A6 --> B6 : relation one\ntwo
+  note for A6 "note one\ntwo"

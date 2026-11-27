@@ -2,7 +2,10 @@
 description: >-
   a class name, member, note or relation label with a code span still reads
   the bold and italic outside the span; the span draws its backticks and the
-  stars inside it as written (#836, D610)
+  stars inside it as written (#836, D610). Plain markdown is read as v12 read
+  it: legacyMarkdown (#1368).
+config:
+  legacyMarkdown: true
 ---
 classDiagram
   class A["**bold** and `code`"] {
