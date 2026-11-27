@@ -1,0 +1,25 @@
+---
+description: >-
+  Label syntax with markdownAlwaysOn (#1368, #1400): the source of label-syntax.mmd with the
+  setting on, so every label is markdown and the picture differs from the default one. The
+  title and both axis titles, one each per chart, are written plain here (quoted markdown
+  strings there), so that every label kind shows plain markers read as markdown. The
+  plain `**bold** _ital_` rows draw bold and italic and the code-span rows draw inline code, in
+  the title, both axis titles, the categories, the legend's plot names and the point labels; a
+  quoted markdown string, tags and `\n` draw as in the default mode. A bare backtick outside
+  quotes is a lexical error, as in v12, so the bare-backtick form is left out.
+config:
+  markdownAlwaysOn: true
+  xyChart:
+    width: 1000
+    height: 700
+---
+xychart
+  title "title **bold** _ital_"
+  x-axis "x-axis **bold** _ital_" ["cat **bold** _ital_", "`cat **bold** _ital_`", "cat a `code` b", "cat <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O", "cat one\ntwo"]
+  y-axis "y-axis **bold** _ital_" 0 --> 10
+  bar "plot **bold** _ital_" [2, 3, 4, 5, 6]
+  bar "`plot **bold** _ital_`" [3, 4, 5, 6, 7]
+  bar "plot a `code` b" [1, 2, 3, 4, 5]
+  bar "plot <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" [2, 2, 2, 2, 2]
+  line "plot one\ntwo" [8 "point **bold** _ital_", 7 "`point **bold** _ital_`", 8 "point a `code` b", 7 "point <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O", 8 "point one\ntwo"]

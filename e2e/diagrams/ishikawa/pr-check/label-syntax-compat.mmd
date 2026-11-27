@@ -1,0 +1,27 @@
+---
+description: >-
+  Label syntax with markdownAlwaysOn (#1368, #1400): the source of label-syntax.mmd with the
+  setting on, so every line is markdown and the picture differs from the default one. The one
+  effect is written plain here (a quoted markdown string there), so that every label kind shows
+  plain markers read as markdown. The
+  plain `**bold** _ital_` lines draw bold and italic, bare backticks and the code-span lines draw
+  inline code, in the effect, the causes and the sub-causes; a quoted markdown string, tags and
+  `\n` draw as in the default mode.
+config:
+  markdownAlwaysOn: true
+---
+ishikawa-beta
+  effect **bold** _ital_
+  cause **bold** _ital_
+    sub **bold** _ital_
+  "`cause **bold** _ital_`"
+    "`sub **bold** _ital_`"
+      "`deep **bold** _ital_`"
+  `cause **bold** _ital_`
+    `sub **bold** _ital_`
+  cause a `code` b
+    sub a `code` b
+  cause <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    sub <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  cause one\ntwo
+    sub one\ntwo

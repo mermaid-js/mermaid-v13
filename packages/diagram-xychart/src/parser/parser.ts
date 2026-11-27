@@ -733,11 +733,41 @@ function buildModel(
       .sort((p, q) => p.range.start - q.range.start),
   };
   if (orientation) model.orientation = orientation;
+  return withTitle(model, title, frontMatterTitle);
+}
+
+/**
+ * `model` with its title: the last in-text `title`, else the front-matter one (D218); and the
+ * texts written as a quoted markdown string (`markdownStrings`).
+ */
+function withTitle(
+  model: Mutable<XyChartModel>,
+  title: XyChartTextStatementNode | undefined,
+  frontMatterTitle: string | undefined
+): XyChartModel {
   if (title) {
     model.title = title.text;
     model.titleAst = title.id;
   } else if (frontMatterTitle !== undefined) model.title = frontMatterTitle;
+  const markdown = markdownStrings(model, title?.text);
+  if (markdown.length > 0) model.markdownStrings = markdown;
   return model;
+}
+
+/** A text written as a quoted markdown string: backticks at both ends, none within. */
+const RE_MARKDOWN_STRING = /^`[^`]*`$/;
+
+/**
+ * The model's texts written as a quoted markdown string (`XyChartModel.markdownStrings`), each
+ * once: the in-text `title`, the axis titles, the categories, the plot names and the point
+ * labels. Only a quoted text can hold a backtick, so the test needs no quote mark.
+ */
+function markdownStrings(model: Mutable<XyChartModel>, title = ''): string[] {
+  const { xAxis, yAxis } = model;
+  const texts = [title, xAxis.title, yAxis.title];
+  if (xAxis.kind === 'band') texts.push(...xAxis.categories);
+  for (const p of model.plots) texts.push(p.name, ...(p.pointLabels ?? []));
+  return [...new Set(texts.filter((t) => RE_MARKDOWN_STRING.test(t)))];
 }
 
 /** An axis statement, as v12's grammar called the DB: the data first, then the title. */

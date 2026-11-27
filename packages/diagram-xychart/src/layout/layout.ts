@@ -24,6 +24,7 @@ import type { Size } from '@mermaid-js/core/layout';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
 import { RectUnion } from '@mermaid-js/shared/layout';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { ignoreWarning, XYCHART_SECTION, xyChartOptions, type XyChartOptions } from '../config.ts';
 import type { XyChartModel, XyChartPlot } from '../model.ts';
 import { Axis, type AxisData } from './axis.ts';
@@ -74,7 +75,18 @@ export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): X
   );
   const warn = once(ctx.warn ?? ignoreWarning);
   const family = ctx.theme.value('fontFamily');
-  const texts = textMeasure(ctx.measurer, ctx.inline);
+  // The label warning goes out once per layout, as the layout's own warnings do (D383).
+  const labels = {
+    config: ctx.config,
+    warn: (w: Warning) => warn(w.code, w.message, []),
+    inline: ctx.inline,
+  };
+  const texts = textMeasure(
+    ctx.measurer,
+    ctx.inline,
+    (text, o) => readLabel(text, o, labels),
+    model.markdownStrings
+  );
   const orientation = model.orientation ?? options.chartOrientation;
   const horizontal = orientation === 'horizontal';
 

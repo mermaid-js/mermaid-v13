@@ -283,6 +283,15 @@ wrap?: boolean
 fontSize?: number
 markdownAutoWrap?: boolean
 /**
+ * Reads every label of the diagram as markdown, as a markdown string (`"`…`"`) is read,
+ * whether it is written as one or not: `**bold**`, `_italic_`, code spans and lists are
+ * drawn as markdown. Tags and a written `\n` are read as without it. Set in a diagram
+ * section (`flowchart.markdownAlwaysOn`), it wins over the top-level key for that diagram
+ * type within a config layer. Names and literal text that are no labels are not changed.
+ * 
+ */
+markdownAlwaysOn?: boolean
+/**
  * Suppresses inserting 'Syntax error' diagram in the DOM.
  * This is useful when you want to control how to handle syntax errors in your application.
  * 
@@ -445,6 +454,15 @@ look?: ("classic" | "handDrawn" | "neo")
  * 
  */
 layout?: string
+/**
+ * Reads every label of the diagram as markdown, as a markdown string (`"`…`"`) is read,
+ * whether it is written as one or not: `**bold**`, `_italic_`, code spans and lists are
+ * drawn as markdown. Tags and a written `\n` are read as without it. Set in a diagram
+ * section (`flowchart.markdownAlwaysOn`), it wins over the top-level key for that diagram
+ * type within a config layer. Names and literal text that are no labels are not changed.
+ * 
+ */
+markdownAlwaysOn?: boolean
 }
 /**
  * The object containing configurations specific for the swimlanes diagram type.
