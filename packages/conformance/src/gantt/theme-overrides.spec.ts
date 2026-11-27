@@ -203,7 +203,7 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         ['activeTaskBorderColor']
       ),
     ],
-  "D657: the task bars, the active bar and the third section band read mainBkg, so an author's mainBkg moves them where v12's constructor values stay; under dark, the text on the active bar follows its fill (D574's contrast rule)":
+  "D657, D730: the task bars, the active bar and the third section band (through the first, D730) read mainBkg, so an author's mainBkg moves them where v12's constructor values stay; under dark, the text on the active bar follows its fill (D574's contrast rule)":
     [
       ...keys(
         'default',
@@ -321,7 +321,13 @@ const RESPONSE_ONLY: readonly string[] = [
   ...keys(
     'base',
     ['none'],
-    ['sectionBkgColor', 'vertLineColor', 'taskBorderColor', 'activeTaskBorderColor']
+    [
+      'sectionBkgColor',
+      'sectionBkgColor2',
+      'vertLineColor',
+      'taskBorderColor',
+      'activeTaskBorderColor',
+    ]
   ),
 ];
 

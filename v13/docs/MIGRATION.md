@@ -2098,8 +2098,8 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
 - **Under a `themeVariables` override (D656, D657):** in the classic family the task bars,
-  the active bar and the third section band (`taskBkgColor`, `activeTaskBkgColor`,
-  `sectionBkgColor2`) read `mainBkg`, and the active bar's outline and the `vert` marker read
+  the active bar and the section bands (`taskBkgColor`, `activeTaskBkgColor`, and through
+  `sectionBkgColor`, `sectionBkgColor2`) read `mainBkg`, and the active bar's outline and the `vert` marker read
   `guideLineColor`. `default`, `dark`, `forest` and `neutral` pin both to their own primary and
   line colours, so an author's `primaryColor` or `lineColor` leaves the bars and the outline
   alone there, as in v12. In `base` they derive from `primaryColor` and `lineColor`, so they
@@ -2107,9 +2107,9 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   `lineColor` where v12's followed `primaryColor` and stayed navy (D574). Set
   `guideLineColor` in `themeVariables` to move the outline and the marker.
 - **The first section band is visible in every classic theme (D726, #1249):** `sectionBkgColor`
-  is the theme's `mainBkg` darkened (to black under `dark`), so the band reads at least 1.2:1
-  against the page, the third band, the grid lines and the bar fills, and the text written on
-  it reads at AA. v12's `default` drew a lavender `rgba(102, 102, 255, 0.49)`; v13's is
+  is the theme's `mainBkg` darkened (to black under `dark`). Bands are drawn at opacity 0.2,
+  as in v12, and the band as drawn reads at least 1.1:1 against the page, the grid lines and
+  the done bars at least 1.2:1 against it, and the text written on it at AA. v12's `default` drew a lavender `rgba(102, 102, 255, 0.49)`; v13's is
   `#9898d1` (v13 used the near-white `#f9ffec` before). `neutral` is `#aeaeae` (v12 `#bdbdbd`),
   `forest` `#98b25c` (v12 `#6eaa49`), `base` `#d1bb8b` (v12 `#f6f9ff`) and `dark` `#000000`
   (v12 `#b4ac76`). An author's `sectionBkgColor` wins in
@@ -2117,6 +2117,12 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   `tertiaryColor`. The v13-only `bandBkg` variable is removed (it never existed in v12): a
   `themeVariables.bandBkg` is ignored without a warning, like any unknown name; set
   `sectionBkgColor`.
+- **Zebra section bands (D730):** the third band (`sectionBkgColor2`) repeats the first, so the
+  tinted rows alternate with `altSectionBkgColor` like zebra rows, in every classic theme. v12
+  gave the third band its own colour (`default` `#fff400`, `neutral` and `forest` the first
+  band's, `dark` `#eae8d9`, `base` `#fff4dd`); in v13 it was `mainBkg`, which at opacity 0.2 was
+  barely apart from the page. An author's `sectionBkgColor` moves both tinted bands; set
+  `sectionBkgColor2` as well to colour the third band on its own.
 - **A `mainBkg` override moves the bars (D657):** an author's `mainBkg` recolours the task
   bars, the active bar and the third band in every classic theme, where v12's `default`,
   `forest` and `neutral` kept their own; under `dark` the text on the active bar follows that

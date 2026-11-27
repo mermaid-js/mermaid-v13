@@ -14,6 +14,7 @@ import {
   contrastRatio,
   createTheme,
   loadTheme,
+  mixColors,
   parseColor,
   type Rgba,
   type ThemeName,
@@ -70,7 +71,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
   },
   default: {
     sectionBkgColor: ['#6666ff7d', '#9898d1'],
-    sectionBkgColor2: ['#fff400', '#ececff'],
+    sectionBkgColor2: ['#fff400', '#9898d1'],
     vertLineColor: ['#000080', '#333333'],
     taskBkgColor: ['#8a90dd', '#ececff'],
     taskBorderColor: ['#534fbc', '#c7c7f1'],
@@ -83,7 +84,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
   dark: {
     sectionBkgColor: ['#b4ac76', '#000000'],
     altSectionBkgColor: ['#333333', '#ffffff'],
-    sectionBkgColor2: ['#eae8d9', '#1f2020'],
+    sectionBkgColor2: ['#eae8d9', '#000000'],
     excludeBkgColor: ['#9f9758', '#eeeeee'],
     todayLineColor: ['#db5757', '#ff0000'],
     vertLineColor: ['#00bfff', '#d3d3d3'],
@@ -100,7 +101,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
   },
   forest: {
     sectionBkgColor: ['#6eaa49', '#98b25c'],
-    sectionBkgColor2: ['#6eaa49', '#cde498'],
+    sectionBkgColor2: ['#6eaa49', '#98b25c'],
     vertLineColor: ['#00bfff', '#000000'],
     taskBkgColor: ['#487e3a', '#cde498'],
     taskBorderColor: ['#13540c', '#abb594'],
@@ -110,7 +111,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
   },
   neutral: {
     sectionBkgColor: ['#bdbdbd', '#aeaeae'],
-    sectionBkgColor2: ['#bdbdbd', '#eeeeee'],
+    sectionBkgColor2: ['#bdbdbd', '#aeaeae'],
     gridColor: ['#e6e6e6', '#d3d3d3'],
     todayLineColor: ['#dd4422', '#ff0000'],
     vertLineColor: ['#dd4422', '#666666'],
@@ -128,6 +129,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
   },
   base: {
     sectionBkgColor: ['#f6f9ff', '#d1bb8b'],
+    sectionBkgColor2: ['#fff4dd', '#d1bb8b'],
     vertLineColor: ['#000080', '#0b0b0b'],
     taskBorderColor: ['#eeddbb', '#d9cfbc'],
     activeTaskBorderColor: ['#fff4dd', '#0b0b0b'],
@@ -175,41 +177,59 @@ describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
       );
   });
 
-  // #1249, D726: the first band is visibly a band, in every classic theme: against the page
-  // behind it, against the third band (`mainBkg`) and against the marks drawn on it, the grid
-  // lines and the bars in each state; and what is written on it stays readable.
-  describe('the first section band is distinct (#1249, D726)', () => {
-    const BAND = 1.2;
+  // #1249, D726, D730: the tinted bands (the first and, as zebra rows, the third) are visibly
+  // bands in every classic theme, as drawn: gantt paints each band at `bandOpacity` (0.2,
+  // `diagram-gantt` `layout/metrics.ts`) over the page, so every ratio is taken on that
+  // composite. The grid lines and the done bars (both `lightgrey` in the light themes) stay
+  // apart from the band as drawn; what is written on it stays readable. Two of D726's raw-colour
+  // checks are gone (D730): band 1 against band 3, which are one colour now, and the plain and
+  // active bar fills, which are outlined and sit no further from the page than from the band.
+  describe('the tinted section bands are distinct as drawn (#1249, D726, D730)', () => {
+    const BAND_OPACITY = 0.2;
+    const BAND = 1.1;
+    const MARK = 1.2;
     const AA = 4.5;
-    const rgba = (v: unknown): Rgba => parseColor(String(v))!;
-    const BEHIND = [
-      'background',
-      'sectionBkgColor2',
-      'gridColor',
-      'doneTaskBkgColor',
-      'activeTaskBkgColor',
-      'taskBkgColor',
-    ] as const;
+    const TINTED = ['sectionBkgColor', 'sectionBkgColor2'] as const;
+    const MARKS = ['gridColor', 'doneTaskBkgColor'] as const;
     const INK = ['taskTextOutsideColor', 'titleColor'] as const;
+    const rgba = (v: unknown): Rgba => parseColor(String(v))!;
     const resolve = async (name: ThemeName) =>
       createTheme(await loadTheme(name), { diagram: gantt.theme, cssVariables: false });
+    const drawn = (theme: Awaited<ReturnType<typeof resolve>>, v: string): Rgba =>
+      mixColors(rgba(theme.value(v)), rgba(theme.value('background')), BAND_OPACITY);
 
     it.each(CLASSIC.map((n) => [n]))(
-      '%s: at least 1.2:1 against the page, band 3, the grid and every bar fill',
+      '%s: each tinted band is 1.1:1 from the page',
       async (name) => {
         const theme = await resolve(name);
-        const band = rgba(theme.value('sectionBkgColor'));
-        const ratios = Object.fromEntries(
-          BEHIND.map((v) => [v, contrastRatio(band, rgba(theme.value(v)))])
-        );
-        for (const v of BEHIND)
-          expect(ratios[v], `${name}: band vs ${v}`).toBeGreaterThanOrEqual(BAND);
+        const page = rgba(theme.value('background'));
+        for (const v of TINTED)
+          expect(contrastRatio(drawn(theme, v), page), `${name}: ${v}`).toBeGreaterThanOrEqual(
+            BAND
+          );
+      }
+    );
+
+    it.each(CLASSIC.map((n) => [n]))('%s: band 3 repeats band 1 (zebra)', async (name) => {
+      const theme = await resolve(name);
+      expect(theme.value('sectionBkgColor2')).toBe(theme.value('sectionBkgColor'));
+    });
+
+    it.each(CLASSIC.map((n) => [n]))(
+      '%s: the grid and done bars are 1.2:1 from the band',
+      async (name) => {
+        const theme = await resolve(name);
+        const band = drawn(theme, 'sectionBkgColor');
+        for (const v of MARKS)
+          expect(contrastRatio(rgba(theme.value(v)), band), `${name}: ${v}`).toBeGreaterThanOrEqual(
+            MARK
+          );
       }
     );
 
     it.each(CLASSIC.map((n) => [n]))('%s: text on the band reads (4.5:1)', async (name) => {
       const theme = await resolve(name);
-      const band = rgba(theme.value('sectionBkgColor'));
+      const band = drawn(theme, 'sectionBkgColor');
       for (const v of INK)
         expect(contrastRatio(rgba(theme.value(v)), band), `${name}: ${v}`).toBeGreaterThanOrEqual(
           AA

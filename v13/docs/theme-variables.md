@@ -252,7 +252,7 @@ flags and opacities, which are read literally.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `sectionBkgColor` | | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#9898d1` | `#000000` | `#98b25c` | `#aeaeae` | `#d1bb8b` | `#ffffff` | `#201f1f` |
 | `altSectionBkgColor` | | color | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` | `white` |
-| `sectionBkgColor2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `sectionBkgColor2` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#9898d1` | `#000000` | `#98b25c` | `#aeaeae` | `#d1bb8b` | `#cccccc` | `#1f2020` |
 | `excludeBkgColor` | | color | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` |
 | `gridColor` | | color | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` |
 | `todayLineColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |

@@ -2,4 +2,4 @@
 '@mermaid-js/diagram-gantt': patch
 ---
 
-fix: the first section band of a gantt chart is a visible colour in `default`, `neutral`, `forest`, `base` and `dark` (it was near white in `default`); set `sectionBkgColor` to choose your own. The v13-only `bandBkg` theme variable is removed and is now ignored.
+fix: gantt section bands alternate like zebra rows in `default`, `neutral`, `forest`, `base` and `dark`: the first and third bands share one visible colour (the first was near white in `default`, the third barely showed); set `sectionBkgColor` (and `sectionBkgColor2`) to choose your own. The v13-only `bandBkg` theme variable is removed and is now ignored.
