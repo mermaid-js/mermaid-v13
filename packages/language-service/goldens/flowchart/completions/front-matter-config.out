@@ -2,6 +2,7 @@
   theme property (string) 3:3-3:3 "" -> "theme: "
   themeVariables property (object) 3:3-3:3 "" -> "themeVariables:\n    "
   lineHops property (boolean | string) 3:3-3:3 "" -> "lineHops: "
+  curve property (string) 3:3-3:3 "" -> "curve: "
   ascii property (object) 3:3-3:3 "" -> "ascii:\n    "
   darkMode property (boolean) 3:3-3:3 "" -> "darkMode: "
   fontFamily property (string) 3:3-3:3 "" -> "fontFamily: "

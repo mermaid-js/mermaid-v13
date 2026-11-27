@@ -17,13 +17,17 @@ item is a card of the last column, at any depth; an item indented less than the 
 error once another item follows it. `@{ … }` after an item is its YAML data. A `:::class` or
 `::icon(…)` line decorates the last item written before it. A blank or comment line counts as a
 statement where one may start, so an item right after two of them in a row, or one right after
-`kanban`, is an error, as in mermaid@12. *)
+`kanban`, is an error, as in mermaid@12.
+
+`accTitle: …`, `accDescr: …` and `accDescr { … }` on a line of their own, at any indent, set the
+diagram's accessible title and description and are no items (D742). mermaid@12 read them as
+items; `accTitle[x]` or a bare `accTitle` is still an item. *)
 
 @lexer
 
 @options case-insensitive ;
 
-@modes class icon node nstr nstr2 shapeData shapeDataStr ;
+@modes acc accBlock class icon node nstr nstr2 shapeData shapeDataStr ;
 
 (* The tag rules in shape data and strings stay linear for the highlighters: a tag name ends at
 a word boundary, a tag holds no `<`, and each character of it has one reading (`=` before `"`
@@ -37,6 +41,18 @@ SHAPE_DATA                /@\{/                            push(shapeData) empty
 <shapeDataStr> SHAPE_DATA /(?:<\w+\b(?:[^<>"=]|=(?!")|="[^<>"]*")*>|[^"])+/ fold :string ;
 <shapeData> SHAPE_DATA    /(?:<\w+\b(?:[^<>"}^=]|=(?!")|="[^<>"}^]*")*>|[^}^"])+/ :meta ;
 <shapeData> -             /\}/                             pop attach-prev :meta ;
+(** At a line start, `accTitle:`, `accDescr:` or `accDescr {`: the indent, then the statement
+read in its own mode (D742). *)
+SPACELIST                 /(?<=^|\n)[\t ]+(?=accTitle[\t ]*:|accDescr[\t ]*[:{])/ push(acc) ;
+-                         /(?<=^|\n)(?=accTitle[\t ]*:|accDescr[\t ]*[:{])/ push(acc) ;
+(** `accTitle: …`: the accessible title, the rest of the line. *)
+<acc> ACC_TITLE           /accTitle[\t ]*:[^\n\u2028\u2029]*/ pop :keyword ;
+(** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to the first `}`, or
+to the end of the text when there is none): the accessible description. *)
+<acc> ACC_DESCR           /accDescr[\t ]*:[^\n\u2028\u2029]*/ pop :keyword ;
+<acc> -                   /accDescr[\t ]*\{/               pop push(accBlock) attach-next :keyword ;
+<accBlock> ACC_DESCR      /[^}]*\}/                        pop :keyword ;
+<accBlock> ACC_DESCR      /[^}]+/                          :keyword ;
 (** A `%%` comment v12's comment removal left (after text on a line, or a bare `%%`), with the
 blanks and line breaks before it: a blank line. *)
 SPACELINE                 /\s*%%.*/                        :comment ;
@@ -108,11 +124,13 @@ line or the end. Blank and comment lines may come before `kanban`. *)
 diagram = [ SPACELINE { SPACELINE | NL } ] KANBAN [ NL ] statement stop { statement stop } ;
 stop = ( NL | EOF | SPACELINE ) { NL | EOF } ;
 
-statement = SPACELIST [ Item | Icon | Class ]
+statement = SPACELIST [ Item | Icon | Class | AccTitle | AccDescr ]
   | SPACELINE
   | Item
   | Icon
-  | Class ;
+  | Class
+  | AccTitle
+  | AccDescr ;
 
 (** An item, a column or a card by its indent: an id, a shape with its text, or both (`todo`,
 `id[text]`, `[text]`), then optional shape data (`id@{ ticket: T-1 }`). *)
@@ -125,3 +143,7 @@ shapeData = SHAPE_DATA { SHAPE_DATA } ;
 Icon = ICON ;
 (** `:::class …`: the classes of the last item, on a line of its own; a later one replaces them. *)
 Class = CLASS ;
+(** `accTitle: …`: the accessible title, on a line of its own; a later one replaces it. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description; a later one replaces it. *)
+AccDescr @AccDescr = ACC_DESCR ;

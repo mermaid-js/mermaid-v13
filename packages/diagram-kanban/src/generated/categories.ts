@@ -36,4 +36,6 @@ export const kanbanCategories = /* @__PURE__ */ kindCategories(T, {
   ShapeDataStr: 'String',
   ShapeDataEnd: 'Meta',
   Eof: 'Other',
+  AccTitle: 'Keyword',
+  AccDescr: 'Keyword',
 });

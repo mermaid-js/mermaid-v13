@@ -120,18 +120,55 @@ const COLOR_KEYWORDS: ReadonlySet<string> = new Set(
 );
 // cspell:enable
 const RE_FUNC = /^[a-z-]+\s*\(.*\)$/i;
+// A channel function, or `color()` with a CSS colour space: the channels are group 1.
+// cspell:ignore prophoto
+const RE_CHANNEL_FUNC =
+  /^(?:(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(|color\(\s*(?:srgb(?:-linear)?|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz(?:-d50|-d65)?)\s)(.*)\)$/i;
+const RE_CHANNEL = /^(?:[+-]?(?:\d{1,10}(?:\.\d{1,10})?|\.\d{1,10})(?:%|deg|g?rad|turn)?|none)$/i;
+// `color-mix(in <space> [<word> hue],` or `light-dark(`: the two colours are group 1.
+const RE_TWO_COLOURS =
+  /^(?:color-mix\(\s*in\s+[a-z\d-]+(?:\s+[a-z]+\s+hue)?\s*,|light-dark\()(.*)\)$/i;
+
+/** One colour that `checkCssColor` keeps, after or before at most one percentage if `pct`. */
+function mixArg(arg: string, pct: boolean): boolean {
+  const words = splitTopLevel(arg, 'space') ?? [];
+  const colours = words.filter((w) => !(pct && w.endsWith('%') && RE_NUMBER.test(w)));
+  return colours.length === 1 && words.length < 3 && checkCssColor(colours[0]!) !== undefined;
+}
+
+/**
+ * False for a colour function whose arguments are not what CSS takes (D737). A channel
+ * function or `color()` takes 3 or 4 numbers, percentages, angles or `none`; relative colours,
+ * `var()`, `calc()` and exponents are refused too. `color-mix()` and `light-dark()` take two
+ * colours. `var()` keeps `checkColor`'s check; any other function is refused.
+ */
+function argsKnown(v: string): boolean {
+  let m = RE_CHANNEL_FUNC.exec(v);
+  if (m) {
+    const parts = m[1]!.trim().split(/\s*[,/]\s*|\s+/);
+    return parts.length > 2 && parts.length < 5 && parts.every((p) => RE_CHANNEL.test(p));
+  }
+  m = RE_TWO_COLOURS.exec(v);
+  const args = m && splitTopLevel(m[1]!, 'comma');
+  if (args) return args.length === 2 && args.every((a) => mixArg(a, /^c/i.test(v)));
+  return /^var\(/i.test(v);
+}
 
 /**
  * A colour an author gives, in a style statement, the config or `themeVariables` (D690): what
  * `checkColor` allows, less the words and hex digits CSS does not know. A browser ignores such a
  * colour in CSS, but an attribute that holds one replaces the theme's colour and draws black
- * (#1195).
+ * (#1195). A colour function's arguments are read too (D737).
  */
 export function checkCssColor(value: string): SafeColor | undefined {
-  const v = value.trim();
+  // checkColor first: its length and depth limits bound the recursion through argsKnown.
+  const v = checkColor(value);
+  if (v === undefined) return undefined;
   const known =
-    COLOR_KEYWORDS.has(v.toLowerCase()) || RE_FUNC.test(v) || parseColor(v) !== undefined;
-  return known ? checkColor(v) : undefined;
+    COLOR_KEYWORDS.has(v.toLowerCase()) ||
+    parseColor(v) !== undefined ||
+    (RE_FUNC.test(v) && argsKnown(v));
+  return known ? v : undefined;
 }
 
 const RE_SHADOW_LENGTH = /^(-?)(\d{1,6}(?:\.\d{1,6})?|\.\d{1,6})(px|em|rem)?$/i;

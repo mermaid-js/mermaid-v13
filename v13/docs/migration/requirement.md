@@ -71,8 +71,9 @@
   `rect_border_color`, `rect_min_width`, `rect_min_height`, `fontSize`, `rect_padding` and
   `line_height` are accepted and ignored, as v12.2.0's renderer never read them (see the
   ignored-keys table); `look` as everywhere (D153).
-- **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
-  layout keeps room for each marker so it no longer overlaps the next box.
+- **Edges** follow `requirement.curve`, then the top-level `curve`, then `rounded` (D733, #1378),
+  a self-loop always `rounded`; `flowchart.curve` no longer reaches a requirement diagram, as v12
+  drew its edges with it. The layout keeps room for each marker so it no longer overlaps the next box.
 - **Several self-loops on one box** (D618, #768) each get their own route: the second is drawn
   on the opposite side of the box and later ones nest outward, alternating sides, so every line
   and label shows, as v12 drew them side by side. Before, they were drawn over one another. A
@@ -107,7 +108,7 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 | Marker room: none (dagre); markers could overlap the next box | The layout keeps each marker's drawn extent clear, from the theme's marker geometry (21 × 21 classic, 20 × 20 redux and neo, more for a wider `strokeWidth`; marker strokes stop at 8px, the chevron scale at 2) | Spec #520 (marker room from the family tokens) |
 | Edge label `<g class="edgeLabel">` with `<foreignObject>` (`div.labelBkg`, `span.edgeLabel`) | `<g class="edgeLabel" data-id>` with a `<rect>` and a `<text>` | Text labels; labels carry no `data-ast` (D437) |
 | Relation label on a square chip with no border (`relationLabelBackground`, white or `#16141f` in the redux themes) | A tag, the shared edge label: a rounded box (`rx` 6, no `labelBkg` class) with 8 px of room each side and 4 px above and below, filled opaque with `relationLabelBackground` (the theme background unless set, in every theme) and bordered 1 px solid in `relationColor`, solid on the dashed lines. The layout reserves the same box (`labelPatch`). Under `look: handDrawn` the border is sketched | D626, D627, D628, D629, D630 |
-| Edges drawn with `flowchart.curve` (`rounded` by default) | The same curves, through `flowchart.curve` (class's precedent) | |
+| Edges drawn with `flowchart.curve` (`rounded` by default) | The same curves, through the new `requirement.curve`, then the new top-level `curve`, then `rounded`. `flowchart.curve` is not read: a requirement diagram that set it sets `requirement.curve` instead. Nothing set draws as before. Text output stays stepped and warns `ASCII_DROPPED` for a curve set by either key | One key per type (D733, #1378) |
 | A self-loop drawn with `flowchart.curve` | A self-loop is always `rounded`, whatever the curve | Class's precedent: its legs are too short for the other curves |
 | A `style` / `classDef` `fill` left the text in the theme's ink (`styles2String` sends only `color` and `font-*` to the labels) | A `fill` with no `color` gives the text `theme.ink(fill)`, an ink that reads on it | R-THEME-12, ER's precedent |
 | Palette colours by CSS `[data-color-id].node path` rules | `data-color-id` kept; the colours are attributes on the outline and divider; an author `style` still wins | D152 |

@@ -78,7 +78,8 @@ export function ascii(
   const laid = layout.requirement?.graph.grid === undefined ? layoutAscii(model, ctx) : layout;
   const prepared = laid.requirement!;
   const { routes, unresolved } = repairRoutes(prepared.graph, laid);
-  const curve = ctx.config.flowchart?.curve;
+  // The curve config sets (D733): `requirement.curve`, else `curve`. Text lines are always square.
+  const curve = ctx.config.requirement?.curve ?? ctx.config.curve;
   for (const w of asciiWarnings(model, prepared, ctx.ast, curve)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which relations cross or share.
   const routeWarning: AsciiRouteWarning | undefined = asciiRoute(unresolved, 'relations');
