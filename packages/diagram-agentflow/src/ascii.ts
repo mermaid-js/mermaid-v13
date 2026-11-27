@@ -81,6 +81,7 @@ export function ascii(
   if (routeWarning) ctx.warn(routeWarning);
   return drawAgentflow(prepared, laid, routes, glyphs, {
     title: ctx.title ?? model.title,
+    ctx,
     ...(options.maxWidth !== undefined ? { maxWidth: options.maxWidth } : {}),
   });
 }

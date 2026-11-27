@@ -1313,6 +1313,13 @@ properties:
       status: honoured
       since: 13.0.0
       reason: 'Set to `false`, a flowchart markdown label (node, subgraph and edge) breaks only at its own line breaks, as v12 did for HTML labels. No other diagram type reads this key.'
+  markdownAlwaysOn:
+    $ref: '#/$defs/BaseDiagramConfig/properties/markdownAlwaysOn'
+    default: false
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: 'v13 reads markdown only in a markdown string (D734). Set to `true`, every label is read as a markdown string is, quoted or not; tags and a written `\n` are read as without it. A diagram section''s `markdownAlwaysOn` wins over this one within a config layer.'
   suppressErrorRendering:
     type: boolean
     default: false
@@ -1388,6 +1395,20 @@ $defs:
           Defines which layout algorithm to use for rendering the diagram.
         type: string
         x-mermaid: { status: pending }
+      markdownAlwaysOn:
+        description: |
+          Reads every label of the diagram as markdown, as a markdown string (`"`…`"`) is read,
+          whether it is written as one or not: `**bold**`, `_italic_`, code spans and lists are
+          drawn as markdown. Tags and a written `\n` are read as without it. Set in a diagram
+          section (`flowchart.markdownAlwaysOn`), it wins over the top-level key for that diagram
+          type within a config layer. Names and literal text that are no labels are not changed.
+        type: boolean
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            New in v13 (D734). Off, only a markdown string is markdown. Set in a diagram section,
+            it wins over the top-level key within a config layer, as `theme` does.
   C4DiagramConfig:
     title: C4 Diagram Config
     allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]

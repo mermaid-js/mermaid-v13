@@ -1,9 +1,8 @@
 // #837 (D114): a quoted mindmap or kanban label that holds a tag with a double-quoted attribute
 // parses as in v12, whose `cleanupText` turned `="x"` into `='x'` inside a tag before lexing.
 // What it draws is what flowchart draws for the same label: the tag and its attributes are
-// dropped with one HTML_DROPPED, the text is kept, and nothing of the tag reaches the SVG.
-// Each type's `nightly-check/html-attribute-in-quoted-label.mmd` holds the cases (nightly-check,
-// not baseline, because it warns by design, as the other HTML_DROPPED fixtures do).
+// drawn as written text, with no warning (#1440), and nothing of the tag reaches the SVG as
+// markup. Each type's `nightly-check/html-attribute-in-quoted-label.mmd` holds the cases.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
@@ -27,9 +26,6 @@ async function render(text: string): Promise<{ svg: string; warnings: Warning[] 
   m.initialize({ deterministic: true });
   return m.render('d', text);
 }
-
-const dropped = (warnings: Warning[]): string[] =>
-  warnings.filter((w) => w.code === 'HTML_DROPPED').map((w) => w.message);
 
 /** What each `<text>` draws, its runs joined and its blanks collapsed. */
 const texts = (svg: string): string[] => drawn(svg).map((l) => l.replace(/\s+/g, ' ').trim());
@@ -130,8 +126,6 @@ function assertNoTagReachesTheSvg(svg: string, own: Set<string>): void {
   }
   expect(all.filter((e) => e.attrs.has('style')).map((e) => e.path.length)).toEqual([0]);
   expect(all.some((e) => [...e.attrs.keys()].some((k) => /^on/i.test(k)))).toBe(false);
-  // The tag's attribute values are nowhere in what is drawn.
-  expect(texts(svg).join('|')).not.toMatch(/alert|color:|span/);
 }
 
 /** The quoted labels of the fixture (not its data), as a flowchart drawing each in a node. */
@@ -153,17 +147,20 @@ describe.each([
     labels: [...Array<string>(3).fill('red text'), 'two attributes', 'click handler', 'T-1'],
   },
 ])('a double-quoted attribute in a quoted $type label (#837, D114)', ({ type, labels }) => {
-  it('parses, draws the text and drops the tag with one HTML_DROPPED', async () => {
+  it('parses, and draws the tag as written text with no warning (#1440)', async () => {
     const { svg, warnings } = await render(fixture(type));
-    expect(warnings.filter((w) => w.code !== 'HTML_DROPPED')).toEqual([]);
-    expect(dropped(warnings)).toEqual(['Labels do not draw <span>.']);
+    expect(warnings).toEqual([]);
     const drawnTexts = texts(svg);
-    for (const label of labels) expect(drawnTexts).toContain(label);
-    expect(drawnTexts.filter((l) => l === 'red text')).toHaveLength(
-      labels.filter((l) => l === 'red text').length
-    );
-    // The same text as the labels written without the tags.
-    expect(drawnTexts).toEqual(texts((await render(plain(fixture(type)))).svg));
+    // With its tags taken out, the same text as the labels written without them.
+    // Compared without white space: a label may wrap inside a tag, where the plain one does not.
+    const flat = (l: string): string => l.replace(/\s+/g, '');
+    const untagged = drawnTexts.map((l) => flat(l).replace(/<\/?span[^>]*>/g, ''));
+    for (const label of labels) expect(untagged).toContain(flat(label));
+    expect(untagged).toEqual(texts((await render(plain(fixture(type)))).svg).map(flat));
+    // The tags, their attributes and the event handler are shown, as v12 cleaned them up.
+    const shown = drawnTexts.join('|').replace(/\s+/g, '');
+    expect(shown).toContain("<spanstyle='color:red'>red</span>");
+    expect(shown).toContain("<spanonclick='alert(1)'>click</span>");
   });
 
   it('lets no tag, style, class or event handler reach the SVG', async () => {
@@ -176,9 +173,11 @@ describe.each([
     const own = await render(fixture(type));
     const flow = await render(asFlowchart(fixture(type)));
     assertNoTagReachesTheSvg(flow.svg, new Set());
-    expect(dropped(own.warnings)).toEqual(dropped(flow.warnings));
-    // Every label flowchart draws is drawn the same.
-    for (const label of texts(flow.svg)) expect(texts(own.svg)).toContain(label);
+    expect(own.warnings).toEqual([]);
+    expect(flow.warnings).toEqual([]);
+    // Every label flowchart draws is drawn with the same text (each wraps at its own width).
+    const flat = (svg: string): string[] => texts(svg).map((l) => l.replace(/\s+/g, ''));
+    for (const label of flat(flow.svg)) expect(flat(own.svg)).toContain(label);
     // The tags add no markup to a label: nothing beyond what the plain labels have.
     const plainShape = labelShape((await render(plain(fixture(type)))).svg);
     for (const k of labelShape(own.svg)) expect(plainShape.has(k), k).toBe(true);

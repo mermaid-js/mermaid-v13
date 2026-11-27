@@ -88,6 +88,7 @@ export function ascii(
   const title = ctx.title ?? model.title;
   return drawRequirement(prepared, laid, routes, glyphsFor(ctx), {
     ...(title !== undefined ? { title } : {}),
+    ctx,
     ...(maxWidth !== undefined ? { maxWidth } : {}),
   });
 }

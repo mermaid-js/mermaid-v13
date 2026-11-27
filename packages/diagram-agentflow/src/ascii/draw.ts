@@ -27,6 +27,7 @@ import {
   tee,
   writeBoxLabel,
 } from '@mermaid-js/shared/ascii';
+import type { MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 
 interface End {
   /** The node or flow the edge ends at. */
@@ -73,6 +74,8 @@ export interface DrawOptions {
   readonly title?: string;
   /** `ascii.maxWidth`: a longer title wraps to it (or to the drawing, when that is wider). */
   readonly maxWidth?: number;
+  /** The render context, for the title's label rule and warning (#1406). */
+  readonly ctx?: MarkdownWarningContext;
 }
 
 /**
@@ -120,5 +123,5 @@ export function drawAgentflow(
     if (!markerGlyph(glyphs, end) && !framed(end))
       tee(canvas, glyphs.tee, glyphs.name === 'unicode', end);
 
-  return finish(canvas, options.title, options.maxWidth);
+  return finish(canvas, options.title, options.maxWidth, options.ctx);
 }

@@ -59,6 +59,7 @@ export function ascii(model: ErModel, layout: ErLayout, ctx: ErAsciiContext): st
   const maxWidth = ctx.config.ascii?.maxWidth;
   return drawEr(er, laid, routes, glyphs, {
     title: ctx.title,
+    ctx,
     pad: units.builder.nodePad.x,
     ...(maxWidth !== undefined ? { maxWidth } : {}),
   });

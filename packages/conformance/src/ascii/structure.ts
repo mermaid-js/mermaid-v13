@@ -211,8 +211,12 @@ class Drawing {
     });
   }
 
-  /** A border cell: a line glyph (a side an edge was drawn across keeps its box) or a mark. */
+  /**
+   * A border cell: a line glyph (a side an edge was drawn across keeps its box) or a mark. A
+   * title's cell is text, marks included: a title may hold `<` and `>` (#1440).
+   */
   private side(x: number, y: number): boolean {
+    if (this.titled.has(`${y},${x}`)) return false;
     return this.armsOf(x, y) !== 0 || MARKS[this.charset].includes(this.at(x, y) ?? ' ');
   }
 

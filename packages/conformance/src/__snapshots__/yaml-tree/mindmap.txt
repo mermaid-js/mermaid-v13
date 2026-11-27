@@ -90,7 +90,7 @@ e2e/diagrams/mindmap/nightly-check/branches-with-shapes-and-labels.mmd 1 96af596
 e2e/diagrams/mindmap/nightly-check/branches.mmd 1 db28abd54ce6db82
 e2e/diagrams/mindmap/nightly-check/circle-shape.mmd 1 3e3a269abb3bf084
 e2e/diagrams/mindmap/nightly-check/default-shape.mmd 1 ffd1dd1b64809350
-e2e/diagrams/mindmap/nightly-check/html-attribute-in-quoted-label.mmd 1 f93edcdfd9617697
+e2e/diagrams/mindmap/nightly-check/html-attribute-in-quoted-label.mmd 1 57c00a0ba447285e
 e2e/diagrams/mindmap/nightly-check/level-2-nodes-exceeding-11.mmd 1 adcee5f01821a8e2
 e2e/diagrams/mindmap/nightly-check/only-a-root.mmd 1 e597054e21652379
 e2e/diagrams/mindmap/nightly-check/rounded-rect-shape.mmd 1 52dbab74b2e98454

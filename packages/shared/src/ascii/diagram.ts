@@ -5,13 +5,15 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { Point } from '@mermaid-js/core/layout';
-import { type MeasuredLabel, Style } from '@mermaid-js/core/text';
+import { labelSource, layoutLabel, type MeasuredLabel, Style } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import {
   armOf,
   ascii as asciiSet,
   asciiOptions,
   Canvas,
   type CellRect,
+  cellMeasurer,
   cellWidth,
   type Dir,
   DOWN,
@@ -191,18 +193,40 @@ export function trimmed(drawn: Canvas | string): { text: string; top: number; le
   return { text: lines.join('\n'), top, left };
 }
 
+const TITLE_FONT = { family: 'monospace', size: 1, weight: 400 } as const;
+
+/**
+ * The front-matter title's lines as the drawing shows them: read by the label rule (#1368,
+ * #1406) with the render's config, so a markdown string's markers (every title's, under
+ * `markdownAlwaysOn`) and the tags are gone and a written `\n` breaks the line.
+ */
+function titleLines(title: string, ctx: MarkdownWarningContext | undefined): string[] {
+  const source = ctx ? readLabel(title, undefined, ctx) : labelSource(title);
+  const label = layoutLabel(source.text, TITLE_FONT, Infinity, cellMeasurer, source);
+  return label.lines.map((line) => line.map((run) => run.text).join('')).filter((l) => l !== '');
+}
+
 /**
  * The drawing as text: blank rows at the ends and the common left margin dropped, the title
- * centred over it on the first lines.
+ * centred over it on the first lines. `ctx`, the render context, gives the label rule its config
+ * and the title's `MARKDOWN_NOT_READ` warning its way out; without it the title is read in the
+ * default mode.
  */
-export function finish(canvas: Canvas, title: string | undefined, maxWidth?: number): string {
+export function finish(
+  canvas: Canvas,
+  title: string | undefined,
+  maxWidth?: number,
+  ctx?: MarkdownWarningContext
+): string {
   const body = trimmed(canvas).text;
   const lines = body === '' ? [] : body.split('\n');
   const text = title?.trim();
   if (text) {
     const width = Math.max(0, ...lines.map(cellWidth));
     // Only a width budget wraps it: then to the budget, or to the drawing when that is wider.
-    const wrapped = maxWidth === undefined ? [text] : wrapTitle(text, Math.max(width, maxWidth));
+    const wrapped = titleLines(text, ctx).flatMap((line) =>
+      maxWidth === undefined ? [line] : wrapTitle(line, Math.max(width, maxWidth))
+    );
     const out = new Canvas();
     wrapped.forEach((line, i) =>
       drawText(out, Math.max(0, Math.floor((width - cellWidth(line)) / 2)), i, line)

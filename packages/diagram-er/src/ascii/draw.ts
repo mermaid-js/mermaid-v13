@@ -36,6 +36,7 @@ import {
   writeBoxLabel,
   type LabelWriter,
 } from '@mermaid-js/shared/ascii';
+import type { MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 
 const textOf = (label: MeasuredLabel, line: number): string =>
   (label.lines[line] ?? []).map((r) => r.text).join('');
@@ -159,6 +160,8 @@ export interface DrawOptions {
   readonly title?: string;
   /** `ascii.maxWidth`: a longer title wraps to it (or to the drawing, when that is wider). */
   readonly maxWidth?: number;
+  /** The render context, for the title's label rule and warning (#1406). */
+  readonly ctx?: MarkdownWarningContext;
   /** Cells between a table cell's divider and its text (the profile's `nodePad.x`). */
   readonly pad: number;
 }
@@ -202,5 +205,5 @@ export function drawEr(
     if (far && end.before) canvas.set(end.before.x, end.before.y, far);
   }
 
-  return finish(canvas, options.title, options.maxWidth);
+  return finish(canvas, options.title, options.maxWidth, options.ctx);
 }

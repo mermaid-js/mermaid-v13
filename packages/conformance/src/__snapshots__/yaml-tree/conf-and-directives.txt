@@ -1,3 +1,5 @@
+e2e/diagrams/conf-and-directives/pr-check/label-syntax-title-compat.mmd 1 a7a2ecfa5246d87c
+e2e/diagrams/conf-and-directives/pr-check/label-syntax-title.mmd 1 ec7043fdd2eee652
 e2e/diagrams/conf-and-directives/pr-check/no-config-use-default.mmd 1 8052804310804a5b
 e2e/diagrams/conf-and-directives/pr-check/settings-from-frontmatter-nodes-should-be-grey.mmd 1 d09281066cc7d244
 e2e/diagrams/conf-and-directives/pr-check/settings-from-initialize-nodes-should-be-green.mmd 1 2fbf8d81420b4ab5

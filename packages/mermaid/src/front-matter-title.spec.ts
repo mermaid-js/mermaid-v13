@@ -3,9 +3,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createMermaid } from './index.ts';
-import { corpusLabels } from './testing/labels.ts';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
+import { corpusLabels, drawnRuns } from './testing/labels.ts';
 
-const { fixture } = corpusLabels(readFileSync);
+const { fixture, textOf } = corpusLabels(readFileSync);
 
 const CASES = [
   {
@@ -102,6 +103,126 @@ describe('the front-matter title in sequence (#753, D218, D652)', () => {
     );
     expect(svg).toContain('class="sequenceTitle"');
     expect(svg).toBe((await createMermaidWith(stated)).svg);
+  });
+});
+
+// The title follows the label rule (#1368, #1406). YAML has removed one level of quotes, so the
+// rule reads the string YAML gives: `'"`…`"'` is a markdown string, `"`…`"` is bare backticks.
+// `plain` is what the default mode draws, `on` what `markdownAlwaysOn: true` draws, and `warns`
+// whether the default mode gives `MARKDOWN_NOT_READ` (never with the setting on).
+const WAYS = [
+  {
+    way: 'plain',
+    yaml: `'T **bold** _ital_'`,
+    plain: 'T **bold** _ital_',
+    on: 'T <b>bold</b> <i>ital</i>',
+    warns: true,
+  },
+  {
+    way: 'markdown string',
+    yaml: `'"\`T **bold** _ital_\`"'`,
+    plain: 'T <b>bold</b> <i>ital</i>',
+    on: 'T <b>bold</b> <i>ital</i>',
+    warns: false,
+  },
+  {
+    way: 'bare backticks',
+    yaml: `"\`T **bold** _ital_\`"`,
+    plain: '`T **bold** _ital_`',
+    on: '<code>T **bold** _ital_</code>',
+    warns: false,
+  },
+  {
+    way: 'code span',
+    yaml: `'T a \`code\` b'`,
+    plain: 'T a `code` b',
+    on: 'T a <code>code</code> b',
+    warns: false,
+  },
+  {
+    way: 'tags',
+    yaml: `'T <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O'`,
+    plain: 'T <b>bold</b> <i>ital</i> / next H2O',
+    on: 'T <b>bold</b> <i>ital</i> / next H2O',
+    warns: false,
+  },
+  {
+    way: 'written \\n',
+    yaml: `'T one\\ntwo'`,
+    plain: 'T one / two',
+    on: 'T one / two',
+    warns: false,
+  },
+  {
+    way: 'block scalar',
+    yaml: '|-\n  T one\n  two',
+    plain: 'T one / two',
+    on: 'T one / two',
+    warns: false,
+  },
+  {
+    way: 'markdown string with \\n and a tag',
+    yaml: `'"\`T **bold**\\nnext <i>ital</i>\`"'`,
+    plain: 'T <b>bold</b> / next <i>ital</i>',
+    on: 'T <b>bold</b> / next <i>ital</i>',
+    warns: false,
+  },
+] as const;
+
+const BODIES = [
+  {
+    type: 'flowchart',
+    section: 'flowchart',
+    body: 'flowchart LR\n  A --> B\n',
+    cls: 'flowchartTitleText',
+  },
+  { type: 'ER', section: 'er', body: 'erDiagram\n  A ||--o{ B : has\n', cls: 'erDiagramTitleText' },
+] as const;
+
+const codes = (warnings: readonly { code: string }[]): string[] => warnings.map((w) => w.code);
+
+const firstLines = (text: string): string[] =>
+  text
+    .split('\n')
+    .slice(0, 2)
+    .map((l) => l.trim());
+
+/** The drawn runs of the one `<text>` with class `cls`, its lines joined by ` / `. */
+function titleRuns(svg: string, cls: string): string {
+  const texts = [...svg.matchAll(new RegExp(`<text class="${cls}".*?</text>`, 'gs'))];
+  expect(texts).toHaveLength(1);
+  // Tag-drawn <sub>/<sup> runs carry a shift, not a style: read them as text.
+  return drawnRuns(texts[0]![0]).join('');
+}
+
+describe('the front-matter title follows the label rule (#1368, #1406)', () => {
+  const cases = BODIES.flatMap((b) => WAYS.map((w) => ({ ...b, ...w })));
+  it.each(cases)('$type: $way, in the default mode', async (c) => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    const { svg, warnings } = await m.render('t', `---\ntitle: ${c.yaml}\n---\n${c.body}`);
+    expect(codes(warnings)).toEqual(c.warns ? [MARKDOWN_NOT_READ.code] : []);
+    expect(titleRuns(svg, c.cls)).toBe(c.plain);
+  });
+
+  it.each(cases)('$type: $way, with markdownAlwaysOn globally and in its section', async (c) => {
+    const settings = [{ markdownAlwaysOn: true }, { [c.section]: { markdownAlwaysOn: true } }];
+    for (const setting of settings) {
+      const m = createMermaid();
+      m.initialize({ deterministic: true, ...setting });
+      const { svg, warnings } = await m.render('t', `---\ntitle: ${c.yaml}\n---\n${c.body}`);
+      expect(warnings, JSON.stringify(setting)).toEqual([]);
+      expect(titleRuns(svg, c.cls), JSON.stringify(setting)).toBe(c.on);
+    }
+  });
+
+  it('prints the drawn words in text output, a line for each drawn line', async () => {
+    const plain = await textOf('conf-and-directives/pr-check/label-syntax-title.mmd');
+    expect(codes(plain.warnings)).toEqual([MARKDOWN_NOT_READ.code]);
+    expect(firstLines(plain.text)).toEqual(['Title **bold** _ital_', 'next tag H2O']);
+    const on = await textOf('conf-and-directives/pr-check/label-syntax-title-compat.mmd');
+    expect(on.warnings).toEqual([]);
+    expect(firstLines(on.text)).toEqual(['Title bold ital', 'next tag H2O']);
   });
 });
 

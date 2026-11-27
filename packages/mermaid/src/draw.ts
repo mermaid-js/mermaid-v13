@@ -22,7 +22,7 @@ import type { Parsed } from './analysis-cache.ts';
 import type { Bind, DrawBlocks } from './block-pass.ts';
 import type { Snapshot } from './config-snapshot.ts';
 import { contextFor } from './draw-context.ts';
-import { warnHtmlDropped, type DrawContext } from './errors.ts';
+import type { DrawContext } from './errors.ts';
 import { checkFormat } from './prepare.ts';
 import { hooksFor, type Session } from './session.ts';
 import { VERSION } from './version.ts';
@@ -105,7 +105,6 @@ export function drawAscii(
   const textHooks = hooksFor(k, analysis, true);
   const run = textHooks.size === 0 ? undefined : textHooks.start(textCtx, plugin.id);
   const out = drawText(plugin, hook, parse.model, textCtx, run && { run, ast: parse.ast });
-  warnHtmlDropped(ctx);
   const lines = out === '' ? [] : out.split('\n');
   const columns = lines.reduce((m, l) => Math.max(m, backend.cellWidth(l)), 0);
   // D84: never cropped; say so when it still does not fit.
@@ -151,7 +150,6 @@ export function drawSvg(
   const edges = k.registry.hops(a);
   const drawHooks = run && { run, ast: parse.lean ? undefined : parse.ast };
   const drawn = drawDiagram(a.plugin, parse.model, ctx, drawHooks, edges);
-  if (ctx.inline.dropped.size > 0) warnHtmlDropped(ctx);
   // Binds the run's interactions, then each block's in its own nested root (#669).
   return { drawn, ctx, warnings, mount: mounter<RenderResult>(run) };
 }
