@@ -1,0 +1,65 @@
+---
+description: >-
+  Compatibility-mode twin of label-syntax.mmd (spec #1368, D734): the same source with
+  legacyMarkdown set. No agentflow label kind is one where v12 read markdown outside a markdown
+  string, so the picture is expected to equal the default one.
+config:
+  legacyMarkdown: true
+---
+agentflow-beta TB
+  flow F1["flow **bold** _ital_"]
+    direction LR
+    A1["node **bold** _ital_"] -->|"edge **bold** _ital_"| B1[unquoted node **bold** _ital_]
+    B1 -- inline edge **bold** _ital_ --> C1
+  end
+  flow F2["`flow **bold** _ital_`"]
+    direction LR
+    A2["`node **bold** _ital_`"] -->|"`edge **bold** _ital_`"| B2["`unquoted node **bold** _ital_`"]
+    B2 -- "`inline edge **bold** _ital_`" --> C2
+  end
+  flow F3[`flow **bold** _ital_`]
+    direction LR
+    A3[`node **bold** _ital_`] -->|`edge **bold** _ital_`| B3[`unquoted node **bold** _ital_`]
+    B3 -- `inline edge **bold** _ital_` --> C3
+  end
+  flow F4["flow a `code` b"]
+    direction LR
+    A4["node a `code` b"] -->|"edge a `code` b"| B4[unquoted node a `code` b]
+    B4 -- inline edge a `code` b --> C4
+  end
+  flow F5["flow <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+    direction LR
+    A5["node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"] -->|"edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"| B5[unquoted node <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+    B5 -- inline edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O --> C5
+  end
+  flow F6["flow one\ntwo"]
+    direction LR
+    A6["node one\ntwo"] -->|"edge one\ntwo"| B6[unquoted node one\ntwo]
+    B6 -- inline edge one\ntwo --> C6
+  end
+  connector K1["connector **bold** _ital_"]
+  connector K2["`connector **bold** _ital_`"]
+  connector K3[`connector **bold** _ital_`]
+  connector K4["connector a `code` b"]
+  connector K5["connector <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+  connector K6["connector one\ntwo"]
+  global
+    G1["global **bold** _ital_"]
+    G2["`global **bold** _ital_`"]
+    G3[`global **bold** _ital_`]
+    G4["global a `code` b"]
+    G5["global <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+    G6["global one\ntwo"]
+  end
+  C1 --> K1
+  C2 --> K2
+  C3 --> K3
+  C4 --> K4
+  C5 --> K5
+  C6 --> K6
+  K1 -.- G1
+  K2 -.- G2
+  K3 -.- G3
+  K4 -.- G4
+  K5 -.- G5
+  K6 -.- G6

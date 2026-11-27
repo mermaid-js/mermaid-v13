@@ -53,4 +53,11 @@ describe('agentflow labels through the label handler (#1396)', () => {
     const source = diagramFixture('agentflow/pr-check/label-syntax.mmd');
     expect(await svgOf(source, true)).toBe(await svgOf(source));
   });
+
+  it('draws the compatibility-mode twin the same as the label fixture', async () => {
+    const compat = diagramFixture('agentflow/pr-check/label-syntax-compat.mmd');
+    expect(await svgOf(compat)).toBe(
+      await svgOf(diagramFixture('agentflow/pr-check/label-syntax.mmd'))
+    );
+  });
 });
