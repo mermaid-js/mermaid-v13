@@ -1,0 +1,10 @@
+---
+description: >-
+  #1257 and its comment case: a two-line title and a two-line top axis label. The label grows
+  up from its baseline (D355), so the title moves up 4 px clear of it and the viewBox grows
+  (D739). The second and third axes have two lines and one line.
+---
+radar-beta
+  title Line one<br>Line two
+  axis a["First<br>axis"], b["Second<br/>axis"], c["Third"]
+  curve x["Series<br>one"]{1,2,3}

@@ -316,6 +316,47 @@ describe('radar layout: legend and title', () => {
     expect(lay(FIXTURES.simple!, {}, [], { fontSize: '80px' }).fonts.title.size).toBe(80);
   });
 
+  // #1257: a top label of two lines grows up from its `auto` baseline into the title.
+  const food = [axis('food', 'Food<br>Quality'), axis('b'), axis('c')];
+
+  it('moves the title up to 4 px above a top axis label it would meet, bounds grown (#1257, D739)', () => {
+    const l = lay(model(food, [curve('x', [1, 2, 3])], {}, { title: 'Restaurant comparison' }));
+    const label = l.spokes[0]!.label;
+    // The last baseline stays at 31, 9.6 below its line top: two 14.4 px lines start at 7.
+    expect(label.y).toBeCloseTo(31 - 9.6 - 14.4);
+    expect(l.title!.height).toBeCloseTo(19.2);
+    expect(l.title!.y + l.title!.height).toBeCloseTo(label.y - 4);
+    expect(l.title!.x + l.title!.width / 2).toBe(350);
+    expect(meets(l.title!, label)).toBe(false);
+    expect(l.bounds.y).toBeCloseTo(l.title!.y);
+    expect(l.bounds.y + l.bounds.height).toBe(700);
+  });
+
+  it('clears a title of several lines by its full box (#1257 comment case)', () => {
+    const l = lay(
+      model(
+        [axis('a', 'First<br>axis'), axis('b', 'Second<br/>axis'), axis('c', 'Third')],
+        [curve('x', [1, 2, 3], 'Series<br>one')],
+        {},
+        { title: 'Line one<br>Line two' }
+      )
+    );
+    const label = l.spokes[0]!.label;
+    expect(l.title!.height).toBeCloseTo(38.4);
+    expect(l.title!.y + l.title!.height).toBeCloseTo(label.y - 4);
+    for (const s of l.spokes) expect(meets(l.title!, s.label)).toBe(false);
+    expect(l.bounds.y).toBeCloseTo(l.title!.y);
+  });
+
+  it('keeps the title at y 0 when no axis label meets it (one-line top label, #1257)', () => {
+    const l = lay(model(abc, [curve('x', [1, 2, 3])], {}, { title: 'Restaurant comparison' }));
+    expect(l.title!.y).toBe(0);
+    expect(l.bounds).toEqual({ x: 0, y: 0, width: 700, height: 700 });
+    // A two-line top label the title does not reach across: a short title far up is left alone.
+    const high = lay(model(food, [], {}, { title: 'T' }), { marginTop: 100 });
+    expect(high.title!.y).toBe(0);
+  });
+
   it('lays out a markdown string as markdown', () => {
     const l = lay(model([axis('A', '`**bold**`')], [], {}, { title: '`*it*`' }));
     expect(l.spokes[0]!.label.text.lines[0]!.map((r) => r.text).join('')).toBe('bold');
