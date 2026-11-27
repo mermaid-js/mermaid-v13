@@ -1,11 +1,12 @@
 // Label modes per diagram type (#763, #781, D564). The expected texts are what mermaid 12.2.0
 // draws: its `markdownToHTML` reads bold and italic, and hands back a list item or a code span
-// as written. Bullets and inline code in a mindmap markdown string are v13's own (D56).
+// as written. Requirement reads markdown only in a markdown string (D731, #1368), and as v12 did
+// with `legacyMarkdown: true`. Bullets and inline code in a mindmap markdown string are v13's own (D56).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawnRuns } from './testing/labels.ts';
 
-const { drawnBy, textOf } = corpusLabels(readFileSync);
+const { drawnBy, svgOf, textOf } = corpusLabels(readFileSync);
 
 const render = (path: string): Promise<string[]> => drawnBy(path, drawnRuns);
 
@@ -51,20 +52,34 @@ describe('label modes per diagram type (#763, D564)', () => {
     ]);
   });
 
-  it('requirement: backticks are drawn, emphasis is read without them', async () => {
-    const texts = await render('requirement/baseline/text/backticks-and-emphasis.mmd');
-    expect(texts).toEqual([
+  it('requirement: markdown only in a markdown string, plain markers drawn as written (D731)', async () => {
+    const { svg, warnings } = await svgOf('requirement/baseline/text/backticks-and-emphasis.mmd');
+    expect(warnings.map((w) => w.code)).toEqual(['MARKDOWN_NOT_READ']);
+    expect(drawnRuns(svg)).toEqual([
       '<<Requirement>>',
-      '<b>`**bold**`</b>',
+      '<b>bold</b>',
       'ID: 1',
-      'Text: `*it*`',
+      'Text: <i>it</i>',
       '<<Requirement>>',
-      '<b>strong name</b>',
+      '<b>**strong** name</b>',
       'ID: 2',
-      'Text: - not a <i>bullet</i>',
+      'Text: - not a *bullet*',
       '<<Element>>',
       '<b>`code` element</b>',
-      'Type: `sim`',
+      'Type: sim',
+    ]);
+  });
+
+  it('requirement, legacyMarkdown: emphasis is read, a code span is drawn as written (D564, D610)', async () => {
+    const texts = await render('requirement/baseline/text/emphasis-beside-code-span.mmd');
+    expect(texts).toEqual([
+      '<<Requirement>>',
+      '<b><i>italic</i></b><b> beside `**not bold**`</b>',
+      'ID: 1',
+      'Text: <b>bold</b> and `code`',
+      '<<Element>>',
+      '<b>`x_1` and bold</b>',
+      'Type: `sim` <i>model</i>',
     ]);
   });
 
@@ -106,9 +121,10 @@ describe('label modes per diagram type (#763, D564)', () => {
       expect(r.text).toContain(text);
   });
 
-  it('requirement: text output draws the backticks', async () => {
+  it('requirement: text output draws what the SVG draws (D731)', async () => {
     const r = await textOf('requirement/baseline/text/backticks-and-emphasis.mmd');
-    for (const text of ['`**bold**`', 'Text: `*it*`', 'Type: `sim`', 'Text: - not a bullet'])
+    for (const text of [' bold ', '**strong** name', 'Text: it', 'Type: sim', '`code` element'])
       expect(r.text).toContain(text);
+    expect(r.text).not.toContain('`**bold**`');
   });
 });
