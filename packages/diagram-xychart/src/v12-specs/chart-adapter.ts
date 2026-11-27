@@ -20,7 +20,7 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import { streamWriter } from '@mermaid-js/core/svg';
-import type { FontKey, Measurer } from '@mermaid-js/core/text';
+import { labelSource, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { xyChartOptions } from '../config.ts';
 import { layoutXyChart } from '../layout/index.ts';
@@ -285,7 +285,7 @@ export class ChartLegend {
       this.model,
       options,
       font,
-      textMeasure(measurer(calc), undefined, {})
+      textMeasure(measurer(calc), undefined, (text, o) => labelSource(text, o))
     );
   }
 

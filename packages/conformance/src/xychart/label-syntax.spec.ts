@@ -4,13 +4,14 @@
  * every label kind: the title, the axis titles, the categories, the plot names (the legend) and
  * the point labels. The parser removes the quotes and marks a markdown string, so the layout
  * reads the text inside its backticks as markdown. Plain markers and a code span are drawn as
- * written; tags draw and a written `\n` breaks. No XY chart label kind read markdown in v12, so
- * `legacyMarkdown` changes nothing.
+ * written; tags draw and a written `\n` breaks.
+ * `markdownAlwaysOn` reads every label as markdown: the compat fixture shows it.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createMermaid, type InitializeConfig, type Mermaid } from 'mermaid';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 
@@ -22,6 +23,10 @@ const COMPAT = readFileSync(
   join(REPO_ROOT, 'e2e/diagrams/xychart/pr-check/label-syntax-compat.mmd'),
   'utf8'
 );
+
+/** Every label kind as a quoted markdown string. */
+const MARKDOWN_STRINGS =
+  'xychart\n  title "`**t**`"\n  x-axis "`**x**`" ["`**c**`", b]\n  y-axis "`**y**`" 0 --> 10\n  line "`**p**`" [1 "`**l**`", 2]\n';
 
 function api(config: InitializeConfig = {}): Mermaid {
   const m = createMermaid();
@@ -84,13 +89,44 @@ describe('XY chart label syntax (#1368)', () => {
     ]);
   });
 
-  it('draws the same with legacyMarkdown: no XY chart label kind read markdown in v12', async () => {
-    const svg = async (config: InitializeConfig): Promise<string> =>
-      (await api(config).render('m', SOURCE)).svg;
-    expect(await svg({ legacyMarkdown: true })).toBe(await svg({}));
+  it('reads every label kind as markdown with markdownAlwaysOn (the compat fixture)', async () => {
+    expect(drawn((await api().render('m', COMPAT)).svg)).toEqual([
+      'title [b:bold] [i:ital]',
+      'point [b:bold] [i:ital]',
+      'point [b:bold] [i:ital]',
+      'point a [m:code] b',
+      'point [b:bold] [i:ital] / next H2O',
+      'point one / two',
+      'plot [b:bold] [i:ital]',
+      'plot [b:bold] [i:ital]',
+      'plot a [m:code] b',
+      'plot [b:bold] [i:ital] / next H2O',
+      'plot one / two',
+      'cat [b:bold] [i:ital]',
+      'cat [b:bold] [i:ital]',
+      'cat a [m:code] b',
+      'cat [b:bold] [i:ital] / next H2O',
+      'cat one / two',
+      'x-axis [b:bold] [i:ital]',
+      'y-axis [b:bold] [i:ital]',
+    ]);
   });
 
-  it('draws the compatibility-mode twin fixture as the default one', async () => {
-    expect((await api().render('m', COMPAT)).svg).toBe((await api().render('m', SOURCE)).svg);
+  it('reads the setting from the xyChart section as from the top level', async () => {
+    const plain = COMPAT.replace(/^config:\n {2}markdownAlwaysOn: true\n/m, 'config:\n');
+    expect(plain).not.toBe(COMPAT);
+    const top = (await api({ markdownAlwaysOn: true }).render('m', plain)).svg;
+    expect((await api({ xyChart: { markdownAlwaysOn: true } }).render('m', plain)).svg).toBe(top);
+    expect(top).toBe((await api().render('m', COMPAT)).svg);
+  });
+
+  it('warns MARKDOWN_NOT_READ once in the default mode, never with markdownAlwaysOn', async () => {
+    const codes = async (src: string): Promise<string[]> =>
+      (await api().render('m', src)).warnings
+        .map((w) => w.code)
+        .filter((c) => c === MARKDOWN_NOT_READ.code);
+    expect(await codes(SOURCE)).toEqual([MARKDOWN_NOT_READ.code]);
+    expect(await codes(COMPAT)).toEqual([]);
+    expect(await codes(MARKDOWN_STRINGS)).toEqual([]);
   });
 });

@@ -62,7 +62,10 @@ import type {
 
 /** What the layout reads from the render context. */
 export type IshikawaLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'inline'>>;
+  Partial<Pick<RenderContext, 'inline' | 'warn'>>;
+
+/** A layout called without `warn` (the parity specs) drops the label warning. */
+const ignoreWarning = (): void => undefined;
 
 /** Measures `text` in `font`, wrapped at `maxWidth` (`Infinity`: only at `<br>`). */
 type Measure = (text: string, font: FontKey, maxWidth: number) => MeasuredLabel;
@@ -97,9 +100,10 @@ function layout(model: IshikawaModel, ctx: IshikawaLayoutContext, fix: boolean):
     label: { family, size: fontSize, weight: m.labelWeight },
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
+  const labels = { config: ctx.config, warn: ctx.warn ?? ignoreWarning, ...inline };
   // v12's word wrap never split a word: keep one wider than the width whole.
   const measure: Measure = (text, font, maxWidth) => {
-    const source = ishikawaLabelSource(text, ctx.config);
+    const source = ishikawaLabelSource(text, labels);
     return layoutLabel(source.text, font, maxWidth, ctx.measurer, {
       ...inline,
       ...source,

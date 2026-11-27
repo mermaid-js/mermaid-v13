@@ -2,4 +2,4 @@
 '@mermaid-js/diagram-xychart': patch
 ---
 
-fix: an XY chart title, axis title, category, plot name or point label written as a quoted markdown string (`` "`**bold**`" ``) renders as markdown instead of showing its backticks.
+fix: an XY chart title, axis title, category, plot name or point label written as a quoted markdown string (`` "`**bold**`" ``) renders as markdown instead of showing its backticks. With `markdownAlwaysOn: true` every XY chart label is drawn as markdown.

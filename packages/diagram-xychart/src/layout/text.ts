@@ -5,8 +5,8 @@
  * point, `text-anchor`, a baseline and a rotation, with its box from the measurer.
  */
 import type { Size } from '@mermaid-js/core/layout';
-import type { InlineSpans, LabelConfig, Measurer } from '@mermaid-js/core/text';
-import { labelSource, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import type { InlineSpans, LabelSource, LabelSourceOptions, Measurer } from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { Point, Rect, XyBaseline, XyText, XyTextAnchor } from './types.ts';
 
 /** A measured text: its size and the distance from its top to its first baseline. */
@@ -29,29 +29,35 @@ export interface TextMeasure {
   max(texts: readonly Measured[], font: FontKey): Size;
 }
 
+/** The render's label handler: `readLabel` with its context, or `labelSource` without one. */
+export type LabelReader = (text: string, options: LabelSourceOptions) => LabelSource;
+
+/** A number as a category or label: a value, never markdown (`1.` is no list item). */
+const RE_NUMBER = /^[-+]?(?:\d+\.?\d*|\.\d+)$/;
+
 /**
- * How a label is read (#1368): a text the parser marked as a quoted markdown string
- * (`markdownStrings`) is markdown without its backticks; any other is plain, tags drawn and a
- * written `\n` a break. No XY chart label kind read markdown in v12 (`v12Markdown: false`).
- * `config` is the render's, passed to the handler as it is.
+ * Measures labels through the render's measurer and label handler (#1368): a text the parser
+ * marked as a quoted markdown string (`markdownStrings`) is markdown without its backticks; any
+ * other is plain, tags drawn and a written `\n` a break, or markdown under `markdownAlwaysOn`
+ * (the handler decides). A number is a value and is read as plain text in every mode.
  */
 export function textMeasure(
   measurer: Measurer,
   inline: InlineSpans | undefined,
-  config: LabelConfig,
+  read: LabelReader,
   markdownStrings: readonly string[] = []
 ): TextMeasure {
   const options = inline ? { inline } : {};
   const marked = new Set(markdownStrings);
+  const source = (text: string): LabelSource => {
+    if (RE_NUMBER.test(text)) return { text, markup: 'plain', backslashBreak: false };
+    const markdown = marked.has(text);
+    return read(markdown ? text.slice(1, -1) : text, { markdown });
+  };
   return {
     label(text, font) {
-      const markdown = marked.has(text);
-      const source = labelSource(
-        markdown ? text.slice(1, -1) : text,
-        { markdown, v12Markdown: false },
-        config
-      );
-      const label = layoutLabel(source.text, font, Infinity, measurer, { ...options, ...source });
+      const src = source(text);
+      const label = layoutLabel(src.text, font, Infinity, measurer, { ...options, ...src });
       return {
         text,
         font,

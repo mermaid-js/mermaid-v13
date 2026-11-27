@@ -43,13 +43,6 @@ const FRAGMENTS_MORE = [
   'horizontal',
 ];
 
-/**
- * `message` without the text it quotes from `src`: an author's `LINE` quoted back in a
- * message ("got `LINE`") is their word, not a token name.
- */
-const ownWords = (message: string, src: string): string =>
-  message.replace(/`([^`\n]+)`/g, (m, quoted: string) => (src.includes(quoted) ? '``' : m));
-
 describe('xychart error messages', () => {
   it('never name a token or grammar rule', async () => {
     const corpus = [...(await xyChartCorpus()), ...xyChartCases()].map((c) => c.source);
@@ -63,11 +56,7 @@ describe('xychart error messages', () => {
         if (d.severity === 'error') errors++;
         // A message quotes at most one line of the source.
         const lines = /[\n\r\u2028\u2029]/.test(d.message);
-        if (
-          lines ||
-          BANNED.test(ownWords(d.message, src)) ||
-          d.expected?.some((e) => BANNED.test(e))
-        ) {
+        if (lines || BANNED.test(d.message) || d.expected?.some((e) => BANNED.test(e))) {
           bad.push(`${JSON.stringify(src)}: ${d.message}`);
         }
       }

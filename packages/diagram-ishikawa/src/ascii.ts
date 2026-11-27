@@ -42,7 +42,7 @@ export function ascii(model: IshikawaModel, _layout: unknown, ctx: IshikawaAscii
   const options: LabelOptions = ctx.inline ? { inline: ctx.inline } : {};
   const dropped: string[] = [];
   const plain = (text: string, ast: string): string => {
-    const source = ishikawaLabelSource(text, ctx.config);
+    const source = ishikawaLabelSource(text, ctx);
     const label = layoutLabel(source.text, FONT, Infinity, cellMeasurer, {
       ...options,
       ...source,

@@ -52,5 +52,5 @@ e2e/diagrams/ishikawa/pr-check/6-should-render-with-handdrawn-look.mmd 1 d130ab7
 e2e/diagrams/ishikawa/pr-check/7-should-render-with-forest-theme.mmd 1 daf808f517a14889
 e2e/diagrams/ishikawa/pr-check/8-should-render-with-dark-theme.mmd 1 91cc779992ab9c8a
 e2e/diagrams/ishikawa/pr-check/9-should-render-with-custom-diagrampadding.mmd 1 3b33a7814765ba13
-e2e/diagrams/ishikawa/pr-check/label-syntax-compat.mmd 1 99b5839baf42cf9a
+e2e/diagrams/ishikawa/pr-check/label-syntax-compat.mmd 1 b5599d1e3301d804
 e2e/diagrams/ishikawa/pr-check/label-syntax.mmd 1 0bf9dee1df5a5b71
