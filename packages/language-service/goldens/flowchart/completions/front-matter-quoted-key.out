@@ -17,7 +17,7 @@
   wrap property (boolean) 3:4-3:6 "th" -> "wrap"
   fontSize property (number) 3:4-3:6 "th" -> "fontSize"
   markdownAutoWrap property (boolean) 3:4-3:6 "th" -> "markdownAutoWrap"
-  legacyMarkdown property (boolean) 3:4-3:6 "th" -> "legacyMarkdown"
+  markdownAlwaysOn property (boolean) 3:4-3:6 "th" -> "markdownAlwaysOn"
 @ 5:14  "curve": |
   basis value 5:14-5:14 "" -> "basis"
   bumpX value 5:14-5:14 "" -> "bumpX"

@@ -265,13 +265,14 @@ wrap?: boolean
 fontSize?: number
 markdownAutoWrap?: boolean
 /**
- * Restores v12's reading of markdown written without a markdown string (`"`…`"`): `**bold**`
- * and `_italic_` in a plain label are drawn as emphasis again, in the label kinds where v12
- * read them (class, state, ER, requirement, mindmap, kanban, architecture and swimlane lane
- * titles). It does not change tags, line breaks or markdown strings.
+ * Reads every label of the diagram as markdown, as a markdown string (`"`…`"`) is read,
+ * whether it is written as one or not: `**bold**`, `_italic_`, code spans and lists are
+ * drawn as markdown. Tags and a written `\n` are read as without it. Set in a diagram
+ * section (`flowchart.markdownAlwaysOn`), it wins over the top-level key for that diagram
+ * type within a config layer. Names and literal text that are no labels are not changed.
  * 
  */
-legacyMarkdown?: boolean
+markdownAlwaysOn?: boolean
 /**
  * Suppresses inserting 'Syntax error' diagram in the DOM.
  * This is useful when you want to control how to handle syntax errors in your application.
@@ -429,6 +430,15 @@ look?: ("classic" | "handDrawn" | "neo")
  * 
  */
 layout?: string
+/**
+ * Reads every label of the diagram as markdown, as a markdown string (`"`…`"`) is read,
+ * whether it is written as one or not: `**bold**`, `_italic_`, code spans and lists are
+ * drawn as markdown. Tags and a written `\n` are read as without it. Set in a diagram
+ * section (`flowchart.markdownAlwaysOn`), it wins over the top-level key for that diagram
+ * type within a config layer. Names and literal text that are no labels are not changed.
+ * 
+ */
+markdownAlwaysOn?: boolean
 }
 /**
  * The object containing configurations specific for the swimlanes diagram type.
