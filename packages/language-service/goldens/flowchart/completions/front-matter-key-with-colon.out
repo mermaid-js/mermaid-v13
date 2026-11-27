@@ -16,6 +16,7 @@
   wrap property (boolean) 3:3-3:8 "theme" -> "wrap"
   fontSize property (number) 3:3-3:8 "theme" -> "fontSize"
   markdownAutoWrap property (boolean) 3:3-3:8 "theme" -> "markdownAutoWrap"
+  legacyMarkdown property (boolean) 3:3-3:8 "theme" -> "legacyMarkdown"
 @ 5:7  ht|
   useWidth property (number) 5:5-5:7 "ht" -> "useWidth: "
   useMaxWidth property (boolean) 5:5-5:7 "ht" -> "useMaxWidth: "

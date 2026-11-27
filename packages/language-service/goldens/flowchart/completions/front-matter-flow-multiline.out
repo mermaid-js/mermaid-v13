@@ -49,5 +49,6 @@
   wrap property (boolean) 9:4-9:4 "" -> "wrap"
   fontSize property (number) 9:4-9:4 "" -> "fontSize"
   markdownAutoWrap property (boolean) 9:4-9:4 "" -> "markdownAutoWrap"
+  legacyMarkdown property (boolean) 9:4-9:4 "" -> "legacyMarkdown"
 @ 12:1  |
   displayMode property (string) 12:1-12:1 "" -> "displayMode: "
