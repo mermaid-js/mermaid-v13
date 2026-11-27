@@ -7,6 +7,7 @@ import { packet as plugin } from '../plugin.ts';
 import { FIXTURES, model, REGISTER } from './fixtures.ts';
 import { layoutPacket, type PacketLayout } from './index.ts';
 import { packetLayoutViolations } from './invariants.ts';
+import { PACKET_METRICS } from './metrics.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -315,6 +316,55 @@ describe('packet layout: a row grows to fit its tallest label (D740, #1267)', ()
   });
 });
 
+describe('packet layout: crowded bit numbers (D747, #1268)', () => {
+  /** Each piece's bit numbers in a row, as text. */
+  const numbers = (l: PacketLayout, r = 0) =>
+    l.rows[r]!.pieces.map((p) => p.bitNumbers.map((b) => b.text));
+  /** Two 16-bit fields: 15's box ends `paddingX` before 16's starts. */
+  const halves = model([
+    [0, 15, 'a'],
+    [16, 31, 'b'],
+  ]);
+
+  it('drops an end number that meets a start number, its own or the next field’s', () => {
+    // halfEm: a 3-digit number is 15 px wide, a 2-bit piece 19 px at bitWidth 12.
+    const { model: m, config } = FIXTURES.crowded!;
+    const l = lay(m, config);
+    expect(numbers(l, 6)).toEqual([
+      ['96'],
+      ['98'],
+      ['100'],
+      ['102'],
+      ['104'],
+      ['105'],
+      ['106', '111'],
+    ]);
+    // The rows of one wide field keep both numbers.
+    expect(numbers(l, 0)).toEqual([['0', '15']]);
+  });
+
+  it('keeps start numbers, so 15 and 16 no longer run together with paddingX 0', () => {
+    expect(numbers(lay(halves, { paddingX: 0 }))).toEqual([['0'], ['16', '31']]);
+    // Descending: the left field is bar (15-8), so its end number 8 goes.
+    expect(numbers(lay(twoFields(16), { paddingX: 0, bitOrder: 'descending' }))).toEqual([
+      ['7', '0'],
+      ['15'],
+    ]);
+  });
+
+  it('keeps an end number exactly the minimum gap clear of the next, and drops a closer one', () => {
+    const at = (paddingX: number) => numbers(lay(halves, { paddingX }))[0];
+    expect(at(PACKET_METRICS.bitNumberSpace)).toEqual(['0', '15']);
+    expect(at(PACKET_METRICS.bitNumberSpace - 0.5)).toEqual(['0']);
+  });
+
+  it('keeps every number with the default config', () => {
+    const l = lay(FIXTURES.tcp!.model, {}, undefined, tableMeasurer);
+    for (const p of l.rows.flatMap((r) => r.pieces))
+      expect(p.bitNumbers).toHaveLength(p.bits === 1 ? 1 : 2);
+  });
+});
+
 describe('packet layout: bounding box (D344)', () => {
   it('is v12’s viewBox when nothing runs past it, half the stroke included', () => {
     expect(lay(FIXTURES.tcp!.model).bounds).toEqual({
@@ -380,9 +430,11 @@ describe('packet layout: config and theme', () => {
 });
 
 describe('packet layout: positions do not depend on measurements', () => {
-  // Measurements shrink labels (D343), grow the bounds (D344) and grow a row to a label taller
-  // than it (D740): while every label fits its row, two measurers that disagree on every width
-  // and line height give the same boxes and anchor points.
+  // Measurements shrink labels (D343), grow the bounds (D344), grow a row to a label taller
+  // than it (D740) and drop an end number that would meet the next (D747): while every label
+  // fits its row, two measurers that disagree on every width and line height give the same boxes
+  // and anchor points, and every end number `wide` keeps
+  // is where the table measurer puts it.
   const wide: Measurer = {
     id: 'wide',
     width: (text, font) => text.length * font.size * 1.7,
@@ -398,7 +450,7 @@ describe('packet layout: positions do not depend on measurements', () => {
       r.pieces.map((p) => ({
         box: p.box,
         label: [p.label.x + p.label.width / 2, p.label.y + p.label.height / 2],
-        bits: p.bitNumbers.map((b) => [b.x, b.y, b.anchor]),
+        bits: p.bitNumbers.filter((b) => b.role === 'start').map((b) => [b.x, b.y, b.anchor]),
       }))
     ),
     title: l.title && [l.title.x + l.title.width / 2, titlePoint(l)],
@@ -421,6 +473,14 @@ describe('packet layout: positions do not depend on measurements', () => {
     const a = lay(m, config, undefined, tableMeasurer);
     const b = lay(m, config, undefined, wide);
     expect(points(b)).toEqual(points(a));
+    const ends = (l: PacketLayout) =>
+      l.rows.flatMap((r) =>
+        r.pieces.flatMap((p) =>
+          p.bitNumbers.filter((n) => n.role === 'end').map((n) => [n.bit, n.x, n.y] as const)
+        )
+      );
+    const all = new Set(ends(a).map((e) => e.join()));
+    for (const e of ends(b)) expect(all).toContain(e.join());
     expect(packetLayoutViolations(m, b)).toEqual([]);
   });
 

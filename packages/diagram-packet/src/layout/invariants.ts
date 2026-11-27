@@ -61,6 +61,7 @@ export function packetLayoutViolations(model: PacketModel, layout: PacketLayout)
       bitNumberViolations(p, row.y, options.showBits, descending, out);
     }
     if (bits > bitsPerRow) out.push(`row ${r} holds ${bits} bits, more than ${bitsPerRow}`);
+    bitNumbersApart(row.pieces, r, out);
 
     // Pieces apart, left to right.
     const byX = [...row.pieces].sort((a, b) => a.box.x - b.box.x);
@@ -139,12 +140,31 @@ function bitNumberViolations(
   if (!showBits) want = [];
   const got = p.bitNumbers.map((n) => `${n.text}@${n.x}/${n.anchor}`).join();
   const wanted = want.map(([bit, x, a]) => `${bit}@${x}/${a}`).join();
-  if (got !== wanted) out.push(`${name} has bit numbers ${got}, not ${wanted}`);
+  // A crowded end number may be dropped (D747).
+  const crowded = want.length === 2 ? `${leading}@${box.x}/start` : wanted;
+  if (got !== wanted && got !== crowded) out.push(`${name} has bit numbers ${got}, not ${wanted}`);
   for (const n of p.bitNumbers) {
     if (n.text !== String(n.bit)) out.push(`${name}'s bit number ${n.text} reads ${n.bit}`);
     if (Math.abs(n.y - (rowY - m.bitNumberGap)) > EPS)
       out.push(`${name}'s bit number ${n.text} is at y ${n.y}`);
   }
+}
+
+/**
+ * The bit numbers of a row are `bitNumberSpace` apart (D747): every pair that holds an end
+ * number. Two start numbers always stay, so a pair of them may still meet (one-bit fields
+ * narrower than their numbers).
+ */
+function bitNumbersApart(pieces: readonly PacketPieceLayout[], r: number, out: string[]): void {
+  const all = pieces.flatMap((p) => p.bitNumbers);
+  all.forEach((a, i) => {
+    for (const b of all.slice(i + 1)) {
+      if (a.role === 'start' && b.role === 'start') continue;
+      const [left, right] = a.box.x <= b.box.x ? [a, b] : [b, a];
+      if (right.box.x - (left.box.x + left.box.width) < m.bitNumberSpace - EPS)
+        out.push(`row ${r}: bit numbers ${left.text} and ${right.text} are not apart`);
+    }
+  });
 }
 
 /**

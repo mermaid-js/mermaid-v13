@@ -145,7 +145,8 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
     const labels = pieces.map((p) => fitted(model.fields[p.field]!.label, widthOf(p)));
     const height = labels.reduce((h, l) => Math.max(h, l.text.height), rowHeight);
     grown += height - rowHeight;
-    return { y, height, pieces: pieces.map((p, i) => piece(p, y, height, labels[i]!)) };
+    const placed = pieces.map((p, i) => piece(p, y, height, labels[i]!));
+    return { y, height, pieces: dropCrowdedEnds(placed) };
   });
 
   const width = bitWidth * bitsPerRow + 2 * m.margin;
@@ -198,6 +199,28 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
     fonts,
     bounds: box.rect(),
   };
+}
+
+/**
+ * D747 (#1268): an end number that comes within `bitNumberSpace` of another number in its row is
+ * dropped, the left one of two end numbers; start numbers always stay. Rows where nothing is
+ * crowded come back as they were.
+ */
+function dropCrowdedEnds(pieces: PacketPieceLayout[]): PacketPieceLayout[] {
+  const all = pieces.flatMap((p) => p.bitNumbers).sort((a, b) => a.box.x - b.box.x);
+  const dropped = new Set<BitNumber>();
+  all.forEach((a, i) => {
+    const reach = a.box.x + a.box.width + m.bitNumberSpace;
+    for (let j = i + 1; j < all.length && all[j]!.box.x < reach; j++) {
+      const b = all[j]!;
+      if (dropped.has(a)) return;
+      if (dropped.has(b)) continue;
+      if (a.role === 'end') dropped.add(a);
+      else if (b.role === 'end') dropped.add(b);
+    }
+  });
+  if (dropped.size === 0) return pieces;
+  return pieces.map((p) => ({ ...p, bitNumbers: p.bitNumbers.filter((n) => !dropped.has(n)) }));
 }
 
 /** A label measured in the font it fits its piece's width in. */
