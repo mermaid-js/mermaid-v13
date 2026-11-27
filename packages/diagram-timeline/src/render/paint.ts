@@ -10,11 +10,13 @@
 import type { RenderContext } from '@mermaid-js/core';
 import {
   checkColor,
+  checkCssColor,
   type Attrs,
   type OutlinePaint,
   type Paint,
   type SafeValue,
 } from '@mermaid-js/core/svg';
+import { TIMELINE_PALETTE_IGNORED } from '../codes.ts';
 import { boxStrokes, scaleColors } from '../layout/env.ts';
 
 type Theme = RenderContext['theme'];
@@ -92,6 +94,51 @@ function weightOf(value: string): number {
   if (value === 'bold' || value === 'bolder') return 700;
   const n = Number(value);
   return Number.isFinite(n) && n > 0 ? n : NORMAL_WEIGHT;
+}
+
+/** An author's numbered `cScale` entry (`cScaleLabel3`), as core reads one: no leading zero. */
+const RE_SCALE_SLOT = /^(cScale(?:Inv|Label)?)(0|[1-9]\d?)$/;
+const SCALE_PALETTES: readonly PaletteName[] = ['cScale', 'cScaleInv', 'cScaleLabel'];
+
+/**
+ * The `cScale` palettes the paint below does not read, from the same theme variables that pick
+ * its branch: none in the classic themes, `cScale` and `cScaleInv` under a gradient (neo), all
+ * three where boxes take `mainBkg` / `nodeBorder` (redux).
+ */
+function unreadPalettes(theme: Theme): readonly PaletteName[] {
+  if (!scaleColors(theme)) return SCALE_PALETTES;
+  return theme.gradient() === undefined ? [] : ['cScale', 'cScaleInv'];
+}
+
+/**
+ * One `TIMELINE_PALETTE_IGNORED` warning per render naming the author's `cScale<n>`,
+ * `cScaleInv<n>` and `cScaleLabel<n>` that the paint does not read (D766). `Theme` resolves an
+ * author's value but does not say whose a value is, so this reads the config the theme was
+ * built from, as venn does. A slot past the palette or a value the theme dropped is not counted.
+ */
+export function warnUnreadPalettes(ctx: Pick<RenderContext, 'theme' | 'config' | 'warn'>): void {
+  const unread = unreadPalettes(ctx.theme);
+  if (unread.length === 0) return;
+  const authored = (ctx.config.themeVariables ?? {}) as Readonly<Record<string, unknown>>;
+  const keys = Object.keys(authored).filter((key) => {
+    const m = RE_SCALE_SLOT.exec(key);
+    const v = authored[key];
+    return (
+      m !== null &&
+      unread.includes(m[1] as PaletteName) &&
+      Number(m[2]) < PALETTE_SLOTS &&
+      typeof v === 'string' &&
+      checkCssColor(v) !== undefined
+    );
+  });
+  if (keys.length === 0) return;
+  const them = keys.length === 1 ? 'it' : 'them';
+  ctx.warn({
+    code: TIMELINE_PALETTE_IGNORED,
+    message:
+      `The active theme's timeline does not read ${keys.join(', ')}, so the timeline ignores ` +
+      `${them}. Set theme: default to use ${them}.`,
+  });
 }
 
 export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Paints {
