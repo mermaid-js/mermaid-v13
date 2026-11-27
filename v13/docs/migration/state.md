@@ -10,6 +10,10 @@
   and bold and italic outside it are still read. The title and rows of a state with several
   description lines are plain text, as v12 drew them: `**x**` stays as written there and a
   written `\n` breaks the line.
+- **A described state is not wrapped** (D731, #1214): the title and the description rows of a
+  state with several description lines break only at a written `\n`, never at
+  `state.wrappingWidth`, and the box grows to the longest line. This holds in cells too. v12 built
+  these labels with an infinite width. A state with one description wraps as before.
 - **A transition written inside a composite that names the composite** (D555):
   `state Boot { Running; Boot --> Running }`, the reverse, and `Outer --> Inner` written inside
   `Inner`. v12 filed the composite under itself (or under a state inside it) and then never

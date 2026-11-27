@@ -427,8 +427,9 @@ function measureState(
     // v12 `rectWithTitle`: the first description as the title, a divider, then the other
     // description lines (v12 stateDb `label[0]` and `label.slice(1)`). The id is not drawn.
     const [title, ...more] = s.descriptions;
-    const label = m.plain(title!, style, m.wrap);
-    const rows = m.plain(more.join('\n'), style, m.wrap);
+    // Both break only at a written `\n`, as v12's `createLabel` (infinite width) did (D731).
+    const label = m.plain(title!, style, Infinity);
+    const rows = m.plain(more.join('\n'), style, Infinity);
     const wide = label.width > rows.width ? label : rows;
     const box = boxOf(wide, sm.statePad, m, m.cells ? 0 : m.minWidth);
     const tall = m.cells ? label.lines.length + rows.lines.length : label.height + rows.height;

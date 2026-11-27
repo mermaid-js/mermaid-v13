@@ -2,6 +2,7 @@ import type { DiagramPlugin } from '@mermaid-js/core';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
 import {
+  cellProfile,
   layered,
   pxProfile,
   validateLayout,
@@ -9,6 +10,7 @@ import {
   type LayoutModel,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
+import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import {
@@ -41,7 +43,7 @@ function run(src: string, options: { units?: UnitProfile; config?: ConfigInput }
   let model: LayoutModel | undefined;
   const ctx: StateRenderContext = {
     config: resolveConfig(CORE_DEFAULTS, options.config),
-    measurer: tableMeasurer,
+    measurer: options.units?.id === 'cell' ? cellMeasurer : tableMeasurer,
     units: options.units ?? pxProfile,
     theme: createTheme(spec, { diagram: diagramTheme }),
     warn: () => {},
@@ -178,6 +180,44 @@ describe('state graph builder', () => {
     expect(text(view.label.lines)).toEqual(['first line']);
     expect(text(view.rows.lines)).toEqual(['second line', 'third line']);
     expect(view.h).toBeGreaterThan(view.label.height + view.rows.height);
+  });
+
+  describe('a described state breaks only at a written \\n (D731, #1214)', () => {
+    const long = 'Waiting for payment confirmation';
+    const row = 'retries every minute until the bank answers';
+    const src = `stateDiagram-v2\n  state "${long}" as W\n  W : ${row}\n  W : second row\n`;
+    const text = (lines: { text: string }[][]) => lines.map((l) => l.map((r) => r.text).join(''));
+    const described = (source: string, units: UnitProfile) => {
+      const view = run(source, { units }).layout.state.views.get('W');
+      if (!view || !('rows' in view) || !view.rows) throw new Error('not described');
+      return { label: view.label, rows: view.rows };
+    };
+
+    it.each([
+      ['px', pxProfile],
+      ['cells', cellProfile()],
+    ])('keeps the title and each row on one line in %s', (_name, units) => {
+      const view = described(src, units);
+      expect(text(view.label.lines)).toEqual([long]);
+      expect(text(view.rows.lines)).toEqual([row, 'second row']);
+    });
+
+    it.each([
+      ['px', pxProfile],
+      ['cells', cellProfile()],
+    ])('still breaks at a written \\n in %s', (_name, units) => {
+      const view = described(
+        'stateDiagram-v2\n  state "first\\nsecond" as W\n  W : row one\\nrow two\n  W : row three\n',
+        units
+      );
+      expect(text(view.label.lines)).toEqual(['first', 'second']);
+      expect(text(view.rows.lines)).toEqual(['row one', 'row two', 'row three']);
+    });
+
+    it('keeps wrapping a state with one description', () => {
+      const view = run(`stateDiagram-v2\n  W : ${long} ${row}\n`).layout.state.views.get('W');
+      expect(view && 'label' in view ? view.label.lines.length : 0).toBeGreaterThan(1);
+    });
   });
 
   it('takes spacing from state config in px', () => {
