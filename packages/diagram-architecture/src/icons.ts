@@ -21,7 +21,7 @@ export function architectureLabels(model: ArchitectureModel): readonly string[] 
   for (const g of model.groups) if (g.title !== undefined) out.push(g.title);
   for (const s of model.services) {
     if (s.title !== undefined) out.push(s.title);
-    if (s.iconText !== undefined) out.push(s.iconText);
+    if (s.iconText) out.push(s.iconText);
   }
   for (const e of model.edges) if (e.title !== undefined) out.push(e.title);
   return out;

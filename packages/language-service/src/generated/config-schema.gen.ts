@@ -3260,7 +3260,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "Only v12's gantt renderer read `useWidth`; the architecture renderer never did."
+            "reason": "Only v12's gantt renderer read `useWidth`; the architecture renderer never did. Set, it warns `ARCHITECTURE_SETTINGS_IGNORED` (D763)."
           }
         },
         "useMaxWidth": {
@@ -3307,78 +3307,72 @@ export const configSchema: ConfigSchema = {
           }
         },
         "fontSize": {
+          "description": "Ignored in v13 (D507). In v12 (default 16) it sized cytoscape's own label style; v13 draws\nevery architecture label in the theme's `fontSize`.\n",
           "type": "number",
-          "default": 16,
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "In v12 it sized only cytoscape's own label style and moved a group's title by half of it; the text was drawn in the global font size. v13 draws every architecture label in the theme's `fontSize`, as v12 drew the text (D507).",
+            "reason": "In v12 it sized only cytoscape's own label style and moved a group's title by half of it; the text was drawn in the global font size. v13 draws every architecture label in the theme's `fontSize`, as v12 drew the text (D507). It has no default, so a set key is one the author set: it warns `ARCHITECTURE_SETTINGS_IGNORED` (D763).",
             "replacement": "`themeVariables.fontSize`"
           }
         },
         "randomize": {
-          "description": "Ignored in v13 (D328). In v12 it randomized the fcose layout's starting positions; v13 lays\narchitecture out with `compass`, which is deterministic and has no starting positions.\n",
+          "description": "Ignored in v13 (D328). In v12 (default false) it randomized the fcose layout's starting\npositions; v13 lays architecture out with `compass`, which is deterministic and has no\nstarting positions.\n",
           "type": "boolean",
-          "default": false,
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. It has no default, so a set key is one the author set: it warns `ARCHITECTURE_SETTINGS_IGNORED` (D763).",
             "replacement": "none"
           }
         },
         "nodeSeparation": {
-          "description": "Ignored in v13 (D328). In v12 it set fcose's minimum separation between sibling nodes;\n`compass` places nodes on a grid with a fixed cell gap.\n",
+          "description": "Ignored in v13 (D328). In v12 (default 75) it set fcose's minimum separation between\nsibling nodes; `compass` places nodes on a grid with a fixed cell gap.\n",
           "type": "number",
-          "default": 75,
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. It has no default, so a set key is one the author set: it warns `ARCHITECTURE_SETTINGS_IGNORED` (D763).",
             "replacement": "none"
           }
         },
         "idealEdgeLengthMultiplier": {
-          "description": "Ignored in v13 (D328). In v12 it scaled fcose's ideal edge length within a group;\n`compass` places nodes on a grid with a fixed cell gap.\n",
+          "description": "Ignored in v13 (D328). In v12 (default 1.5) it scaled fcose's ideal edge length within a\ngroup; `compass` places nodes on a grid with a fixed cell gap.\n",
           "type": "number",
-          "default": 1.5,
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. It has no default, so a set key is one the author set: it warns `ARCHITECTURE_SETTINGS_IGNORED` (D763).",
             "replacement": "none"
           }
         },
         "edgeElasticity": {
-          "description": "Ignored in v13 (D328). In v12 it set fcose's spring elasticity within a group; `compass`\nhas no springs.\n",
+          "description": "Ignored in v13 (D328). In v12 (default 0.45) it set fcose's spring elasticity within a\ngroup; `compass` has no springs.\n",
           "type": "number",
-          "default": 0.45,
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. It has no default, so a set key is one the author set: it warns `ARCHITECTURE_SETTINGS_IGNORED` (D763).",
             "replacement": "none"
           }
         },
         "numIter": {
-          "description": "Ignored in v13 (D328). In v12 it capped fcose's iterations; `compass` places nodes in one\npass.\n",
+          "description": "Ignored in v13 (D328). In v12 (default 2500) it capped fcose's iterations; `compass`\nplaces nodes in one pass.\n",
           "type": "number",
-          "default": 2500,
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. It has no default, so a set key is one the author set: it warns `ARCHITECTURE_SETTINGS_IGNORED` (D763).",
             "replacement": "none"
           }
         },
         "seed": {
-          "description": "Ignored in v13 (D328). In v12 it seeded fcose's random number generator; `compass` is\ndeterministic, so every render of the same diagram has the same layout.\n",
+          "description": "Ignored in v13 (D328). In v12 (default 1) it seeded fcose's random number generator;\n`compass` is deterministic, so every render of the same diagram has the same layout.\n",
           "type": "number",
-          "default": 1,
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune.",
+            "reason": "An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. It has no default, so a set key is one the author set: it warns `ARCHITECTURE_SETTINGS_IGNORED` (D763).",
             "replacement": "none"
           }
         }

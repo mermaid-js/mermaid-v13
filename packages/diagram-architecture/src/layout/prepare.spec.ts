@@ -13,7 +13,8 @@ import {
 } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
-import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
+import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { ARCHITECTURE_CONFIG_IGNORED, ARCHITECTURE_SETTINGS_IGNORED } from '../codes.ts';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
 import { ART_SIZE } from '../render/builtins.ts';
 import { contextFor, gridMeasurer, modelOf, themeNamed } from './fixtures.ts';
@@ -30,14 +31,18 @@ async function prepared(source: string, config = {}, measurer?: Measurer) {
 const node = (graph: LayoutGraph, id: string) => graph.nodes.find((n) => n.id === id)!;
 const group = (graph: LayoutGraph, id: string) => graph.groups.find((g) => g.id === id)!;
 
+/** The theme's 16 px font, measured by `gridMeasurer` (20 px a line). */
+const GRID_TEXT = { fontSize: 16, lineHeight: 20 };
+
 describe('the metrics table (v12 svgDraw.ts)', () => {
   it("holds v12's lengths at the defaults", () => {
-    expect(architectureSizes()).toEqual({
+    expect(architectureSizes(GRID_TEXT)).toEqual({
       iconSize: 80,
       padding: 40,
       arrow: 80 / 6,
       labelWidth: 120,
-      labelAt: { x: 40, y: 80 },
+      labelGap: 6,
+      labelAt: { x: 40, y: 86 },
       groupIcon: 30,
       groupLabelGap: 4,
       groupDash: 8,
@@ -49,19 +54,30 @@ describe('the metrics table (v12 svgDraw.ts)', () => {
   });
 
   it('scales with iconSize and padding as v12 did', () => {
-    const s = architectureSizes(120, 20);
-    expect([s.arrow, s.labelWidth, s.labelAt]).toEqual([20, 180, { x: 60, y: 120 }]);
+    const s = architectureSizes(GRID_TEXT, 120, 20);
+    expect([s.arrow, s.labelWidth, s.labelAt]).toEqual([20, 180, { x: 60, y: 126 }]);
     expect([s.groupIcon, s.groupDash, s.anchorY]).toEqual([15, 8, 60]);
+  });
+
+  it("hangs a service label's first line fontSize below the icon, as v12's dy=1em did (D762)", () => {
+    // The first line's middle is 1em under the icon: its box starts fontSize − lineHeight / 2 down.
+    expect(architectureSizes({ fontSize: 16, lineHeight: 20 }).labelAt.y - 80).toBe(6);
+    expect(architectureSizes({ fontSize: 20, lineHeight: 24 }, 50).labelAt).toEqual({
+      x: 25,
+      y: 58,
+    });
+    expect(architectureSizes({ fontSize: 20, lineHeight: 24 }, 50).labelGap).toBe(8);
   });
 });
 
 describe('services and junctions', () => {
   it('a service is its icon with the label beneath, its side ends at the icon centre', async () => {
     const { graph, nodes } = await prepared('service a(server)[abcd]\nservice b(server)');
+    // 80 for the icon, 16 − 20 / 2 = 6 of hang (D762), then the label's one 20 px line.
     expect(node(graph, 'a')).toEqual({
       id: 'a',
       width: 80,
-      height: 100,
+      height: 106,
       anchorY: 40,
       shape: 'service',
     });
@@ -73,9 +89,19 @@ describe('services and junctions', () => {
   it('a label wraps at iconSize × 1.5 and widens the box past the icon', async () => {
     const { graph, nodes } = await prepared('service a(server)[aaaaaaaaaa bbbbbbbbbb]');
     expect(nodes[0]!.label!.lines).toHaveLength(2);
-    expect(node(graph, 'a')).toMatchObject({ width: 100, height: 120, anchorY: 40 });
+    expect(node(graph, 'a')).toMatchObject({ width: 100, height: 126, anchorY: 40 });
     const wide = await prepared('service a(server)[aaaaaaaaaaaaaaaaaaaa]');
     expect(node(wide.graph, 'a').width).toBeLessThanOrEqual(120);
+  });
+
+  it("hangs the label from the theme's fontSize and grows the box by as much (D762)", async () => {
+    const theme = createTheme(await loadTheme('default'), { themeVariables: { fontSize: '30px' } });
+    const ctx = contextFor(compass, theme);
+    const p = prepareArchitecture(modelOf('architecture-beta\nservice a[A]\nservice b'), ctx);
+    // 30 − 20 / 2 = 20 under the icon; an unlabelled service stays its icon.
+    expect(p.sizes.labelAt).toEqual({ x: 40, y: 100 });
+    expect(node(p.graph, 'a')).toMatchObject({ width: 80, height: 120 });
+    expect(node(p.graph, 'b')).toMatchObject({ width: 80, height: 80 });
   });
 
   it('a junction is a bare iconSize square in its group', async () => {
@@ -227,7 +253,7 @@ describe('config', () => {
       architecture: { iconSize: 100, padding: '10' },
     });
     expect([sizes.iconSize, sizes.padding]).toEqual([100, 10]);
-    expect(node(graph, 'a')).toMatchObject({ width: 100, height: 120, anchorY: 50 });
+    expect(node(graph, 'a')).toMatchObject({ width: 100, height: 126, anchorY: 50 });
     expect(group(graph, 'g').padding).toEqual({ top: 10, right: 10, bottom: 10, left: 10 });
     expect(ctx.warnings).toEqual([]);
   });
@@ -265,6 +291,79 @@ describe('config', () => {
       'architecture.iconSize',
       'architecture.padding',
     ]);
+  });
+});
+
+describe('settings v13 does not read (D763)', () => {
+  const ALL = {
+    useWidth: 99,
+    fontSize: 20,
+    seed: 7,
+    numIter: 5,
+    edgeElasticity: 0.9,
+    idealEdgeLengthMultiplier: 3,
+    nodeSeparation: 300,
+    randomize: true,
+  };
+
+  it('warns once, naming every set key in one fixed order, whatever order they were written in', async () => {
+    const { ctx } = await prepared('service a[A]', { architecture: ALL });
+    expect(ctx.warnings).toHaveLength(1);
+    const [w] = ctx.warnings as { code: string; message: string; path?: string }[];
+    expect(w!.code).toBe(ARCHITECTURE_SETTINGS_IGNORED);
+    expect(w!.path).toBe('architecture.randomize');
+    const named = [
+      'randomize',
+      'nodeSeparation',
+      'idealEdgeLengthMultiplier',
+      'edgeElasticity',
+      'numIter',
+      'seed',
+      'fontSize',
+      'useWidth',
+    ];
+    const at = named.map((k) => w!.message.indexOf(`architecture.${k}`));
+    expect(at.every((i) => i >= 0)).toBe(true);
+    expect([...at].sort((a, b) => a - b)).toEqual(at);
+    expect(w!.message).toContain('v13 has no fcose layout');
+    expect(w!.message).toContain('fcose');
+    expect(w!.message).toContain('themeVariables.fontSize');
+    expect(w!.message).toContain('never read');
+  });
+
+  it('names only what is set, and says only what applies to it', async () => {
+    const { ctx } = await prepared('service a[A]', {
+      architecture: { seed: 7, idealEdgeLengthMultiplier: 3 },
+    });
+    expect(ctx.warnings).toHaveLength(1);
+    const { message, code } = ctx.warnings[0] as { code: string; message: string };
+    expect(code).toBe(ARCHITECTURE_SETTINGS_IGNORED);
+    expect(message).toMatch(/architecture\.idealEdgeLengthMultiplier.*architecture\.seed/);
+    expect(message).not.toContain('randomize');
+    expect(message).not.toContain('themeVariables');
+    expect(message).not.toContain('useWidth');
+  });
+
+  it('warns for a key set to its v12 default, which is still set', async () => {
+    const { ctx } = await prepared('service a[A]', { architecture: { seed: 1, fontSize: 16 } });
+    expect(ctx.warnings.map((w) => w.code)).toEqual([ARCHITECTURE_SETTINGS_IGNORED]);
+  });
+
+  it('says nothing when none is set, nor for the keys it reads', async () => {
+    const plain = await prepared('service a[A]');
+    expect(plain.ctx.warnings).toEqual([]);
+    const read = await prepared('service a[A]', {
+      architecture: { iconSize: 60, padding: 20, useMaxWidth: false },
+    });
+    expect(read.ctx.warnings).toEqual([]);
+  });
+
+  it('lays out the same with every key set (they are read by nothing)', async () => {
+    const src = 'group g[G]\nservice a[A] in g\nservice b[B]\na:R -[x]- L:b';
+    const plain = await prepared(src);
+    const set = await prepared(src, { architecture: ALL });
+    expect(set.graph).toEqual(plain.graph);
+    expect(set.sizes).toEqual(plain.sizes);
   });
 });
 

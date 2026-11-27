@@ -6,12 +6,5 @@ import type { ArchitectureDiagramConfig } from '@mermaid-js/core/config';
 export const architectureConfigDefaults: ArchitectureDiagramConfig = {
   "useMaxWidth": true,
   "padding": 40,
-  "iconSize": 80,
-  "fontSize": 16,
-  "randomize": false,
-  "nodeSeparation": 75,
-  "idealEdgeLengthMultiplier": 1.5,
-  "edgeElasticity": 0.45,
-  "numIter": 2500,
-  "seed": 1
+  "iconSize": 80
 };
