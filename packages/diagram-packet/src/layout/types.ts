@@ -46,11 +46,11 @@ export interface PacketPieceLayout {
   readonly end: number;
   /** `end - start + 1`. */
   readonly bits: number;
-  /** The rectangle: `bits * bitWidth - paddingX` wide (never below 0, D342), `rowHeight` tall. */
+  /** The rectangle: `bits * bitWidth - paddingX` wide (never below 0, D342), the row's height tall. */
   readonly box: Rect;
   /**
-   * The field's label, centred on the box; its font shrinks when it is wider or taller than the box, down
-   * to the bit-number size, then it overflows (D343).
+   * The field's label, centred on the box; its font shrinks when it is wider than the box, down
+   * to the bit-number size, then it overflows the width (D343). A taller label grows the row (D740).
    */
   readonly label: PlacedLabel;
   /** None without `showBits`; one, centred, for a one-bit piece; else leading and trailing. */
@@ -58,8 +58,10 @@ export interface PacketPieceLayout {
 }
 
 export interface PacketRowLayout {
-  /** The row's top: `r * (rowHeight + pY) + pY`. */
+  /** The row's top: `pY` below the row above's bottom, `pY` for the first (v12's `r * (rowHeight + pY) + pY`). */
   readonly y: number;
+  /** `rowHeight`, or the row's tallest label when that is taller (D740). */
+  readonly height: number;
   /** In model order (bit order); `descending` mirrors their `x`, not their order. */
   readonly pieces: readonly PacketPieceLayout[];
 }
@@ -67,7 +69,10 @@ export interface PacketRowLayout {
 export interface PacketLayout {
   /** v12's canvas: `bitWidth * bitsPerRow + 2` wide. */
   readonly width: number;
-  /** `(rowHeight + pY) * (rows + 1) - (title ? 0 : rowHeight)`. */
+  /**
+   * `pY` below the last row's bottom, plus `rowHeight` for a title: v12's
+   * `(rowHeight + pY) * (rows + 1) - (title ? 0 : rowHeight)` while no row grows (D740).
+   */
   readonly height: number;
   /** The checked `packet` options the layout used (`packetConfig`), `bitsPerRow` the model's. */
   readonly options: PacketConfig;

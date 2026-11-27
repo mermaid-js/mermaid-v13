@@ -133,6 +133,18 @@ export const FIXTURES: Readonly<Record<string, Fixture>> = {
       { title: 'Two<br/>lines' }
     ),
   },
+  // A label of four lines grows its row; the rows below and the title move down (D740, #1267).
+  tallLabel: {
+    model: model(
+      [
+        [0, 15, 'one<br>two<br>three<br>four'],
+        [16, 31, 'ok'],
+        [32, 47, 'a<br>b<br>c'],
+        [48, 63, 'd'],
+      ],
+      { title: 'Grown rows' }
+    ),
+  },
   // A title far wider than the canvas (D344).
   wideTitle: {
     model: model([[0, 3, 'a']], {
