@@ -12,7 +12,9 @@ import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
+import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import type { StateRenderContext } from './context.ts';
+import { STATE_CURVE } from './curve.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
 import { v12Label, type V12LabelMode } from '@mermaid-js/core/text/v12-label';
@@ -96,6 +98,12 @@ export interface StateEdgeView {
 
 export interface StatePrepared {
   graph: LayoutGraph;
+  /**
+   * How the diagram's edges are drawn (D733): `state.curve`, else the global `curve`, else
+   * `curved`, resolved once per render so `CURVE_UNKNOWN` warns once. A self-transition is
+   * drawn `rounded` whatever it is.
+   */
+  curve: CurveKind;
   nodes: StateNodeView[];
   /** Composites and regions, outermost first. */
   groups: StateGroupView[];
@@ -272,8 +280,9 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
       })
     ),
   ];
-  const graph = layoutGraph(model, { nodes, groups, edges }, regionsOf, groupDir, m, length);
-  return { graph, nodes, groups, edges, views, regions: regionsOf };
+  const curve = curveResolver(ctx.config.curve, STATE_CURVE, (w) => ctx.warn(w))(cfg.curve);
+  const graph = layoutGraph(model, { nodes, groups, edges, curve }, regionsOf, groupDir, m, length);
+  return { graph, curve, nodes, groups, edges, views, regions: regionsOf };
 }
 
 /** A note's node and the edge that joins it to its state. */
@@ -427,8 +436,9 @@ function measureState(
     // v12 `rectWithTitle`: the first description as the title, a divider, then the other
     // description lines (v12 stateDb `label[0]` and `label.slice(1)`). The id is not drawn.
     const [title, ...more] = s.descriptions;
-    const label = m.plain(title!, style, m.wrap);
-    const rows = m.plain(more.join('\n'), style, m.wrap);
+    // Both break only at a written `\n`, as v12's `createLabel` (infinite width) did (D731).
+    const label = m.plain(title!, style, Infinity);
+    const rows = m.plain(more.join('\n'), style, Infinity);
     const wide = label.width > rows.width ? label : rows;
     const box = boxOf(wide, sm.statePad, m, m.cells ? 0 : m.minWidth);
     const tall = m.cells ? label.lines.length + rows.lines.length : label.height + rows.height;
@@ -447,7 +457,7 @@ function measureState(
 /** The graph the layout engine gets, every length from the unit profile. */
 function layoutGraph(
   model: StateModel,
-  { nodes, groups, edges }: Pick<StatePrepared, 'nodes' | 'groups' | 'edges'>,
+  { nodes, groups, edges, curve }: Pick<StatePrepared, 'nodes' | 'groups' | 'edges' | 'curve'>,
   regionsOf: ReadonlyMap<string, readonly string[]>,
   groupDir: ReadonlyMap<string, Dir | undefined>,
   m: Measure,
@@ -470,7 +480,10 @@ function layoutGraph(
       return node;
     }),
     groups: groups.map((g): LayoutGroup => {
-      const group: LayoutGroup = { id: g.id, padding: groupPadding(g, regionsOf, mixed, b) };
+      const group: LayoutGroup = {
+        id: g.id,
+        padding: groupPadding(g, regionsOf, mixed, b, units.grid !== undefined),
+      };
       if (g.label.height > 0) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
       const d = groupDir.get(g.id);
@@ -481,7 +494,7 @@ function layoutGraph(
     ...spacing,
     diagramPadding: b.diagramPadding,
     // On the grid routes are always square (D78).
-    routing: units.grid === undefined ? 'curved' : 'stepped',
+    routing: units.grid === undefined ? curveRouting(curve) : 'stepped',
     headRoom: b.headRoom,
     metrics: units.engine,
   };
@@ -494,15 +507,25 @@ function layoutGraph(
  * to the regions, so the region frames tile it and the dividers run border to border. A region
  * has no title. A composite that also holds plain children (`mixed`: an earlier opening put
  * states in it directly) keeps its padding, so those children do not touch its border.
+ *
+ * Above a titled composite's content is its title strip (D732): the title `titlePad / 2` below
+ * the frame's top (`layoutState` seats it there), the strip line `titlePad / 4` below the title,
+ * then `groupPad` to the first child, as on the other three sides. Regions start at the strip
+ * line and bring their own `groupPad`. On the grid the title is on the border row and no strip
+ * is drawn, so the padding there is `titlePad` alone.
  */
 function groupPadding(
   g: StateGroupView,
   regionsOf: ReadonlyMap<string, readonly string[]>,
   mixed: ReadonlySet<string>,
-  b: UnitProfile['builder']
+  b: UnitProfile['builder'],
+  grid: boolean
 ): LayoutGroup['padding'] {
-  const top = g.label.height > 0 ? b.titlePad : b.groupPad;
-  if (!g.region && regionsOf.has(g.id) && !mixed.has(g.id))
-    return { top, right: 0, bottom: 0, left: 0 };
+  const split = !g.region && regionsOf.has(g.id) && !mixed.has(g.id);
+  // Half of `titlePad` above the title, a quarter of it between the title and the strip line.
+  const half = b.titlePad / 2;
+  const strip = grid ? b.titlePad : half + half / 2 + (split ? 0 : b.groupPad);
+  const top = g.label.height > 0 ? strip : b.groupPad;
+  if (split) return { top, right: 0, bottom: 0, left: 0 };
   return { top, right: b.groupPad, bottom: b.groupPad, left: b.groupPad };
 }
