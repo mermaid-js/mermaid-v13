@@ -7,6 +7,7 @@
 // pitfall 13: `usecase-layout-literals.spec.ts`; in cells, text output's D478 forms, T7).
 import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { labelledEdge } from '@mermaid-js/shared/layout';
+import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
@@ -41,6 +42,7 @@ import type {
   UsecaseUseCase,
 } from '../model.ts';
 import type { UsecaseLayoutContext } from './context.ts';
+import { USECASE_CURVE } from './curve.ts';
 import { PX } from './metrics.ts';
 import { ANGLE_QUOTES, sizingOf, type Quotes, type Sizing } from './sizing.ts';
 
@@ -217,6 +219,11 @@ export interface UsecasePrepared {
   readonly edges: readonly UsecaseEdgeView[];
   readonly config: UsecaseLayoutConfig;
   /**
+   * The curve of every relationship and note line but a self-loop's (D733): `usecase.curve`,
+   * then the top-level `curve`, then {@link USECASE_CURVE}.
+   */
+  readonly curve: CurveKind;
+  /**
    * The front-matter title (D472), in the theme's font, unwrapped. The graph leaves room for
    * none: the renderer draws it above the laid-out diagram.
    */
@@ -379,6 +386,9 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
     ctx.config.usecase as Readonly<Record<string, unknown>> | undefined,
     (w) => ctx.warn(w)
   );
+  const curve = curveResolver(ctx.config.curve, USECASE_CURVE, (w) => ctx.warn(w))(
+    ctx.config.usecase?.curve
+  );
   const family = ctx.theme.value('fontFamily');
   const base: FontKey = { family, size: ctx.theme.number('fontSize'), weight: FONT_WEIGHT.normal };
   const parts: ViewInputs = {
@@ -448,12 +458,22 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
   const graph = layoutGraph(
     { direction: model.direction, nodes, boundaries, edges },
     config,
-    parts.sizing
+    parts.sizing,
+    curve
   );
   const text = model.title?.trim();
   const plain = parts.measure.styleOf([]);
   const title = text ? parts.measure.label(text, base, Infinity, plain) : undefined;
-  return { graph, nodes, layoutIds, boundaries, edges, config, ...(title ? { title } : {}) };
+  return {
+    graph,
+    nodes,
+    layoutIds,
+    boundaries,
+    edges,
+    config,
+    curve,
+    ...(title ? { title } : {}),
+  };
 }
 
 function withParent<T extends object>(view: T, parent: string | undefined): T {
@@ -687,9 +707,15 @@ interface Views {
 
 /**
  * The graph the layout engine gets: the config's spacing and margin, which the sizing may finish
- * (in cells, text output: on the grid, the spacing an author set converted).
+ * (in cells, text output: on the grid, the spacing an author set converted), and the routing the
+ * curve asks for. On the grid every edge is routed at right angles whatever it asks (D78).
  */
-function layoutGraph(views: Views, config: UsecaseLayoutConfig, sizing: Sizing): LayoutGraph {
+function layoutGraph(
+  views: Views,
+  config: UsecaseLayoutConfig,
+  sizing: Sizing,
+  curve: CurveKind
+): LayoutGraph {
   const builder = sizing.units.builder;
   const across = sideways(views.direction);
   const graph: LayoutGraph = {
@@ -723,6 +749,7 @@ function layoutGraph(views: Views, config: UsecaseLayoutConfig, sizing: Sizing):
     diagramPadding: config.diagramPadding,
     headRoom: builder.headRoom,
     metrics: sizing.units.engine,
+    routing: sizing.units.grid === undefined ? curveRouting(curve) : 'stepped',
   };
   return sizing.finish ? sizing.finish(graph) : graph;
 }

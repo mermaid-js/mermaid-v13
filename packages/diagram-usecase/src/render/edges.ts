@@ -78,7 +78,8 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
     const path = routePath(
       w,
       route.points,
-      e.source === e.target ? 'rounded' : 'curved',
+      // A self-loop keeps its rounded path whatever the curve (D733).
+      e.source === e.target ? 'rounded' : scene.p.curve,
       markerTrim(ends.start),
       markerTrim(ends.end)
     );
