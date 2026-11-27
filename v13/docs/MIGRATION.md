@@ -3364,7 +3364,7 @@ v12's, apart from the two layout fixes of D514.
   spec strings and docs examples, and the grammar is in
   [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
   with a range at the token (R-PARSE-4).
-- **Label text** (D731, #1368): markdown is read only in a markdown string. A name or an
+- **Label text** (#1368): markdown is read only in a markdown string. A name or an
   `id:`, `text:`, `type:` or `docref:` value written `` "`**bold** _italic_`" `` is drawn
   bold and italic, where v12 drew the backticks and the stars as written. Any other name or
   value is plain text: v12's documented example (`requirement "__test_req__"`,

@@ -336,7 +336,7 @@ describe('the style-copy cap (D433)', () => {
   });
 });
 
-describe('label syntax (D731, #1368)', () => {
+describe('label syntax (#1368)', () => {
   /** Each line of the label `part` of box `n`, as `[text, style]` runs. */
   const runs = (src: string, part: string, init?: MermaidConfig, n = 0) =>
     lay(src, init)

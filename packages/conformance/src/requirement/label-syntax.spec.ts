@@ -3,7 +3,7 @@ import type { Warning } from '@mermaid-js/core';
 import { createMermaid } from 'mermaid';
 
 /**
- * Requirement labels through the public API (D731, #1368): markdown is read only in a markdown
+ * Requirement labels through the public API (#1368): markdown is read only in a markdown
  * string, a written `\n` breaks the line, and markdown written outside a markdown string gives
  * one `MARKDOWN_NOT_READ` warning per render. With `markdownAlwaysOn`, set globally or in the
  * `requirement` section, every label is markdown and nothing warns.
@@ -47,7 +47,7 @@ const drawn = (svg: string): string =>
 const notRead = (warnings: readonly Warning[]) =>
   warnings.filter((w) => w.code === 'MARKDOWN_NOT_READ');
 
-describe('requirement labels (D731, #1368)', () => {
+describe('requirement labels (#1368)', () => {
   it('draws plain markdown as written, with one MARKDOWN_NOT_READ warning per render', async () => {
     const r = await api().render('r', PLAIN);
     expect(drawn(r.svg)).toContain('**strong** name');

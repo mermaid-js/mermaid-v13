@@ -1,6 +1,6 @@
 // Label modes per diagram type (#763, #781, D564). The expected texts are what mermaid 12.2.0
 // draws: its `markdownToHTML` reads bold and italic, and hands back a list item or a code span
-// as written. Requirement reads markdown only in a markdown string (D731, #1368), and in every
+// as written. Requirement reads markdown only in a markdown string (#1368), and in every
 // label with `markdownAlwaysOn: true`. Bullets and inline code in a mindmap markdown string are v13's own (D56).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -52,7 +52,7 @@ describe('label modes per diagram type (#763, D564)', () => {
     ]);
   });
 
-  it('requirement: markdown only in a markdown string, tags in every label (D731)', async () => {
+  it('requirement: markdown only in a markdown string, tags in every label (#1368)', async () => {
     const texts = await render('requirement/baseline/text/backticks-and-emphasis.mmd');
     expect(texts).toEqual([
       '<<Requirement>>',
@@ -120,7 +120,7 @@ describe('label modes per diagram type (#763, D564)', () => {
       expect(r.text).toContain(text);
   });
 
-  it('requirement: text output draws what the SVG draws (D731)', async () => {
+  it('requirement: text output draws what the SVG draws (#1368)', async () => {
     const r = await textOf('requirement/baseline/text/backticks-and-emphasis.mmd');
     for (const text of [
       ' bold ',

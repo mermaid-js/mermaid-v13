@@ -1,4 +1,4 @@
-// The markdown strings of a requirement diagram (D731, #1368). The parser drops a quoted text's
+// The markdown strings of a requirement diagram (#1368). The parser drops a quoted text's
 // quotes, as v12 did, so a markdown string `"`…`"` reaches the model as `` `…` ``; the model
 // marks it (`RequirementBox.markdown`) for the label handler, which reads it as markdown.
 import type { MarkdownField } from '../model.ts';
