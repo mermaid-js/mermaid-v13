@@ -34,6 +34,8 @@ export interface MindmapMetrics {
   /** Schema defaults of the config keys the layout reads: `mindmap.padding`, `maxNodeWidth`. */
   readonly padding: number;
   readonly maxNodeWidth: number;
+  /** The range an author's `mindmap.maxNodeWidth` is clamped to, px (D769). */
+  readonly maxNodeWidthRange: { readonly min: number; readonly max: number };
   /** The least width a label wraps to (core's `layoutLabel` takes a positive width). */
   readonly minWrap: number;
   /** The weight labels are measured and drawn at (bold comes from markdown only). */
@@ -77,6 +79,7 @@ export interface MindmapMetrics {
 export const MINDMAP_METRICS: MindmapMetrics = {
   padding: 10,
   maxNodeWidth: 200,
+  maxNodeWidthRange: { min: 120, max: 1200 },
   minWrap: 1,
   fontWeight: 400,
   shapes: {

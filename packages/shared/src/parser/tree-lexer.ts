@@ -22,12 +22,18 @@
  * and returns a `SHAPE_DATA` whose image its action cleared; inside, `[^}^"]+` (line breaks
  * included) and each `"` are `SHAPE_DATA` tokens, and a quoted run's text is one more.
  *
+ * Accessibility statements (a diagram whose table names `AccTitle` and `AccDescr`; kanban, D742,
+ * where v12 read them as items): at a line start, after blanks only, `accTitle[\t ]*:` and
+ * `accDescr[\t ]*:` take the rest of the line, and `accDescr[\t ]*{` runs to the next `}` (to the
+ * end of the text when there is none). Without regard to case, as the lexer reads every keyword
+ * (jison's `case-insensitive`). `accTitle` followed by anything else stays an id.
+ *
  * jison throws on a `{` or `}` outside a shape, a lone backtick or quote in a markdown string
  * and a U+2028 or U+2029 after `:::`, and with shape data on an `@` that starts no `@{` and a
  * `^` in the data; each is a one-character `Kind.Error` and lexing goes on. Every scan is
  * linear in the text it consumes (R-PARSE-7).
  */
-// cspell:words NSTR
+// cspell:words NSTR accdescr acctitle
 import {
   AT,
   BACKTICK,
@@ -36,6 +42,7 @@ import {
   DASH,
   DQUOTE,
   FIRST_DIAGRAM_KIND,
+  isBlank,
   isLineEnd,
   isSpace,
   isWord,
@@ -43,6 +50,7 @@ import {
   LBRACE,
   LBRACKET,
   LF,
+  LOWER_A,
   LPAREN,
   PERCENT,
   type Probe,
@@ -157,12 +165,21 @@ export interface TreeKindTable {
   readonly ShapeDataQuote?: number;
   readonly ShapeDataStr?: number;
   readonly ShapeDataEnd?: number;
+  /**
+   * `accTitle: …`: with it and `AccDescr` the diagram has accessibility statements (one alone
+   * gives none).
+   */
+  readonly AccTitle?: number;
+  /** `accDescr: …` or `accDescr { … }`. */
+  readonly AccDescr?: number;
 }
 
 /** A {@link TreeKindTable} with every kind a number (-1, which no token has, for one left out). */
 export type TreeKinds = { readonly [K in keyof TreeKindTable]-?: number } & {
   /** The diagram has `@{ … }` shape data. */
   readonly data: boolean;
+  /** The diagram has `accTitle` and `accDescr` statements (its table names both kinds). */
+  readonly acc: boolean;
 };
 
 /**
@@ -171,6 +188,7 @@ export type TreeKinds = { readonly [K in keyof TreeKindTable]-?: number } & {
  * reading them sees one object shape.
  */
 export function treeKinds(kinds: TreeKindTable): TreeKinds {
+  const acc = kinds.AccTitle !== undefined && kinds.AccDescr !== undefined;
   return {
     Keyword: kinds.Keyword,
     SpaceLine: kinds.SpaceLine,
@@ -195,7 +213,10 @@ export function treeKinds(kinds: TreeKindTable): TreeKinds {
     ShapeDataQuote: kinds.ShapeDataQuote ?? -1,
     ShapeDataStr: kinds.ShapeDataStr ?? -1,
     ShapeDataEnd: kinds.ShapeDataEnd ?? -1,
+    AccTitle: acc ? (kinds.AccTitle ?? -1) : -1,
+    AccDescr: acc ? (kinds.AccDescr ?? -1) : -1,
     data: kinds.ShapeDataStart !== undefined,
+    acc,
   };
 }
 
@@ -343,6 +364,13 @@ class TreeLexer extends StateLexer {
       this.begin(k.NodeDStart, p + open, S.NODE);
       return;
     }
+    this.idOrAccessibility(c);
+  }
+
+  /** An acc statement (a diagram with them), else an id, at the cursor (its first character `c`). */
+  private idOrAccessibility(c: number): void {
+    const { p, k } = this;
+    if (k.acc && lowerCode(c) === LOWER_A && this.accessibility()) return;
     const e = this.idEnd(p);
     if (e > p) this.emit(k.NodeId, p, e);
     // A `{` that starts no `{{`, a `}`, or (with shape data) an `@` that starts no `@{`: no
@@ -357,6 +385,38 @@ class TreeLexer extends StateLexer {
     if (!this.literal(this.word, p) || isWord(this.text.charCodeAt(e))) return false;
     this.emit(this.k.Keyword, p, e);
     return true;
+  }
+
+  /**
+   * `accTitle: …`, `accDescr: …` or `accDescr { … }` at the cursor, with only blanks before it
+   * on its line: whether one was there, and so lexed.
+   */
+  private accessibility(): boolean {
+    const { text, p } = this;
+    const title = this.literal('acctitle', p);
+    if ((!title && !this.literal('accdescr', p)) || !this.atLineStart(p)) return false;
+    const r = this.blanks(p + 8);
+    const next = text.charCodeAt(r);
+    if (next === COLON) this.emit(title ? this.k.AccTitle : this.k.AccDescr, p, this.dotEnd(r + 1));
+    else if (!title && next === LBRACE) this.emit(this.k.AccDescr, p, this.braceEnd(r + 1));
+    else return false;
+    return true;
+  }
+
+  /**
+   * Whether only blanks stand between the last line break (LF, as `[\n]`; CRs are LFs by now)
+   * and `p`, or the text's start.
+   */
+  private atLineStart(p: number): boolean {
+    let b = p;
+    while (b > 0 && isBlank(this.text.charCodeAt(b - 1))) b--;
+    return b === 0 || this.text.charCodeAt(b - 1) === LF;
+  }
+
+  /** Past the first `}` from `q`, or the end of the text without one. */
+  private braceEnd(q: number): number {
+    const close = this.text.indexOf('}', q);
+    return close === -1 ? this.n : close + 1;
   }
 
   /** `:::` or `::icon(` at the cursor: whether one was there, and so lexed. */

@@ -182,21 +182,120 @@ describe('kanban.jison quirks', () => {
     ]);
   });
 
-  it('makes `accTitle: x`, `accDescr: x` and `title x` item ids: kanban has no such statements', () => {
-    expect(jison('kanban\n  accTitle: x\n  accDescr: x\n  title x')).toEqual([
+  it('reads `accTitle: x` and `accDescr: x` as statements, where v12 read item ids (D742)', () => {
+    // v12: NODE_ID:accTitle: x and NODE_ID:accDescr: x. `title x` stays an item id.
+    expect(jison('kanban\n  accTitle: x\n  accDescr : y z\n  title x')).toEqual([
       'KANBAN:kanban',
       'NL:\n',
       'SPACELIST:  ',
-      'NODE_ID:accTitle: x',
+      'ACC_TITLE:accTitle: x',
       'NL:\n',
       'SPACELIST:  ',
-      'NODE_ID:accDescr: x',
+      'ACC_DESCR:accDescr : y z',
       'NL:\n',
       'SPACELIST:  ',
       'NODE_ID:title x',
       'NL:',
       'EOF:',
     ]);
+  });
+
+  it('reads an acc statement to its line end, whatever the text holds (D742)', () => {
+    expect(jison('kanban\naccTitle: a [b] (c) @{ d } }e{\n  x')).toEqual([
+      'KANBAN:kanban',
+      'NL:\n',
+      'ACC_TITLE:accTitle: a [b] (c) @{ d } }e{',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:x',
+      'NL:',
+      'EOF:',
+    ]);
+  });
+
+  it('reads `accDescr { … }` over lines, to its `}` (D742)', () => {
+    expect(jison('kanban\n  accDescr {\n    a [b]\n    (c) @x\n  }\n  x')).toEqual([
+      'KANBAN:kanban',
+      'NL:\n',
+      'SPACELIST:  ',
+      'ACC_DESCR:accDescr {\n    a [b]\n    (c) @x\n  }',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:x',
+      'NL:',
+      'EOF:',
+    ]);
+    // Left open, it runs to the end of the text.
+    expect(jison('kanban\n  accDescr {\n  x')).toEqual([
+      'KANBAN:kanban',
+      'NL:\n',
+      'SPACELIST:  ',
+      'ACC_DESCR:accDescr {\n  x',
+      'EOF:',
+    ]);
+  });
+
+  it('keeps `accTitle[x]`, a bare keyword and one not at a line start item ids, as v12', () => {
+    expect(jison('kanban\n  accTitle[x]\n  accDescr\n  accTitleX: y\n  a accTitle: z')).toEqual([
+      'KANBAN:kanban',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:accTitle',
+      'NODE_DSTART:[',
+      'NODE_DESCR:x',
+      'NODE_DEND:]',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:accDescr',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:accTitleX: y',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:a accTitle: z',
+      'NL:',
+      'EOF:',
+    ]);
+    // A line start is after a line break `[\n]` only, as in the grammar file: not after a
+    // U+2028 or U+2029, which no tree-lexer rule reads as one.
+    expect(jison('kanban\n  a[x]\u2028accTitle: y\n  b[x]\u2029accDescr: z').slice(7)).toEqual([
+      'SPACELIST:\u2028',
+      'NODE_ID:accTitle: y',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:b',
+      'NODE_DSTART:[',
+      'NODE_DESCR:x',
+      'NODE_DEND:]',
+      'SPACELIST:\u2029',
+      'NODE_ID:accDescr: z',
+      'NL:',
+      'EOF:',
+    ]);
+    // `accDescr` then `{` on the next line is no block.
+    expect(jison('kanban\n  accDescr\n  {x}').slice(3, 7)).toEqual([
+      'NODE_ID:accDescr',
+      'NL:\n',
+      'SPACELIST:  ',
+      'LEXICAL_ERROR:{',
+    ]);
+  });
+
+  it('reads the acc keywords without regard to case, as every keyword (D742)', () => {
+    expect(jison('kanban\nACCTITLE: x\nAccDescr{y}').slice(2, 5)).toEqual([
+      'ACC_TITLE:ACCTITLE: x',
+      'NL:\n',
+      'ACC_DESCR:AccDescr{y}',
+    ]);
+  });
+
+  it('lexes a long acc line and many acc statements in linear time', () => {
+    const long = `kanban\n  accTitle: ${'a [b] '.repeat(50_000)}\n  x`;
+    expect(of(long, T.AccTitle)).toHaveLength(1);
+    const many = `kanban\n${'  accDescr {\n'.repeat(20_000)}`;
+    expect(of(many, T.AccDescr)).toHaveLength(1);
+    const closed = `kanban\n${'  accDescr { a }\n  accTitle: b\n'.repeat(20_000)}`;
+    expect(of(closed, T.AccDescr)).toHaveLength(20_000);
   });
 
   it('reads entity codes, which v12 encoded before lexing, as entities in the token written', () => {

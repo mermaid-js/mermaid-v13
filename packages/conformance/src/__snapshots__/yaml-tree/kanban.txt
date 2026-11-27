@@ -39,7 +39,7 @@ e2e/diagrams/kanban/nightly-check/section-width.mmd 1 686817f8f5338f44
 e2e/diagrams/kanban/nightly-check/shape-data-multi-line.mmd 5 42700e8dde8f0a2c
 e2e/diagrams/kanban/nightly-check/shapes.mmd 1 ef06c18beab2991e
 e2e/diagrams/kanban/nightly-check/strings-and-markdown.mmd 1 999a933caa402b92
-e2e/diagrams/kanban/nightly-check/theme-dark.mmd 4 fe8e3a2f05cca674
+e2e/diagrams/kanban/nightly-check/theme-dark.mmd 4 232402049a8fcd13
 e2e/diagrams/kanban/nightly-check/theme-forest.mmd 4 c8e011d43fe06146
 e2e/diagrams/kanban/nightly-check/ticket-and-assignee-just-fit.mmd 2 4f32d0f9c9588716
 e2e/diagrams/kanban/nightly-check/ticket-links.mmd 3 ff1ffa827ae322e7
