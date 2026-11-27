@@ -120,17 +120,32 @@ const COLOR_KEYWORDS: ReadonlySet<string> = new Set(
 );
 // cspell:enable
 const RE_FUNC = /^[a-z-]+\s*\(.*\)$/i;
+const RE_CHANNEL_FUNC = /^(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\s*\((.*)\)$/i;
+const RE_CHANNEL = /^(?:[+-]?(?:\d{1,10}(?:\.\d{0,10})?|\.\d{1,10})(?:%|deg|g?rad|turn)?|none)$/i;
+
+/**
+ * False for a channel function whose arguments are not 3 or 4 numbers, percentages, angles or
+ * `none` (D737). Relative colours, `var()`, `calc()` and exponents are refused too.
+ */
+function channelsKnown(v: string): boolean {
+  const m = RE_CHANNEL_FUNC.exec(v);
+  if (!m) return true;
+  const parts = m[1]!.trim().split(/\s*[,/]\s*|\s+/);
+  return parts.length > 2 && parts.length < 5 && parts.every((p) => RE_CHANNEL.test(p));
+}
 
 /**
  * A colour an author gives, in a style statement, the config or `themeVariables` (D690): what
  * `checkColor` allows, less the words and hex digits CSS does not know. A browser ignores such a
  * colour in CSS, but an attribute that holds one replaces the theme's colour and draws black
- * (#1195).
+ * (#1195). A channel function's arguments are read too (D737).
  */
 export function checkCssColor(value: string): SafeColor | undefined {
   const v = value.trim();
   const known =
-    COLOR_KEYWORDS.has(v.toLowerCase()) || RE_FUNC.test(v) || parseColor(v) !== undefined;
+    COLOR_KEYWORDS.has(v.toLowerCase()) ||
+    parseColor(v) !== undefined ||
+    (RE_FUNC.test(v) && channelsKnown(v));
   return known ? checkColor(v) : undefined;
 }
 

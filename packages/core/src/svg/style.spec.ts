@@ -99,6 +99,8 @@ describe('checkStyle', () => {
       'red blue',
       'red,blue',
       '12',
+      'rgb(redd)',
+      'hsl(redd)',
       'none none',
     ]) {
       const { warnings, warn } = collect();
@@ -118,6 +120,38 @@ describe('checkStyle', () => {
       expect(checkCssColor(` ${v} `), v).toBe(v);
     // checkColor keeps its wider reading for values no author misspells (theme rules, math, icons).
     expect(checkColor('redd')).toBe('redd');
+  });
+
+  it('reads the arguments of a channel colour function (D737)', () => {
+    for (const v of [
+      'rgb(37 99 235 / 60%)',
+      'hsla(210, 80%, 30%, 0.9)',
+      'oklch(70% 0.1 200 / .5)',
+      'hsl(none 0% 0%)',
+      'hwb(1turn 0% 0%)',
+      'lab(50% -20 +30.5)',
+      'LCH(50% 30 1.5rad)',
+      'oklab(0.5 0.1 -0.1)',
+      'hsl(100grad 50% 50%)',
+    ])
+      expect(checkCssColor(v), v).toBe(v);
+    for (const v of [
+      'rgb(redd)',
+      'rgb(1 2)',
+      'rgb(1, 2, 3, 4, 5)',
+      'rgb(1,,2,3)',
+      'hsl(redd)',
+      'oklch(redd)',
+      'lab(1)',
+      'rgba()',
+      'rgb(1px 2 3)',
+      // Valid CSS the check does not read.
+      'rgb(from red r g b)',
+      'rgb(var(--mermaid-x) 0 0)',
+      'rgb(calc(1) 0 0)',
+      'rgb(1e2 0 0)',
+    ])
+      expect(checkCssColor(v), v).toBeUndefined();
   });
 
   it('keeps an earlier colour when a later one is misspelt, as CSS does', () => {
