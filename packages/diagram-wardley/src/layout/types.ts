@@ -6,7 +6,7 @@
  * strokes, dashes and opacities the renderer draws with are in `WARDLEY_METRICS`.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey } from '@mermaid-js/core/text';
+import type { FontKey, LabelMarkup, MeasuredLabel } from '@mermaid-js/core/text';
 import type { WardleyFlow, WardleyNodeClass, WardleyStrategy } from '../model.ts';
 
 export interface Point {
@@ -33,17 +33,20 @@ export type WardleyTextAnchor = 'start' | 'middle';
 export type WardleyBaseline = 'auto' | 'middle' | 'central';
 
 /**
- * A measured text, one literal line as v12's `.text()` drew it: v12's anchor point, alignment
- * and rotation, and the box the line fills before the rotation. The string is the model's with
- * its white space collapsed as SVG draws a text node; nothing in it is markup, an entity or a
- * line break.
+ * A measured text, read by the label rule (#1368) and laid out by core's label layout: v12's
+ * anchor point, alignment and rotation, and the box its lines fill before the rotation. The
+ * first line sits where v12's one line did; further lines follow below it.
  */
 export interface PlacedText extends Rect {
-  /** What is drawn, as measured. */
+  /** What is drawn, as plain text: the runs of each line, the lines joined by `\n`. */
   readonly text: string;
+  /** The laid-out lines and runs, as `SvgWriter.label()` draws them. */
+  readonly label: MeasuredLabel;
+  /** How the text was read: `plain` unless it is a markdown string or every label is markdown. */
+  readonly markup: LabelMarkup;
   /** The font it was measured in, and so is drawn in. */
   readonly font: FontKey;
-  /** From the box's top to the line's baseline (the font's ascent). */
+  /** From the box's top to the first line's baseline (the font's ascent). */
   readonly ascent: number;
   /** v12's `x`, `y`. */
   readonly at: Point;

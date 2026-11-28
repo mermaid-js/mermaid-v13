@@ -4,10 +4,12 @@
  * numbers are `git show fa796a943:packages/mermaid/src/diagrams/wardley/wardleyRenderer.ts`'s):
  * the canvas and the projection, the stages and the grid, then the pipelines, which move their
  * parents (in model order) and hand the moved positions to the links, the trends and the nodes,
- * then the annotations, the notes and the (de)accelerators. Every text is one literal line, as
- * v12's `.text()` drew it, measured through the injected measurer in the theme's font family
- * (D422, pitfall 16) and placed where v12's `text-anchor` and `dominant-baseline` put it; the
- * bounds grow past v12's canvas wherever something drawn reaches out of it (D224). Lengths come
+ * then the annotations, the notes and the (de)accelerators. Every text is read by the label rule
+ * (`readLabel`, #1368: tags draw, a quoted markdown string is markdown, a written `\n` breaks
+ * the line) and laid out by core's label layout, measured through the injected measurer in the
+ * theme's font family (D422, pitfall 16). Its first line is placed where v12's `text-anchor` and
+ * `dominant-baseline` put v12's one line, and any further lines follow below it; the bounds grow
+ * past v12's canvas wherever something drawn reaches out of it (D224). Lengths come
  * from the `wardley-beta` config, the map's `size` and the metrics table (pitfall 13).
  *
  * Never NaN or nothing (D424, D226): the config falls back where v12 drew nothing
@@ -20,10 +22,11 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, Measurer } from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey, type LabelOptions } from '@mermaid-js/core/text';
+import { readLabel, type MarkdownWarningContext } from '@mermaid-js/core/text/markdown-warning';
 import { wardleyLayoutConfig, wardleySection, type WardleyLayoutConfig } from '../config.ts';
 import { WARDLEY_LINK_DROPPED, WARDLEY_STAGE_CLAMPED } from '../codes.ts';
-import type { WardleyAccelerator, WardleyModel, WardleyNode } from '../model.ts';
+import type { WardleyAccelerator, WardleyLabel, WardleyModel, WardleyNode } from '../model.ts';
 import { Box, HALF_TURN } from './geometry.ts';
 import {
   AXIS_LABELS,
@@ -51,7 +54,7 @@ import type {
 
 /** What the layout reads from the render context. */
 export type WardleyLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn'>>;
+  Partial<Pick<RenderContext, 'inline' | 'warn'>>;
 
 /** For a layout run without a `warn` sink (unit tests, the invariants). */
 const ignoreWarning = (): void => undefined;
@@ -62,7 +65,8 @@ type Positions = ReadonlyMap<string, Point>;
 
 /** One text to measure and place. */
 interface TextParts {
-  readonly text: string;
+  /** A label, which the label rule reads; or a fixed text of the diagram's, which it does not. */
+  readonly text: WardleyLabel | string;
   readonly font: FontKey;
   readonly at: Point;
   readonly anchor: WardleyTextAnchor;
@@ -111,12 +115,12 @@ export function layoutWardley(model: WardleyModel, ctx: WardleyLayoutContext): W
     x: (v) => padding + (v / 100) * chartWidth,
     y: (v) => height - padding - (v / 100) * chartHeight,
   };
-  const type = typesetter(ctx.measurer, fontsOf(config, ctx.theme.value('fontFamily')));
+  const type = typesetter(ctx, fontsOf(config, ctx.theme.value('fontFamily')));
   const { fonts } = type;
 
-  const title = model.title
+  const title = model.drawnTitle
     ? type.place({
-        text: model.title,
+        text: model.drawnTitle,
         font: fonts.title,
         at: { x: width / 2, y: padding * metrics.title.yFactor },
         anchor: 'middle',
@@ -181,7 +185,7 @@ export function layoutWardley(model: WardleyModel, ctx: WardleyLayoutContext): W
   const notes = model.notes.map((n) => ({
     ast: n.astId,
     label: type.place({
-      text: n.text,
+      text: n.drawn,
       font: fonts.note,
       at: { x: frame.x(n.x), y: frame.y(n.y) },
       anchor: 'start',
@@ -239,27 +243,35 @@ function fontsOf(config: WardleyLayoutConfig, family: string): Fonts {
 /** How far left of its anchor a text's box starts, in text widths. */
 const ANCHOR_SHIFT: Readonly<Record<WardleyTextAnchor, number>> = { start: 0, middle: 1 / 2 };
 
-/** XML white space, which a text node draws as one space (and not at its ends). */
-const RE_WHITE_SPACE = /[ \t\n\r]+/g;
-
 /**
- * Texts as v12's `.text()` drew them: one literal line (no markup, entity or line break), its
- * white space collapsed as SVG draws it, measured in its font and boxed on `at` as v12's
- * `text-anchor` and `dominant-baseline` place it.
+ * Texts laid out by core's label layout in their font without wrapping, and boxed on `at`: the
+ * first line where v12's `text-anchor` and `dominant-baseline` put v12's one line, any further
+ * lines below it. A label is read by the label rule (`readLabel`, #1368), which also gives the
+ * render its one `MARKDOWN_NOT_READ`; a fixed text (an axis name, a default stage, an
+ * annotation number) is plain.
  */
-function typesetter(measurer: Measurer, fonts: Fonts): Typesetter {
+function typesetter(ctx: WardleyLayoutContext, fonts: Fonts): Typesetter {
+  const { measurer } = ctx;
+  const inline: Pick<LabelOptions, 'inline'> = ctx.inline ? { inline: ctx.inline } : {};
+  const reader: MarkdownWarningContext = { ...ctx, warn: ctx.warn ?? ignoreWarning };
   return {
     fonts,
     place({ text, font, at, anchor, baseline, rotate = 0 }) {
-      const drawn = text.replace(RE_WHITE_SPACE, ' ').trim();
-      const width = drawn === '' ? 0 : measurer.width(drawn, font, 0);
-      const { ascent, lineHeight } = measurer.metrics(font);
+      const source =
+        typeof text === 'string'
+          ? { text, markup: 'plain' as const }
+          : readLabel(text.text, text.markdown ? { markdown: true } : {}, reader);
+      const label = layoutLabel(source.text, font, Infinity, measurer, { ...inline, ...source });
+      const { width, lineHeight, baseline: ascent } = label;
       return {
         x: at.x - ANCHOR_SHIFT[anchor] * width,
         y: baseline === 'auto' ? at.y - ascent : at.y - lineHeight / 2,
         width,
-        height: lineHeight,
-        text: drawn,
+        // An empty text keeps one line's height, as v12's empty `<text>` had.
+        height: Math.max(label.height, lineHeight),
+        text: label.lines.map((line) => line.map((run) => run.text).join('')).join('\n'),
+        label,
+        markup: source.markup,
         font,
         ascent,
         at,
@@ -324,7 +336,7 @@ function stagesOf({ model, frame, type, warn }: StageParts): WardleyStageLayout[
     const start = padding + from * chartWidth;
     const end = padding + to * chartWidth;
     const label = type.place({
-      text: name,
+      text: evolution?.drawn[i] ?? name,
       font: type.fonts.stage,
       at: { x: (start + end) / 2, y: labelY },
       anchor: 'middle',
@@ -455,7 +467,7 @@ function linksOf(
       ...(forward ? { end: head(to, u, metrics.head.link) } : {}),
     };
     let label: PlacedText | undefined;
-    if (link.label) {
+    if (link.drawn?.text) {
       const off = metrics.link.labelOffset;
       const at = {
         x: (source.x + target.x) / 2 + u.y * off,
@@ -464,7 +476,7 @@ function linksOf(
       let rotate = (Math.atan2(dy, dx) * HALF_TURN) / Math.PI;
       if (rotate > metrics.link.flipAngle || rotate < -metrics.link.flipAngle) rotate += HALF_TURN;
       label = env.type.place({
-        text: link.label,
+        text: link.drawn,
         font: env.type.fonts.link,
         at,
         anchor: 'middle',
@@ -589,7 +601,7 @@ function labelOf({ node, point, config, type }: LabelParts): PlacedText {
   if (node.className === 'anchor') {
     const at = { x: point.x + (ox ?? 0), y: point.y + (oy ?? -metrics.node.anchorLift) };
     return type.place({
-      text: node.label,
+      text: node.drawn,
       font: type.fonts.anchor,
       at,
       anchor: 'middle',
@@ -602,7 +614,7 @@ function labelOf({ node, point, config, type }: LabelParts): PlacedText {
     y: point.y + (oy ?? -(config.nodeLabelOffset + shift)),
   };
   return type.place({
-    text: node.label,
+    text: node.drawn,
     font: type.fonts.node,
     at,
     anchor: 'start',
@@ -628,7 +640,7 @@ function annotationsBoxOf(
   // Measured once at the origin, moved into the box once it is placed.
   const measured = texts.map((a) =>
     type.place({
-      text: `${a.number}. ${a.text}`,
+      text: { ...a.drawn, text: `${a.number}. ${a.drawn.text}` },
       font: type.fonts.annotation,
       at: { x: 0, y: 0 },
       anchor: 'start',
@@ -636,8 +648,11 @@ function annotationsBoxOf(
     })
   );
   const width = Math.max(...measured.map((t) => t.width)) + box.padding * 2 + box.extraWidth;
-  const tallest = Math.max(...measured.map((t) => t.height));
-  const height = texts.length * box.lineHeight + box.padding * 2 + tallest / 2;
+  // v12's slot per annotation, and below a text of several lines the room its further lines take.
+  const extra = measured.map((t) => t.height - t.label.lineHeight);
+  const tallest = Math.max(...measured.map((t) => t.label.lineHeight));
+  const below = extra.reduce((sum, e) => sum + e, 0);
+  const height = texts.length * box.lineHeight + below + box.padding * 2 + tallest / 2;
   const x = Math.max(
     config.padding,
     Math.min(frame.x(at.x), config.width - config.padding - width)
@@ -646,9 +661,12 @@ function annotationsBoxOf(
     config.padding,
     Math.min(frame.y(at.y), config.height - config.padding - height)
   );
-  const lines = measured.map((t, i) =>
-    shifted(t, x + box.padding, y + box.padding + (i + 1) * box.lineHeight)
-  );
+  let before = 0;
+  const lines = measured.map((t, i) => {
+    const line = shifted(t, x + box.padding, y + box.padding + (i + 1) * box.lineHeight + before);
+    before += extra[i]!;
+    return line;
+  });
   return { ast: at.astId, box: { x, y, width, height }, lines };
 }
 
@@ -689,7 +707,7 @@ function acceleratorOf({
     { x: tail, y: bottom },
   ];
   const label = type.place({
-    text: accelerator.name,
+    text: accelerator.drawn,
     font: type.fonts.accelerator,
     at: { x: x + width / 2, y: bottom + labelGap },
     anchor: 'middle',

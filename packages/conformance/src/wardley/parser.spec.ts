@@ -61,6 +61,7 @@ describe('wardley parser on the fixtures', () => {
     expect(model.nodes[2]).toEqual({
       id: 'Cup of Tea',
       label: 'Cup of Tea',
+      drawn: { text: 'Cup of Tea' },
       x: 61,
       y: 79,
       className: 'component',
@@ -106,6 +107,7 @@ describe('wardley parser on the fixtures', () => {
     expect(model.nodes.find((n) => n.id === 'Kettle_Campfire Kettle')).toEqual({
       id: 'Kettle_Campfire Kettle',
       label: 'Campfire Kettle',
+      drawn: { text: 'Campfire Kettle' },
       x: 35,
       y: 0.57 * 100,
       className: 'pipeline-component',
@@ -133,6 +135,7 @@ describe('wardley model: v12 population rules', () => {
       {
         id: 'A',
         label: 'A',
+        drawn: { text: 'A' },
         x: 20,
         y: 20,
         className: 'component',
@@ -158,6 +161,7 @@ describe('wardley model: v12 population rules', () => {
     expect(node).toEqual({
       id: 'P_c',
       label: 'c',
+      drawn: { text: 'c' },
       x: 20,
       y: 50,
       className: 'pipeline-component',
@@ -250,6 +254,7 @@ describe('wardley model: v12 population rules', () => {
     ]);
     expect(parse(nightly('parser-evolution-last-wins')).model.evolution).toEqual({
       stages: ['Genesis / Concept', 'Custom / Emerging', 'Product'],
+      drawn: [{ text: 'Genesis / Concept' }, { text: 'Custom / Emerging' }, { text: 'Product' }],
       boundaries: [0.4],
       astId: 'evolution@2',
     });

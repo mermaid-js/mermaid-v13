@@ -252,11 +252,22 @@ function checkStages(check: Check): void {
   if (fits && !inside) out.push('the annotations box is outside the chart');
 }
 
-/** Every text is one literal line, its white space collapsed (v12's `.text()`). */
+/**
+ * Every text's box is the size of its laid-out lines (an empty text one line high), and its
+ * plain text is theirs (#1368).
+ */
 function checkTexts(check: Check): void {
-  for (const [what, text] of textsOf(check.layout))
-    if (/[\t\n\r]| {2}/.test(text.text) || text.text.trim() !== text.text)
-      check.out.push(`${what} is not one collapsed line`);
+  const { near } = check;
+  for (const [what, t] of textsOf(check.layout)) {
+    const { label } = t;
+    const lines = label.lines.map((line) => line.map((run) => run.text).join('')).join('\n');
+    if (
+      !near(t.width, label.width) ||
+      !near(t.height, Math.max(label.height, label.lineHeight)) ||
+      t.text !== lines
+    )
+      check.out.push(`${what} is not the size of its lines`);
+  }
 }
 
 /** Everything drawn inside the bounds (D224). */

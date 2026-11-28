@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import {
@@ -480,13 +481,135 @@ describe('wardley render: what is drawn', () => {
     expect(lines.map((n) => textOf(tree, n))).toEqual(['1. First', '2. Second']);
   });
 
-  it("draws v12's #name; codes as their characters and a literal &name; as written (GAPS #493)", async () => {
+  it("draws v12's #name; codes and entities as their characters (GAPS #493, #1368)", async () => {
+    // v12 showed a literal `&amp;` as written; the label rule decodes entities in every label.
     const { tree, svg } = await render(probe('entities'));
-    expect(textOf(tree, byClass(tree, 'wardley-title')[0]!)).toBe('A & B &amp; C');
-    expect(textOf(tree, byClass(tree, 'wardley-node-label')[0]!)).toBe('Tea & &amp; "Cups"');
+    expect(textOf(tree, byClass(tree, 'wardley-title')[0]!)).toBe('A & B & C');
+    expect(textOf(tree, byClass(tree, 'wardley-node-label')[0]!)).toBe('Tea & & "Cups"');
     const [notes] = byClass(tree, 'wardley-notes');
-    expect(textOf(tree, notes!)).toBe('♥ love &lt;3');
-    expect(svg).toContain('>Tea &amp; &amp;amp; &quot;Cups&quot;</text>');
+    expect(textOf(tree, notes!)).toBe('♥ love <3');
+    expect(svg).toContain('>Tea &amp; &amp; &quot;Cups&quot;</text>');
+  });
+
+  it('draws labels by the label rule (#1368)', async () => {
+    const src = [
+      'wardley-beta',
+      'title t <b>b</b>',
+      'component "`c **b**`" [0.5, 0.5]',
+      'component "c **b**" [0.7, 0.7]',
+      'component "one\\ntwo" [0.3, 0.3]',
+      '"`c **b**`" -> "c **b**" ; l <i>i</i>',
+    ].join('\n');
+    const { tree } = await render(src);
+    const tspans = (n: SvgElement) =>
+      tree.children(n).map((c) => [textOf(tree, c), attr(tree, c, 'font-weight') ?? '']);
+    const [title] = byClass(tree, 'wardley-title');
+    expect(tspans(title!)).toEqual([
+      ['t ', ''],
+      ['b', 'bold'],
+    ]);
+    const [md, plain, lines] = byClass(tree, 'wardley-node-label');
+    expect(tspans(md!)).toEqual([
+      ['c ', ''],
+      ['b', 'bold'],
+    ]);
+    // One plain line is written as v12 wrote it, with no <tspan>.
+    expect(textOf(tree, plain!)).toBe('c **b**');
+    expect(tree.children(plain!).every((c) => c.text !== undefined)).toBe(true);
+    expect(tree.children(lines!).map((c) => [textOf(tree, c), attr(tree, c, 'x')])).toEqual([
+      ['one', attr(tree, lines, 'x')],
+      ['two', attr(tree, lines, 'x')],
+    ]);
+    // A turned label keeps its anchor as the <text>'s x and y, the centre of its turn.
+    const [link] = byClass(tree, 'wardley-link-label');
+    expect(attr(tree, link, 'transform')).toBe(
+      `rotate(${/rotate\(([^,]+),/.exec(attr(tree, link, 'transform') ?? '')?.[1]},${attr(tree, link, 'x')},${attr(tree, link, 'y')})`
+    );
+    expect(tree.children(link!).map((c) => attr(tree, c, 'font-style') ?? '')).toEqual([
+      '',
+      'italic',
+    ]);
+  });
+
+  // Every label kind, each written plain with an emphasis pair.
+  const PLAIN = [
+    'wardley-beta',
+    'title t **b** _i_',
+    'evolution "s **b** _i_" -> B -> C -> D',
+    'anchor "a **b** _i_" [0.95, 0.6]',
+    'component "c **b** _i_" [0.5, 0.5]',
+    'component "d **b** _i_" [0.2, 0.2]',
+    '"c **b** _i_" -> "d **b** _i_" ; l **b** _i_',
+    'pipeline "c **b** _i_" {\n  component "p **b** _i_" [0.6]\n}',
+    'note "n **b** _i_" [0.1, 0.9]',
+    'annotations [0.05, 0.4]',
+    'annotation 1, [0.5, 0.9] "a **b** _i_"',
+    'accelerator "x **b** _i_" [0.4, 0.4]',
+    'deaccelerator "y **b** _i_" [0.4, 0.7]',
+  ].join('\n');
+
+  /** Each user label's text runs, `*bold*` and `_italic_`, in drawing order. */
+  const drawnRuns = (tree: SvgView): string[] =>
+    tree
+      .find(
+        (n, t) =>
+          t.tag(n) === 'text' && !(t.getAttr(n, 'class') ?? '').includes('wardley-axis-label')
+      )
+      .map((n) => {
+        const parts = n.children.map((c) => {
+          if (c.text !== undefined) return c.text;
+          const t = textOf(tree, c);
+          if (attr(tree, c, 'font-weight') === 'bold') return `*${t}*`;
+          return attr(tree, c, 'font-style') === 'italic' ? `_${t}_` : t;
+        });
+        return parts.join('');
+      })
+      .filter((t) => !/^\d$|^(B|C|D)$/.test(t));
+
+  const always = (section: boolean): string =>
+    section
+      ? `---\nconfig:\n  wardley-beta:\n    markdownAlwaysOn: true\n---\n${PLAIN}`
+      : `---\nconfig:\n  markdownAlwaysOn: true\n---\n${PLAIN}`;
+
+  it('draws every plain label kind as markdown with markdownAlwaysOn, global or in its section (#1368)', async () => {
+    const expected = [
+      't *b* _i_',
+      's *b* _i_',
+      'l *b* _i_',
+      'a *b* _i_',
+      'c *b* _i_',
+      'd *b* _i_',
+      'p *b* _i_',
+      '1. a *b* _i_',
+      'n *b* _i_',
+      'x *b* _i_',
+      'y *b* _i_',
+    ];
+    for (const section of [false, true]) {
+      const { tree, warnings } = await render(always(section));
+      expect(drawnRuns(tree).sort(), `section ${section}`).toEqual([...expected].sort());
+      expect(warnings.map((w) => w.code)).not.toContain(MARKDOWN_NOT_READ.code);
+    }
+    // Without the setting the same labels are drawn as written, with one warning.
+    const { tree, warnings } = await render(PLAIN);
+    expect(drawnRuns(tree).every((t) => t.endsWith('**b** _i_'))).toBe(true);
+    expect(warnings.filter((w) => w.code === MARKDOWN_NOT_READ.code)).toHaveLength(1);
+  });
+
+  it('draws markdown strings, tags and \\n the same with markdownAlwaysOn, and warns for none (#1368)', async () => {
+    const src = [
+      'wardley-beta',
+      'title "`t **b**`"',
+      'component "`c **b**`" [0.5, 0.5]',
+      'component "t <b>b</b><br>n" [0.7, 0.7]',
+      'component "one\\ntwo" [0.3, 0.3]',
+      'note "`n _i_`" [0.1, 0.9]',
+    ].join('\n');
+    const plain = await render(src);
+    const on = await render(`---\nconfig:\n  markdownAlwaysOn: true\n---\n${src}`);
+    expect(drawnRuns(on.tree)).toEqual(drawnRuns(plain.tree));
+    for (const r of [plain, on])
+      expect(r.warnings.map((w) => w.code)).not.toContain(MARKDOWN_NOT_READ.code);
   });
 
   it('draws the in-text title with data-ast, a front-matter one without (D218)', async () => {

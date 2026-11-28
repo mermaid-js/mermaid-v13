@@ -17,6 +17,8 @@ e2e/diagrams/wardley/pr-check/3-should-render-pipelines.mmd 1 b6c74eaffae3acbb
 e2e/diagrams/wardley/pr-check/4-should-render-link-types-and-annotations.mmd 1 7bcd108d4f85ec98
 e2e/diagrams/wardley/pr-check/5-should-render-custom-canvas-size.mmd 1 4ef06a6b0498f658
 e2e/diagrams/wardley/pr-check/6-should-render-gpt-tokeniser-architecture.mmd 1 96b94fcbfdba7486
+e2e/diagrams/wardley/pr-check/label-syntax-compat.mmd 1 6f38bc460a72f849
+e2e/diagrams/wardley/pr-check/label-syntax.mmd 1 ccad808ed117ee6e
 e2e/diagrams/wardley/pr-check/theme-test-base.mmd 1 14df9cbc2a2b6ceb
 e2e/diagrams/wardley/pr-check/theme-test-dark.mmd 1 af76e00b87fa9d8a
 e2e/diagrams/wardley/pr-check/theme-test-forest.mmd 1 d2e659ae0f7b6e3c

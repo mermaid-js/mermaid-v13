@@ -72,17 +72,46 @@ export function renderWardley(
   w.close();
 }
 
-/** A placed text as v12 wrote it: at its anchor, aligned and turned as v12 did. */
+/** What makes a run more than text in the font's own style. */
+const STYLED = ['kind', 'bold', 'italic', 'underline', 'strike', 'attrs'] as const;
+
+/**
+ * Whether a text was read as plain text and laid out as at most one line of one run in the
+ * font's own style: then it is written as v12 wrote it.
+ */
+function plain({ markup, label: { lines } }: PlacedText): boolean {
+  const [run, ...more] = lines[0] ?? [];
+  if (markup !== 'plain' || lines.length > 1 || more.length > 0) return false;
+  return !run || STYLED.every((key) => !run[key]);
+}
+
+/**
+ * A placed text. One plain line is written as v12 wrote it: at its anchor, aligned and turned as
+ * v12 did. Any other text, and every text read as markdown (a markdown string, or every label
+ * under `markdownAlwaysOn`), goes through `SvgWriter.label()` (#1368), left-aligned
+ * under a start anchor, the first line's box where v12's line was, and turned about the same
+ * anchor, which the `<text>` keeps as its `x` and `y`.
+ */
 function text(w: SvgWriter, t: PlacedText, attrs: Attrs): void {
+  const font: Attrs = {
+    'font-size': t.font.size,
+    'font-weight': t.font.weight === BOLD_WEIGHT ? 'bold' : undefined,
+  };
+  const transform = t.rotate === 0 ? undefined : rotate(t.rotate, t.at.x, t.at.y);
+  if (!plain(t)) {
+    const box = t.anchor === 'start' ? { ...t.label, left: true } : t.label;
+    const at = { ...attrs, x: t.at.x, y: t.at.y, ...font, transform };
+    w.label(box, t.x + t.width / 2, t.y + t.height / 2, at);
+    return;
+  }
   w.open('text', {
     ...attrs,
     x: t.at.x,
     y: t.at.y,
-    'font-size': t.font.size,
-    'font-weight': t.font.weight === BOLD_WEIGHT ? 'bold' : undefined,
+    ...font,
     'text-anchor': t.anchor,
     'dominant-baseline': t.baseline === 'auto' ? undefined : t.baseline,
-    transform: t.rotate === 0 ? undefined : rotate(t.rotate, t.at.x, t.at.y),
+    transform,
   });
   w.text(t.text);
   w.close();

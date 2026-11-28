@@ -25,7 +25,7 @@
  * its first statement (pitfall 9).
  */
 import type { AstNode, Range } from '@mermaid-js/core/parser-kit';
-import type { WardleyStrategy } from '../model.ts';
+import type { WardleyLabel, WardleyStrategy } from '../model.ts';
 
 /** A name (`STRING`, `ID` or `NAME_WITH_SPACES`): the converted value and the token's range. */
 export interface WardleyName {
@@ -33,6 +33,8 @@ export interface WardleyName {
   value: string;
   /** The name token, quotes included (the symbol's range, D191). */
   range: Range;
+  /** The name as the label rule reads it where it is drawn (#1368). */
+  drawn: WardleyLabel;
 }
 
 /** A coordinate or other number: its value and the token's range. */
@@ -110,6 +112,8 @@ export interface WardleyLinkNode extends AstNode<'Link'> {
   toPort?: string;
   /** The `; label` text, trimmed (v12's value converter). */
   linkLabel?: string;
+  /** The drawn label (the arrow's `+'…'`, else the `; label`) as the label rule reads it. */
+  drawnLabel?: WardleyLabel;
 }
 
 /** `evolve Name target`. */
@@ -121,6 +125,8 @@ export interface WardleyEvolveNode extends AstNode<'Evolve'> {
 /** `note "text" [visibility, evolution]`. */
 export interface WardleyNoteNode extends AstNode<'Note'> {
   text: string;
+  /** `text` as the label rule reads it (#1368). */
+  drawn: WardleyLabel;
   visibility: WardleyNumber;
   evolution: WardleyNumber;
 }
@@ -137,6 +143,8 @@ export interface WardleyAnnotationNode extends AstNode<'Annotation'> {
   visibility: WardleyNumber;
   evolution: WardleyNumber;
   text: string;
+  /** `text` as the label rule reads it (#1368). */
+  drawn: WardleyLabel;
 }
 
 /** `accelerator Name [visibility, evolution]` or `deaccelerator …`. */
