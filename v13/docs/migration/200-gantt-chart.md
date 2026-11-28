@@ -7,7 +7,7 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
 
 - **Host local time (D270):** dates, `today` and the time axis use the host time zone, with
   daylight saving handled as d3-time does, as in v12. There is no dayjs or d3 any more: the date
-  code is a port of Pele's (D271), with v12's dayjs quirks kept.
+  code is v13's own (D271), with v12's dayjs quirks kept.
 - **`now` is a render option (D270, D275):** the instant the chart treats as today is
   `render(id, text, { now })` (a number or a `Date`); `mermaid` defaults it to `Date.now()` at
   each call, in the browser, Node and the CLI. Diagram text cannot set it. The today line is

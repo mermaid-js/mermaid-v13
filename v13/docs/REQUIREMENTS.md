@@ -5,24 +5,24 @@ Sources: [DECISIONS.md](DECISIONS.md) (D1–D45, P1) · [research/](research/)
 
 ## 1. Why v13
 
-Mermaid is both a syntax and a renderer. The syntax is widely adopted. The renderer has become big, slow and hard to secure, and integrators are replacing it. Obsidian, which ships to millions of users, has moved to Pele, a zero-dependency re-implementation of the renderer. Other apps are following.
+Mermaid is both a syntax and a renderer. The syntax is widely adopted. The renderer has become big, slow and hard to secure, and integrators are replacing it. Obsidian, which ships to millions of users, has moved to a zero-dependency re-implementation of the renderer, the reference implementation. Other apps are following.
 
 The measured gap on 158 flowcharts (`mermaid-v13-approches`, 2026-10-30, Chromium, M4 Max):
 
-|  | Mermaid 12.2 (default = ELK) | Mermaid 12.2 (dagre) | Pele (TS) | Ondine (Rust/WASM) |
+|  | Mermaid 12.2 (default = ELK) | Mermaid 12.2 (dagre) | Reference implementation (TS) | Ondine (Rust/WASM) |
 | --- | --- | --- | --- | --- |
 | Fetched for a flowchart (gzip) | 654 KB | 213 KB | 62 KB | 4 KB JS + 135 KB WASM |
 | Σ warm median (153 common) | 13.7 s | 8.5 s | 0.14 s | 0.15 s |
 | Runtime npm deps | 86 transitive | 86 | 0 | 0 at runtime |
 | `foreignObject` / `<style>` in output | yes / yes | yes / yes | no / no | no / no |
 
-Pele and Ondine are tied on speed. Most of the gap comes from architecture, not language: a DOM-free pipeline, no generic sanitizer, measurement with no DOM inserts, and no accidental costs. One example of an accidental cost is the per-call config cloning found in PR #8635.
+The reference implementation and Ondine are tied on speed. Most of the gap comes from architecture, not language: a DOM-free pipeline, no generic sanitizer, measurement with no DOM inserts, and no accidental costs. One example of an accidental cost is the per-call config cloning found in PR #8635.
 
 v13 closes the gap on **size, speed, theming and security** while keeping Mermaid's main asset: **the syntax, and the documents already written in it.**
 
 ## 2. Principles
 
-- **P1 – Mermaid is the baseline.** Existing behaviour and defaults stay unless there is a reason to change them. Take from Pele, Ondine and others only where they are demonstrably better. (P1)
+- **P1 – Mermaid is the baseline.** Existing behaviour and defaults stay unless there is a reason to change them. Take from the reference implementation, Ondine and others only where they are demonstrably better. (P1)
 - **P2 – Syntax is sacred, pixels are not.** Existing diagram text must keep working. The visual output may change, because this is a major version. (D2)
 - **P3 – Pure core.** Core is a pure function from text to output. It uses no DOM and no global mutable state, and its data structures are plain. This keeps it fast, testable, runnable on servers, and keeps a Rust/WASM implementation possible. Possible, not planned: there is no requirement or plan to build one. (D3, D4, D42)
 - **P4 – Safe by construction.** Output is generated to be safe. It is not sanitized after the fact. (D6)
@@ -107,11 +107,11 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45, D150 | Approaches harness geomean, reported in CI and enforced on a local run (D150); current v12 also reported |
 | R-PERF-4 | 100% of the flowchart corpus renders without error, including the large and huge tiers. | Must | M1 | D10 | Harness OK count = corpus size |
 | R-PERF-5 | Benchmarks report time per stage: parse, measure, layout and serialise. | Must | M1 | D43, D203 | Harness output contains stage columns; `measure` is filled for flowchart fixtures, other types follow with their own tickets (D203) |
-| R-PERF-6 | The fixed benchmark fixtures include the Pele/#8635 set (7-, 50- and 500-node flowcharts, sequence, class) plus the 158-diagram corpus. | Must | M1 | D43 | Fixtures committed |
+| R-PERF-6 | The fixed benchmark fixtures include the #8635 / compare set (7-, 50- and 500-node flowcharts, sequence, class) plus the 158-diagram corpus. | Must | M1 | D43 | Fixtures committed |
 | R-PERF-7 | CI fails when any stage regresses by more than 10% on the reference runner. | Must | M1 | D43 | CI job with a stored baseline |
 | R-PERF-8 | Core has a published size budget, enforced in CI: everything the `mermaid` entry loads before any diagram chunk (`@mermaid-js/core` plus the public API, registry, detectors and DOM adapter) is ≤ 110,208 B (107.625 KB) gzip (D625, D662, D670, D671; was 100 KB, then 102,400 B, then 103,424 B, then 103,680 B, then 104,448 B). Later diagram packages are optional plugins and have no size budget for now. | Should | M3.5 | D7, D59, D161, D310, D546, D567, D583, D599, D625, D662, D670, D671 | Committed budget file; esbuild size spec in `pnpm check` |
-| R-PERF-9 | The time from loading the module to the first possible render is ≤ 15 ms on the reference runner (Pele: 10 ms). | Should | M1 | – | Harness "Ready at" |
-| R-PERF-10 | The warm geomean against Pele (at Pele's default settings) over the bench fixtures does not get worse than the last recorded close-out ratio plus 5%. Recorded: 1.45× slower (2026-11-05, before #265). The aim is to render faster than Pele; 2× is the aspiration (D206). | Should | M3.5 | D205, D206 | Bench gate, enforced on a local run on the reference machine and report-only on CI (as R-PERF-3, D150) |
+| R-PERF-9 | The time from loading the module to the first possible render is ≤ 15 ms on the reference runner (the compare renderer: 10 ms). | Should | M1 | – | Harness "Ready at" |
+| R-PERF-10 | The warm geomean against the compare renderer (at its default settings) over the bench fixtures does not get worse than the last recorded close-out ratio plus 5%. Recorded: 1.45× slower (2026-11-05, before #265). The aim is to render faster than the compare renderer; 2× is the aspiration (D206). | Should | M3.5 | D205, D206 | Bench gate, enforced on a local run on the reference machine and report-only on CI (as R-PERF-3, D150) |
 
 ## 8. Parsing (R-PARSE)
 
@@ -147,7 +147,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-LAYOUT-1 | Core ships a zero-dependency layered (Sugiyama-style) layout, derived from Pele's: longest-path ranking, barycenter crossing reduction, Brandes-Köpf placement, straightening, and compound subgraphs with border ports. | Must | M1 | D18, D12 | Flowchart corpus renders; DDLT-style layout tests |
+| R-LAYOUT-1 | Core ships a zero-dependency layered (Sugiyama-style) layout, derived from the reference implementation's: longest-path ranking, barycenter crossing reduction, Brandes-Köpf placement, straightening, and compound subgraphs with border ports. | Must | M1 | D18, D12 | Flowchart corpus renders; DDLT-style layout tests |
 | R-LAYOUT-2 | Layout engines implement a plain-data interface `(graph, measurer, config) → LayoutModel`. Alternative engines (DOMUS, ELK plugin, tidy-tree) plug in via `registerLayoutLoaders`. | Must | M1 | D18, D32 | Second engine (test stub) registered and selected via `layout:` config |
 | R-LAYOUT-3 | Layout is deterministic (R-ARCH-6). There are no NaN or Infinity coordinates. | Must | M1 | D26 | Property tests |
 | R-LAYOUT-4 | Flowchart features supported: all directions (TB/TD/BT/LR/RL), subgraphs with their own `direction`, every v12 node shape and edge type, edge labels, `linkStyle`, `curve` interpolations, and minimum edge length (`---->`). | Must | M1 | P1, D2 | Visual baseline per feature |
@@ -300,7 +300,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-REL-1 | Development happens on branch `mermaid-v13`. v12 continues on `develop`. | Must | M1 | D1 | Branch exists |
 | R-REL-2 | Changesets pre-release mode versions the alphas. The release master publishes them (D159); publishing on every merge to `mermaid-v13` waits for CI in the OSS repository. | Must | M1 | D28, D159 | Release workflows, v13/docs/RELEASING.md |
 | R-REL-3 | Public `mermaid@13.0.0-alpha.N` (dist-tag `v13-alpha`) is published to npm from the first alpha (D159). Each release prints R-PERF-1…4 on the last bench report. The gate is enforced once R-PERF-3 holds on CI; until then the release master skips it with a stated reason. | Must | M1 | D28, D159 | `release:publish` (`--gate` or `--skip-gate`) |
-| R-REL-4 | Ported code carries its upstream's attribution, under that upstream's license, in file headers and `THIRD_PARTY_NOTICES`. Pele is credited in the layered engine's header only (D749). | Must | M1 | D12, D749 | License check |
+| R-REL-4 | Ported code carries its upstream's attribution, under that upstream's license, in file headers and `THIRD_PARTY_NOTICES`. The reference implementation is credited in the layered engine's header only (D749). | Must | M1 | D12, D749 | License check |
 | R-REL-5 | Requirements, design, ADRs and tickets cross-reference each other by R-id. | Must | M1 | D36 | Review |
 
 ## 23. v12 track (R-V12)
@@ -320,7 +320,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 - **O-4. Reference runner.** R-PERF-7 needs a stable machine for per-stage regression checks. GitHub-hosted runners vary by ±20%. For spec #265 the maintainer's M1 Max is the reference machine (D208); the general question stays open.
 - **O-5. HTML subset in labels.** R-TEXT-3 lists a minimal subset. Check the corpus for other tags in real use (`<sub>`, `<sup>`, `<u>`, `<a>`) before freezing the list. Closed 2026-11-13 (D566): the subset stays `<br>`, `<b>`, `<strong>`, `<i>`, `<em>`. Counted in v12's own material (#691; diagrams with the tag): `<br>` in 15 of 612 docs blocks, 109 of 2,444 e2e fixtures and 47 of 592 demo blocks; `<strong>` in 8 fixtures and 18 demo blocks; `<b>` in 6 fixtures; `<img>` in 2 fixtures and one demo page; `<u>`, `<s>`, `<span>` and `<p>` only in generated performance fixtures; `<a>`, `<sub>`, `<sup>`, `<small>`, `<code>` and `<font>` in no diagram. A dropped tag now gives `HTML_DROPPED`.
 - **O-6. Number targets.** R-PERF-9 (≤ 15 ms ready) and R-THEME-5 (≤ 8 base variables) are my proposals. Accepted 2026-11-02.
-- **O-7. Pele layout: port or depend.** The layered layout (R-LAYOUT) is derived from Pele. Decide whether to port the code into core (we own and adapt it; MIT attribution per R-REL) or depend on Pele's published package (upstream fixes for free, but an external runtime dependency against R-PERF-2, and less control over the API and determinism). Decided 2026-11-02: port.
+- **O-7. Reference implementation's layout: port or depend.** The layered layout (R-LAYOUT) is derived from the reference implementation. Decide whether to port the code into core (we own and adapt it; credited per R-REL-4) or depend on the reference implementation's published package (upstream fixes for free, but an external runtime dependency against R-PERF-2, and less control over the API and determinism). Decided 2026-11-02: port.
 
 ## 25. Open questions for alpha
 
