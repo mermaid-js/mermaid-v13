@@ -73,12 +73,6 @@ const quoted = (items: readonly string[]): string => items.map((i) => `"${i}"`).
  */
 const SHARED_UPSTREAMS: readonly Upstream[] = [
   {
-    name: 'Pele',
-    marker: 'https://github.com/obsidianmd/pele',
-    holder: ['kepano'],
-    copyright: ['Copyright (c) 2026 kepano'],
-  },
-  {
     name: '@braintree/sanitize-url',
     marker: '@braintree/sanitize-url',
     holder: ['Braintree'],
@@ -135,7 +129,7 @@ export const UPSTREAMS: readonly Upstream[] = [...SHARED_UPSTREAMS, ...DIAGRAM_U
  * shared ones here, and each diagram package's `credits.files`.
  */
 export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
-  'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
+  'packages/core/src/svg/url.ts': ['@braintree/sanitize-url'],
   'packages/plugin-icons/src/resolve.ts': ['@iconify/utils'],
   'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
   ...Object.fromEntries(
@@ -241,15 +235,12 @@ function derivedFiles(root: string, dir: string, problems: string[]): Derived[] 
   return derived;
 }
 
-/**
- * The part of the notices under `name`'s heading line. Without that heading it is empty,
- * except for Pele, the first upstream, whose notices may predate per-upstream sections.
- */
+/** The part of the notices under `name`'s heading line; empty without that heading. */
 function section(notices: string, name: string): string {
   const lines = notices.split('\n');
   const headings = UPSTREAMS.map((u) => u.name);
   const start = lines.findIndex((l) => l.trim() === name);
-  if (start < 0) return name === 'Pele' ? notices : '';
+  if (start < 0) return '';
   let end = lines.length;
   for (let i = start + 1; i < lines.length; i++)
     if (headings.includes(lines[i]!.trim())) {
@@ -271,8 +262,6 @@ export function checkLicenses(root: string): string[] {
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
       private?: boolean;
       files?: string[];
-      dependencies?: Record<string, string>;
-      devDependencies?: Record<string, string>;
     };
     const pkg = relative(root, pkgDir);
     const noticesPath = join(pkgDir, NOTICES);
@@ -294,20 +283,11 @@ export function checkLicenses(root: string): string[] {
     }
 
     const notices = readFileSync(noticesPath, 'utf8');
-    // Pele's text is required in every notices file, except one that only credits a runtime
-    // dependency (layout-elk's elkjs) or bundled code (plugin-math's MathJax, a dev dependency)
-    // in a package with no ported file, and one whose ported files all come from other upstreams
-    // (plugin-icons' @iconify/utils).
-    const headings = new Set(notices.split('\n').map((l) => l.trim()));
-    const credited = { ...manifest.dependencies, ...manifest.devDependencies };
-    const dependencyOnly =
-      derived.length === 0 && Object.keys(credited).some((d) => headings.has(d));
-    const othersOnly = derived.length > 0 && derived.every((d) => d.upstream.name !== 'Pele');
+    // The notices hold the text of each upstream the package's files come from or it bundles;
+    // notices that only credit a runtime dependency (layout-elk's elkjs) or bundled code
+    // (plugin-math's MathJax) need none.
     const used = UPSTREAMS.filter(
-      (u) =>
-        (u.name === 'Pele' && !dependencyOnly && !othersOnly) ||
-        derived.some((d) => d.upstream === u) ||
-        bundled.includes(u)
+      (u) => derived.some((d) => d.upstream === u) || bundled.includes(u)
     );
     for (const u of used) {
       const license = licenseOf(u);
@@ -329,10 +309,7 @@ export function checkLicenses(root: string): string[] {
     const listed = listedIn(notices);
     for (const { file, upstream } of derived) {
       if (!listed.has(file)) {
-        if (upstream.name === 'Pele')
-          problems.push(`${pkg}/${file}: not listed in ${pkg}/${NOTICES}`);
-        else
-          problems.push(`${pkg}/${file}: not listed under ${upstream.name} in ${pkg}/${NOTICES}`);
+        problems.push(`${pkg}/${file}: not listed under ${upstream.name} in ${pkg}/${NOTICES}`);
       } else if (!listedIn(section(notices, upstream.name)).has(file)) {
         problems.push(`${pkg}/${file}: not listed under ${upstream.name} in ${pkg}/${NOTICES}`);
       }

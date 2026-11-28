@@ -40,14 +40,14 @@ function coreDifference(source: string): boolean {
 }
 
 /**
- * Pele's AST-equality fuzz, adopted as a parity property (spec #526 T2, D325): per notation,
- * {@link COUNT} generated inputs (`fuzz.ts`: mutated corpus inputs, random token pieces,
- * well-formed grammars of random shape, and those mutated) go through mermaid\@12 and v13. Pele
- * compared its own trees with `@mermaid-js/parser`'s; here the comparison is the parity
- * adapters': accept/reject, and the model v12's parsers built from those trees (rules in order,
- * each definition as the seven-kind tree, title, accTitle, accDescr). Inputs that reach a
- * difference in core's preprocess ({@link coreDifference}) are left out, and the run prints how
- * many. Both outcomes must be common, or the comparison says little.
+ * The reference implementation's AST-equality fuzz, adopted as a parity property (spec #526 T2,
+ * D325): per notation, {@link COUNT} generated inputs (`fuzz.ts`: mutated corpus inputs, random
+ * token pieces, well-formed grammars of random shape, and those mutated) go through mermaid\@12 and
+ * v13. The reference implementation compared its own trees with `@mermaid-js/parser`'s; here the
+ * comparison is the parity adapters': accept/reject, and the model v12's parsers built from those
+ * trees (rules in order, each definition as the seven-kind tree, title, accTitle, accDescr). Inputs
+ * that reach a difference in core's preprocess ({@link coreDifference}) are left out, and the run
+ * prints how many. Both outcomes must be common, or the comparison says little.
  */
 describe.each(FUZZ_NOTATIONS)('railroad fuzz parity ($notation)', (n) => {
   it('agrees with mermaid@12 on mutated and generated inputs', async () => {

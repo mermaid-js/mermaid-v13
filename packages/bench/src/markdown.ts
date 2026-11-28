@@ -187,7 +187,7 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
     ...diagramsTable(report.renderers, [
       { id: 'v12-frozen', ratio: 'Speedup', always: true },
       { id: 'v13-base', ratio: 'vs base' },
-      { id: 'pele', ratio: 'vs pele' },
+      { id: 'compare', ratio: 'vs compare' },
     ]),
     ...unsupportedLines(report),
     ...(report.codeSize ? codeSizeLines(report.codeSize) : []),

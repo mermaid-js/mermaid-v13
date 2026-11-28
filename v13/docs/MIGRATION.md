@@ -2039,7 +2039,7 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
 
 - **Host local time (D270):** dates, `today` and the time axis use the host time zone, with
   daylight saving handled as d3-time does, as in v12. There is no dayjs or d3 any more: the date
-  code is a port of Pele's (D271), with v12's dayjs quirks kept.
+  code is v13's own (D271), with v12's dayjs quirks kept.
 - **`now` is a render option (D270, D275):** the instant the chart treats as today is
   `render(id, text, { now })` (a number or a `Date`); `mermaid` defaults it to `Date.now()` at
   each call, in the browser, Node and the CLI. Diagram text cannot set it. The today line is
@@ -3033,7 +3033,7 @@ each a `g.node` (`node <classes or default> flowchart-label`) holding its shape 
 
 The C4 parser accepts the v12 language (`C4Context`, `C4Container`, `C4Component`, `C4Dynamic`,
 `C4Deployment`; oracle parity over the corpus, grammar in [syntax/c4.md](./syntax/c4.md)). The
-layout is a port of Pele's C4 grid and relation router, sized with v12's `c4` lengths (D454,
+layout is a grid and relation router of v13's own, sized with v12's `c4` lengths (D454,
 D455). What changes (spec #522):
 
 | v12 | v13 | Why |
@@ -3053,7 +3053,7 @@ D455). What changes (spec #522):
 | A relation to an alias nothing defines failed at render with `C4 rel "a" -> "b" references an unknown shape or boundary` | The same message, now a parse diagnostic (`C4_UNKNOWN_END`) at the statement | D457 |
 | A non-numeric `$offsetX`/`$offsetY` was read as `NaN` | It counts as 0, with one `C4_OFFSET_INVALID` warning | D457 |
 | `UpdateRelStyle`'s `$offsetX`/`$offsetY` moved a relation label by exactly that much, even onto a boundary's border or header | The offsets give the spot the placement starts from: a label there slides to a spot clear of every boundary border and header nearby. Where none lies near its line (a gap between two frames narrower than the label), it stays by its line, across the border | D746 |
-| v12's packer placed elements in rows by statement order with fixed widths, wrapping at `screen.availWidth`; boundaries in rows below their parent's header, each `c4BoundaryInRow` a fixed share of the parent | Pele's grid: the same rows by statement order, each boundary sized bottom-up from its contents, with v12's lengths as gaps and margins (`c4ShapeMargin`, `diagramMarginX`/`Y`, `nextLinePaddingX`); the layout no longer depends on the screen | D454 |
+| v12's packer placed elements in rows by statement order with fixed widths, wrapping at `screen.availWidth`; boundaries in rows below their parent's header, each `c4BoundaryInRow` a fixed share of the parent | A grid: the same rows by statement order, each boundary sized bottom-up from its contents, with v12's lengths as gaps and margins (`c4ShapeMargin`, `diagramMarginX`/`Y`, `nextLinePaddingX`); the layout no longer depends on the screen | D454 |
 | Every row was top-aligned, so a shape beside a person stood level with its head and the relations between them ran to the head; elements stood `2·c4ShapeMargin` apart whatever their relation labels | A row holding a person lines up on the person's body, and relations beside a person end on its body (from above, still on the head); two row neighbours joined by labelled relations stand at least the widest tag between them apart, plus room for the arrowheads; tags of lines closer than a tag are staggered along them, each on its own line. Rows without a person stay top-aligned; text output and c4-beta are unchanged | D679, for the maintainer |
 | `c4ShapeInRow` and `c4BoundaryInRow` were never read from the config: the DB hard-coded 4 and 2, which only `UpdateLayoutConfig` changed | Read from the `c4` section as defaults that `UpdateLayoutConfig` overrides | D454 |
 | The `c4` section's `height`, `boxMargin` and `wrapPadding` were never read | Ignored ([Removed, moved and ignored keys](#removed-moved-and-ignored-keys)) | D454 |

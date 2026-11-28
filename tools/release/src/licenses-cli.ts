@@ -1,5 +1,5 @@
 /**
- * `pnpm check:licenses`: fails when ported code (Pele, sanitize-url, Iconify, and the d3 packages
+ * `pnpm check:licenses`: fails when ported code (sanitize-url, Iconify, and the d3 packages
  * sankey and treemap re-implement) lacks its upstream's attribution under that upstream's
  * license (R-REL-4).
  */

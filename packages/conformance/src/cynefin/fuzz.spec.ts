@@ -16,7 +16,7 @@ import { cynefinAdapter } from './v13.ts';
  * Each mutant inserts one fragment at an offset of the body (front matter is core's), replaces
  * a character with it, or cuts a span, from a seeded generator, so a failure names a
  * reproducible mutant. A mutant no adapter claims (the header cut) must be one v12 does not
- * detect either. Pele's 51 fragments are
+ * detect either. The reference implementation's 51 fragments are
  * not on this machine (GAPS.md); {@link FRAGMENTS} is built from the spec's quirks instead.
  *
  * The known differences are core's directive reading, which every type shares (the parity

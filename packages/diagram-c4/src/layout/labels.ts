@@ -1,9 +1,8 @@
 /**
- * Where each C4 relation's label goes (D455, Pele `render.ts` at commit 3a2f075,
- * https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano): measured after routing, then placed
- * along its line where it covers least of what it should keep off.
+ * Where each C4 relation's label goes (D455, the reference implementation's `render.ts` at commit
+ * 3a2f075): measured after routing, then placed along its line where it covers least of what it
+ * should keep off.
  */
-// cspell:ignore kepano
 import { Style } from '@mermaid-js/core/text';
 import type { C4LayoutConfig, C4Fonts } from '../config.ts';
 import type { C4Model, C4Relation } from '../model.ts';
@@ -55,8 +54,8 @@ export interface LabelSpot {
 }
 
 /**
- * What a label should not cover (Pele `render.ts`): shapes but their edges, arrowheads, boundary
- * headers and the labels placed before it, as x0, y0, x1, y1 runs.
+ * What a label should not cover (the reference implementation's `render.ts`): shapes but their
+ * edges, arrowheads, boundary headers and the labels placed before it, as x0, y0, x1, y1 runs.
  */
 export class Taken {
   private readonly boxes: number[] = [];
@@ -241,10 +240,11 @@ export function measureLabel(
 }
 
 /**
- * A relation's label and `[techn]`, measured and placed along its line (Pele `render.ts`): on
- * the line, or beside it when another relation runs the opposite way, moved by the author's
- * offsets; with `taken`, slid to the spot that covers least of it (and added to it). Measured
- * after routing, as Pele does: its wrap width (the route's `room`) depends on the line it sits on.
+ * A relation's label and `[techn]`, measured and placed along its line (the reference
+ * implementation's `render.ts`): on the line, or beside it when another relation runs the opposite
+ * way, moved by the author's offsets; with `taken`, slid to the spot that covers least of it (and
+ * added to it). Measured after routing, as the reference implementation does: its wrap width (the
+ * route's `room`) depends on the line it sits on.
  */
 export function placeLabel({ rel, index, r, input, keep, place }: LabelInput): LabelSpot {
   const measured = measureLabel(input, rel, index, r.room);
@@ -459,7 +459,8 @@ interface Clearest {
 /**
  * Where along the line, and how far off it, a `lw` × `lh` label goes. First on the line (the
  * author's offsets, then none; a tag pushed beside its line also tries the line itself), slid to
- * the spot that covers least of `taken` (Pele `render.ts`), each other relation's stretch through
+ * the spot that covers least of `taken` (the reference implementation's `render.ts`), each other
+ * relation's stretch through
  * it costing `lineCover` of its area; a tag then also tries the finer steps of `fineSlide` on the
  * line, so that one fitting between the shapes stays on it (#955 review); when that spot still
  * costs anything, also beside the line on either side, a label's depth further out at each step. When no spot is clear, the search runs again with finer steps along the line

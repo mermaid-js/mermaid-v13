@@ -1,6 +1,6 @@
 /**
  * The size report (#814, spec #813): lines by package and category, and gzip bytes per diagram
- * chunk for v13 and for the pinned Pele build. Other tickets of spec #813 quote its numbers.
+ * chunk for v13 and for the pinned compare build. Other tickets of spec #813 quote its numbers.
  *
  * Lines are counted by `code-lines.ts` and sorted by `code-categories.ts`. Bytes come from the
  * bench's production build (`build.ts`, the bundle `measureCoreSize` makes), so the core and
@@ -74,9 +74,9 @@ export function measureLines(root: string): LineCounts {
 /** The size report: the `codeSize` field of a bench report, and `size-report`'s output. */
 export interface CodeSizeReport {
   lines: LineCounts;
-  /** Absent, with `pele`, when only lines were measured (`size-report --root`). */
+  /** Absent, with `compare`, when only lines were measured (`size-report --root`). */
   chunks?: ChunkSizes;
-  pele?: PeleChunks;
+  compare?: CompareChunks;
 }
 
 /**
@@ -90,7 +90,7 @@ export async function measureCodeSize(root: string, bundle: Bundle): Promise<Cod
   return {
     lines: measureLines(root),
     chunks: diagramChunks(bundle, await defaultLayouts(pkgs)),
-    pele: peleChunks(),
+    compare: compareChunks(),
   };
 }
 
@@ -196,8 +196,8 @@ export function diagramChunks(
   };
 }
 
-/** Gzip-9 bytes of the published Pele build, each file on its own (as spec #813 measured it). */
-export interface PeleChunks {
+/** Gzip-9 bytes of the published compare build, each file on its own (as spec #813 measured it). */
+export interface CompareChunks {
   version: string;
   /** `pele/core`: `dist/esm/core.js` and its static imports. */
   core: number;
@@ -211,11 +211,11 @@ export interface PeleChunks {
 /** Static `import`/`export … from` specifiers of an ES module (not `import()`). */
 const STATIC_IMPORT = /\b(?:import|export)\s*(?:[\w$*{}\s,]*?\bfrom\s*)?["'](\.{1,2}\/[^"']+)["']/g;
 
-/** The Pele package the bench depends on (`packages/bench/node_modules/pele`). */
-const PELE_DIR = fileURLToPath(new URL('../node_modules/pele/', import.meta.url));
+/** The compare package the bench depends on (`packages/bench/node_modules/pele`). */
+const COMPARE_DIR = fileURLToPath(new URL('../node_modules/pele/', import.meta.url));
 
-/** Gzip bytes of Pele's published ESM build, per diagram entry beyond core. */
-export function peleChunks(dir: string = PELE_DIR): PeleChunks {
+/** Gzip bytes of the compare renderer's published ESM build, per diagram entry beyond core. */
+export function compareChunks(dir: string = COMPARE_DIR): CompareChunks {
   const esm = join(dir, 'dist', 'esm');
   const files = new Map<string, Buffer>();
   const walk = (d: string): void => {

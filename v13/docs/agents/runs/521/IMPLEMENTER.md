@@ -1,9 +1,11 @@
 # Implementer brief: block port (#521)
 
+`$REF` is the reference implementation's checkout (D770).
+
 - Ticket: `gh issue view -R mermaid-js/mermaid-v13 <N>`. Spec: #521 (`gh issue view -R mermaid-js/mermaid-v13 521`), decided D440–D449 (`v13/docs/DECISIONS.md`). Docs: `v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md`. Recipe: `v13/docs/agents/port-diagram/` (README, parser-method, theming, language, pitfalls). Theme contract: `v13/docs/agents/runs/414/CONTRACT.md`.
 - Tickets: T0 #552 (core, own PR), T1 #553, T2 #554, T3 #555, T4 #556, T6 #557, T5 #558, T7 #559.
 - Notes: this folder. Read INDEX.md (pointer notes on v12 block and v13 references), GAPS.md (close the items listed for your ticket) and `tickets/<dep>.md` for each blocker.
-- v12 source: `git show fa796a943:packages/mermaid/src/diagrams/block/…`; v12 config schema `git show fa796a943:packages/mermaid/src/schemas/config.schema.yaml`. Oracle: `mermaid@12.2.0` in `packages/conformance` (D316); jison lexer oracle `loadJisonLexerOracle('block')`. Pele (`/Users/knsv/repos/pele/src/diagrams/block/`) is an MIT reference, never the oracle (D325).
+- v12 source: `git show fa796a943:packages/mermaid/src/diagrams/block/…`; v12 config schema `git show fa796a943:packages/mermaid/src/schemas/config.schema.yaml`. Oracle: `mermaid@12.2.0` in `packages/conformance` (D316); jison lexer oracle `loadJisonLexerOracle('block')`. The reference implementation (`$REF/src/diagrams/block/`) is an MIT reference, never the oracle (D325).
 - Worked examples: kanban, cynefin, pie (jison types); treemap, wardley, xychart, sankey, venn (newest ports).
 - Worktree: this session's own worktree `/Users/knsv/repos/mermaid-v13/.claude/worktrees/521-block-7f431e`, with the ticket's branch `feature/<N>_<short>` already checked out (cut from `feature/521_block`, `pnpm install` done). Never check out another branch there; the integration branch lives in a separate worktree (`b521`) that only the orchestrator touches.
 - Env: `export PATH=$HOME/.volta/tools/image/node/24.16.0/bin:$PATH VITEST_MAX_WORKERS=4 GIT_SSH_COMMAND="ssh -o ServerAliveInterval=20 -o ServerAliveCountMax=30"`. Run every `pnpm check` and `pnpm e2e` as `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check` (three ports share this machine; a set `PARSE_FIXTURE_PATH` makes the conformance corpus specs read an outside folder and fail). Ticket agents never push.

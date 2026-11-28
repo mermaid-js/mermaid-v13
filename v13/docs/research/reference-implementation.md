@@ -1,9 +1,9 @@
-# Pele: research notes for Mermaid v13
+# The reference implementation: research notes for Mermaid v13
 
 Source: `/Users/knsv/repos/pele` at commit `3a2f075` ("Release: 1.13.0"), package `pele@1.13.0`, author kepano / obsidianmd.
 All paths below are relative to that checkout unless prefixed. I read the code directly. Where a statement is my inference, it is marked **(inference)**.
 
-Benchmark context (from `/Users/knsv/repos/mermaid-v13-approches/README.md`, Chromium, M4 Max, 158 flowcharts, pele@1.12.0): Pele fetches 62 KB gz JS for a flowchart against Mermaid's 213 KB (dagre) or 654 KB (default ELK). It is ready in 10 ms against about 36 ms. The summed warm median over 153 common diagrams is 0.14 s against 8.5 s (dagre) and 13.7 s (ELK), a geomean of 118 to 135 times faster, with 0 npm dependencies. Its output has no `foreignObject` and no `<style>`. The README's main conclusion is that "most of the gap to Mermaid comes from the architecture, not the language": Merman, a Rust port that keeps Mermaid's architecture, is only about 6 times faster.
+Benchmark context (from `/Users/knsv/repos/mermaid-v13-approches/README.md`, Chromium, M4 Max, 158 flowcharts, pele@1.12.0): the reference implementation fetches 62 KB gz JS for a flowchart against Mermaid's 213 KB (dagre) or 654 KB (default ELK). It is ready in 10 ms against about 36 ms. The summed warm median over 153 common diagrams is 0.14 s against 8.5 s (dagre) and 13.7 s (ELK), a geomean of 118 to 135 times faster, with 0 npm dependencies. Its output has no `foreignObject` and no `<style>`. The README's main conclusion is that "most of the gap to Mermaid comes from the architecture, not the language": Merman, a Rust port that keeps Mermaid's architecture, is only about 6 times faster.
 
 ---
 
@@ -70,7 +70,7 @@ The `Diagram<Model>` interface (`src/types.ts:76-87`) has these members: `{type,
 
 There are 33 `DiagramType`s (`src/detect.ts:1-34`): flowchart, sequence, class, state, er, pie, gantt, gitGraph, mindmap, timeline, journey, xychart, quadrantChart, requirement, c4, sankey, block, packet, kanban, architecture, radar, treemap, info, agentflow, usecase, railroad (4 dialects), treeView, venn, cynefin, wardley, swimlane, ishikawa and eventmodeling. The README and `website/src/content/docs/compatibility.md` claim "every diagram type built into Mermaid 12.1.0". ZenUML and external plugins are not supported (`compatibility.md`).
 
-The detector returns both the Pele type and Mermaid's own id, for example `flowchart-v2` or `flowchart-elk` (`detect.ts:36-78`). `flowchart-elk` is drawn with Pele's own layout.
+The detector returns both the reference implementation's type and Mermaid's own id, for example `flowchart-v2` or `flowchart-elk` (`detect.ts:36-78`). `flowchart-elk` is drawn with the reference implementation's own layout.
 
 ---
 
@@ -275,7 +275,7 @@ The detector returns both the Pele type and Mermaid's own id, for example `flowc
 
 ## 9. Size and speed: design choices
 
-1. **Zero runtime dependencies** (`package.json` has only devDependencies). Pele has its own:
+1. **Zero runtime dependencies** (`package.json` has only devDependencies). The reference implementation has its own:
    - YAML parser (`util/yaml.ts`, 470 lines) instead of js-yaml
    - URL sanitizer (`util/url.ts`) instead of @braintree
    - colour luminance (`svg/ink.ts`) instead of khroma
@@ -309,10 +309,10 @@ The detector returns both the Pele type and Mermaid's own id, for example `flowc
 
 There are 175 `*.test.ts` files plus 123 ported Mermaid `*.spec.*` files (from `find tests`). Vitest runs with `pool: 'threads'` (`vitest.config.ts`). The repo has no image snapshots and no `toMatchSnapshot` calls (grep count is 0). The approaches it does use are below.
 
-- **Ported Mermaid parser specs.** `scripts/sync-specs.mjs` copies Mermaid's spec files at a pinned tag (`mermaid@12.1.0`) into `tests/compat/<type>/` and rewrites their imports to point at Pele adapters. Example: `tests/compat/flowchart/adapter.ts` exposes `FlowDB` with Mermaid's method names over Pele's `FlowDb`. It also vendors the upstream grammars (`tests/compat/flowchart/upstream/flow.jison`). Skips are documented in `SKIPPED.md`.
+- **Ported Mermaid parser specs.** `scripts/sync-specs.mjs` copies Mermaid's spec files at a pinned tag (`mermaid@12.1.0`) into `tests/compat/<type>/` and rewrites their imports to point at the reference implementation adapters. Example: `tests/compat/flowchart/adapter.ts` exposes `FlowDB` with Mermaid's method names over the reference implementation's `FlowDb`. It also vendors the upstream grammars (`tests/compat/flowchart/upstream/flow.jison`). Skips are documented in `SKIPPED.md`.
 - **Differential oracle plus fuzzing.**
-  - For JISON diagrams, `tests/support/oracle.ts` and `tests/support/flow-oracle.ts` compile the upstream `.jison` with the `jison` devDependency into a reference parser that records every `yy.*` call. `tests/flowchart/oracle.test.ts:24-49` asserts that Pele's tokens equal the oracle's tokens, that both accept or reject the same input, and that both make the same model calls. It runs over the corpus (more than 300 inputs) and over 5,000 mutated inputs by default; the `FUZZ` and `SEED` environment variables change this. A fragment-insertion mutator does the mutation (`tests/support/corpus.ts`).
-  - For Langium diagrams, `tests/support/langium.ts` uses `@mermaid-js/parser` as the reference. It checks Pele's token tables against the Chevrotain lexer definitions and Pele's parse output against the Langium ASTs.
+  - For JISON diagrams, `tests/support/oracle.ts` and `tests/support/flow-oracle.ts` compile the upstream `.jison` with the `jison` devDependency into a reference parser that records every `yy.*` call. `tests/flowchart/oracle.test.ts:24-49` asserts that the reference implementation's tokens equal the oracle's tokens, that both accept or reject the same input, and that both make the same model calls. It runs over the corpus (more than 300 inputs) and over 5,000 mutated inputs by default; the `FUZZ` and `SEED` environment variables change this. A fragment-insertion mutator does the mutation (`tests/support/corpus.ts`).
+  - For Langium diagrams, `tests/support/langium.ts` uses `@mermaid-js/parser` as the reference. It checks the reference implementation's token tables against the Chevrotain lexer definitions and the reference implementation's parse output against the Langium ASTs.
 - **Corpus**: every string literal in the ported specs that looks like a diagram, plus Mermaid's docs examples (`tests/corpus/<type>-docs.json`, loaded in `tests/support/corpus.ts:4-23`).
 - **Render invariants**, not pixels. For every corpus input (`tests/render/flowchart.test.ts:21-35`), the SVG must:
   - be well-formed XML
@@ -336,7 +336,7 @@ There are 175 `*.test.ts` files plus 123 ported Mermaid `*.spec.*` files (from `
   - There are no HTML labels. Only the inline subset in §3 is supported, and markdown is limited to bold and italic.
   - JS `click` callbacks are ignored. Edge `animate`/`animation` are parsed but not rendered **(inference)**.
   - ZenUML and external or registered plugins are not supported. There is no `registerExternalDiagrams`-style public plugin API, although `register()` accepts any `Diagram` object, so third parties could in principle register one **(inference)**.
-  - Icons need a host resolver. Pele has no built-in icon packs, except for some architecture and treeView symbols.
+  - Icons need a host resolver. The reference implementation has no built-in icon packs, except for some architecture and treeView symbols.
   - Text measurement in Node or SSR without canvas is approximate (an Arial ASCII table and fixed widths for everything else). Labels can therefore mis-fit if the drawn font differs. The docs flag the font-matching requirement.
   - Vertical text metrics are a fixed 0.35 em shift and a 1.5 or 1.3 line-height (`builder.ts:56`, `label.ts:26-28`).
   - The deliberate deviations are mostly stricter rules (`compatibility.md`): edge limit 5,000 versus 500, URL scheme allow-list versus Mermaid's deny-list, a sankey syntax error on a non-numeric value, and Unicode sankey names.
@@ -346,21 +346,21 @@ There are 175 `*.test.ts` files plus 123 ported Mermaid `*.spec.*` files (from `
 
 ## Steal list for Mermaid v13
 
-1. **Make the renderer a pure, synchronous `(model, config, options) -> {svg, w, h, links}` function with no DOM.** Put mount/resize/zoom in a separate optional layer. This is the key architecture behind the roughly 100x speed-up. Pele: `src/types.ts:76-87`, `src/core.ts:162-189`, with `src/mount.ts` separate.
-2. **Use a pluggable `TextMeasurer` with a cached canvas default and a deterministic metric-table fallback**, and use the table in all tests. Cache per font, refuse to cache fallback-font widths, and invalidate when fonts load. Pele: `src/text/measurer.ts:15-159`, `src/text/metrics.ts`, `scripts/gen-metrics.mjs`, `src/mount.ts:72-99`.
-3. **Treat available width as a layout input.** Use `maxWidth` with three strategies: tighten spacing, flip LR to TB below a breakpoint, and shrink the chart plot. `mount()` should re-render on resize only when the diagram actually adapts. Pele: `src/diagrams/common/fit-width.ts`, `src/mount.ts:150-170`.
-4. **Theme through CSS custom properties with a private alias layer** (`--_fg: var(--pele-fg, #1f1f1f)`). Re-theme and switch dark mode with no re-render, emit no `<style>`, and include only the aliases that are used. Pele: `src/svg/theme.ts:6-9`, `src/svg/root.ts:20-56`, `website/src/content/docs/theming.md`.
+1. **Make the renderer a pure, synchronous `(model, config, options) -> {svg, w, h, links}` function with no DOM.** Put mount/resize/zoom in a separate optional layer. This is the key architecture behind the roughly 100x speed-up. The reference implementation: `src/types.ts:76-87`, `src/core.ts:162-189`, with `src/mount.ts` separate.
+2. **Use a pluggable `TextMeasurer` with a cached canvas default and a deterministic metric-table fallback**, and use the table in all tests. Cache per font, refuse to cache fallback-font widths, and invalidate when fonts load. The reference implementation: `src/text/measurer.ts:15-159`, `src/text/metrics.ts`, `scripts/gen-metrics.mjs`, `src/mount.ts:72-99`.
+3. **Treat available width as a layout input.** Use `maxWidth` with three strategies: tighten spacing, flip LR to TB below a breakpoint, and shrink the chart plot. `mount()` should re-render on resize only when the diagram actually adapts. The reference implementation: `src/diagrams/common/fit-width.ts`, `src/mount.ts:150-170`.
+4. **Theme through CSS custom properties with a private alias layer** (`--_fg: var(--pele-fg, #1f1f1f)`). Re-theme and switch dark mode with no re-render, emit no `<style>`, and include only the aliases that are used. The reference implementation: `src/svg/theme.ts:6-9`, `src/svg/root.ts:20-56`, `website/src/content/docs/theming.md`.
 5. **Make the output inert by construction and enforce it with an allow-list test oracle**, instead of shipping DOMPurify. That means:
    - escape-on-write (`esc`/`escText`)
    - property and value allow-lists for `style`/`classDef`
    - a scheme allow-list for links and images
    - inline markers instead of `<marker>` defs and ids
 
-   Pele: `src/svg/builder.ts:8-26`, `src/svg/theme.ts:49-136`, `src/util/url.ts`, `src/svg/edges.ts:203-232`, `tests/support/inert.ts`.
-6. **Pick text contrast automatically on user fills** using WCAG luminance, with two theme tokens (`fg-on-light`/`fg-on-dark`) and no colour library. Pele: `src/svg/ink.ts`.
-7. **Test the parser differentially against the legacy grammar while migrating.** Compile the old `.jison` (or use `@mermaid-js/parser`) as an oracle and compare tokens, accept/reject decisions and db calls on the spec and docs corpus plus seeded mutation fuzzing. This fits directly with our Chevrotain migration. Pele: `tests/support/oracle.ts`, `tests/support/flow-oracle.ts`, `tests/flowchart/oracle.test.ts`, `tests/support/langium.ts`, `scripts/sync-specs.mjs`.
-8. **Add hard, host-controlled limits and turn deep recursion into a typed `'limit'` error.** Limits should cover source, output size and edges, and be enforced in the db as well as in layout caps. Keep a stress suite of adversarial inputs, and replace backtracking regexes with linear scans. Pele: `src/core.ts:35-52`, `src/diagrams/flowchart/db.ts:253-260`, `src/preprocess.ts:196-234`, `tests/stress.test.ts`.
-9. **Give errors stable codes and map positions back to the original source.** Record preprocessing edits so line and column refer to the user's text (front matter and directives included), and do the mapping lazily on error. Pele: `src/errors.ts:1-108`, `src/core.ts:112-126`.
-10. **Use one Sugiyama core with explicit, ranked aesthetic goals plus a compound wrapper that lays out each group as a box with border ports**, and share it across flowchart, class, state, er, requirement and others. Implement it with typed arrays and bounded sweeps. Pele: `src/layout/layered.ts:1-27`, `:242+`, `src/layout/compound.ts:416-419`.
-11. **Split the package per diagram with a generated registry and lazy loader**, export `parse()` models that `render()` accepts, and report per-type gz cost in the build. Pele: `scripts/gen-registry.mjs`, `src/lazy.ts`, `scripts/build.mjs:19-80`, `src/core.ts:152-160`.
-12. **Apply micro-techniques in the SVG string builder**: a fast-path `esc`, integer-table `num()` with 2 decimals, single `<text>` without `<tspan>` for plain labels, emphasis shared by every span hoisted onto `<text>`, and `data-id` instead of `id` (avoiding id collisions across multiple diagrams on a page). Pele: `src/svg/builder.ts:16-106`, `src/svg/root.ts`.
+   The reference implementation: `src/svg/builder.ts:8-26`, `src/svg/theme.ts:49-136`, `src/util/url.ts`, `src/svg/edges.ts:203-232`, `tests/support/inert.ts`.
+6. **Pick text contrast automatically on user fills** using WCAG luminance, with two theme tokens (`fg-on-light`/`fg-on-dark`) and no colour library. The reference implementation: `src/svg/ink.ts`.
+7. **Test the parser differentially against the legacy grammar while migrating.** Compile the old `.jison` (or use `@mermaid-js/parser`) as an oracle and compare tokens, accept/reject decisions and db calls on the spec and docs corpus plus seeded mutation fuzzing. This fits directly with our Chevrotain migration. The reference implementation: `tests/support/oracle.ts`, `tests/support/flow-oracle.ts`, `tests/flowchart/oracle.test.ts`, `tests/support/langium.ts`, `scripts/sync-specs.mjs`.
+8. **Add hard, host-controlled limits and turn deep recursion into a typed `'limit'` error.** Limits should cover source, output size and edges, and be enforced in the db as well as in layout caps. Keep a stress suite of adversarial inputs, and replace backtracking regexes with linear scans. The reference implementation: `src/core.ts:35-52`, `src/diagrams/flowchart/db.ts:253-260`, `src/preprocess.ts:196-234`, `tests/stress.test.ts`.
+9. **Give errors stable codes and map positions back to the original source.** Record preprocessing edits so line and column refer to the user's text (front matter and directives included), and do the mapping lazily on error. The reference implementation: `src/errors.ts:1-108`, `src/core.ts:112-126`.
+10. **Use one Sugiyama core with explicit, ranked aesthetic goals plus a compound wrapper that lays out each group as a box with border ports**, and share it across flowchart, class, state, er, requirement and others. Implement it with typed arrays and bounded sweeps. The reference implementation: `src/layout/layered.ts:1-27`, `:242+`, `src/layout/compound.ts:416-419`.
+11. **Split the package per diagram with a generated registry and lazy loader**, export `parse()` models that `render()` accepts, and report per-type gz cost in the build. The reference implementation: `scripts/gen-registry.mjs`, `src/lazy.ts`, `scripts/build.mjs:19-80`, `src/core.ts:152-160`.
+12. **Apply micro-techniques in the SVG string builder**: a fast-path `esc`, integer-table `num()` with 2 decimals, single `<text>` without `<tspan>` for plain labels, emphasis shared by every span hoisted onto `<text>`, and `data-id` instead of `id` (avoiding id collisions across multiple diagrams on a page). The reference implementation: `src/svg/builder.ts:16-106`, `src/svg/root.ts`.

@@ -1,8 +1,6 @@
-// cspell:words kepano
 // Measurer selection and the browser canvas measurer (DESIGN §5.1, R-TEXT-5, R-TEXT-7).
 // Core never imports this module; `mermaid` injects the selected measurer into the render
 // context, so core stays free of the DOM (R-ARCH-1).
-// Based on Pele's canvasMeasurer (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
 import {
   SMALLER,
   Style,

@@ -1,12 +1,12 @@
 /**
  * The committed benchmark fixtures (R-PERF-6): the 158-diagram flowchart corpus synced by the
- * `mermaid-v13-approaches` harness, and the #8635 / Pele set (7-, 50- and 500-node flowcharts,
+ * `mermaid-v13-approaches` harness, and the #8635 / compare set (7-, 50- and 500-node flowcharts,
  * a sequence and a class diagram). Performance only; the parity corpus lives in conformance.
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-export type FixtureSet = 'corpus' | 'pele';
+export type FixtureSet = 'corpus' | 'compare';
 export type Tier = 'tiny' | 'regular' | 'large' | 'huge';
 
 export interface Fixture {
@@ -34,7 +34,7 @@ interface CorpusManifest {
   }[];
 }
 
-interface PeleManifest {
+interface CompareManifest {
   diagrams: { id: string; file: string; type: Fixture['type']; nodes?: number }[];
 }
 
@@ -64,18 +64,18 @@ export function loadFixtures(): Fixture[] {
       source: readFileSync(FIXTURES_DIR + 'corpus/' + d.file, 'utf8'),
     })
   );
-  const pele = readJson<PeleManifest>('pele/manifest.json').diagrams.map((d): Fixture => {
-    const source = readFileSync(FIXTURES_DIR + 'pele/' + d.file, 'utf8');
+  const compare = readJson<CompareManifest>('compare/manifest.json').diagrams.map((d): Fixture => {
+    const source = readFileSync(FIXTURES_DIR + 'compare/' + d.file, 'utf8');
     return {
       id: d.id,
-      set: 'pele',
+      set: 'compare',
       type: d.type,
-      group: 'pele',
+      group: 'compare',
       tier: tierOf(source),
       features: [],
       bytes: Buffer.byteLength(source),
       source,
     };
   });
-  return [...corpus, ...pele];
+  return [...corpus, ...compare];
 }

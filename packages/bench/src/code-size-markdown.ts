@@ -1,7 +1,7 @@
 /** Markdown of the size report (#814): lines by category and package, gzip bytes per diagram. */
 import type { CategoryId } from './code-categories.ts';
 import { CATEGORIES } from './code-categories.ts';
-import type { ChunkSizes, CodeSizeReport, LineCounts, PeleChunks } from './code-size.ts';
+import type { ChunkSizes, CodeSizeReport, LineCounts, CompareChunks } from './code-size.ts';
 import { UNCLASSIFIED } from './code-size.ts';
 import { dash, row, rule } from './md.ts';
 
@@ -59,17 +59,17 @@ function packageLines(lines: LineCounts): string[] {
   ];
 }
 
-/** Pele's name for a v13 diagram package (`diagram-gitgraph` → `gitGraph`), if it has one. */
-const peleName = (pkg: string, pele: PeleChunks) => {
+/** The compare renderer's name for a v13 diagram package (`diagram-gitgraph` → `gitGraph`), if it has one. */
+const compareName = (pkg: string, compare: CompareChunks) => {
   const type = pkg.replace(/^diagram-/, '');
-  return pele.diagrams.find((d) => [type, `${type}chart`].includes(d.diagram.toLowerCase()));
+  return compare.diagrams.find((d) => [type, `${type}chart`].includes(d.diagram.toLowerCase()));
 };
 
-/** One row per v13 diagram package, then the Pele entries no package matched. */
-function diagramRows(chunks: ChunkSizes, pele: PeleChunks): string[] {
+/** One row per v13 diagram package, then the compare entries no package matched. */
+function diagramRows(chunks: ChunkSizes, compare: CompareChunks): string[] {
   const matched = new Set<string>();
   const out = chunks.diagrams.map((d) => {
-    const p = peleName(d.pkg, pele);
+    const p = compareName(d.pkg, compare);
     if (p) matched.add(p.diagram);
     return row([
       d.pkg.replace(/^diagram-/, ''),
@@ -80,17 +80,17 @@ function diagramRows(chunks: ChunkSizes, pele: PeleChunks): string[] {
       p ? n(p.closure) : dash,
     ]);
   });
-  for (const p of pele.diagrams.filter((x) => !matched.has(x.diagram)))
-    out.push(row([`${p.diagram} (Pele only)`, dash, dash, dash, dash, n(p.closure)]));
+  for (const p of compare.diagrams.filter((x) => !matched.has(x.diagram)))
+    out.push(row([`${p.diagram} (compare only)`, dash, dash, dash, dash, n(p.closure)]));
   return out;
 }
 
-/** A row with a first cell, a v13 figure, three empty v13 columns and a Pele figure. */
-const summaryRow = (name: string, v13: string, peleCell: string) =>
-  row([name, v13, '', '', '', peleCell]);
+/** A row with a first cell, a v13 figure, three empty v13 columns and a compare figure. */
+const summaryRow = (name: string, v13: string, compareCell: string) =>
+  row([name, v13, '', '', '', compareCell]);
 
-function byteLines(chunks: ChunkSizes, pele: PeleChunks): string[] {
-  const peleFlowchart = pele.diagrams.find((d) => d.diagram === 'flowchart')?.closure;
+function byteLines(chunks: ChunkSizes, compare: CompareChunks): string[] {
+  const compareFlowchart = compare.diagrams.find((d) => d.diagram === 'flowchart')?.closure;
   return [
     row([
       'Diagram',
@@ -98,20 +98,20 @@ function byteLines(chunks: ChunkSizes, pele: PeleChunks): string[] {
       'v13 static closure',
       'v13 default layout',
       'v13 render',
-      `Pele ${pele.version}`,
+      `compare ${compare.version}`,
     ]),
     rule(6),
-    summaryRow('core', n(chunks.core), n(pele.core)),
+    summaryRow('core', n(chunks.core), n(compare.core)),
     summaryRow(
       'core + flowchart (loaded)',
       n(chunks.loaded),
-      peleFlowchart === undefined ? dash : n(pele.core + peleFlowchart)
+      compareFlowchart === undefined ? dash : n(compare.core + compareFlowchart)
     ),
-    ...diagramRows(chunks, pele),
+    ...diagramRows(chunks, compare),
     summaryRow(
       'all files',
       `${n(chunks.total)} (${chunks.files} files)`,
-      `${n(pele.total)} (${pele.files} files)`
+      `${n(compare.total)} (${compare.files} files)`
     ),
   ];
 }
@@ -121,7 +121,7 @@ const BYTES_NOTE = [
   'Below the two core rows, every figure is what a type loads beyond core.',
   '"Static closure" is the chunk and the chunks it imports statically.',
   '"Default layout" is the lazy chunk of the engine the plugin names as `layoutEngine.default`, which the registry loads for every render of the type; "render" is the sum of the two.',
-  'Pele is its published `dist/esm` build: each `diagrams/<name>.js` entry and its static imports beyond `core.js`, layouts included.',
+  'compare is the published `dist/esm` build of the `pele` package: each `diagrams/<name>.js` entry and its static imports beyond `core.js`, layouts included.',
 ].join(' ');
 
 /** The size report as markdown lines, under a `##` heading. */
@@ -141,13 +141,13 @@ export function codeSizeLines(report: CodeSizeReport): string[] {
       ''
     );
   out.push('### Lines by package', '', ...packageLines(lines), '');
-  if (report.chunks && report.pele) {
+  if (report.chunks && report.compare) {
     out.push(
       '### Gzip bytes per diagram',
       '',
       BYTES_NOTE,
       '',
-      ...byteLines(report.chunks, report.pele),
+      ...byteLines(report.chunks, report.compare),
       ''
     );
   }

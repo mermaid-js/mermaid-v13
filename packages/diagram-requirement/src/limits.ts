@@ -1,9 +1,9 @@
 /**
- * The style-copy cap's error (D433, R-SEC-5), shaped as gantt's step limit (D542): the parse
- * stops copying styles at `MAX_STYLE_COPIES` and records the overflow in the model; the layout
- * calls {@link checkStyleCopies} first, so the render ends in the pipeline's `LIMIT` error with
- * the limit, its value and the count found. The cap is fixed (Pele's limit), not the
- * integrator's `maxLayoutWork`, whose name it reports.
+ * The style-copy cap's error (D433, R-SEC-5), shaped as gantt's step limit (D542): the parse stops
+ * copying styles at `MAX_STYLE_COPIES` and records the overflow in the model; the layout calls
+ * {@link checkStyleCopies} first, so the render ends in the pipeline's `LIMIT` error with the
+ * limit, its value and the count found. The cap is fixed (the reference implementation's limit),
+ * not the integrator's `maxLayoutWork`, whose name it reports.
  */
 import { LimitError } from '@mermaid-js/core/limits';
 import type { RequirementModel } from './model.ts';

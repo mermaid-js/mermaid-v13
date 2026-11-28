@@ -1,6 +1,5 @@
 /**
- * The C4 grid (D454), ported from Pele's `src/diagrams/c4/layout.ts`
- * (https://github.com/obsidianmd/pele at commit 3a2f075, MIT, (c) 2026 kepano): v12's model, each
+ * The C4 grid (D454): v12's model, each
  * boundary's elements in rows of `c4ShapeInRow` in statement order and then the boundaries inside
  * it in rows of `c4BoundaryInRow`, each boundary sized bottom-up around its contents with its
  * header reserved inside its frame, then placed top-down.
@@ -8,9 +7,10 @@
  * Changed in the port: v12's config lengths are the gaps and margins (elements `2·c4ShapeMargin`
  * apart, as v12's packer put them; boundaries `diagramMarginX` apart across and
  * `c4ShapeMargin + diagramMarginY` down; contents `c4ShapeMargin` inside a frame; rows after the
- * first `nextLinePaddingX` in), shapes keep their own height in a row as v12's did (Pele
- * stretched them), the header is v12's (centred; label, `[type]`, description at v12's offsets),
- * and a boundary on a parent cycle is drawn at the top level (D454) instead of not at all.
+ * first `nextLinePaddingX` in), shapes keep their own height in a row as v12's did (the reference
+ * implementation stretched them), the header is v12's (centred; label, `[type]`, description at
+ * v12's offsets), and a boundary on a parent cycle is drawn at the top level (D454) instead of not
+ * at all.
  *
  * A `direction` (#730, amending D452) sets the fill order of a group's contents. In TB, the
  * default and the order above, a line is a row of `c4ShapeInRow`, its members run left to right
@@ -20,7 +20,6 @@
  * boundaries) in the opposite order, so the first statement comes last. Gaps keep their
  * physical axis: a horizontal gap is the X one wherever it falls.
  */
-// cspell:ignore kepano
 import type { C4Boundary, C4Direction, C4Model } from '../model.ts';
 
 /** A box the grid places: its size is set before, its top-left corner by the grid. */

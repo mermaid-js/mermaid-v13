@@ -18,12 +18,12 @@ Keep/drop judgements below are inferences unless a ticket says otherwise.
 - Global ignores :17-29 (`**/dist/`, `.claude/`, `**/generated/`, `packages/mermaid/src/config.type.ts`, …). `parserOptions.project` lists `./packages/*/tsconfig.json`. **`globals.browser` is enabled for all files** (:41-46), so the DOM-globals ban (#2) needs `no-restricted-globals` or `no-restricted-properties` scoped to `packages/core/**` and `packages/diagram-*/**`.
 - Rules worth keeping (:61-165): `curly`, **`no-console: 'error'`** (:63), `consistent-type-imports`, `no-floating-promises`, `no-misused-promises`, `@typescript-eslint/no-restricted-imports` (:70-81, currently only `fastdom`; extend it for import boundaries), `no-unused-vars` with `^_` ignores, `consistent-type-definitions`, `ban-ts-comment` (description ≥10), `naming-convention` (PascalCase types, no `I` prefix), `@cspell/spellchecker` (:127), `no-only-tests` (:141), `lodash/import-scope` (drop: no lodash in v13).
 - `compat/compat` for `packages/*/src/**` against browserslist (:166-182). Root `package.json` `browserslist`: chrome/edge ≥121, firefox ≥123, safari/ios ≥17.4, node ≥22.12.
-- **`TSEnumDeclaration` ban** (:236-247) also matches `const enum`, which Pele uses heavily (see 02).
+- **`TSEnumDeclaration` ban** (:236-247) also matches `const enum`, which the reference implementation uses heavily (see 02).
 - `no-console` is off for `e2e/**`, `demos/**`, `.esbuild/**` (:185-188) and some scripts (:207-215).
 - There is no regex-safety lint yet. #2 needs "no nested quantifiers in regexes applied to user input". `eslint-plugin-regexp` (`regexp/no-super-linear-backtracking`) is a candidate (inference; not installed). `eslint-plugin-unicorn` is installed.
 
 ## CSpell
-- `cspell.config.yaml` imports `.cspell/cspell.config.yaml`; dictionaries are `.cspell/{code-terms,contributors,libraries,mermaid-terms,misc-terms}.txt`; `ignorePaths` include `**/*.spec.{js,ts}` (checked via eslint), `e2e/platform/**`, `dist`, lockfiles. ESLint runs `@cspell/spellchecker`. `scripts/fixCSpell.ts` sorts the dictionaries. Ported Pele code will need words added (e.g. `kepano`, `lnode`, `ledge`, `cnode`).
+- `cspell.config.yaml` imports `.cspell/cspell.config.yaml`; dictionaries are `.cspell/{code-terms,contributors,libraries,mermaid-terms,misc-terms}.txt`; `ignorePaths` include `**/*.spec.{js,ts}` (checked via eslint), `e2e/platform/**`, `dist`, lockfiles. ESLint runs `@cspell/spellchecker`. `scripts/fixCSpell.ts` sorts the dictionaries. Ported the reference implementation code will need words added (e.g. `kepano`, `lnode`, `ledge`, `cnode`).
 
 ## Husky / lint-staged / prettier / changesets
 - `.husky/pre-commit`: `NODE_OPTIONS="--max_old_space_size=8192" pnpm run pre-commit` → `lint-staged`.

@@ -15,23 +15,27 @@ describe('bench fixtures (R-PERF-6)', () => {
     );
   });
 
-  it('commits the #8635 / Pele set: 7-, 50- and 500-node flowcharts, sequence and class', () => {
-    const pele = Object.fromEntries(fixtures.filter((f) => f.set === 'pele').map((f) => [f.id, f]));
-    expect(Object.keys(pele).sort()).toEqual([
-      'pele/class',
-      'pele/flowchart-50',
-      'pele/flowchart-500',
-      'pele/flowchart-7',
-      'pele/sequence',
+  it('commits the #8635 / compare set: 7-, 50- and 500-node flowcharts, sequence and class', () => {
+    const compare = Object.fromEntries(
+      fixtures.filter((f) => f.set === 'compare').map((f) => [f.id, f])
+    );
+    expect(Object.keys(compare).sort()).toEqual([
+      'compare/class',
+      'compare/flowchart-50',
+      'compare/flowchart-500',
+      'compare/flowchart-7',
+      'compare/sequence',
     ]);
-    expect(pele['pele/sequence']?.source.startsWith('sequenceDiagram\n')).toBe(true);
-    expect(pele['pele/class']?.source.startsWith('classDiagram\n')).toBe(true);
+    expect(compare['compare/sequence']?.source.startsWith('sequenceDiagram\n')).toBe(true);
+    expect(compare['compare/class']?.source.startsWith('classDiagram\n')).toBe(true);
     // A fan-out-3 tree of n nodes has n - 1 edges, one per line after the header.
-    const edges = (id: string) => (pele[id]?.source.match(/-->/g) ?? []).length;
-    expect(edges('pele/flowchart-50')).toBe(49);
-    expect(edges('pele/flowchart-500')).toBe(499);
-    expect(pele['pele/flowchart-500']?.source).toContain('  n166[Node 166] --> n499[Node 499]\n');
-    expect(pele['pele/flowchart-7']?.source).toContain('B -->|Yes| C[Ship it]');
+    const edges = (id: string) => (compare[id]?.source.match(/-->/g) ?? []).length;
+    expect(edges('compare/flowchart-50')).toBe(49);
+    expect(edges('compare/flowchart-500')).toBe(499);
+    expect(compare['compare/flowchart-500']?.source).toContain(
+      '  n166[Node 166] --> n499[Node 499]\n'
+    );
+    expect(compare['compare/flowchart-7']?.source).toContain('B -->|Yes| C[Ship it]');
   });
 
   it('gives every fixture a unique id', () => {

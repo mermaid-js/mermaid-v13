@@ -65,38 +65,38 @@ describe('interleave', () => {
   it('measures each fixture on every renderer before the next fixture, rotating the order', async () => {
     const calls: string[] = [];
     const closed: string[] = [];
-    const sessions = (['v13', 'v13-base', 'pele'] as const).map((r) =>
+    const sessions = (['v13', 'v13-base', 'compare'] as const).map((r) =>
       fakeSession(r, calls, closed)
     );
     const runs = await interleave(sessions, ['x', 'y', 'z'].map(fixture), () => {}, 'test');
     expect(calls).toEqual([
       'x:v13',
       'x:v13-base',
-      'x:pele',
+      'x:compare',
       'y:v13-base',
-      'y:pele',
+      'y:compare',
       'y:v13',
-      'z:pele',
+      'z:compare',
       'z:v13',
       'z:v13-base',
     ]);
     // Each run keeps its results in fixture order, and runs keep renderer order.
-    expect(runs.map((r) => r.renderer)).toEqual(['v13', 'v13-base', 'pele']);
+    expect(runs.map((r) => r.renderer)).toEqual(['v13', 'v13-base', 'compare']);
     for (const r of runs) expect(r.results.map((x) => x.id)).toEqual(['x', 'y', 'z']);
-    expect(closed.sort()).toEqual(['pele', 'v13', 'v13-base']);
+    expect(closed.sort()).toEqual(['compare', 'v13', 'v13-base']);
   });
 
   it('closes every session when a measurement throws', async () => {
     const closed: string[] = [];
     const good = fakeSession('v13', [], closed);
     const bad: Session = {
-      ...fakeSession('pele', [], closed),
+      ...fakeSession('compare', [], closed),
       measure: () => Promise.reject(new Error('page crashed')),
     };
     await expect(interleave([good, bad], [fixture('x')], () => {}, 'test')).rejects.toThrow(
       'page crashed'
     );
-    expect(closed.sort()).toEqual(['pele', 'v13']);
+    expect(closed.sort()).toEqual(['compare', 'v13']);
   });
 });
 
@@ -104,7 +104,7 @@ describe('runAll', () => {
   it('keeps renderers that could not start in place, and runs the others alternating', async () => {
     const calls: string[] = [];
     const runs = await runAll(
-      ['v13', 'v13-base', 'pele'],
+      ['v13', 'v13-base', 'compare'],
       (r) => Promise.resolve(r === 'v13-base' ? emptyRun(r, 'missing') : fakeSession(r, calls, [])),
       ['x', 'y'].map(fixture),
       () => {},
@@ -113,8 +113,8 @@ describe('runAll', () => {
     expect(runs.map((r) => `${r.renderer}:${r.status}`)).toEqual([
       'v13:ready',
       'v13-base:missing',
-      'pele:ready',
+      'compare:ready',
     ]);
-    expect(calls).toEqual(['x:v13', 'x:pele', 'y:pele', 'y:v13']);
+    expect(calls).toEqual(['x:v13', 'x:compare', 'y:compare', 'y:v13']);
   });
 });

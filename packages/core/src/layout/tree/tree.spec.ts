@@ -43,7 +43,8 @@ describe('tree: a root and its branches', () => {
   });
 
   it('puts the first branches right and the rest left, split where the heights are closest', () => {
-    // Cutting after `a` or after `b` leaves the sides 30 apart; the earlier cut wins, as in Pele.
+    // Cutting after `a` or after `b` leaves the sides 30 apart; the earlier cut wins, as in the
+    // reference implementation.
     const r = at(m, 'r');
     expect(at(m, 'a').x).toBeGreaterThan(r.x);
     expect(at(m, 'b').x).toBeLessThan(r.x);

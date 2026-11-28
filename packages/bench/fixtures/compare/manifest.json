@@ -1,0 +1,15 @@
+{
+  "source": "pele/scripts/bench-mermaid.mjs (the fixtures mermaid-js/mermaid#8635 compares against)",
+  "diagrams": [
+    { "id": "compare/flowchart-7", "file": "flowchart-7.mmd", "type": "flowchart", "nodes": 7 },
+    { "id": "compare/flowchart-50", "file": "flowchart-50.mmd", "type": "flowchart", "nodes": 50 },
+    {
+      "id": "compare/flowchart-500",
+      "file": "flowchart-500.mmd",
+      "type": "flowchart",
+      "nodes": 500
+    },
+    { "id": "compare/sequence", "file": "sequence.mmd", "type": "sequence" },
+    { "id": "compare/class", "file": "class.mmd", "type": "class" }
+  ]
+}

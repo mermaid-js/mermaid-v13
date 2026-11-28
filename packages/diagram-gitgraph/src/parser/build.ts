@@ -26,7 +26,7 @@ interface CherryPickInput {
   missing: Range;
 }
 
-/** The 32-bit golden-ratio constant of Pele's `nextId` (D260). */
+/** The 32-bit golden-ratio constant of the reference implementation's `nextId` (D260). */
 const GOLDEN = 0x9e3779b1;
 
 /** One parse's git state: v12's `GitGraphState`, less what the grammar cannot reach. */
@@ -62,9 +62,9 @@ export class GitBuilder {
   }
 
   /**
-   * Pele's `nextId` (D260): `<seq>-` and seven hex digits of a multiplicative hash of the
-   * sequence number; an id already in use, or written anywhere in the text, moves to the next
-   * salt.
+   * The reference implementation's `nextId` (D260): `<seq>-` and seven hex digits of a
+   * multiplicative hash of the sequence number; an id already in use, or written anywhere in the
+   * text, moves to the next salt.
    */
   private nextId(): string {
     for (let salt = this.seq + 1; ; salt += GOLDEN) {

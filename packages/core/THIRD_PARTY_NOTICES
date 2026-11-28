@@ -1,67 +1,12 @@
 Third-party notices for @mermaid-js/core
 ========================================
 
-Pele
-----
-
-The files below are ported from, or based on, Pele (https://github.com/obsidianmd/pele) at
-commit 3a2f075 (release 1.13.0). Each file's header says what it took and what changed. Pele is
-used under the MIT License:
-
-  src/layout/compass/compass.ts
-  src/layout/compass/grid.ts
-  src/layout/compass/route.ts
-  src/layout/layered/compound.ts
-  src/layout/layered/compound-layer.ts
-  src/layout/layered/compound-levels.ts
-  src/layout/layered/compound-own.ts
-  src/layout/layered/compound-place.ts
-  src/layout/layered/compound-state.ts
-  src/layout/layered/crossings.ts
-  src/layout/layered/grid-layout.ts
-  src/layout/layered/grid-model.ts
-  src/layout/layered/grid.ts
-  src/layout/layered/index.ts
-  src/layout/layered/layered.ts
-  src/layout/tree/tree.ts
-  src/parser-kit/chars.ts
-  src/preprocess/yaml.ts
-  src/svg/escape.ts
-  src/svg/inert.ts
-  src/svg/testing/index.ts
-  src/svg/url.ts
-  src/text/label.ts
-  src/text/table.ts
-
-MIT License
-
-Copyright (c) 2026 kepano
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
 @braintree/sanitize-url
 -----------------------
 
 The control-character, entity and escape stripping in the file below is a port of
-@braintree/sanitize-url (https://github.com/braintree/sanitize-url), by way of Pele's
-reimplementation. @braintree/sanitize-url is used under the MIT License:
+@braintree/sanitize-url (https://github.com/braintree/sanitize-url). @braintree/sanitize-url is
+used under the MIT License:
 
   src/svg/url.ts
 
@@ -86,7 +31,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
 
 mermaid-ascii
 -------------

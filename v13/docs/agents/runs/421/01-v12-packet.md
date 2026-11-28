@@ -1,5 +1,7 @@
 # 421 / 01: v12 packet pointer notes
 
+`$REF` is the reference implementation's checkout (D770).
+
 Paths are relative to the repo root. `t:` stands for `git -C /Users/knsv/repos/mermaid show mermaid@12.2.0:<path>`. **The `mermaid@12.2.0` tag is not in this checkout**, only in `/Users/knsv/repos/mermaid` (1fb786986). Here, `fa796a943` holds the same packet, parser and schema files; only the syntax page differs (fa adds a 4-line `description:` front matter and swaps `mermaid`/`mermaid-example` fences). Line numbers are 1-based, taken on `feature/421_packet` at 26323b244.
 
 ## 1. v12 packet source (`t:packages/mermaid/src/diagrams/packet/`, 385 LOC)
@@ -58,6 +60,6 @@ Paths are relative to the repo root. `t:` stands for `git -C /Users/knsv/repos/m
 - **Labels** `layoutLabel` `core/src/text/label.ts:86`; pie `diagram-pie/src/layout/layout.ts:49-50`; journey `diagram-journey/src/layout/env.ts:81` (`maxWidth` from the box, the shape for fit-to-field).
 - **ASCII** `core/src/ascii/index.ts:5-18`: `Canvas` (`canvas.ts:13`), `drawBox` (`draw.ts:58`), `drawText` (`draw.ts:15`), `junction` (`glyphs.ts:170`), `ascii`/`unicode` glyphs, `asciiOptions`, `cellMeasurer`. Model: `diagram-er/package.json:19-22` (`./ascii`), :53-58 (`formats`, `"ascii"` key), `src/plugin.ts:23-24`, `src/ascii.ts:10-21`.
 
-## 5. Pele
+## 5. The reference implementation
 
-- No Pele source on this machine: no `pele/src/diagrams/packet/` under `/Users/knsv`. Only `packages/bench/fixtures/pele/` (class, flowchart, sequence `.mmd` + `manifest.json`), no packet. The token table must come from the oracle probe above.
+- No source of the reference implementation on this machine: no `$REF/src/diagrams/packet/` under `/Users/knsv`. Only `packages/bench/fixtures/pele/` (class, flowchart, sequence `.mmd` + `manifest.json`), no packet. The token table must come from the oracle probe above.

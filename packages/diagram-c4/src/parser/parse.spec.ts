@@ -378,7 +378,7 @@ describe('D452: parse quirks that damaged the model', () => {
   });
 
   it('reports `$__proto__` instead of crashing (D452)', () => {
-    // A warning: Pele keeps it as an unknown name, with no error.
+    // A warning: the reference implementation keeps it as an unknown name, with no error.
     const r = parse('C4Context\nPerson(a, "A", $__proto__="x")');
     expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([
       ['warning', codes.C4_NAME_RESERVED],

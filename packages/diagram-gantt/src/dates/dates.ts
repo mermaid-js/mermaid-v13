@@ -1,11 +1,9 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/diagrams/gantt/dates.ts at 3a2f075;
-// `parseDuration` from src/diagrams/gantt/db.ts.
-// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/diagram-gantt.
-// Changes from Pele: the one-entry cache of the compiled parse format is gone (no module state,
-// R-ARCH-4), so `compile` runs per call; index reads carry `!` for noUncheckedIndexedAccess.
-// `readStartDate` and `readEndDate` are new: the written-date branches of v12's `getStartDate`
-// and `getEndDate` (ganttDb.js at fa796a943). The date code is otherwise unchanged.
-// cspell:ignore kepano gggg zzz Mdhmswy
+// Changes from the reference implementation: the one-entry cache of the compiled parse format is
+// gone (no module state, R-ARCH-4), so `compile` runs per call; index reads carry `!` for
+// noUncheckedIndexedAccess. `readStartDate` and `readEndDate` are new: the written-date branches of
+// v12's `getStartDate` and `getEndDate` (ganttDb.js at fa796a943). The date code is otherwise
+// unchanged.
+// cspell:ignore gggg zzz Mdhmswy
 //
 // The parts of dayjs 1.11 that Mermaid's gantt code relies on, with the plugins it loads (custom parse format,
 // advanced format, ISO week) and the English locale: strict parsing against a format, formatting, and calendar

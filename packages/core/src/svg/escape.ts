@@ -1,7 +1,4 @@
-/**
- * Escaping and number formatting. Ported from Pele (https://github.com/obsidianmd/pele,
- * MIT, (c) 2026 kepano), src/svg/builder.ts @ 3a2f075.
- */
+/** Escaping and number formatting. */
 import { AMP, DQUOTE, GT, LT } from '../parser-kit/char-codes.ts';
 
 // Characters XML 1.0 does not allow (C0 controls except tab/LF/CR, DEL, lone surrogates,

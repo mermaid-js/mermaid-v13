@@ -16,7 +16,7 @@ detector (not "3 versions"). class/state have only `-V2` detectors. ELK layout n
 
 From `/Users/knsv/repos/mermaid-v13-approches/reports/2026-10-30-mermaid-dagre.md`:
 
-| | Mermaid 12.2 | Pele (TS, 0 deps) | Ondine (Rust/WASM) |
+| | Mermaid 12.2 | The reference implementation (TS, 0 deps) | Ondine (Rust/WASM) |
 |---|---|---|---|
 | Loaded for a flowchart | 796 KB / 213 KB gz | 156 KB / 62 KB gz | 8 KB JS + 310 KB WASM |
 | Distributable | 4.85 MB / 1.39 MB gz | 156 KB | 318 KB |
@@ -26,7 +26,7 @@ From `/Users/knsv/repos/mermaid-v13-approches/reports/2026-10-30-mermaid-dagre.m
 | SVGs with `<foreignObject>` | 147/158 | 0 | 0 |
 | SVGs with `<style>` | 158/158 | 0 | 0 |
 
-Large graphs: `perf/huge2` (1708 lines) takes 2899 ms in Mermaid and 40 ms in Pele, and
+Large graphs: `perf/huge2` (1708 lines) takes 2899 ms in Mermaid and 40 ms in the reference implementation, and
 `perf/medium3` (564 lines) takes 1120 ms and 12 ms. Mermaid's cost is not in parsing. It comes from DOM
 measurement, layout and serialization (§2).
 
@@ -442,7 +442,7 @@ Merge flow (`src/config.ts`, 358 LOC):
   Test corpus: 25 `e2e/platform/xss*.html` pages, `ghsa1-3.html`, `click_security_{strict,loose,sandbox,other}.html`, and
   `e2e/other/pr-check/xss.spec.js` (22 tests) plus `ghsa.spec.js` (6).
 - v13 implication: an SVG-only output with no foreignObject, no `<style>` (or a fixed stylesheet with CSS vars) and no
-  `.html()` sinks would remove classes 1–3 structurally. The benchmark shows Pele/Ondine emit none of these constructs.
+  `.html()` sinks would remove classes 1–3 structurally. The benchmark shows the reference implementation and Ondine emit none of these constructs.
 
 ---
 

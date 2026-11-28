@@ -4,8 +4,7 @@
  * `<script>`, `on*`, `<style>`, `foreignObject` or a script-capable URL.
  *
  * A linear hand-written scanner: the input may be hostile, so no backtracking regexes.
- * Structure follows Pele's test oracle (https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano), tests/support/inert.ts @ 3a2f075.
+ * Structure follows the reference implementation's test oracle, tests/support/inert.ts @ 3a2f075.
  */
 import {
   ALLOWED_ATTRS,

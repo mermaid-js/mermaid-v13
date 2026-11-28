@@ -12,7 +12,7 @@ Integration branch `feature/522_c4` (from `mermaid-v13` at 521fb76ee). Draft PR:
 | T6 language facet | #543 | #539 | merged (ff bc3c97782; package entry 26,244 B gz, `./language` 18,312 B gz core external; core unchanged) |
 | T7 ascii (Should) | #545 | #542 | merged (ff a3f71747a; text path 12,288 B gz; core +12, the `loadAscii` row) |
 
-- `01-v12-c4.md`: pointer notes on v12 grammar, DB, renderer, shapes, specs, config, corpus, Pele.
+- `01-v12-c4.md`: pointer notes on v12 grammar, DB, renderer, shapes, specs, config, corpus, the reference implementation.
 - `02-v13-core.md`: pointer notes on the plugin contract, `custom` ports, conformance wiring, core seams, size guards.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
 - `GAPS.md`: unmet criteria and choices per ticket.

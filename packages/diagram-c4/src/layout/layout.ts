@@ -1,13 +1,11 @@
 /**
  * The C4 custom layout (spec #522 §Layout, T3, `layoutKind: 'custom'`): `C4Model` in, `C4Layout`
- * out. Text is measured first, through the injected measurer in the fonts it is drawn in
- * (pitfall 16); then the grid (`./grid.ts`, D454) places elements and boundaries, the router
- * (`./route.ts`, D455) draws the relations in model order, and each relation's label goes along
- * its line where it covers least (Pele `render.ts` at commit 3a2f075, https://github.com/obsidianmd/pele,
- * MIT, (c) 2026 kepano). The title goes above, and the canvas is everything drawn (D224) with the
- * config margins all round.
+ * out. Text is measured first, through the injected measurer in the fonts it is drawn in (pitfall
+ * 16); then the grid (`./grid.ts`, D454) places elements and boundaries, the router (`./route.ts`,
+ * D455) draws the relations in model order, and each relation's label goes along its line where it
+ * covers least (the reference implementation's `render.ts` at commit 3a2f075). The title goes
+ * above, and the canvas is everything drawn (D224) with the config margins all round.
  */
-// cspell:ignore kepano
 import type { RenderContext } from '@mermaid-js/core';
 import {
   layoutLabel,
@@ -518,7 +516,10 @@ interface Arrowed {
   readonly heads: readonly number[];
 }
 
-/** Routes every relation with known ends in model order, then places their labels (Pele `render.ts`). */
+/**
+ * Routes every relation with known ends in model order, then places their labels (the reference
+ * implementation's `render.ts`).
+ */
 function routeAll(input: RouteInput): RoutedAll {
   const { model, endOf, shapes, frames, order } = input;
   // With tags, each line keeps its tag's height from the next where the room allows (D679).

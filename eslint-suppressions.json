@@ -144,11 +144,6 @@
       "count": 1
     }
   },
-  "packages/conformance/src/fuzz/mutator.ts": {
-    "tsdoc/syntax": {
-      "count": 1
-    }
-  },
   "packages/conformance/src/fuzz/run.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
@@ -280,14 +275,6 @@
     },
     "complexity": {
       "count": 4
-    },
-    "tsdoc/syntax": {
-      "count": 1
-    }
-  },
-  "packages/core/src/svg/escape.ts": {
-    "tsdoc/syntax": {
-      "count": 1
     }
   },
   "packages/core/src/svg/inert.ts": {
@@ -439,9 +426,6 @@
   "packages/diagram-flowchart/src/parser/model.ts": {
     "@typescript-eslint/no-base-to-string": {
       "count": 6
-    },
-    "tsdoc/syntax": {
-      "count": 1
     }
   },
   "packages/diagram-flowchart/src/parser/parse.spec.ts": {

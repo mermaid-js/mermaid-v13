@@ -1,8 +1,8 @@
 // cspell:words nonterminal terminalx xterminal accdescr acctitle
 /**
  * Generated railroad inputs for the fuzz property (`fuzz.spec.ts`), per notation, adapted from
- * Pele's AST-equality fuzz (`pele@1.13.0`, `tests/support/railroad-oracle.ts` and
- * `tests/support/corpus.ts`, MIT, Copyright (c) 2026 kepano; spec #526 adopts it as a parity
+ * the reference implementation's AST-equality fuzz (`tests/support/railroad-oracle.ts` and
+ * `tests/support/corpus.ts`; spec #526 adopts it as a parity
  * property, D325). Four sources of input, a quarter each: corpus inputs mutated with fragments
  * of the notation, random token pieces, well-formed grammars of random shape, and those
  * mutated. Every draw comes from one seeded generator, so a failure names a reproducible input.
@@ -11,7 +11,7 @@ import type { RailroadNotation } from '@mermaid-js/diagram-railroad';
 
 export type Rnd = () => number;
 
-/** A linear congruential generator from `seed` (Pele's `random`). */
+/** A linear congruential generator from `seed` (the reference implementation's `random`). */
 export function random(seed: number): Rnd {
   let state = seed >>> 0;
   return () => {
@@ -30,7 +30,10 @@ function several(rnd: Rnd, max: number, make: () => string, joints: readonly str
   return parts.join(pick(rnd, joints));
 }
 
-/** Up to three edits of a corpus input: insert, cut, splice, repeat or replace (Pele's `mutator`). */
+/**
+ * Up to three edits of a corpus input: insert, cut, splice, repeat or replace (the reference
+ * implementation's `mutator`).
+ */
 export function mutator(
   corpus: readonly string[],
   fragments: readonly string[],
@@ -454,7 +457,7 @@ const HEADERS = [
   'title\n',
 ];
 
-/** Well-formed text of random shape in one notation (Pele's `grammar`). */
+/** Well-formed text of random shape in one notation (the reference implementation's `grammar`). */
 export function grammar(n: FuzzNotation, rnd: Rnd): string {
   let s = n.keyword + pick(rnd, ['\n', ' ', '\n\n']);
   while (rnd() < 0.25) s += pick(rnd, HEADERS);
@@ -463,7 +466,10 @@ export function grammar(n: FuzzNotation, rnd: Rnd): string {
   return s;
 }
 
-/** Token-level pieces in a random order, most of them well-formed on their own (Pele's `pieces`). */
+/**
+ * Token-level pieces in a random order, most of them well-formed on their own (the reference
+ * implementation's `pieces`).
+ */
 export function pieces(n: FuzzNotation, rnd: Rnd): string {
   let s = rnd() < 0.9 ? n.keyword + pick(rnd, ['\n', ' ', '\n\n', '']) : '';
   for (let i = 1 + Math.floor(rnd() * 14); i > 0; i--) {
@@ -476,7 +482,8 @@ const RE_KEYWORD = /railroad-(?:ebnf-|abnf-|peg-)?beta/;
 
 /**
  * The notation's own corpus inputs, then its seeds, then the other notations' inputs under this
- * keyword, which exercise the error paths and the shared constructs (Pele's `corpusFor`).
+ * keyword, which exercise the error paths and the shared constructs (the reference implementation's
+ * `corpusFor`).
  */
 export function fuzzCorpus(n: FuzzNotation, all: readonly string[]): string[] {
   const own = all.filter((src) => src.includes(n.keyword));

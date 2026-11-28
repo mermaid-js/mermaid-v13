@@ -4,11 +4,10 @@
  * lengths (`diagramMarginX`, `c4ShapeMargin`, `c4ShapePadding`, `width`, …) are read by
  * `../config.ts`; nothing else in `src/layout/` writes a length.
  *
- * v12's own constants (`c4Renderer.ts`, `c4LabelHelper.ts`, `styles.js`, `c4ShapeAdapter.ts`)
- * and Pele's router constants (`src/diagrams/c4/route.ts`, `render.ts` at commit 3a2f075,
- * https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano) are marked as such.
+ * v12's own constants (`c4Renderer.ts`, `c4LabelHelper.ts`, `styles.js`, `c4ShapeAdapter.ts`) and
+ * the reference implementation's router constants (`src/diagrams/c4/route.ts`, `render.ts` at
+ * commit 3a2f075) are marked as such.
  */
-// cspell:ignore kepano
 export const C4_METRICS = {
   /** v12 `c4LabelHelper.ts`: the gap between an element's name, type and description. */
   sectionGap: 3,
@@ -26,7 +25,10 @@ export const C4_METRICS = {
   boundaryLabelGrow: 2,
   boundaryDescrShrink: 2,
   minFontSize: 1,
-  /** Room each side of a header wider than the boundary's contents (Pele `HEAD_LEFT`). */
+  /**
+   * Room each side of a header wider than the boundary's contents (the reference implementation's
+   * `HEAD_LEFT`).
+   */
   boundaryHeadPadX: 16,
   /** v12 `svgDraw.ts`: a boundary's corner radius. */
   boundaryRadius: 2.5,
@@ -47,7 +49,7 @@ export const C4_METRICS = {
   /** `fr-rect`: the frame lines stand this far inside each side. */
   frameInset: 8,
 
-  // The router (Pele `route.ts`).
+  // The router (the reference implementation's `route.ts`).
   /** A self-loop's reach to the right, its label's gap past it, and its label room. */
   loop: 28,
   loopLabelGap: 4,
@@ -76,10 +78,13 @@ export const C4_METRICS = {
   /** The step between the places a line may leave or reach a side, and their least distance from its ends. */
   portStep: 12,
   portInset: 8,
-  /** How far a line moves sideways when another runs the opposite way (Pele `PAIR_SHIFT`). */
+  /**
+   * How far a line moves sideways when another runs the opposite way (the reference
+   * implementation's `PAIR_SHIFT`).
+   */
   pairShift: 7,
 
-  // Label placement (Pele `render.ts`).
+  // Label placement (the reference implementation's `render.ts`).
   /** A label may cover this much of a shape's edge, where there is no text. */
   labelEdge: 8,
   /**

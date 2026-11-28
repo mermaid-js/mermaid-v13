@@ -1,10 +1,8 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
-// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
-// Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
-// noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed arrays, and the
-// layout cache keys on `layoutInputs`. Length constants come from `opt.metrics` (D77). The
-// algorithm is otherwise unchanged.
-// cspell:ignore kepano lnode lnodes cnode
+// Changes from the reference implementation: `const enum`s are `as const` objects, and index reads
+// carry `!` for noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed
+// arrays, and the layout cache keys on `layoutInputs`. Length constants come from `opt.metrics`
+// (D77). The algorithm is otherwise unchanged.
+// cspell:ignore lnode lnodes cnode
 //
 import { assignEdges, budgetPorts, levelsOf } from './compound-levels.ts';
 import { orderByFlatLayout } from './compound-layer.ts';

@@ -7,7 +7,7 @@ Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft 
 | Package skeleton | — | — | on the integration branch (setup) |
 | Final whole-branch review | — | all | fixed and merged; `tickets/final-review.md` |
 | T0 core `now`, `availableWidth` on the context | #375 | — | merged (ff 46431e19d) |
-| D1 dates and axis (Pele port) | #376 | — | merged (no-ff) |
+| D1 dates and axis (the reference implementation port) | #376 | — | merged (no-ff) |
 | T1 lexer parity gate | #377 | #285 (merged) | merged (ff 935787bfe) |
 | T2 grammar, parser, model, AST | #378 | #377 | merged (no-ff), + generated grammar files committed |
 | T3 schedule and layout | #379 | #375, #376, #378 | merged (ff f216d2453) |
@@ -16,7 +16,7 @@ Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft 
 | I1 interactions spec | #384 | #381 | merged (ff 13a63ae5b) |
 | T5 integration | #385 | #381, #382 | merged (ff a3115006d) |
 
-- `01-v12-gantt.md`: pointer notes on v12 grammar, DB, renderer, styles, config, corpus, Pele.
+- `01-v12-gantt.md`: pointer notes on v12 grammar, DB, renderer, styles, config, corpus, the reference implementation.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
 - `GAPS.md`: unmet criteria and choices per ticket.
 - `tickets/<n>.md`: handoffs.

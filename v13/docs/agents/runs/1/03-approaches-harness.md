@@ -1,5 +1,7 @@
 # 03 — `mermaid-v13-approches` bench harness (→ `packages/bench`, ticket #3)
 
+`$REF` is the reference implementation's checkout (D770).
+
 Repo: `/Users/knsv/repos/mermaid-v13-approches` @ `43323c6` (2026-10-30). Package `research-mermaid-comparison`, MIT, private. Uses pnpm and Vite 8; Playwright 1.64 drives headless runs.
 Deps: `mermaid@12.2.0`, `pele@1.12.0`, `ondine@0.0.3`, `@mermanjs/web-render@0.9.2`.
 
@@ -23,7 +25,7 @@ reports/2026-10-30-mermaid-{default-elk,dagre}.{json,md}
 - Groups and counts: `pr-check` 12, `nightly` 3, `dagre` 68, `shape-alias` 42, `v2` 7, `classic` 3, `icon` 10 (= 145 tiny/regular), `perf` 13 (large/huge, from `e2e/platform/dev-diagrams/performance/flowcharts/`, with duplicates `huge4` and `large3` dropped).
 - Sources are this repo's `e2e/diagrams/flowchart/{pr-check,nightly-check/{.,dagre,shape-alias,v2,classic,icon}}`. `sync-corpus.mjs:22-31` excludes `visual-check/`, `handdrawn/`, `shape-themes/`, `redux-color-subgraphs/` and `elk-container-algorithms/`. Feature tags are regexes at `:33ff` (subgraph, classDef, style, linkStyle, shape-syntax, frontmatter, …).
 - **After ticket #2 these e2e sources go away from the working tree**, so commit the 158 files plus the manifest into `packages/bench/fixtures/` (R-PERF-6 "fixtures committed"). Copying from `/Users/knsv/repos/mermaid-v13-approches/corpus/` is simplest. The `perf/` files are also in this repo at `e2e/platform/dev-diagrams/performance/flowcharts/` (16 files incl. dups).
-- The #8635/Pele set (7/50/500-node flowcharts, sequence, class) is **not** in this corpus. Take it from `pele/scripts/bench-mermaid.mjs:29-80` (see 02-pele-port.md).
+- The #8635/the reference implementation set (7/50/500-node flowcharts, sequence, class) is **not** in this corpus. Take it from `$REF/scripts/bench-mermaid.mjs:29-80` (see 02-reference-port.md).
 
 ## How it measures
 - **Isolation**: each renderer runs in its own iframe at the *other* loopback name (`localhost` ↔ `127.0.0.1`). That makes it cross-site, so it gets its own process. Iframes are recreated every run.
@@ -48,7 +50,7 @@ pnpm bench [--no-build] [--headed] [--tiers tiny,regular] [--renderers mermaid,p
 `bench.mjs` polls `window.__bench.state/progress` every second, then calls `window.__bench.report()`, and writes `reports/<ISO-stamp>.{json,md}`. Markdown table columns: Ready at, Init, Loaded JS, Loaded WASM, OK/err/timeout, Σ warm (common), Σ first (common), vs Mermaid (geomean) (`bench.mjs:73-127`).
 
 ## Reference results (2026-10-30, Chromium 156, M4 Max, 158 diagrams, 20 reps)
-Mermaid dagre: 213 KB gz fetched, Ready at 36 ms. Pele: 62 KB, 10 ms, 158/158 OK, geomean 135× (vs ELK default) / 118× (vs dagre). Full tables: `README.md` "Results" and `reports/*.md`.
+Mermaid dagre: 213 KB gz fetched, Ready at 36 ms. The reference implementation: 62 KB, 10 ms, 158/158 OK, geomean 135× (vs ELK default) / 118× (vs dagre). Full tables: `README.md` "Results" and `reports/*.md`.
 
 ## Gaps for #3 (inferences)
 - No per-stage (parse/measure/layout/serialise) timing exists. It has to be added in the v13 build behind a compile-time flag. The harness only times end-to-end.

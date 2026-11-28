@@ -27,7 +27,7 @@ const DIR = join(SITE_DIR, 'instructions');
 const CHILD = join(DIR, 'render-n.mjs');
 
 // The counted process: plain JS, so only Node and the renderer run. Limits are lifted as in the
-// bench adapters. v13 takes `render(id, text)`, Pele `render(text, options)`.
+// bench adapters. v13 takes `render(id, text)`, compare `render(text, options)`.
 const CHILD_SOURCE = `import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 const [kind, entry, file, count] = process.argv.slice(2);
@@ -35,10 +35,10 @@ const mod = await import(pathToFileURL(entry).href);
 const src = readFileSync(file, 'utf8');
 const lifted = { maxTextSize: 10000000, maxEdges: 1000000 };
 if (kind === 'v13' && typeof mod.initialize === 'function') mod.initialize(lifted);
-const pele = { limit: lifted.maxTextSize, maxEdges: lifted.maxEdges, outputLimit: Number.MAX_SAFE_INTEGER };
+const compare = { limit: lifted.maxTextSize, maxEdges: lifted.maxEdges, outputLimit: Number.MAX_SAFE_INTEGER };
 for (let i = 0; i < Number(count); i++) {
   const text = src + '\\n%% run ' + i + '\\n';
-  const r = kind === 'pele' ? mod.render(text, pele) : await mod.render('d' + i, text);
+  const r = kind === 'compare' ? mod.render(text, compare) : await mod.render('d' + i, text);
   if (!String(r.svg ?? r).includes('<svg')) throw new Error('no svg');
 }
 `;
@@ -108,7 +108,7 @@ export interface InstructionRun {
 export interface InstructionOptions {
   perf: string;
   site: Site;
-  /** Node-capable renderers (v13 first is expected; v13-base and Pele are compared with it). */
+  /** Node-capable renderers (v13 first is expected; v13-base and compare are compared with it). */
   renderers: RendererId[];
   diagrams: { diagram: NamedDiagram; fixture: Fixture }[];
   repeats: number;
@@ -147,7 +147,7 @@ export function countInstructions(o: InstructionOptions): InstructionRun {
       version: r === 'v13-base' ? o.site.base!.version : versionOf(r),
     });
   }
-  const kindOf = (r: RendererId) => (r === 'pele' ? 'pele' : 'v13');
+  const kindOf = (r: RendererId) => (r === 'compare' ? 'compare' : 'v13');
   const active = o.renderers.filter((r) => entries.has(r));
   o.log(
     `Counting instructions of ${active.join(', ')} in Node on ${o.diagrams.length} diagrams, ${o.repeats} repeats`

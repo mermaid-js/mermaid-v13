@@ -96,7 +96,7 @@ const DIFFERENCES: Readonly<Record<string, Difference>> = {
   'group-id edge end': {
     source: 'architecture-cases/edge-to-group-id',
     v12: 'rejects with a raw TypeError (`.in` read off the missing node, architectureDb.ts:225-226)',
-    v13: "rejects with ARCHITECTURE_GROUP_EDGE_END and Pele's message",
+    v13: "rejects with ARCHITECTURE_GROUP_EDGE_END and the reference implementation's message",
     check(v12, source) {
       expect(v12.accepted).toBe(false);
       expect(v12.accepted ? '' : v12.error).toBe(TYPE_ERROR);

@@ -11,7 +11,7 @@ Read files with `git -C /Users/knsv/repos/mermaid show flowchart-chevrotain-pars
 |---|---|---|
 | `flow.tokens.ts` | 692 | `createToken` set. Abstract categories `Link, StartLink, EdgeText, TextToken, Pipe, ShapeData` (`Lexer.NA`, :28-33); `NodeString` :42, `UnicodeText` :48, `NewLine` :58, `Space` :69, `AccTitle/AccDescr/AccDescrMultiline` :80-88, `MdStringStart/MdString/MdStringEnd` :99-108, `StringStart/StringContent/StringEnd` :116-125, keywords `Style, Default, LinkStyle, Interpolate, ClassDef, Class, Href, Call…` :140-169. Token-level reference for the v13 lexer (DESIGN §4.3) |
 | `flow.lexer.ts` | 154 | `flowLexer = new Lexer({ defaultMode: 'default', modes: {…} })` :33. Modes mirror jison start conditions |
-| `flow.lexer.spec.ts` | 216 | **Lexer-parity gate**: jison lexer is the oracle; asserts identical `(terminal name, image)` streams. Documented deviations: `accTitle:`/`accDescr:` (jison emits an empty-image value token) and `@{` SHAPE_DATA opener (empty image). Same idea as Pele's `oracleTokens` |
+| `flow.lexer.spec.ts` | 216 | **Lexer-parity gate**: jison lexer is the oracle; asserts identical `(terminal name, image)` streams. Documented deviations: `accTitle:`/`accDescr:` (jison emits an empty-image value token) and `@{` SHAPE_DATA opener (empty image). Same idea as the reference implementation's `oracleTokens` |
 | `flow.parser.ts` | 736 | CstParser grammar |
 | `flow.visitor.ts` | 526 | CST → `FlowDB` calls (reproduces jison actions) |
 | `flow.chevrotain.ts` | 38 | `parseFlowchartChevrotain(input, yy: FlowDB)`. Appends `\n`, reports whichever of lex/parse error comes first (restores jison first-error order). Errors are plain `Error` **with no position** (regression noted in parser-and-tooling.md:105) |

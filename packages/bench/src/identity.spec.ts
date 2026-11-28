@@ -12,12 +12,12 @@ describe('compareIdentity', () => {
   it('names a fixture whose SVG differs by one character, with where it first differs', () => {
     const result = compareIdentity([
       { id: 'corpus/a', head: { svg: '<svg/>' }, base: { svg: '<svg/>' } },
-      { id: 'pele/b', head: { svg: '<svg width="10"/>' }, base: { svg: '<svg width="11"/>' } },
+      { id: 'compare/b', head: { svg: '<svg width="10"/>' }, base: { svg: '<svg width="11"/>' } },
     ]);
     expect(result).toEqual({
       compared: 2,
       failedInBoth: 0,
-      differing: [{ id: 'pele/b', reason: 'SVG differs at offset 13' }],
+      differing: [{ id: 'compare/b', reason: 'SVG differs at offset 13' }],
     });
   });
 
@@ -74,14 +74,14 @@ describe('identityReport', () => {
       failedInBoth: 0,
       differing: [
         { id: 'corpus/basic/edges', reason: 'SVG differs at offset 812' },
-        { id: 'pele/flowchart-500', reason: 'head failed: TypeError: x is undefined' },
+        { id: 'compare/flowchart-500', reason: 'head failed: TypeError: x is undefined' },
       ],
     });
     expect(report).toEqual({
       lines: [
         'Identity: 161 of 163 identical; 2 differ:',
         '  corpus/basic/edges: SVG differs at offset 812',
-        '  pele/flowchart-500: head failed: TypeError: x is undefined',
+        '  compare/flowchart-500: head failed: TypeError: x is undefined',
       ],
       exitCode: 1,
     });

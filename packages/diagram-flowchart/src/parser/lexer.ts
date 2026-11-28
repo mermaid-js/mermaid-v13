@@ -4,13 +4,12 @@
  * here are flowchart's own: its keywords, its links (normal, thick, dotted and invisible, with
  * `x`, `o` and `<` heads) and their edge text, its blanks, and `}\s*\n`, which v12 rewrote.
  *
- * Ported from Pele's `src/diagrams/flowchart/lexer.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano), which is checked token by token
- * against the jison lexer. Changes from Pele are listed in the family's lexer.
+ * It is checked token by token against the jison lexer. Changes from the reference implementation
+ * are listed in the family's lexer.
  *
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
-// cspell:words kepano invis
+// cspell:words invis
 import {
   closingLine,
   CR,

@@ -1,7 +1,9 @@
 # Implementer brief — spec #289 (M4 quadrant chart)
 
+`$REF` is the reference implementation's checkout (D770).
+
 - Ticket: `gh issue view -R mermaid-js/mermaid-v13 <N>`. Spec: #289 (read its "Maintainer decisions": decided). Docs: v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md (D210–D239; D224–D227 are in pie's block and apply here). Recipe: v13/docs/agents/port-diagram/ (README, parser-method, pitfalls, theming, language). Worked example: `packages/diagram-sequence` (custom layout), `packages/conformance`.
-- v12 source: `git show fa796a943:packages/mermaid/src/diagrams/quadrant-chart/…` (`parser/quadrant.jison`, `quadrantDb.ts`, `quadrantBuilder.ts`, `quadrantRenderer.ts`, `utils.ts`, specs); theme rules in `…/themes/theme-*.js` (`/* quadrant-graph */`). Oracle: the `mermaid-v12` dev dependency in `packages/conformance`. Corpus: `e2e/diagrams/quadrant-chart/**/*.mmd` (14). Pele (`/Users/knsv/repos/pele/src/diagrams/quadrant/`) is a reference, never the oracle.
+- v12 source: `git show fa796a943:packages/mermaid/src/diagrams/quadrant-chart/…` (`parser/quadrant.jison`, `quadrantDb.ts`, `quadrantBuilder.ts`, `quadrantRenderer.ts`, `utils.ts`, specs); theme rules in `…/themes/theme-*.js` (`/* quadrant-graph */`). Oracle: the `mermaid-v12` dev dependency in `packages/conformance`. Corpus: `e2e/diagrams/quadrant-chart/**/*.mmd` (14). The reference implementation (`$REF/src/diagrams/quadrant/`) is a reference, never the oracle.
 - Tickets: T0 #309, T1 #300, T2 #301, T3 #332, T4 #312, T5 #317, T6 #321.
 - Notes: this folder. Read INDEX.md, GAPS.md (close the items listed for your ticket) and tickets/<dep>.md for each blocker.
 - Integration branch: `feature/289_quadrant` (worktree `/Users/knsv/repos/mermaid-v13/.claude/worktrees/289-quadrant-6c8aad`). Your worktree: `/Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N>` on `feature/<N>_<short>`. Use absolute paths; stay out of the main checkout and other worktrees. Run `pnpm install` first.

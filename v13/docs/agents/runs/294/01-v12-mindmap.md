@@ -1,5 +1,7 @@
 # 01 — v12 mindmap pointer notes (spec #294)
 
+`$REF` is the reference implementation's checkout (D770).
+
 `V=fa796a943:packages/mermaid/src/diagrams/mindmap`, `SH=fa796a943:packages/mermaid/src/rendering-util/rendering-elements/shapes`, `TT=fa796a943:packages/mermaid-layout-tidy-tree/src`, `CB=fa796a943:packages/mermaid/src/rendering-util/layout-algorithms/cose-bilkent`, `R=fa796a943:packages/mermaid/src`. Read with `git show $V/<file>`.
 v12.2.0 dist (the oracle): `node_modules/.pnpm/mermaid@12.2.0/node_modules/mermaid/dist/chunks/mermaid.core/mindmap-definition-6OY57UG3.mjs`.
 Results marked (probed) came from running that chunk's `diagram.parser` with `yy = diagram.db` and v12's DOMPurify patched to identity (as `packages/conformance/src/oracle.ts:40–72`), so sanitising is not probed.
@@ -129,13 +131,13 @@ Results marked (probed) came from running that chunk's `diagram.parser` with `yy
 - Description errors, all confirmed: `rounded-rect-shape.mmd:3` says rounded but L7 is `((`; `circle-shape.mmd:3` says circle but L7 is `(`. `bang-and-cloud-shape.mmd:4` says "each carrying its own icon" and has 3; `…-with-icons.mmd:3–5` says "without any icon" and has none: the names are swapped, not the bodies.
 - Extra error: `text-should-wrap-with-icon.mmd:3` says "carrying both an icon" but has no `::icon` line.
 
-## 8. Pele — `/Users/knsv/repos/pele/src/diagrams/mindmap/`
+## 8. The reference implementation — `$REF/src/diagrams/mindmap/`
 
 - `db.ts:33–60` stack of open nodes: pop while `open[top].level >= level` (L45), parent = top, root error text as v12 (L48), section at insert `parent.isRoot ? children.length % 11 : parent.section` (L54). `decorateNode` ignores a missing node (L62–68).
 - `parser.ts` → `../common/outline.ts` (`tokenize` L115, `parseOutline` L262, `getType` L64; shared with kanban).
 - `render.ts:120–148` subtree bands: `stack` (L120–134) piles children with `GAP_Y 8` / `GROUP_GAP 18`, extents bottom-up over the depth-first order (L137–148). It is a stacked band layout, not contour-compacting Reingold–Tilford.
 - `render.ts:166–203` left/right split (D283): first `split` branches right, rest left, `split` minimises `|2·right − total + (2k − count)·BRANCH_GAP_Y|` (L172–182). x steps `w/2 + GAP_X 36 | BRANCH_GAP_X 52 + w/2` (L200).
-- `render.ts:157–165` outline (`down`) mode via `turnToFit` (`../common/fit-width.ts:44`). No tidy-tree code in Pele (grep).
+- `render.ts:157–165` outline (`down`) mode via `turnToFit` (`../common/fit-width.ts:44`). No tidy-tree code in the reference implementation (grep).
 
 ## 9. Surprises (against the spec)
 

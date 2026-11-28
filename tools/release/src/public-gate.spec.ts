@@ -147,7 +147,7 @@ describe('public alpha gate (R-REL-3: R-PERF-1…4)', () => {
     for (const options of [
       { filter: 'huge' },
       { tiers: ['tiny'] },
-      { sets: ['pele'] },
+      { sets: ['compare'] },
       { renderers: ['v13'] },
     ]) {
       const outcome = input(passing((r) => (r.options = options)));

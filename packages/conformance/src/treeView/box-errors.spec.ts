@@ -18,7 +18,8 @@ import { treeViewGateCorpus } from './corpus.ts';
  *   Only a `STRAY_BLANK` may name it in its related range instead: v13 reports the blank, v12
  *   the indent after it. A Langium error at the end of the text names no line (`line ?`).
  * - **Columns of a box error.** v12 gave none. v13's `BOX_EMPTY_NODE` starts at the line's first
- *   branch glyph in the source, its `BOX_UNEXPECTED_INDENT` at the line's start (Pele's mapping).
+ * branch glyph in the source, its `BOX_UNEXPECTED_INDENT` at the line's start (the reference
+ * implementation's mapping).
  * - **Columns of a Langium error.** v12's column is in the rewritten text (it never remapped
  *   columns). Taken back through v13's box pass (whose rewrite is gated against v12's) to the
  *   source character it came from, it is where one of those diagnostics starts. The corpus holds

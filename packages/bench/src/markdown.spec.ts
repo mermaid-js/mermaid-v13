@@ -81,22 +81,22 @@ describe('markdown report', () => {
   it('lists fixtures of types without a v13 package apart from the results', () => {
     const withUnsupported: BenchReport = {
       ...report,
-      unsupported: [{ id: 'pele/sequence', set: 'pele', type: 'sequence' }],
+      unsupported: [{ id: 'compare/sequence', set: 'compare', type: 'sequence' }],
     };
     const out = formatMarkdown(
       withUnsupported,
       evaluateGates({ report: withUnsupported, baseline: undefined, mode: 'report', corpusSize: 1 })
     );
     expect(out).toContain('## Not run: no v13 package for the type');
-    expect(out).toContain('| pele/sequence | pele | sequence |');
-    expect(out.split('\n').filter((l) => l.startsWith('| pele/sequence'))).toHaveLength(1);
+    expect(out).toContain('| compare/sequence | compare | sequence |');
+    expect(out.split('\n').filter((l) => l.startsWith('| compare/sequence'))).toHaveLength(1);
     expect(md).not.toContain('Not run');
   });
 
-  it('adds v13-base and pele columns only when those renderers ran', () => {
+  it('adds v13-base and compare columns only when those renderers ran', () => {
     expect(md).not.toContain('vs v13-base');
-    expect(md).not.toContain('pele warm');
-    const run = (renderer: 'v13-base' | 'pele', version: string, warmMs: number) => ({
+    expect(md).not.toContain('compare warm');
+    const run = (renderer: 'v13-base' | 'compare', version: string, warmMs: number) => ({
       renderer,
       version,
       status: 'ready' as const,
@@ -110,17 +110,17 @@ describe('markdown report', () => {
       renderers: [
         ...report.renderers,
         run('v13-base', '13.0.0-alpha.0 (abc123456)', 0.4),
-        run('pele', '1.13.0', 0.1),
+        run('compare', '1.13.0', 0.1),
       ],
     };
     const out = formatMarkdown(
       withBoth,
       evaluateGates({ report: withBoth, baseline: undefined, mode: 'report', corpusSize: 1 })
     );
-    // v13 at 0.2 ms: twice as fast as the base (0.4 ms), half as fast as pele (0.1 ms).
+    // v13 at 0.2 ms: twice as fast as the base (0.4 ms), half as fast as compare (0.1 ms).
     expect(out).toMatch(/\| v13 \| 13\.0\.0-alpha\.0 \|.*\| 100× \| 2× \|/);
     expect(out).toMatch(/\| v13-base \| 13\.0\.0-alpha\.0 \(abc123456\) \|.*\| 1× \|/);
-    expect(out).toMatch(/\| v13-base warm \| vs base \| pele warm \| vs pele \|$/m);
+    expect(out).toMatch(/\| v13-base warm \| vs base \| compare warm \| vs compare \|$/m);
     const row = out.split('\n').find((l) => l.startsWith('| corpus/a'));
     expect(row).toMatch(/\| 0\.4 \| 2× \| 0\.1 \| 0\.5× \|$/);
   });

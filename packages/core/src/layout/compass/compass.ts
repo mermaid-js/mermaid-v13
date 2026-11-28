@@ -1,17 +1,16 @@
-// The `compass` engine (D326, D327, D501): LayoutGraph → LayoutModel by Pele's grid placement
-// (`grid.ts`), its pixel pass (here) and its orthogonal router (`route.ts`), ported from Pele
-// (https://github.com/obsidianmd/pele, src/diagrams/architecture/render.ts:27-32 and 214-410,
-// MIT, (c) 2026 kepano; see THIRD_PARTY_NOTICES). Empty rows and columns rank away, cells are
-// sized from the node boxes and edge labels, groups are inset for their padding and titles, and
-// each edge end sits on the side it names.
+// The `compass` engine (D326, D327, D501): LayoutGraph → LayoutModel by the reference
+// implementation's grid placement (`grid.ts`), its pixel pass (here) and its orthogonal router
+// (`route.ts`). Empty rows and columns rank away, cells are sized from the node boxes and edge
+// labels, groups are inset for their padding and titles, and each edge end sits on the side it
+// names.
 //
-// Changed from Pele: plain LayoutGraph input with measured sizes (no label layout, icons or
-// drawing here), the lengths in `metrics.ts` (v12's `iconSize` 80 and `padding` 40), group
-// padding from the graph, sides from `direction` where an edge names none (D327), ends that are
-// groups, nodes in a row lined up on their `anchorY` (the middle by default) rather than by their
-// tops, self-loop ends kept on their side, edge labels moved off any node a route passes and end
-// labels (D102) placed, junction dots and wires left to the renderer, and the pass split into
-// methods of one class. The output is route points with ports.
+// Changed from the reference implementation: plain LayoutGraph input with measured sizes (no label
+// layout, icons or drawing here), the lengths in `metrics.ts` (v12's `iconSize` 80 and `padding`
+// 40), group padding from the graph, sides from `direction` where an edge names none (D327), ends
+// that are groups, nodes in a row lined up on their `anchorY` (the middle by default) rather than
+// by their tops, self-loop ends kept on their side, edge labels moved off any node a route passes
+// and end labels (D102) placed, junction dots and wires left to the renderer, and the pass split
+// into methods of one class. The output is route points with ports.
 import type {
   LayoutEdge,
   LayoutGraph,
@@ -688,8 +687,9 @@ class Pixels {
         y = y >= (p.y0 + p.y1) / 2 ? p.y1 + h / 2 + M.labelClear : p.y0 - h / 2 - M.labelClear;
       }
     }
-    // Pele clears only the two end boxes. A route on another graph type can pass a third node,
-    // so a label that lands on one takes the first clear spot along the route instead.
+    // The reference implementation clears only the two end boxes. A route on another graph type can
+    // pass a third node, so a label that lands on one takes the first clear spot along the route
+    // instead.
     const spot = clearSpot(points, { x, y }, { w, h }, upright, this.nodeSpace);
     const r = { x0: spot.x - w / 2, y0: spot.y - h / 2, x1: spot.x + w / 2, y1: spot.y + h / 2 };
     this.grow(r);

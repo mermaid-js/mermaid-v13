@@ -1,5 +1,5 @@
 // The `layered` engine: LayoutGraph → LayoutModel over the compound layout ported from Pele
-// (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano; see THIRD_PARTY_NOTICES). The
+// (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). The
 // `availableWidth` handling follows Pele's src/diagrams/common/fit-width.ts (`tighten`, then
 // `turnToFit`), applied to the layout instead of to a whole render.
 // cspell:ignore kepano cnode cnodes cedges

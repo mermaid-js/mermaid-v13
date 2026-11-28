@@ -1,6 +1,6 @@
 /*
  * The size report on its own (#814, spec #813), without the browser bench: lines by package and
- * category, gzip bytes per diagram chunk of v13's production build, and Pele's published build.
+ * category, gzip bytes per diagram chunk of v13's production build, and the compare renderer's published build.
  * Writes dist/reports/size-report.{json,md} and prints the markdown. The full bench report
  * carries the same section.
  *

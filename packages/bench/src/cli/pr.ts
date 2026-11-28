@@ -1,6 +1,6 @@
 /*
  * The PR check (`pr-check.ts`): sizes, one Node render of the corpus, instruction counts of v13
- * against its base and Pele, and a small browser run of v13 and mermaid@12. Writes
+ * against its base and compare, and a small browser run of v13 and mermaid@12. Writes
  * dist/reports/pr.{json,md} and comment.md (the PR comment), and applies the gates.
  *
  *   pnpm --filter @mermaid-js/bench pr [--base <ref>] [--mode auto|report|enforce]
@@ -62,13 +62,13 @@ const staticGzip = (b: Bundle) => closureSize(b).gzip;
 const corpusCheck = await corpusInNode(nodeEntry(site, 'v13')!, corpus);
 log(`Corpus in Node: ${corpusCheck.ok}/${corpusCheck.total} rendered`);
 
-// 2. Instruction counts of v13, v13-base and Pele (reported, never gating).
+// 2. Instruction counts of v13, v13-base and compare (reported, never gating).
 const perf = findPerf();
 const instructions = perf
   ? countInstructions({
       perf,
       site,
-      renderers: ['v13', 'v13-base', 'pele'],
+      renderers: ['v13', 'v13-base', 'compare'],
       diagrams,
       ...INSTRUCTION_DEFAULTS,
       log,

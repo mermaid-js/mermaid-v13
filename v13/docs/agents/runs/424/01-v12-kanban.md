@@ -1,5 +1,7 @@
 # 01 — v12 kanban pointer notes (spec #424)
 
+`$REF` is the reference implementation's checkout (D770).
+
 **Refs.** The `mermaid@12.2.0` tag exists only in the OSS checkout `/Users/knsv/repos/mermaid`; in this repo use its commit `1fb786986` (an ancestor of `fa796a943`, which the harvest uses: `packages/conformance/src/jison/harvest.ts:16`). Every kanban file below is byte-identical between the two. Only `docs/syntax/kanban.md` differs (the `mermaid`/`mermaid-example` fence order), and `clusters.js` gains `pool` after L803.
 `V=1fb786986:packages/mermaid/src/diagrams/kanban`, `SH=1fb786986:packages/mermaid/src/rendering-util/rendering-elements`, `R=1fb786986:packages/mermaid/src`. Read with `git show $V/<file>`.
 Oracle dist: `packages/conformance/node_modules/mermaid-v12/dist/chunks/mermaid.core/kanban-definition-FNSA4HC5.mjs`. Results marked (probed) came from `loadOracle()` (`packages/conformance/src/oracle.ts`, DOMPurify patched to identity) followed by `db.getData()`.
@@ -31,7 +33,7 @@ Kanban adds only: the three `%x` lines; the six shape-data rules (L24–47); `@`
   - L101–107 `padding` from `mindmap.padding`, ×2 for types 1, 2 and 6. L113 `width` from `mindmap.maxNodeWidth`. Neither is read downstream for kanban: the renderer overwrites `width`, and kanbanItem reads `padding || 10`.
   - L110 `id: sanitizeText(id) || 'kbn' + cnt++`: an id that sanitises to `''` becomes `kbn<n>` (not in the spec; unprobed, since the oracle sanitises to identity).
   - L122–129 YAML wrap (`{\n…\n}` or `…\n`), `yaml.load` with `JSON_SCHEMA`; core's `parseYaml` is the same schema (`packages/core/src/preprocess/yaml.ts:2`).
-  - L131–133 shape check. (probed) A non-string `shape` (`shape: 5`) throws `doc.shape.toLowerCase is not a function`, a TypeError the spec does not list; Pele `String()`s it (`db.ts:51`).
+  - L131–133 shape check. (probed) A non-string `shape` (`shape: 5`) throws `doc.shape.toLowerCase is not a function`, a TypeError the spec does not list; the reference implementation `String()`s it (`db.ts:51`).
   - L136–138 `shape === 'kanbanItem'` is kept on the node, but nothing reads it.
   - L139–141 `label` is kept **raw**, and getData's `sanitizeText` turns it into a string (probed: `label: 5` → `"5"`). A falsy `label` (`''`, `0`) is ignored (probed).
   - L142–150 `toString()` for `icon`, `assigned`, `ticket` (probed: `ticket: 2038` → `"2038"`, `assigned: [x, y]` → `"x,y"`). L152–154 `priority` raw (probed: `[1,2]` stays an array).
@@ -124,7 +126,7 @@ Kanban adds only: the three `%x` lines; the six shape-data rules (L24–47); `@`
 - Descriptor: the mindmap one is already on base at `packages/conformance/src/jison/types.ts:125–137`; add `kanban` after it. Smoke: `packages/conformance/src/jison/smoke.spec.ts:11` `M4` list.
 - PARITY_SUITES adapter: `git diff origin/mermaid-v13 $B -- packages/conformance/src/registry.ts` shows the mindmap entry (`corpus: mindmapParityCorpus`). Kanban copies it with `kanban-v12-specs.json` and `kanban-cases.json`.
 
-## 9. Pele (`/Users/knsv/repos/pele` does not exist on this machine)
+## 9. The reference implementation (`$REF` does not exist on this machine)
 
 Read it with `gh api 'repos/obsidianmd/pele/contents/src/diagrams/<path>?ref=3a2f075' -H 'Accept: application/vnd.github.raw'`. The spec's line cites check out.
 - `kanban/db.ts` (89 lines): YAML L39–47, non-mapping ignored L49–50, `String(doc.shape)` L51, decoration guard L82–88. `kanban/parser.ts` (9 lines) delegates to `common/outline.ts`.

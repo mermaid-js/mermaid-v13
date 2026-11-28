@@ -6,15 +6,15 @@
  *   `:`, `,`, `[`, `]`, `{`, `}`, GRATICULE, BOOLEAN, ACC_DESCR, ACC_TITLE, TITLE, NUMBER,
  *   STRING, ID, NEWLINE, WHITESPACE (skipped), YAML, DIRECTIVE, SINGLE_LINE_COMMENT (hidden).
  *
- * Chevrotain facts it reproduces: the first rule in order wins, except that the word keywords
- * (all but `radar-beta:`) have ID as their longer alternative, so `maxi` and `axisB` are names;
- * the terminals GRATICULE, BOOLEAN and TITLE have none, so `circles` is `circle` then the name
- * `s` and `titleX` is a title then `X` (D357: v12's split, not Pele's). `radar-beta` needs a
- * blank, `%%` or the end after it (`tokenBuilder.ts`). A regex backtracks inside a rule (`12.`
- * is `1`, then the name `2`, then an error); `\w`, `\s` and `\S` are JS's (ASCII `\w`, so
- * `über` is an error); `[^\n\r]` stops at LF and CR only. Where no rule matches it writes one
- * `Error` token over the characters up to the next offset where one does, as Chevrotain skips
- * them.
+ * Chevrotain facts it reproduces: the first rule in order wins, except that the word keywords (all
+ * but `radar-beta:`) have ID as their longer alternative, so `maxi` and `axisB` are names; the
+ * terminals GRATICULE, BOOLEAN and TITLE have none, so `circles` is `circle` then the name `s` and
+ * `titleX` is a title then `X` (D357: v12's split, not the reference implementation's).
+ * `radar-beta` needs a blank, `%%` or the end after it (`tokenBuilder.ts`). A regex backtracks
+ * inside a rule (`12.` is `1`, then the name `2`, then an error); `\w`, `\s` and `\S` are JS's
+ * (ASCII `\w`, so `über` is an error); `[^\n\r]` stops at LF and CR only. Where no rule matches it
+ * writes one `Error` token over the characters up to the next offset where one does, as Chevrotain
+ * skips them.
  *
  * Like pie's lexer it lexes the text v12 lexed (pitfall 1): the source view ({@link sourceView})
  * cuts the comment lines, directives and dropped `;` v12 removed, and marks the tag quotes it

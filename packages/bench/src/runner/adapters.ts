@@ -83,15 +83,15 @@ function v12(id: 'v12-frozen' | 'v12-current', load: Loader): Adapter {
   };
 }
 
-type PeleRender = (source: string, options?: Record<string, unknown>) => { svg: string };
+type CompareRender = (source: string, options?: Record<string, unknown>) => { svg: string };
 
-function pele(load: Loader): Adapter {
-  let render: PeleRender;
+function compare(load: Loader): Adapter {
+  let render: CompareRender;
   let options: Record<string, unknown> = {};
   return {
     async init({ liftLimits }) {
-      render = (await load('pele')).render as PeleRender;
-      // Pele's defaults otherwise. It is synchronous and throws a PeleError on bad input.
+      render = (await load('compare')).render as CompareRender;
+      // The compare renderer's defaults otherwise. It is synchronous and throws a PeleError on bad input.
       if (liftLimits)
         options = {
           limit: LIFTED.maxTextSize,
@@ -100,13 +100,13 @@ function pele(load: Loader): Adapter {
         };
     },
     render(source) {
-      // Pele is synchronous; the adapter contract is a promise.
+      // The compare renderer is synchronous; the adapter contract is a promise.
       return Promise.resolve(render(source, options).svg);
     },
   };
 }
 
 export function adapterFor(id: RendererId, load: Loader): Adapter {
-  if (id === 'pele') return pele(load);
+  if (id === 'compare') return compare(load);
   return id === 'v13' || id === 'v13-stages' || id === 'v13-base' ? v13(id, load) : v12(id, load);
 }

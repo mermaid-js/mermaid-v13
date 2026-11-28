@@ -675,7 +675,7 @@
     "id": "c4-cases/named-proto",
     "inputHash": "sha256:feab83dab7981ba3",
     "kind": "accept",
-    "reason": "v12 threw a TypeError on `$__proto__`; v13 keeps it as an unknown name with a `C4_NAME_RESERVED` warning, as Pele keeps it (D452, #539).",
+    "reason": "v12 threw a TypeError on `$__proto__`; v13 keeps it as an unknown name with a `C4_NAME_RESERVED` warning, as the reference implementation keeps it (D452, #539).",
     "owner": "#539",
     "since": "2026-11-09"
   },

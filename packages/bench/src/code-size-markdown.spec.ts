@@ -30,7 +30,7 @@ const report: CodeSizeReport = {
     total: 400_000,
     files: 90,
   },
-  pele: {
+  compare: {
     version: '1.13.0',
     core: 19_221,
     diagrams: [
@@ -78,15 +78,15 @@ describe('codeSizeLines', () => {
     expect(md).toContain('| diagram-pie | 700 | 400 | – | 300 | – |');
   });
 
-  it('puts each diagram next to the Pele entry of the same type', () => {
+  it('puts each diagram next to the compare entry of the same type', () => {
     expect(md).toMatch(
-      /\| Diagram \| v13 chunk \| v13 static closure \| v13 default layout \| v13 render \| Pele 1\.13\.0 \|/
+      /\| Diagram \| v13 chunk \| v13 static closure \| v13 default layout \| v13 render \| compare 1\.13\.0 \|/
     );
     expect(md).toContain('| core | 100,000 |  |  |  | 19,221 |');
     expect(md).toContain('| core + flowchart (loaded) | 140,000 |  |  |  | 67,715 |');
     expect(md).toContain('| flowchart | 30,000 | 40,000 | – | 40,000 | 48,494 |');
     expect(md).toContain('| gitgraph | 9,000 | 9,500 | – | 9,500 | 7,000 |');
-    expect(md).toContain('| swimlane (Pele only) | – | – | – | – | 3,000 |');
+    expect(md).toContain('| swimlane (compare only) | – | – | – | – | 3,000 |');
     expect(md).toContain('| all files | 400,000 (90 files) |  |  |  | 313,373 (122 files) |');
   });
 

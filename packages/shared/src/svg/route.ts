@@ -1,7 +1,5 @@
-// Edge paths from layout routes, trimmed at each end for an end marker (DESIGN §7.1).
-// Ported from Pele's src/svg/edges.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
-// (c) 2026 kepano): `routePath`. The one route drawing every graph diagram shares.
-// cspell:ignore kepano
+// Edge paths from layout routes, trimmed at each end for an end marker (DESIGN §7.1):
+// `routePath`. The one route drawing every graph diagram shares.
 import type { Warning } from '@mermaid-js/core';
 import type { EdgeRouting, RoutePoint } from '@mermaid-js/core/layout';
 import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
@@ -43,9 +41,9 @@ const isStepped = (kind: string): kind is 'step' | 'stepBefore' | 'stepAfter' =>
 export const DEFAULT_CURVE = 'rounded' satisfies CurveKind;
 
 /**
- * The curve kind for a v12 `curve` name. A d3 curve factory name (`basis`, `cardinal`, …) is
- * drawn `curved`, as is an unset name. Any other name is drawn with {@link DEFAULT_CURVE} and
- * reported to `warn` as `CURVE_UNKNOWN` (D602, D681). Use {@link curveReporter} to warn once per name.
+ * The curve kind for a v12 `curve` name. A d3 curve factory name (`basis`, `cardinal`, …) is drawn
+ * `curved`, as is an unset name. Any other name is drawn with {@link DEFAULT_CURVE} and reported to
+ * `warn` as `CURVE_UNKNOWN` (D602, D681). Use {@link curveReporter} to warn once per name.
  */
 export function curveKind(curve: string | undefined, warn?: (warning: Warning) => void): CurveKind {
   if (curve === undefined || D3_CURVES.has(curve)) return 'curved';

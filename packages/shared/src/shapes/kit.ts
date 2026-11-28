@@ -1,10 +1,8 @@
-// What node shapes are built from: the padding a shape is sized with, the shape definition, and
-// the sizers, outline helpers and path builders several shapes (and the diagrams that draw a
-// shape their own way) share. Ported from Pele's src/svg/shapes.ts @ 3a2f075
-// (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano), with v12's shape names and the
-// theme's padding and radius tokens. Every shape goes through `w.outline` (D302): the outline as
-// `node`, inner lines as `divider`, a filled piece inside a shape as `part`, small dots as `mark`.
-// cspell:ignore kepano
+// What node shapes are built from: the padding a shape is sized with, the shape definition, and the
+// sizers, outline helpers and path builders several shapes (and the diagrams that draw a shape
+// their own way) share, with v12's shape names and the theme's padding and radius tokens. Every
+// shape goes through `w.outline` (D302): the outline as `node`, inner lines as `divider`, a filled
+// piece inside a shape as `part`, small dots as `mark`.
 import type { Attrs, OutlineRole, PathData, SvgWriter } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { Rect } from '../layout/bounds.ts';

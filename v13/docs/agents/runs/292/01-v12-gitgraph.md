@@ -1,5 +1,7 @@
 # 01 — v12 gitGraph pointer notes (spec #292)
 
+`$REF` is the reference implementation's checkout (D770).
+
 `L=fa796a943:packages/parser/src/language`, `G=fa796a943:packages/mermaid/src/diagrams/git`, `TH=fa796a943:packages/mermaid/src/themes`. Read with `git show $G/<file>`.
 Oracles: `packages/conformance/node_modules/mermaid-parser-v12` (`@mermaid-js/parser@2.0.1`, `dist/mermaid-parser.core.mjs`, `createGitGraphServices().GitGraph.parser.Lexer`) and `mermaid-v12` through `packages/conformance/src/oracle.ts` (`loadOracle().parse(text, config)` → `db`). Node 24 runs `oracle.ts` directly (type stripping). Facts marked (probed) came from those.
 
@@ -111,9 +113,9 @@ Oracles: `packages/conformance/node_modules/mermaid-parser-v12` (`@mermaid-js/pa
 - Schema `packages/core/schema/config.schema.yaml` L1776–1831: all nine keys `x-mermaid: { status: pending }` (L1792–1829), `arrowMarkerAbsolute: *arrowMarkerAbsolute` (anchor L872, `ignored` L879); `NodeLabel` `$def` L1833–1848 (four `pending` keys, referenced only by gitGraph L1798). Base `useWidth`/`useMaxWidth` pending L1094–1104; per-diagram override pattern: pie L2078–2083 (`useWidth` ignored, `useMaxWidth` `$ref` + honoured), timeline L3260+.
 - Palettes: `packages/core/src/theme/vocabulary.ts:177–187` `PALETTE_VARIABLES` (`borderColorArray`, `bkgColorArray`, `cScale*`) and `NUMBERED_PALETTES` (numbered `<name>0`–`11`); `theme/specs/palettes.ts:88–96` `paletteSlots` (fixed 12), `INVERTED_SCALE`, `LABEL_SCALE`; `scales.ts:8` `HUE_STEPS` (30…330), L16 `hueSources`, L40 `darkenedScale`, L55 `DARK_HUE_SOURCES`, L63 `darkModeLabels`. Users: `specs/base.ts:21,53–54`, `default.ts:94–125`, `dark.ts:96–115`. Override resolution `theme.ts:242–256`. No `git*`, `commitLabel*`, `tagLabel*` variable exists in core yet.
 
-## 10. Pele
+## 10. The reference implementation
 
-`/Users/knsv/repos/pele/src/diagrams/git/db.ts` (HEAD `3a2f075`, 2026-10-30): `buildGit` L122; `nextId` L138–143: `` `${seq}-${(Math.imul(salt, 0x9e3779b1) >>> 0).toString(16).padStart(8,'0').slice(0,7)}` `` with `salt = seq + 1`, stepping `salt += 0x9e3779b1` while the id is taken. Used for commits L167, merges L207, cherry-picks L237. `titleBefore` in `src/diagrams/common/tokens.ts:141`.
+`$REF/src/diagrams/git/db.ts` (HEAD `3a2f075`, 2026-10-30): `buildGit` L122; `nextId` L138–143: `` `${seq}-${(Math.imul(salt, 0x9e3779b1) >>> 0).toString(16).padStart(8,'0').slice(0,7)}` `` with `salt = seq + 1`, stepping `salt += 0x9e3779b1` while the id is taken. Used for commits L167, merges L207, cherry-picks L237. `titleBefore` in `src/diagrams/common/tokens.ts:141`.
 
 ## 11. Surprises
 

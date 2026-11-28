@@ -1,8 +1,8 @@
 /**
  * The five C4 shapes as the layout sees them (D446): which one an element is drawn as, its size
  * around its text, and its outline as a union of rectangles and ellipses, which the router clips
- * relations to (Pele `route.ts` `hit()`, https://github.com/obsidianmd/pele at commit 3a2f075, MIT,
- * (c) 2026 kepano, here with the rounded corners as well) and the invariants check ends against.
+ * relations to (the reference implementation's `route.ts` `hit()` at commit 3a2f075, here with the
+ * rounded corners as well) and the invariants check ends against.
  *
  * Sizes follow v12's shapes with `c4.c4ShapePadding` as their padding and `c4.width` as their
  * least width (`c4ShapeAdapter.ts`, `drawRect`): a rounded box `max(width, text + 2·pad)` by
@@ -14,7 +14,6 @@
  * cylinder did, in both looks), `fr-rect` `subroutinePadding*`; in the classic themes each is
  * `2·pad`, as the others.
  */
-// cspell:ignore kepano
 import {
   capRy,
   cylinderSize,

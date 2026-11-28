@@ -86,12 +86,12 @@ Paths are workspace-relative at `feature/429_venn` = 12ba676cb, after kanban (#4
 ## 6. Licences
 
 - `tools/release/src/licenses.ts`:
-  - `Upstream` L22–29 (**one `holder`, one `copyright` string**); `UPSTREAMS` L31–51 (Pele, sanitize-url, @iconify/utils); `REQUIRED_CREDITS` L54–58;
+  - `Upstream` L22–29 (**one `holder`, one `copyright` string**); `UPSTREAMS` L31–51 (the reference implementation, sanitize-url, @iconify/utils); `REQUIRED_CREDITS` L54–58;
   - header check L120–127 (`\bMIT\b` + `holder`); notices check L193–197 (`'MIT License'` + `copyright`, `"files"` must list it); per-upstream `section` L136–148; listed files `src/…` L150, L199–212;
-  - `othersOnly` L187 (no Pele text is needed when every ported file is another upstream's).
+  - `othersOnly` L187 (no text of the reference implementation is needed when every ported file is another upstream's).
   - venn.js has **two** holders, so either one entry must pick a holder and copyright line, or the shape grows. fmin's BSD-3 is outside what the checker models.
 - CLI `licenses-cli.ts`, `pnpm check:licenses` (`package.json:20`, inside `check` L35, and `.github/workflows/release.yml:95`). Spec `licenses.spec.ts`.
-- How a package ships notices: `packages/plugin-icons/THIRD_PARTY_NOTICES` (a per-upstream section: name, underline, what was ported, indented `src/…` paths, then the MIT text) + `package.json:20–22` `"files"`. The header form is `plugin-icons/src/resolve.ts:1–10`. The Pele / D66 form is `core/src/layout/layered/layered.ts:1–7` and `core/src/layout/tree/tree.ts:1–9` (`core/THIRD_PARTY_NOTICES`, 113 lines).
+- How a package ships notices: `packages/plugin-icons/THIRD_PARTY_NOTICES` (a per-upstream section: name, underline, what was ported, indented `src/…` paths, then the MIT text) + `package.json:20–22` `"files"`. The header form is `plugin-icons/src/resolve.ts:1–10`. The reference implementation's / D66 form is `core/src/layout/layered/layered.ts:1–7` and `core/src/layout/tree/tree.ts:1–9` (`core/THIRD_PARTY_NOTICES`, 113 lines).
 
 ## 7. Tests, sizes, language
 

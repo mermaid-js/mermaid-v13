@@ -209,9 +209,9 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
     });
   });
 
-  it('ignores the Pele sequence and class fixtures in the OK count', () => {
+  it('ignores the compare sequence and class fixtures in the OK count', () => {
     const report = healthy();
-    report.renderers[0]!.results.push({ ...result('pele/sequence', null), set: 'pele' });
+    report.renderers[0]!.results.push({ ...result('compare/sequence', null), set: 'compare' });
     expect(gate(report, 'ok-count').status).toBe('pass');
   });
 

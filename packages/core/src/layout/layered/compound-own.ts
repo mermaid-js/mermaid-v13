@@ -1,9 +1,8 @@
-// Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
-// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
-// Changes from Pele: split out of `compound.ts` (D596): the edges between a group and its own member (#198, #415), the band their labels sit in,
-// and the helpers that place them. In px, such an edge ends clear of the other lines ending on the member's top
-// (`freeAcross`, mermaid-js/mermaid#8824). Otherwise the algorithm is unchanged.
-// cspell:ignore kepano lnode lnodes cnode
+// Changes from the reference implementation: split out of `compound.ts` (D596): the edges between a
+// group and its own member (#198, #415), the band their labels sit in, and the helpers that place
+// them. In px, such an edge ends clear of the other lines ending on the member's top (`freeAcross`,
+// mermaid-js/mermaid#8824). Otherwise the algorithm is unchanged.
+// cspell:ignore lnode lnodes cnode
 //
 import type { CEdge, CNode } from './compound.ts';
 import { Side, type Compound, type Level } from './compound-state.ts';

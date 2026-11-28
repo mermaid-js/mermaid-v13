@@ -1,6 +1,8 @@
 # Pointer index, spec #525 (architecture, `@mermaid-js/diagram-architecture`)
 
-Pointers only. v12 = `git show fa796a943:<path>`; Pele = `/Users/knsv/repos/pele/src/diagrams/architecture/`; everything else is this worktree. `A` = `packages/mermaid/src/diagrams/architecture/`, `PL` = `packages/parser/src/language/architecture/`.
+`$REF` is the reference implementation's checkout (D770).
+
+Pointers only. v12 = `git show fa796a943:<path>`; the reference implementation = `$REF/src/diagrams/architecture/`; everything else is this worktree. `A` = `packages/mermaid/src/diagrams/architecture/`, `PL` = `packages/parser/src/language/architecture/`.
 
 ## 1. v12 sources (fa796a943)
 
@@ -47,7 +49,7 @@ Pointers only. v12 = `git show fa796a943:<path>`; Pele = `/Users/knsv/repos/pele
 | `packages/mermaid/src/schemas/config.schema.yaml:1132-1205` | `ArchitectureDiagramConfig`: padding 1150, iconSize 1153, fontSize 1156, randomize 1159, nodeSeparation 1169, idealEdgeLengthMultiplier 1176, edgeElasticity 1183, numIter 1190, seed 1196 |
 | `packages/mermaid/src/docs/syntax/architecture.md` (340 lines) | Groups 37, Services 59, Edges 81, Direction 89, Arrows 107, Edges out of groups 119, align 136, grid 185, Junctions 226, Configuration 254, Icons 321 |
 
-## 2. Pele reference
+## 2. The reference implementation reference
 
 | Pointer | What |
 | --- | --- |
@@ -99,7 +101,7 @@ Pointers only. v12 = `git show fa796a943:<path>`; Pele = `/Users/knsv/repos/pele
 | `tools/gen-config/src/generate.ts:36-54` | `SECTION_OWNERS` |
 | `knip.json:58` | package entry |
 | `eslint.config.js:217` | `v12-specs/*.spec.ts` glob |
-| `tools/release/src/licenses.ts:72-73,127,144` | upstream table (Pele row exists), `publish.spec.ts:44`; `packages/mermaid/THIRD_PARTY_NOTICES` |
+| `tools/release/src/licenses.ts:72-73,127,144` | upstream table (the reference implementation row exists), `publish.spec.ts:44`; `packages/mermaid/THIRD_PARTY_NOTICES` |
 | `packages/language-service/goldens/*/completions/empty.out` | one header line per type (18 files) |
 | `packages/dev/src/adapter.spec.ts:13` | `aria-roledescription` regex; `:112` handdrawn each |
 | `packages/dev/src/fixtures.spec.ts:128`, `fixture-discovery.ts:26` | fixture types (architecture already at 26) |

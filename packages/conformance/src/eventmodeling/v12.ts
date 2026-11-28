@@ -21,8 +21,8 @@
  *   converter's regexes (`common/matcher.ts`, `valueConverter.ts`), which v12's event modeling
  *   grammar never ran. The DB values are the raw images otherwise;
  * - D523 is applied to v12's raw data images for the AST lists (frames' inline data, data
- *   blocks, notes) with Pele's `blockText` (MIT, `model.ts:86-100`), an implementation apart
- *   from v13's; quoted data is taken between the quotes;
+ * blocks, notes) with the reference implementation's `blockText` (`model.ts:86-100`), an
+ * implementation apart from v13's; quoted data is taken between the quotes;
  * - a kind is the keyword as written; a `gwt` step is its entity name (v12's grammar did not
  *   keep the step's kind).
  */
@@ -124,8 +124,9 @@ export function boxText(html: string): string {
 }
 
 /**
- * Pele's `blockText` (`src/diagrams/eventmodeling/model.ts:86-100`, MIT): the text between the
- * outer braces, without the indentation its lines share; quoted data between its quotes.
+ * The reference implementation's `blockText` (`src/diagrams/eventmodeling/model.ts:86-100`): the
+ * text between the outer braces, without the indentation its lines share; quoted data between its
+ * quotes.
  */
 export function blockText(raw: string): string {
   const open = raw.startsWith('{') ? 0 : -1;

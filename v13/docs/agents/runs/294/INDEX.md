@@ -15,7 +15,7 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | corpus cleanup ("only real diagrams") | — | — | merged (`tickets/corpus-cleanup.md`) |
 | hand-drawn H4 baselines | #344 | #390 (merged) | merged (ff b834dd012) |
 
-- `01-v12-mindmap.md`: pointer notes on v12 grammar, DB, renderer, styles, shapes, tidy-tree, corpus, Pele.
+- `01-v12-mindmap.md`: pointer notes on v12 grammar, DB, renderer, styles, shapes, tidy-tree, corpus, the reference implementation.
 - `02-v13-core.md`: pointer notes on core's layout contract, engine selection, registry, size guards.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
 - `GAPS.md`: unmet criteria and choices per ticket.

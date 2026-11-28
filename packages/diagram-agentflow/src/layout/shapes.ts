@@ -5,10 +5,8 @@
  * and the renderer (#548) draws, as a closed polygon in the shape's own frame (centre at 0, y
  * down), curves sampled.
  *
- * The rounded box and the wave are sampled from the shapes ported from Pele's
- * `src/svg/shapes.ts` at 3a2f075 (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
+ * The rounded box and the wave are sampled from the shared shapes.
  * Changed: the outline as points, the one geometry layout and renderer share.
- * cspell:ignore kepano
  */
 import type { Point } from '@mermaid-js/core/layout';
 import {

@@ -1,11 +1,9 @@
 /**
- * A relation's path as plain commands, for the renderer's `PathBuilder` (Pele `route.ts`
- * `path()` and its self-loop, https://github.com/obsidianmd/pele at commit 3a2f075, MIT, (c) 2026 kepano):
- * a line; upright and level stretches with corners rounded to at most `corner`; or a self-loop's
- * cubic. `startTrim` and `endTrim` stop the line short of its ends, under the arrowheads the
- * renderer draws there.
+ * A relation's path as plain commands, for the renderer's `PathBuilder` (the reference
+ * implementation's `route.ts` `path()` and its self-loop, at commit 3a2f075): a line; upright and
+ * level stretches with corners rounded to at most `corner`; or a self-loop's cubic. `startTrim` and
+ * `endTrim` stop the line short of its ends, under the arrowheads the renderer draws there.
  */
-// cspell:ignore kepano
 import { C4_METRICS as M } from './metrics.ts';
 import type { C4RelationLayout } from './types.ts';
 

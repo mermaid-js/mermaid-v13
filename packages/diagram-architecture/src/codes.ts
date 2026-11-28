@@ -1,8 +1,8 @@
 /**
  * Architecture's diagnostic codes (#599), in one place for the parser and, later, the layout and
  * the renderer. Each error carries v12's DB message word for word (`architectureDb.ts`), except
- * {@link ARCHITECTURE_GROUP_EDGE_END}, which takes Pele's (D504). Each is exported from the
- * package entry.
+ * {@link ARCHITECTURE_GROUP_EDGE_END}, which takes the reference implementation's (D504). Each is
+ * exported from the package entry.
  */
 
 /** v12: `The service id [a] is already in use by another node` (services, junctions, groups). */
@@ -16,8 +16,8 @@ export const ARCHITECTURE_PARENT_NOT_GROUP = 'ARCHITECTURE_PARENT_NOT_GROUP';
 /** v12: `The left-hand id [a] does not yet exist. Please create …` (or `right-hand`). */
 export const ARCHITECTURE_UNKNOWN_ID = 'ARCHITECTURE_UNKNOWN_ID';
 /**
- * D504: an edge end that names a group, with Pele's message (`The left-hand id [g] is a group.`
- * and how to fix it), where v12 threw a `TypeError`.
+ * D504: an edge end that names a group, with the reference implementation's message
+ * (`The left-hand id [g] is a group.` and how to fix it), where v12 threw a `TypeError`.
  */
 export const ARCHITECTURE_GROUP_EDGE_END = 'ARCHITECTURE_GROUP_EDGE_END';
 /** v12: `The left-hand id [a] is modified to traverse the group boundary, but …`. */
