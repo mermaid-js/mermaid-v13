@@ -21,7 +21,9 @@
  * 430, measured with the theme font; the margin is `eventmodeling.padding` around what is drawn
  * (D224). New: a frame that names itself as its source gets a loop under its box's bottom right
  * corner, clear of the other relations' ends (D659; v12 drew a line through the box), and text past the
- * greatest box height is left out and flagged (v12 clipped it).
+ * greatest box height is left out and flagged (v12 clipped it). Relations leaving one side of a
+ * box leave from distinct points, and one between lanes that would meet another box goes around
+ * it (D743, `detour.ts`).
  */
 import type { RenderContext } from '@mermaid-js/core';
 import {
@@ -36,7 +38,10 @@ import { eventModelingConfig } from '../config.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
 import { eventModelStructure, type EventModelRelation } from '../structure.ts';
 import { expandTabs } from '../tabs.ts';
+import { detourRoutes, type DetourLine } from './detour.ts';
 import {
+  departure,
+  departureBeforeLoop,
   EVENTMODELING_METRICS as M,
   FONT_WEIGHT,
   share,
@@ -164,9 +169,16 @@ export function layoutEventModel(
     return { ...b, y: top, ...placeText(texts[k] as BoxText, { ...b, y: top }) };
   });
 
-  const relations = structure.relations.map((r, k) =>
-    relationOf(r, boxes, lanes, under.routes.get(k))
+  const departures = departuresOf(structure.relations, boxes, lanes);
+  const first = structure.relations.map((r, k) =>
+    relationOf(r, boxes, lanes, under.routes.get(k), departures.get(k))
   );
+  // A relation between lanes that would meet another box takes a detour (D743).
+  const lines = detourRoutes(first, boxes, lanes);
+  const relations = first.map((r, k) => {
+    const { points, noDetour } = lines[k] as DetourLine;
+    return { ...r, points, head: headOf(points), ...(noDetour ? { noDetour } : {}) };
+  });
   return {
     font,
     radius: M.radius,
@@ -341,16 +353,66 @@ function placeText(
   return { name, data: placed(text.data, x + inset, top + text.name.height + text.gap) };
 }
 
+/** Whether a relation between lanes runs up; `undefined` for one within a lane. */
+function upward(
+  r: EventModelRelation,
+  boxes: readonly EventModelBoxLayout[],
+  lanes: readonly EventModelLaneLayout[]
+): boolean | undefined {
+  const s = boxes[r.source] as EventModelBoxLayout;
+  const t = boxes[r.target] as EventModelBoxLayout;
+  if (s.lane === t.lane) return undefined;
+  return (lanes[s.lane]?.y ?? 0) > (lanes[t.lane]?.y ?? 0);
+}
+
+/**
+ * Where each relation between lanes leaves its source (D743): the relations that leave one side
+ * of a box, ordered by where they meet their targets (then in v12's order), spread from v12's ⅔
+ * to the right, so no two leave from one point; under a self loop, left of it. By relation index.
+ */
+function departuresOf(
+  relations: readonly EventModelRelation[],
+  boxes: readonly EventModelBoxLayout[],
+  lanes: readonly EventModelLaneLayout[]
+): Map<number, number> {
+  // By source and side: `2 × source`, plus 1 for the top.
+  const sides = new Map<number, { k: number; at: number }[]>();
+  for (const [k, r] of relations.entries()) {
+    const up = upward(r, boxes, lanes);
+    if (up === undefined) continue;
+    const t = boxes[r.target] as EventModelBoxLayout;
+    const key = 2 * r.source + Number(up);
+    const list = sides.get(key) ?? [];
+    list.push({ k, at: t.x + share(t.width, TARGET_ANCHOR) });
+    sides.set(key, list);
+  }
+  // A self loop hangs under its box's bottom (D659).
+  const looped = new Set(relations.filter((r) => r.source === r.target).map((r) => 2 * r.source));
+  const out = new Map<number, number>();
+  for (const [key, list] of sides.entries()) {
+    list.sort((a, b) => a.at - b.at || a.k - b.k);
+    const spread = looped.has(key) ? departureBeforeLoop : departure;
+    for (const [i, { k }] of list.entries()) {
+      const s = boxes[(relations[k] as EventModelRelation).source] as EventModelBoxLayout;
+      out.set(k, s.x + spread(s.width, i, list.length));
+    }
+  }
+  return out;
+}
+
+/** A relation's route and first line; {@link detourRoutes} may redraw it and the head follows. */
 function relationOf(
   r: EventModelRelation,
   boxes: readonly EventModelBoxLayout[],
   lanes: readonly EventModelLaneLayout[],
-  below: UnderRoute | undefined
-): EventModelRelationLayout {
+  below: UnderRoute | undefined,
+  leaves: number | undefined
+): Omit<EventModelRelationLayout, 'head'> {
   const s = boxes[r.source] as EventModelBoxLayout;
   const t = boxes[r.target] as EventModelBoxLayout;
   const laneTop = lanes[s.lane]?.y ?? 0;
-  const [route, points] = bentRoute(r, s, t, laneTop, below) ?? straightRoute(s, t, lanes);
+  const [route, points] =
+    bentRoute(r, s, t, laneTop, below) ?? straightRoute(s, t, upward(r, boxes, lanes), leaves);
   return {
     source: r.source,
     target: r.target,
@@ -359,7 +421,6 @@ function relationOf(
     ...(r.astId === undefined ? {} : { astId: r.astId }),
     route,
     points,
-    head: headOf(points),
   };
 }
 
@@ -382,13 +443,18 @@ function bentRoute(
   return ['under', underRow(s, t, below.from, below.to, laneTop + below.depth)];
 }
 
-/** A relation to the next box of its lane (`along`, D521), or between lanes (v12's segment). */
+/**
+ * A relation to the next box of its lane (`along`, D521), or between lanes: v12's segment to ⅓
+ * of the target's width, from `leaves` on the source's edge (D743; v12's ⅔ when it is the only
+ * relation leaving that side).
+ */
 function straightRoute(
   s: EventModelBoxLayout,
   t: EventModelBoxLayout,
-  lanes: readonly EventModelLaneLayout[]
+  up: boolean | undefined,
+  leaves: number | undefined
 ): Routed {
-  if (s.lane === t.lane)
+  if (up === undefined)
     return [
       'along',
       [
@@ -396,11 +462,10 @@ function straightRoute(
         { x: t.x, y: t.y + t.height / 2 },
       ],
     ];
-  const up = (lanes[s.lane]?.y ?? 0) > (lanes[t.lane]?.y ?? 0);
   return [
     up ? 'up' : 'down',
     [
-      { x: s.x + share(s.width, SOURCE_ANCHOR), y: up ? s.y : s.y + s.height },
+      { x: leaves ?? s.x + share(s.width, SOURCE_ANCHOR), y: up ? s.y : s.y + s.height },
       { x: t.x + share(t.width, TARGET_ANCHOR), y: up ? t.y + t.height : t.y },
     ],
   ];

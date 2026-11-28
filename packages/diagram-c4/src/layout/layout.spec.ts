@@ -12,7 +12,7 @@ import { C4_METRICS as M } from './metrics.ts';
 import { c4RelationPath } from './path.ts';
 import { crosses, lineOf } from './route.ts';
 import { labelBlockers, outlineForm, personParts } from './shapes.ts';
-import { rectsOverlap } from '@mermaid-js/shared/testing/layout-invariants';
+import { rectInside, rectsOverlap } from '@mermaid-js/shared/testing/layout-invariants';
 import { fixture, fixtureSource, FIXTURES } from './mmd.fixtures.ts';
 import type { C4Layout, C4RelationLayout, PlacedLabel, Point, Rect } from './types.ts';
 
@@ -111,14 +111,38 @@ const SHAPE_GAP = 100;
 
 const CROWDED_EXCEPTIONS = [
   'baseline/config/rows-and-fixed-width table: c -> d',
+  // D746: tags with no spot near their line clear of the boundary borders, so each stays
+  // where it would be, across a border, rather than float off: a line through a gap between two
+  // frames narrower than its tag, or a short line from a frame's side. With the grid measurer,
+  // 3-component's `ma -> sign` meets a border in the product default theme only.
+  ...['table', 'grid'].flatMap((name) => [
+    ...(name === 'grid' ? ['mobile -> app'] : []).map(
+      (r) => `baseline/diagram-types/deployment ${name}: ${r}`
+    ),
+    `baseline/diagram-types/deployment ${name}: app -> db`,
+    `nightly-check/c4-5-should-render-a-simple-c4deployment-diagram ${name}: mobile -> api`,
+    `nightly-check/diagram-types/deployment-diagram ${name}: api -> db`,
+    `nightly-check/diagram-types/deployment-node-aliases ${name}: api -> db`,
+    ...['c1_0 -> c2_0', 'c3_0 -> c4_0', 'c5_0 -> c0_0'].map(
+      (r) => `nightly-check/large-diagram ${name}: ${r}`
+    ),
+  ]),
+  'nightly-check/docs/2-container grid: backend_api -> banking_system',
+  'nightly-check/docs/3-component grid (the product default theme): ma -> sign',
+  'nightly-check/docs/5-deployment table: db -> db2',
+  ...['web -> spa', 'api -> db2', 'db -> db2'].map(
+    (r) => `nightly-check/docs/5-deployment grid: ${r}`
+  ),
   // D679: tags the placement leaves straddling their own line.
   ...STRADDLING,
   // D679: eight lines between two systems 70 px tall stand closer than half a tag apart, so no
   // rule holds their tags on them: each leaves its line, with either measurer, and is crowded.
+  // D746: the three short lines from the Bank frame's side to Vault leave no room inside it.
   ...['table', 'grid'].flatMap((name) =>
     [
       ...['ledger -> billing', 'ledger -> billing', 'billing -> ledger', 'ledger -> billing'],
       ...['billing -> ledger', 'ledger -> billing', 'billing -> ledger', 'ledger -> billing'],
+      ...['bank -> vault', 'bank -> vault', 'vault -> bank'],
     ].map((r) => `pr-check/repeated-relations-room ${name}: ${r}`)
   ),
 ];
@@ -144,7 +168,12 @@ describe('c4 layout invariants on the e2e fixtures', () => {
       const crowded = layout.relations
         .filter((r) => r.crowded)
         .map((r) => `${path} ${name}: ${r.from} -> ${r.to}`);
-      expect(crowded).toEqual(CROWDED_EXCEPTIONS.filter((c) => c.startsWith(`${path} ${name}:`)));
+      // An exception may name the theme it holds in alone: `path name (theme): from -> to`.
+      const inTheme = `${path} ${name} (${themeName}):`;
+      const expected = CROWDED_EXCEPTIONS.filter(
+        (c) => c.startsWith(`${path} ${name}:`) || c.startsWith(inTheme)
+      ).map((c) => c.replace(inTheme, `${path} ${name}:`));
+      expect(crowded, themeName).toEqual(expected);
     }
   });
 
@@ -1034,6 +1063,21 @@ describe('c4 relations (D455)', () => {
         rel(layoutC4(model, c4TestContext(config, drawn)), 'SystemC', 'customerA').crowded,
         themeName
       ).toBeUndefined();
+  });
+
+  it("slides a tag off a boundary's border and header, even where the author's offsets put it (D746)", () => {
+    // UpdateRelStyle moves Customer -> Web shop's tag 20 px right and up, onto the dashed top
+    // border of the Shop boundary the line enters (#1363).
+    const { model, config } = fixture('baseline/styles/update-styles');
+    for (const [themeName, drawn] of themes) {
+      const layout = layoutC4(model, c4TestContext(config, drawn));
+      const box = rel(layout, 'u', 's').labelBox!;
+      const shop = frame(layout, 'b');
+      const inOrOut = rectInside(box, shop.box) || !rectsOverlap(box, shop.box);
+      expect(inOrOut, themeName).toBe(true);
+      for (const line of [shop.label, shop.type])
+        expect(rectsOverlap(box, line!), themeName).toBe(false);
+    }
   });
 
   it('draws no tag for a relation without a label or techn, and one for a techn alone', () => {

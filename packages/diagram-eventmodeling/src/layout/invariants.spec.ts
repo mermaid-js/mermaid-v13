@@ -144,6 +144,47 @@ describe('eventModelLayoutViolations', () => {
     expect(v).toContain('relations relation:01->02 and relation:01->03 share a run');
   });
 
+  it('catches a relation between lanes drawn through an unrelated box (D743, #1234)', () => {
+    // E, U, and a reset C ->> E: v12's segment from E's ⅔ to U's ⅓ runs inside C.
+    const resetting = model(
+      frame('evt', 'E'),
+      frame('ui', 'U'),
+      frame('rmo', 'C', { reset: true, sources: ['01'] })
+    );
+    const l = layoutEventModel(resetting, eventModelTestContext(theme, {}, halfEm));
+    expect(eventModelLayoutViolations(resetting, l)).toEqual([]);
+    const e = l.boxes[0] as EventModelBoxLayout;
+    const u = l.boxes[1] as EventModelBoxLayout;
+    const tip = { x: u.x + u.width / 3, y: u.y + u.height };
+    const broken = reroute(l, 'relation:01->02', (r) => ({
+      points: [{ x: e.x + (2 * e.width) / 3, y: e.y }, tip],
+      head: [r.head[0], tip, r.head[2]],
+    }));
+    expect(eventModelLayoutViolations(resetting, broken)).toContain(
+      'relation relation:01->02 runs through box 2'
+    );
+  });
+
+  it('lets through only a relation the layout marks as having no detour (D743)', () => {
+    // Two wide read models fill the middle lane on both sides of E ->> U: no column fits.
+    const long = 'x'.repeat(50);
+    const blocked = model(
+      frame('rmo', long),
+      frame('evt', 'E'),
+      frame('ui', 'U'),
+      frame('rmo', long, { reset: true })
+    );
+    const l = layoutEventModel(blocked, eventModelTestContext(theme, {}, halfEm));
+    expect(eventModelLayoutViolations(blocked, l)).toEqual([]);
+    const unmarked = {
+      ...l,
+      relations: l.relations.map(({ noDetour: _, ...r }) => r),
+    };
+    expect(eventModelLayoutViolations(blocked, unmarked)).toContain(
+      'relation relation:02->03 runs through box 0'
+    );
+  });
+
   it('catches a relation within a lane leaving it', () => {
     const broken = reroute(routed(), 'relation:01->03', (r) => ({
       points: r.points.map((p, k) => (k === 1 || k === 2 ? { ...p, y: p.y + 100 } : p)),

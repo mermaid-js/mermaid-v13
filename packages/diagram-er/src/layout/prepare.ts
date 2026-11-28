@@ -21,6 +21,7 @@ import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/read
 import { parseGenericTypes, REFERENCES } from '@mermaid-js/shared/parser/generic-types';
 import type { ErRenderContext } from './context.ts';
 import { END_CELLS, erMetrics } from './ends.ts';
+import { nameWrap } from './name-wrap.ts';
 
 /** A band of a table: its offset from the table's top (or left) border and its size. */
 export interface Band {
@@ -114,7 +115,15 @@ interface Measure {
   readonly font: FontKey;
   readonly pad: { readonly x: number; readonly y: number };
   readonly rule: number;
-  readonly label: (text: string, f: FontKey, max: number, bits?: number) => MeasuredLabel;
+  /** Where the name of an entity with no attributes wraps (#1226). */
+  readonly nameWrap: number;
+  readonly label: (
+    text: string,
+    f: FontKey,
+    max: number,
+    bits?: number,
+    keepWords?: boolean
+  ) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
 }
 
@@ -171,9 +180,15 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     pad: cellPad(units, length),
     // This is the only place the builder looks at which profile it has.
     rule: units.id === 'cell' ? 1 : 0,
+    nameWrap: nameWrap(units, length),
     // v12 passes every ER label through `createText` with Markdown on (D565).
-    label: (text, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline, markup: 'emphasis' }),
+    label: (text, f, max, bits = 0, keepWords = false) =>
+      layoutLabel(text, f, max, measurer, {
+        style: bits,
+        inline: ctx.inline,
+        markup: 'emphasis',
+        keepWords,
+      }),
     styleOf: styleCache(new Map(model.classes.map((c) => [c.name, c.styles])), (w) => ctx.warn(w)),
   };
   const minWidth = sizeKey(units, length, 'minEntityWidth');
@@ -297,7 +312,7 @@ function bands(sizes: readonly number[], start: number, rule: number): Band[] {
 /**
  * v12 `erBox`: each column as wide as its widest cell plus padding, shared by every row; a name
  * wider than the columns spreads the difference over the columns in use. With no attributes,
- * the name in a padded box, at least `minWidth` wide.
+ * the name in a padded box, at least `minWidth` wide, wrapped at `m.nameWrap` (v12 `drawRect`).
  */
 function entityView(
   entity: ErEntity,
@@ -309,7 +324,9 @@ function entityView(
   const classes = ['default', ...entity.classes];
   const style = m.styleOf(classes, entity.styles);
   const [f, bits] = textStyle(style, m.font);
-  const label = m.label(entity.alias || entity.name, f, Infinity, bits);
+  const wrap = entity.attributes.length === 0 ? m.nameWrap : Infinity;
+  // v12's HTML label breaks between words and after a hyphen, never inside a word.
+  const label = m.label(entity.alias || entity.name, f, wrap, bits, true);
   const { pad, rule } = m;
   const base = {
     id: entity.id,

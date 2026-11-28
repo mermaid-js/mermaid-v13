@@ -1,0 +1,10 @@
+%% #1234, D743: ItemAdded's relations leave its top from distinct points; the one to OtherUI goes up
+%% clear of CartItems (docs-008), and those to Mailer and Billing jog in the gap past Orders and Stats.
+eventmodeling
+tf 01 evt ItemAdded
+tf 02 ui OtherUI
+rf 03 rmo CartItems ->> 01
+rf 04 rmo Orders ->> 01
+rf 05 rmo Stats ->> 01
+rf 06 pcr Mailer ->> 01
+rf 07 pcr Billing ->> 01

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   WARDLEY_COORDINATE_AMBIGUOUS,
+  WARDLEY_EVOLVE_PIPELINE_COMPONENT,
   WARDLEY_LINK_DROPPED,
   WARDLEY_OUT_OF_RANGE,
   WARDLEY_PIPELINE_REPLACED,
@@ -41,8 +42,14 @@ describe('wardley parser warnings name their statements in render() (D425, D428)
   });
 
   it('WARDLEY_UNKNOWN_TARGET names the evolve', async () => {
+    expect(await warningsOf('parser-range-evolve-unknown')).toEqual([
+      { code: WARDLEY_UNKNOWN_TARGET, astIds: ['evolve:Cup'] },
+    ]);
+  });
+
+  it('WARDLEY_EVOLVE_PIPELINE_COMPONENT names the evolve (D745)', async () => {
     expect(await warningsOf('parser-evolve-pipeline-child')).toEqual([
-      { code: WARDLEY_UNKNOWN_TARGET, astIds: ['evolve:c'] },
+      { code: WARDLEY_EVOLVE_PIPELINE_COMPONENT, astIds: ['evolve:c'] },
     ]);
   });
 

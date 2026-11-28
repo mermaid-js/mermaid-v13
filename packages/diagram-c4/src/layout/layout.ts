@@ -537,9 +537,12 @@ function routeAll(input: RouteInput): RoutedAll {
   let careful = true;
   const taken = new Taken(work);
   // What a label must never cover: every shape (a person's head and body) and every boundary
-  // header; with tags, also every label placed before it.
+  // header; with tags, also every label placed before it. Nor the frames' borders (D746) while
+  // a spot clears them.
   const blocked = new Taken(work);
   keepOffShapes(shapes, input.tags, taken, blocked);
+  const borders = new Taken(work);
+  for (const f of frames) borders.border(f, input.tags ? M.tagClear : M.besideGap);
   // Every line is routed before any label is placed, so that labels can keep off the arrowheads.
   const lanes = new Lanes(work);
   for (const f of frames) lanes.frame(f);
@@ -560,7 +563,7 @@ function routeAll(input: RouteInput): RoutedAll {
     if (work.done) careful = false;
     const keep = work.done
       ? undefined
-      : { taken, blocked, heads, lines, own: k, work, tags: input.tags };
+      : { taken, blocked, borders, heads, lines, own: k, work, tags: input.tags };
     const placedLabel = placeLabel({ rel, index, r, input, keep, place: places[k] });
     return { rel, index, route: r, startArrow, endArrow, ...placedLabel };
   });

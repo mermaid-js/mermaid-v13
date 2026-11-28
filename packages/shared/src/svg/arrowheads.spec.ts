@@ -3,6 +3,7 @@ import { streamWriter } from '@mermaid-js/core/svg';
 import type { Attrs, SafeColor, SvgWriter } from '@mermaid-js/core/svg';
 import {
   marker,
+  markerReach,
   markerTrim,
   pointTrim,
   type Arrowheads,
@@ -130,5 +131,23 @@ describe('markerTrim', () => {
     ] as const) {
       expect(pointTrim(gap, length)).toBe(markerTrim('arrow_point', heads({ gap, length })));
     }
+  });
+});
+
+describe('markerReach', () => {
+  it('a point head reaches past its gap and length, half its width to each side', () => {
+    expect(markerReach('arrow_point', g)).toEqual({ back: 1 + 8, side: 3 });
+  });
+
+  it('a circle head reaches past its gap and size, its radius to each side', () => {
+    expect(markerReach('arrow_circle', g)).toEqual({ back: 1 + 7, side: 3.5 });
+  });
+
+  it('a cross head reaches half its square and half its stroke past its middle, both ways', () => {
+    expect(markerReach('arrow_cross', g)).toEqual({ back: 2 + 4 + 4.75, side: 4.75 });
+  });
+
+  it('any other type reaches nowhere', () => {
+    expect(markerReach('arrow_open', g)).toEqual({ back: 0, side: 0 });
   });
 });

@@ -1,4 +1,4 @@
 2:21-2:24 "1.5" warning WARDLEY_COORDINATE_AMBIGUOUS: `1.5` is read as 1.5 %, not as a fraction: only values up to 1 are fractions of the axis (`1.0` is 100 %). Write the fraction you meant, such as `0.5`, or a percentage of 2 or more.
 4:1-4:12 "Tea -> Milk" warning WARDLEY_LINK_DROPPED: The link `Tea -> Milk` is not drawn: `Milk` names no anchor or component.
-6:8-6:13 "Sugar" warning WARDLEY_UNKNOWN_TARGET: `evolve Sugar` names no anchor or component, so it draws nothing. Name a component by its name as written (a pipeline component cannot evolve).
+6:8-6:13 "Sugar" warning WARDLEY_UNKNOWN_TARGET: `evolve Sugar` names no anchor or component, so it draws nothing. Name a component by its name as written.
 10:10-10:13 "Tea" warning WARDLEY_PIPELINE_REPLACED: A second `pipeline Tea` replaces the first one's components, which stay on the map outside the pipeline. Write one `pipeline Tea { … }` with all its components.

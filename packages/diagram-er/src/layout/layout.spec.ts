@@ -161,6 +161,61 @@ describe('entity tables in px', () => {
     expect(lay(src, pxProfile, { er: { diagramPadding: 0 } }).graph.diagramPadding).toBe(0);
   });
 
+  it('wraps the name of an entity with no attributes at 120 px, as v12 did (#1226)', () => {
+    // v12 draws such an entity with `drawRect`, whose label wraps at `flowchart.wrappingWidth`.
+    const name = 'This is a fairly long entity name with many words in it';
+    const view = lay(`erDiagram\n  "${name}"\n`, pxProfile).layout.er!.entities[0]!;
+    expect(view.label.lines.length).toBeGreaterThan(1);
+    expect(Math.max(...view.label.widths)).toBeLessThanOrEqual(120);
+    const pad = pxProfile.builder.nodePad;
+    expect(view.width).toBe(Math.max(view.label.width + 2 * pad.x, 100));
+    expect(view.height).toBe(view.label.height + 2 * pad.y);
+  });
+
+  it('breaks a wrapped name after a hyphen and keeps a word wider than 120 px whole, as v12', () => {
+    // v12 (Chromium): "DELIVERY-" / "ADDRESS"; a 24px bold CUSTOMER stays one 137 px line.
+    const hyphen = lay('erDiagram\n  DELIVERY-ADDRESS\n', pxProfile).layout.er!.entities[0]!;
+    expect(hyphen.label.lines.map((l) => l.map((r) => r.text).join(''))).toEqual([
+      'DELIVERY-',
+      'ADDRESS',
+    ]);
+    const word = 'Supercalifragilisticexpialidocious';
+    const whole = lay(`erDiagram\n  ${word}\n`, pxProfile).layout.er!.entities[0]!;
+    expect(whole.label.lines.length).toBe(1);
+    expect(whole.label.width).toBe(cell(word));
+    expect(whole.label.width).toBeGreaterThan(120);
+  });
+
+  it('wraps at er.wrappingWidth, and in cells at the profile width unless set (D751)', () => {
+    const name = 'This is a fairly long entity name with many words in it';
+    const src = `erDiagram\n  "${name}"\n`;
+    const wide = lay(src, pxProfile, { er: { wrappingWidth: 250 } }).layout.er!.entities[0]!;
+    expect(wide.label.lines.length).toBe(2);
+    expect(Math.max(...wide.label.widths)).toBeGreaterThan(120);
+    expect(Math.max(...wide.label.widths)).toBeLessThanOrEqual(250);
+    // Cells: 25 columns by default (also for the written default), 160 px / 8 = 20 when set.
+    const widest = (init?: MermaidConfig) =>
+      Math.max(...lay(src, cellProfile(), init).layout.er!.entities[0]!.label.widths);
+    expect(widest()).toBeLessThanOrEqual(25);
+    expect(widest()).toBeGreaterThan(20);
+    expect(widest({ er: { wrappingWidth: 120 } })).toBe(widest());
+    expect(widest({ er: { wrappingWidth: 160 } })).toBeLessThanOrEqual(20);
+  });
+
+  it('keeps the name of an entity with attributes on one line (#1226)', () => {
+    const name = 'This is a fairly long entity name with many words in it';
+    const view = lay(`erDiagram\n  "${name}" {\n    string id\n  }\n`, pxProfile).layout.er!
+      .entities[0]!;
+    expect(view.label.lines.length).toBe(1);
+    expect(view.label.width).toBe(cell(name));
+  });
+
+  it('keeps a short name of an entity with no attributes on one line', () => {
+    const view = lay('erDiagram\n  CUSTOMER\n', pxProfile).layout.er!.entities[0]!;
+    expect(view.label.lines.length).toBe(1);
+    expect(view.label.width).toBe(cell('CUSTOMER'));
+  });
+
   it('measures a name in the font its style gives it', () => {
     const plain = lay('erDiagram\n  A\n', pxProfile).graph.nodes[0]!;
     const big = lay('erDiagram\n  A\n  style A font-size:40px\n', pxProfile).graph.nodes[0]!;

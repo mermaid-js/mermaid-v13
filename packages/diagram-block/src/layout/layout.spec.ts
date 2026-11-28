@@ -6,7 +6,8 @@ import { layoutBlock } from './layout.ts';
 import { FIXTURES, fixture, gridMeasurer } from './mmd.fixtures.ts';
 import type { BlockLayout, BlockNodeLayout } from './types.ts';
 import { blockTestContext, blockTestTheme, parsedBlock } from '../test-context.ts';
-import { outlineDistance } from '../shapes/outline.ts';
+import { arrowheads, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
+import { clipOutline, outlineDistance, type Point } from '../shapes/outline.ts';
 
 /**
  * The block layout (spec #521 T3) through `layoutBlock`, with the grid measurer (10 px a
@@ -242,6 +243,90 @@ describe('edges (D441)', () => {
     const label = l.edges[0]!.label!;
     expect(label.x + label.width / 2).toBe(48);
     expect(label.y + label.height / 2).toBe(0);
+  });
+
+  it('slides a tag that would sit on a block’s border along its edge, clear of it (#1362)', () => {
+    // `check -- "yes" --> work`: the centres' midpoint is on the top border of `Work`.
+    const { model, config } = fixture('baseline/themes/neo-dark');
+    const l = layoutBlock(model, blockTestContext(theme, config));
+    const e = l.edges.find((x) => x.start === 'check' && x.end === 'work')!;
+    const tag = e.label!;
+    const s = e.points[0]!;
+    const t = e.points.at(-1)!;
+    // Every point on the tag's outline is on one side of each block's outline.
+    const inside = (b: BlockNodeLayout, p: Point): boolean => {
+      const dx = p.x - b.centre.x;
+      const dy = p.y - b.centre.y;
+      const exit = clipOutline(b.outline!, dx, dy);
+      return Math.hypot(dx, dy) < Math.hypot(exit.x, exit.y);
+    };
+    const rim: Point[] = [];
+    for (let k = 0; k <= 40; k++) {
+      const f = k / 40;
+      rim.push(
+        { x: tag.x + f * tag.width, y: tag.y },
+        { x: tag.x + f * tag.width, y: tag.y + tag.height }
+      );
+      rim.push(
+        { x: tag.x, y: tag.y + f * tag.height },
+        { x: tag.x + tag.width, y: tag.y + f * tag.height }
+      );
+    }
+    for (const b of l.blocks.filter((x) => x.outline)) {
+      const sides = new Set(rim.map((p) => inside(b, p)));
+      expect([b.id, sides.size]).toEqual([b.id, 1]);
+    }
+    // The edge is too short for the tag between the borders and the head, so it sits beside
+    // the edge, 2 px clear of it, between the ends …
+    const c = { x: tag.x + tag.width / 2, y: tag.y + tag.height / 2 };
+    const len = Math.hypot(t.x - s.x, t.y - s.y);
+    const u = { x: (t.x - s.x) / len, y: (t.y - s.y) / len };
+    const k = (c.x - s.x) * u.x + (c.y - s.y) * u.y;
+    const across = (tag.width / 2 + 2) * Math.abs(u.y) + (tag.height / 2 + 2) * Math.abs(u.x);
+    expect(Math.abs((c.x - s.x) * u.y - (c.y - s.y) * u.x)).toBeCloseTo(across, 6);
+    expect(k).toBeGreaterThan(0);
+    expect(k).toBeLessThan(len);
+    // … and the arrowhead at `work` (the last `head` px of the edge) is not under it.
+    const head = markerTrim(e.arrowTypeEnd, arrowheads(theme));
+    expect(head).toBeGreaterThan(0);
+    for (const d of [0, head / 2, head - 0.01]) {
+      const p = { x: t.x - u.x * d, y: t.y - u.y * d };
+      const under =
+        p.x > tag.x && p.x < tag.x + tag.width && p.y > tag.y && p.y < tag.y + tag.height;
+      expect([d, under]).toEqual([d, false]);
+    }
+    // Nor are the corners of its base, beside the line.
+    const g = arrowheads(theme);
+    const base = { x: t.x - u.x * (g.gap + g.length), y: t.y - u.y * (g.gap + g.length) };
+    for (const side of [-1, 1]) {
+      const p = {
+        x: base.x - side * u.y * (g.width / 2),
+        y: base.y + side * u.x * (g.width / 2),
+      };
+      const under =
+        p.x > tag.x && p.x < tag.x + tag.width && p.y > tag.y && p.y < tag.y + tag.height;
+      expect([side, under]).toEqual([side, false]);
+    }
+  });
+});
+
+describe('block arrows (#1193)', () => {
+  // v12 sized an arrow from its drawn polygon, so the four-way arrow's heads stay inside its
+  // cell and the grid's padding stays between neighbouring arrows.
+  it('keeps every pair of arrow polygons at least block.padding apart', () => {
+    const { model, config } = fixture(
+      'nightly-check/should-handle-block-arrows-in-different-directions'
+    );
+    const l = layoutBlock(model, blockTestContext(theme, config, gridMeasurer));
+    const arrows = l.blocks.filter((b) => b.shape === 'block-arrow').map((b) => b.box);
+    expect(arrows).toHaveLength(7);
+    for (const [i, a] of arrows.entries()) {
+      for (const b of arrows.slice(i + 1)) {
+        const gapX = Math.max(b.x - right(a), a.x - right(b));
+        const gapY = Math.max(b.y - (a.y + a.height), a.y - (b.y + b.height));
+        expect(Math.max(gapX, gapY)).toBeGreaterThanOrEqual(l.padding - 1e-9);
+      }
+    }
   });
 });
 

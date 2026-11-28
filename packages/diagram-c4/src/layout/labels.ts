@@ -13,6 +13,7 @@ import type { LabelRoom } from './room.ts';
 import type { Place, Stagger } from './pairs.ts';
 import { crosses, lineOf, type Route, type Work } from './route.ts';
 import { hitRect } from './shapes.ts';
+import type { Rect } from './types.ts';
 
 /** A relation's drawn label: C4Dynamic numbers its relations in model order, from 1 (v12). */
 export function relationLabelText(
@@ -69,6 +70,18 @@ export class Taken {
   /** A square of half side `r` about (x, y). */
   around(x: number, y: number, r: number): void {
     this.add(x - r, y - r, x + r, y + r);
+  }
+
+  /**
+   * A boundary frame's border (D746): its four sides, each a strip `half` either side of the
+   * dashed line, so that a label keeps off the border but may sit inside the frame or outside it.
+   */
+  border({ x, y, width, height }: Rect, half: number): void {
+    const [x1, y1] = [x + width, y + height];
+    this.add(x - half, y - half, x1 + half, y + half);
+    this.add(x - half, y1 - half, x1 + half, y1 + half);
+    this.add(x - half, y + half, x + half, y1 - half);
+    this.add(x1 - half, y + half, x1 + half, y1 - half);
   }
 
   /** The area of the box x0, y0, x1, y1 that is taken. */
@@ -141,6 +154,11 @@ export interface Keep {
   readonly taken: Taken;
   /** What it must not cover at all: whole shapes and boundary headers. */
   readonly blocked: Taken;
+  /**
+   * The boundary frames' borders (D746), which it must not cover either, unless no spot clears
+   * them: then a spot clear of all else is taken, marked crowded. None on that second search.
+   */
+  readonly borders?: Taken;
   /** Its own arrowheads' tips, as x, y pairs: it must not cover their squares either. */
   readonly heads: readonly number[];
   /** Every relation's line; the label should keep off all but its own (`own`, by index in `Lines`). */
@@ -169,8 +187,15 @@ function keepOff(keep: Keep | undefined, { x0, y0, x1, y1 }: Box): void {
   if (keep.tags) keep.blocked.add(x0, y0, x1, y1);
 }
 
-/** How much of a label box it must not cover: `blocked`, and its own heads. */
-function forbidden(keep: Keep, { x0, y0, x1, y1 }: Box): number {
+/** How much of a label box it must not cover: `blocked`, the frames' borders, its own heads. */
+function forbidden(keep: Keep, box: Box): number {
+  const [rest, border] = forbiddenParts(keep, box);
+  return rest + border;
+}
+
+/** {@link forbidden} in two: what is not the frames' borders, and what is. */
+function forbiddenParts(keep: Keep, { x0, y0, x1, y1 }: Box): [number, number] {
+  const border = keep.borders?.covered(x0, y0, x1, y1) ?? 0;
   let area = keep.blocked.covered(x0, y0, x1, y1);
   const h = keep.heads;
   keep.work.charge(h.length / 2);
@@ -179,7 +204,7 @@ function forbidden(keep: Keep, { x0, y0, x1, y1 }: Box): number {
     const t = Math.min(y1, h[i + 1]! + M.arrow) - Math.max(y0, h[i + 1]! - M.arrow);
     if (w > 0 && t > 0) area += w * t;
   }
-  return area;
+  return [area, border];
 }
 
 /** A relation's label and `[techn]` measured, and the size of the tag round them. */
@@ -269,8 +294,36 @@ function spotOf({ rel, r, lw, lh, keep, place, tags }: SpotInput): Clearest {
   if (!keep) return { at: M.slide[0]!, dx: given[0], dy: given[1], crowded: false };
   const spot =
     staggeredSpot(r, lw, lh, keep, staggerEnd(rel, place)) ??
-    clearest({ r, lw, lh, given, online, keep });
+    acrossBorders({ r, lw, lh, given, online, keep });
   return crowdedAt(rel, place, r, boxOf(r, spot, lw, lh), tags) ? { ...spot, crowded: true } : spot;
+}
+
+/**
+ * The clearest spot ({@link clearest}), off the frames' borders (D746), so that a tag slides off
+ * a border even where the author's offsets put it. A label does not float far off to clear a
+ * border (a line through a gap between two frames narrower than the label, or a short line from
+ * a frame's side): when the spot off the borders is crowded, or lies farther from the line, by
+ * more than half the label's smaller side, than the spot found with the borders left out, that
+ * spot is taken instead, when it clears the rest, and is crowded, for it lies across a border.
+ */
+function acrossBorders(input: ClearestInput): Clearest {
+  const [spot, across] = clearest(input);
+  const reach = Math.min(input.lw, input.lh) / 2;
+  const off = awayFromLine(input, spot);
+  // A clear spot this near its line is kept: no spot can lie nearer by more than `reach`.
+  if (!across || (!spot.crowded && off <= reach)) return spot;
+  if (across.crowded || sameSpot(spot, across)) return spot;
+  const farther = off > awayFromLine(input, across) + reach;
+  return spot.crowded || farther ? { ...across, crowded: true } : spot;
+}
+
+const sameSpot = (p: Clearest, q: Clearest): boolean =>
+  p.at === q.at && p.dx === q.dx && p.dy === q.dy;
+
+/** How far the middle of the label at `spot` lies from its own line. */
+function awayFromLine({ r, lw, lh }: ClearestInput, spot: Clearest): number {
+  const box = boxOf(r, spot, lw, lh);
+  return distanceToLine(r, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2);
 }
 
 /** The end a staggered tag keeps to; none when not staggered or moved by the author's offsets. */
@@ -415,11 +468,15 @@ interface Clearest {
  * that covers `forbidden` is never taken while another does not; when none clears it, the one
  * that covers least of it is, and the label is crowded, as it is when the spot taken lies over
  * another relation's line.
+ *
+ * With the frames' borders to keep off, the same search also finds the spot it would find with
+ * the borders left out (second), from the same spots: each is tried once, and its cost is
+ * counted once.
  */
-function clearest(input: ClearestInput): Clearest {
+function clearest(input: ClearestInput): [Clearest, Clearest | undefined] {
   const search = new SpotSearch(input);
   search.run();
-  return search.result();
+  return search.results();
 }
 
 /** An offset off the line's stretch, x and y. */
@@ -467,12 +524,65 @@ function besideFrame({ r, lw, lh, given, online }: ClearestInput): BesideFrame {
   };
 }
 
-/** The search {@link clearest} runs, and the best spot it has found so far. */
+/** A spot as {@link SpotSearch} keeps it: `at` along the stretch, `dx`, `dy` off it. */
+interface Spot {
+  readonly at: number;
+  readonly dx: number;
+  readonly dy: number;
+}
+
+/**
+ * One measure {@link SpotSearch} judges the spots by (with the frames' borders or without), and
+ * the best spot it has found by it so far. It takes the spots its own search would have tried:
+ * none once it found a clear one, none in the rest of a pass once stepping out is not worth it.
+ */
+class Judge {
+  best: Spot;
+  least = Infinity;
+  worst = Infinity;
+  crossed = 0;
+  clear = false;
+  open = true;
+
+  constructor(
+    readonly borders: boolean,
+    start: Spot
+  ) {
+    this.best = start;
+  }
+
+  get taking(): boolean {
+    return this.open && !this.clear;
+  }
+
+  /** Whether a spot covering `bad` of what it must not cover is no better than the best. */
+  worse(bad: number): boolean {
+    return bad > this.worst || (bad === this.worst && bad > 0);
+  }
+
+  /** A spot tried: kept when it covers less than the best; the judge is done when it is clear. */
+  offer(spot: Spot, bad: number, lines: number, cost: number): void {
+    if (bad < this.worst || cost < this.least) {
+      [this.worst, this.least, this.crossed] = [bad, cost, lines];
+      this.best = spot;
+    }
+    if (bad === 0 && cost === 0) this.clear = true;
+  }
+
+  /** Whether step `k` out is still worth a try: in reach, and cheaper than the best so far. */
+  worthStepping(k: number, split: number, step: number): boolean {
+    return k < M.besideSteps * split && (this.worst > 0 || k * step < this.least);
+  }
+
+  result(): Clearest {
+    return { ...this.best, crowded: this.worst > 0 || this.crossed > 0 };
+  }
+}
+
+/** The search {@link clearest} runs, and the best spots its judges have found so far. */
 class SpotSearch {
-  private best: { at: number; dx: number; dy: number };
-  private least = Infinity;
-  private worst = Infinity;
-  private crossed = 0;
+  /** With the borders (when there are any), then, when there are, without them. */
+  private readonly judges: readonly Judge[];
   /** What another relation's line through the label costs. */
   private readonly perLine: number;
   private readonly ons: readonly Offset[];
@@ -480,25 +590,34 @@ class SpotSearch {
 
   constructor(private readonly input: ClearestInput) {
     const { lw, lh, given, keep } = input;
-    this.best = { at: M.slide[0]!, dx: given[0], dy: given[1] };
+    const start = { at: M.slide[0]!, dx: given[0], dy: given[1] };
+    this.judges = keep.borders
+      ? [new Judge(true, start), new Judge(false, start)]
+      : [new Judge(true, start)];
     this.perLine = M.lineCover * lw * lh;
     this.ons = onLineOffsets(given, input.online, keep.tags);
     this.frame = besideFrame(input);
   }
 
   /**
-   * The coarse pass, then, when it found no clear spot and the best one is crowded or the label
-   * is a tag, the finer one: a tag keeps `tagClear` from the shapes without floating a depth out.
+   * The coarse pass, then, for each judge that found no clear spot and whose best one is crowded
+   * or whose label is a tag, the finer one: a tag keeps `tagClear` from the shapes without
+   * floating a depth out.
    */
   run(): void {
     const { tags } = this.input.keep;
-    if (this.pass(M.slide, 1)) return;
-    if (this.worst > 0 || this.crossed > 0 || tags)
-      this.pass(M.fineSlide, tags ? M.tagSplit : M.fineSplit);
+    this.pass(M.slide, 1);
+    for (const j of this.judges) j.open = j.worst > 0 || j.crossed > 0 || tags;
+    if (this.judges.some((j) => j.taking)) this.pass(M.fineSlide, tags ? M.tagSplit : M.fineSplit);
   }
 
-  result(): Clearest {
-    return { ...this.best, crowded: this.worst > 0 || this.crossed > 0 };
+  results(): [Clearest, Clearest | undefined] {
+    return [this.judges[0]!.result(), this.judges[1]?.result()];
+  }
+
+  /** Whether every judge has its spot: a clear one, or none more to take in this pass. */
+  private settled(): boolean {
+    return !this.judges.some((j) => j.taking);
   }
 
   /**
@@ -506,10 +625,10 @@ class SpotSearch {
    * the finer places on its line before any beside it (#955 review): one that fits between the
    * shapes stays on its line, where its bare text sat.
    */
-  private pass(slides: readonly number[], split: number): boolean {
+  private pass(slides: readonly number[], split: number): void {
     const finer = this.input.keep.tags && slides !== M.fineSlide;
-    if (this.onLine(slides) || (finer && this.onLine(M.fineSlide))) return true;
-    return this.beside(slides, split);
+    if (this.onLine(slides) || (finer && this.onLine(M.fineSlide))) return;
+    this.beside(slides, split);
   }
 
   private onLine(slides: readonly number[]): boolean {
@@ -521,43 +640,42 @@ class SpotSearch {
    * costs a share of a line through the label: a label keeps by its own line rather than move
    * far from it to clear another's.
    */
-  private beside(slides: readonly number[], split: number): boolean {
+  private beside(slides: readonly number[], split: number): void {
     const { nx, ny, half, depth, ax, ay } = this.frame;
     const step = (M.besideStepCost * this.perLine) / split;
-    for (let k = 0; this.worthStepping(k, split, step); k++)
+    for (let k = 0; this.stepOut(k, split, step); k++)
       for (const side of [1, -1]) {
         const d = side * (half + (k * depth) / split);
-        if (this.tryAt(slides, ax + nx * d, ay + ny * d, k / split)) return true;
+        if (this.tryAt(slides, ax + nx * d, ay + ny * d, k / split)) return;
       }
-    return false;
   }
 
-  /** Whether step `k` out is still worth a try: in reach, and cheaper than the best so far. */
-  private worthStepping(k: number, split: number, step: number): boolean {
-    return k < M.besideSteps * split && (this.worst > 0 || k * step < this.least);
+  /** Closes the judges for which step `k` out is not worth it; whether any still takes spots. */
+  private stepOut(k: number, split: number, step: number): boolean {
+    for (const j of this.judges) if (j.taking && !j.worthStepping(k, split, step)) j.open = false;
+    return !this.settled();
   }
 
-  /** Each place of `slides` along the line, (px, py) off it; true at the first clear one. */
+  /** Each place of `slides` along the line, (px, py) off it; true once every judge is settled. */
   private tryAt(slides: readonly number[], px: number, py: number, away: number): boolean {
     return slides.some((t) => this.tryOne(t, px, py, away));
   }
 
-  /** One spot: kept when it covers less than the best; true when it covers nothing. */
+  /** One spot, offered to every judge still taking spots; true once every judge is settled. */
   private tryOne(t: number, px: number, py: number, away: number): boolean {
     const box = this.boxAt(t, px, py);
-    const bad = forbidden(this.input.keep, box);
-    if (this.worse(bad)) return false;
-    const [lines, cost] = bad > 0 ? [0, Infinity] : this.costOf(box, away);
-    if (bad < this.worst || cost < this.least) {
-      [this.worst, this.least, this.crossed] = [bad, cost, lines];
-      this.best = { at: t, dx: px, dy: py };
+    const [rest, border] = forbiddenParts(this.input.keep, box);
+    const bads = this.judges.map((j) =>
+      j.taking && !j.worse(rest + (j.borders ? border : 0)) ? rest + (j.borders ? border : 0) : -1
+    );
+    if (bads.every((bad) => bad < 0)) return false;
+    const [lines, cost] = bads.includes(0) ? this.costOf(box, away) : [0, Infinity];
+    const spot = { at: t, dx: px, dy: py };
+    for (const [i, bad] of bads.entries()) {
+      if (bad > 0) this.judges[i]!.offer(spot, bad, 0, Infinity);
+      else if (bad === 0) this.judges[i]!.offer(spot, 0, lines, cost);
     }
-    return bad === 0 && cost === 0;
-  }
-
-  /** Whether a spot covering `bad` of what it must not cover is no better than the best. */
-  private worse(bad: number): boolean {
-    return bad > this.worst || (bad === this.worst && bad > 0);
+    return this.settled();
   }
 
   private boxAt(t: number, px: number, py: number): Box {

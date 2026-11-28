@@ -75,6 +75,11 @@ export interface EventModelRelationLayout {
   readonly points: readonly Point[];
   /** The arrowhead polygon, base corner, tip (the last point), base corner (10 × 7). */
   readonly head: readonly [Point, Point, Point];
+  /**
+   * A relation between lanes whose segment meets a box other than its two, where no detour fits
+   * (D743): it keeps v12's segment. Absent on every other relation.
+   */
+  readonly noDetour?: true;
 }
 
 export interface EventModelLayout {

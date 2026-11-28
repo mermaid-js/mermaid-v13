@@ -12,6 +12,7 @@ export const erConfigDefaults: ErDiagramConfig = {
   "minEntityWidth": 100,
   "minEntityHeight": 75,
   "entityPadding": 15,
+  "wrappingWidth": 120,
   "nodeSpacing": 140,
   "rankSpacing": 80,
   "stroke": "gray",

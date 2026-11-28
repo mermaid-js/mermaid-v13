@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   parseWardley,
   WARDLEY_COORDINATE_AMBIGUOUS,
+  WARDLEY_EVOLVE_PIPELINE_COMPONENT,
   WARDLEY_LINK_DROPPED,
   WARDLEY_PIPELINE_REPLACED,
   WARDLEY_UNKNOWN_TARGET,
@@ -240,7 +241,48 @@ describe('wardley model: v12 population rules', () => {
     // A pipeline child is found by its id only, as v12's `getNode`.
     const child = parse(nightly('parser-evolve-pipeline-child'));
     expect(child.model.trends.map((t) => t.nodeId)).toEqual(['P_c']);
-    expect(child.diagnostics.map((d) => d.code)).toEqual([WARDLEY_UNKNOWN_TARGET]);
+    expect(child.diagnostics.map((d) => d.code)).toEqual([WARDLEY_EVOLVE_PIPELINE_COMPONENT]);
+  });
+
+  it('names the cause of a skipped evolve: an unknown name, or a pipeline component (#1273, D745)', () => {
+    const [unknown] = parse(nightly('parser-range-evolve-unknown')).diagnostics;
+    expect(unknown?.message).toBe(
+      '`evolve Cup` names no anchor or component, so it draws nothing. Name a component by its name as written.'
+    );
+    const src = nightly('parser-evolve-pipeline-child');
+    const [d] = parse(src).diagnostics;
+    expect(d).toMatchObject({ code: WARDLEY_EVOLVE_PIPELINE_COMPONENT, severity: 'warning' });
+    expect(d?.message).toBe(
+      "`c` is a pipeline component of `P`; it can't evolve by its name. Use its id `P_c`."
+    );
+    expect(d && src.slice(d.range.start, d.range.end)).toBe('c');
+  });
+
+  it('quotes a dropped link without an arrow as drawn, backticks and all (#1273)', () => {
+    // The `#35;` code is quoted as the `#` v12 drew; a backtick lengthens the code span.
+    const src = 'wardley-beta\ncomponent A [0.5, 0.5]\nclick A "a`b #35; c"\n';
+    const { diagnostics } = parse(src);
+    expect(diagnostics.map((d) => [d.code, d.message])).toEqual([
+      [
+        WARDLEY_LINK_DROPPED,
+        'The link ``click A "a`b # c"`` is not drawn: `click A` and ``a`b # c`` name no anchor or component.',
+      ],
+    ]);
+  });
+
+  it('quotes a dropped link without an arrow as written (#1273)', () => {
+    const src = nightly('parser-link-without-arrow');
+    const { model, diagnostics } = parse(src);
+    expect(model.links.map((l) => [l.source, l.target])).toEqual([
+      ['A', 'B'],
+      ['click A href', 'https://example.com'],
+    ]);
+    expect(diagnostics.map((d) => [d.code, d.message])).toEqual([
+      [
+        WARDLEY_LINK_DROPPED,
+        'The link `click A href "https://example.com"` is not drawn: `click A href` and `https://example.com` name no anchor or component.',
+      ],
+    ]);
   });
 
   it('keeps the last evolve, evolution and size, and the first annotations box', () => {
@@ -435,6 +477,17 @@ describe('wardley AST, symbols and statements', () => {
       '"Tea \\"Cup\\""',
       "'  spaced  '",
     ]);
+    // D745: an `evolve` naming a pipeline component by its name refers to it, so a rename of
+    // the component renames the `evolve` too and keeps its warning.
+    const child = nightly('parser-evolve-pipeline-child');
+    expect(parse(child).symbols.map((s) => [s.role, s.name, s.range.start, s.range.end])).toEqual([
+      ['def', 'P', 23, 24],
+      ['ref', 'P', 45, 46],
+      ['def', 'c', 61, 62],
+      ['ref', 'c', 78, 79],
+      ['ref', 'P', 91, 92],
+      ['ref', 'c', 93, 94],
+    ]);
     expect(parse(nightly('parser-link-resolve')).symbols.map((s) => s.name)).toEqual([
       'A',
       'B',
@@ -487,7 +540,7 @@ describe('wardley AST, symbols and statements', () => {
   it('accepts every parser fixture without an error, as v12 does', () => {
     const dir = join(REPO_ROOT, 'e2e/diagrams/wardley/nightly-check');
     const names = readdirSync(dir).filter((f) => f.startsWith('parser-') && f.endsWith('.mmd'));
-    expect(names.length).toBe(33);
+    expect(names.length).toBe(34);
     for (const file of names) {
       const errors = parse(readFileSync(join(dir, file), 'utf8')).diagnostics.filter(
         (d) => d.severity === 'error'

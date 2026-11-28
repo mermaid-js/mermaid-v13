@@ -887,6 +887,8 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     const { diagnostics } = this.st;
     const resolved = normalise(
       {
+        src: this.src,
+        view: this.view,
         statements: this.children,
         orphans: this.orphans,
         title: this.texts.title,

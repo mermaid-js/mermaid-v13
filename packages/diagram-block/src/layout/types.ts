@@ -63,8 +63,9 @@ export interface BlockEdgeLayout {
   readonly end: string;
   /**
    * `line`: v12's segment between the centres, clipped at both outlines, its middle point the
-   * centres' midpoint (`[start, middle, end]`). `loop`: a self-loop (D441) as one cubic Bézier,
-   * `[start, control, control, end]`, from and back to the block's outline.
+   * centres' midpoint (`[start, middle, end]`), also where the label slid away from it.
+   * `loop`: a self-loop (D441) as one cubic Bézier, `[start, control, control, end]`, from and
+   * back to the block's outline.
    */
   readonly kind: 'line' | 'loop';
   readonly points: readonly Point[];
@@ -72,7 +73,12 @@ export interface BlockEdgeLayout {
   readonly arrowTypeEnd: BlockArrowType;
   readonly thickness: BlockEdge['thickness'];
   readonly pattern: BlockEdge['pattern'];
-  /** Centred on the middle point (a loop's apex); absent without a label. */
+  /**
+   * Centred on the middle point (a loop's apex), unless it would sit there on a block's border
+   * or inside a block that is not one of the edge's ends nor holds both: a line's label then
+   * slides along the line to the nearest clear spot (#1362, `edge-label.ts`). Absent without a
+   * label.
+   */
   readonly label?: PlacedLabel;
 }
 

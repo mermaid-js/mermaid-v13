@@ -1,7 +1,7 @@
 // v12's `rendering-util/rendering-elements/shapes/blockArrow.spec.ts` (fa796a943), ported as is:
 // the sixteen point sets, the axis shorthands and the natural width. Only the imports differ.
 import { describe, expect, it } from 'vitest';
-import { getArrowPoints, type ArrowDirection as Direction } from './block-arrow.ts';
+import { blockArrowSize, getArrowPoints, type ArrowDirection as Direction } from './block-arrow.ts';
 import type { Point } from './outline.ts';
 
 const bbox = { width: 100, height: 20 };
@@ -193,5 +193,35 @@ describe('block arrow points', () => {
 
   it('uses the natural width when total width is omitted', () => {
     expect(getArrowPoints(['right', 'down'], bbox, node)).toEqual([p(0, 0), p(150, 0), p(0, -40)]);
+  });
+});
+
+// #1193: v12 sized a block arrow from its drawn polygon's bbox, so the size reserves what the
+// polygon draws past its body. A label 100 by 20 with block padding 10 has a body
+// 100 + 40 + 10 = 150 wide and 20 + 20 = 40 high.
+describe('block arrow size', () => {
+  const label = { width: 100, height: 20 };
+
+  it('reserves the four-way arrowheads, 2 · 5 past the body on every side', () => {
+    expect(blockArrowSize(label, 10, ['x', 'y'])).toEqual({ w: 170, h: 60 });
+    expect(blockArrowSize(label, 10, ['right', 'left', 'up', 'down'])).toEqual({ w: 170, h: 60 });
+  });
+
+  it('is the body for every other set of directions, whose polygon fits inside it', () => {
+    for (const directions of [
+      ['right'],
+      ['left'],
+      ['up'],
+      ['down'],
+      ['x'],
+      ['y'],
+      ['right', 'up'],
+      ['left', 'down'],
+      ['x', 'up'],
+      ['y', 'left'],
+      [],
+    ]) {
+      expect(blockArrowSize(label, 10, directions)).toEqual({ w: 150, h: 40 });
+    }
   });
 });

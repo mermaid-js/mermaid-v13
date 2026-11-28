@@ -158,6 +158,78 @@ describe('layoutEventModel', () => {
     expect(l.boxes.map((b) => b.y)).toEqual([180, 15]);
   });
 
+  it('leaves a box with a self loop left of the loop, in target order (D743, D659)', () => {
+    // A loops on itself and three relations leave its bottom; the loop's left leg is 30 in
+    // from A's right edge.
+    const l = lay(
+      model(
+        frame('ui', 'A', { sources: ['01'] }),
+        frame('evt', 'B', { sources: ['01'] }),
+        frame('evt', 'C', { sources: ['01'] }),
+        frame('cmd', 'D', { sources: ['01'] })
+      )
+    );
+    const a = l.boxes[0]!;
+    const leg = a.x + a.width - 30;
+    const self = l.relations.find((r) => r.route === 'self');
+    expect(self?.points[0]?.x).toBe(leg);
+    const down = l.relations.filter((r) => r.source === 0 && r.route !== 'self');
+    expect(down).toHaveLength(3);
+    const from = down.map((r) => r.points[0]!.x);
+    for (const x of from) expect(x).toBeLessThan(leg);
+    expect(new Set(from).size).toBe(3);
+    // In the order of their targets, so no two cross.
+    const byTarget = [...down].sort((p, q) => p.points.at(-1)!.x - q.points.at(-1)!.x);
+    const xs = byTarget.map((r) => r.points[0]!.x);
+    expect(xs).toEqual([...xs].sort((p, q) => p - q));
+  });
+
+  it('keeps every detour run inside the gap between its lanes (D743)', () => {
+    // Fan-out (#1234): several detours share the gaps above the events lane.
+    const l = lay(
+      model(
+        frame('cmd', 'Place'),
+        frame('evt', 'P'),
+        frame('rmo', 'Orders', { reset: true, sources: ['02'] }),
+        frame('rmo', 'Stats', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Mailer', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Billing', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Audit', { reset: true, sources: ['02'] }),
+        frame('ui', 'Screen', { reset: true, sources: ['02'] })
+      )
+    );
+    const runs = l.relations.flatMap((r) =>
+      r.points.slice(1).flatMap((q, k) => {
+        const p = r.points[k]!;
+        return p.y === q.y && p.x !== q.x && r.route !== 'self' && r.route !== 'under' ? [q.y] : [];
+      })
+    );
+    expect(runs.length).toBeGreaterThan(0);
+    const gaps = l.lanes.slice(1).map((lane, k): [number, number] => {
+      const above = l.lanes[k]!;
+      return [above.y + above.height, lane.y];
+    });
+    for (const y of runs) expect([y, gaps.some(([lo, hi]) => y > lo && y < hi)]).toEqual([y, true]);
+  });
+
+  it('keeps the segment of a relation no detour fits, and marks it (D743)', () => {
+    // Two 440-wide read models fill the middle lane on both sides of E ->> U, beyond the reach
+    // of any column.
+    const long = 'x'.repeat(50);
+    const l = lay(
+      model(
+        frame('rmo', long),
+        frame('evt', 'E'),
+        frame('ui', 'U'),
+        frame('rmo', long, { reset: true })
+      )
+    );
+    const r = l.relations.find((x) => x.id === 'relation:02->03');
+    expect(r?.points).toHaveLength(2);
+    expect(r?.noDetour).toBe(true);
+    expect(l.relations.filter((x) => x.noDetour)).toHaveLength(1);
+  });
+
   it('routes a relation that skips a box of its lane under the row (D659)', () => {
     const l = lay(
       model(
@@ -206,6 +278,66 @@ describe('layoutEventModel', () => {
     // The lane grows from 130 to the lowest channel and 15 under it; the boxes keep v12's top.
     expect(l.lanes.map((x) => x.height)).toEqual([165]);
     expect(l.boxes.map((b) => b.y)).toEqual([15, 15, 15, 15]);
+  });
+
+  // docs-008 (#1234): E, U (inferred from E), and a reset C ->> E between them in x.
+  const resetting = model(
+    frame('evt', 'E'),
+    frame('ui', 'U'),
+    frame('rmo', 'C', { reset: true, sources: ['01'] })
+  );
+
+  it('leaves a box from distinct points when relations leave the same side (D743)', () => {
+    const l = lay(resetting);
+    // E at (250, 295), U at (280, 15), C at (310, 155), each 100 × 100. Both relations leave E's
+    // top; the one to the target further left first, at ⅔, the next ⅑ of the width right of it.
+    const from = l.relations.map((r) => r.points[0]);
+    expect(new Set(from.map((p) => p?.x)).size).toBe(2);
+    const toC = l.relations.find((r) => r.id === 'relation:01->03');
+    expect(toC?.points.map((p) => [round(p.x), p.y])).toEqual([
+      [327.78, 295],
+      [343.33, 255],
+    ]);
+  });
+
+  it('takes a relation between lanes past an unrelated box it would meet (D743)', () => {
+    const l = lay(resetting);
+    // The straight segment from E to U runs inside C's left edge. It goes up 10 left of C
+    // instead, where both E's top and U's bottom are, in one vertical segment.
+    const toU = l.relations.find((r) => r.id === 'relation:01->02');
+    expect(toU).toMatchObject({
+      route: 'up',
+      points: [
+        { x: 300, y: 295 },
+        { x: 300, y: 115 },
+      ],
+    });
+  });
+
+  it('jogs a detour between the lanes when no column reaches both boxes (D743)', () => {
+    // Fan-out: P ->> Orders, Stats (the lane above), Mailer, Billing (the top lane).
+    const l = lay(
+      model(
+        frame('cmd', 'Place'),
+        frame('evt', 'P'),
+        frame('rmo', 'Orders', { reset: true, sources: ['02'] }),
+        frame('rmo', 'Stats', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Mailer', { reset: true, sources: ['02'] }),
+        frame('pcr', 'Billing', { reset: true, sources: ['02'] })
+      )
+    );
+    const fromP = l.relations.filter((r) => r.source === 1).map((r) => r.points[0]?.x);
+    expect(new Set(fromP).size).toBe(4);
+    // Mailer (500, 15) and Billing (610, 15) sit above Orders (360) and Stats (470): their
+    // relations leave P's top, run right in the gap above the events lane, and go up clear of
+    // Stats, into the target's bottom.
+    for (const id of ['relation:02->05', 'relation:02->06']) {
+      const r = l.relations.find((x) => x.id === id);
+      expect(r?.points.length, id).toBe(4);
+      const [, a, b] = r?.points ?? [];
+      expect(a?.y, id).toBe(b?.y);
+      expect(b?.x, id).toBeGreaterThanOrEqual(580);
+    }
   });
 
   it('draws no relation to the first frame or a reset frame', () => {

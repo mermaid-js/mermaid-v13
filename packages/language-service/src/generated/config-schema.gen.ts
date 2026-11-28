@@ -4430,6 +4430,17 @@ export const configSchema: ConfigSchema = {
             "reason": "The padding inside every entity table cell, in px, across and down, in place of the layout's node padding (D116). Text output keeps its 1-cell padding."
           }
         },
+        "wrappingWidth": {
+          "description": "Width, in pixels, at which the name of an entity with no attributes wraps. It breaks\nbetween words and after a hyphen; a word wider than this stays whole. An entity with\nattributes keeps its name on one line.\n",
+          "type": "number",
+          "default": 120,
+          "minimum": 0,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (D751). v12 wrapped these names at `flowchart.wrappingWidth`, which ER no longer reads. Text output wraps at its own width unless this is set to another value."
+          }
+        },
         "nodeSpacing": {
           "type": "integer",
           "default": 140,
