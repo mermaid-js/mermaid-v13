@@ -1,18 +1,18 @@
 # Ondine — research notes for Mermaid v13
 
 Source: `https://github.com/wevm/ondine`, shallow clone at `/Users/knsv/repos/mermaid-v13/.tmp/ondine`
-(npm `ondine@0.0.3`, MIT, © weth LLC + Pele notice © kepano). Paths below are relative to that clone.
+(npm `ondine@0.0.3`, MIT, © weth LLC + the reference implementation notice © kepano). Paths below are relative to that clone.
 Nothing was built or installed; this is a read of the source, docs, and checked-in bench notes.
 
 ## TL;DR
 
-- Ondine is a **file-by-file, behavior-preserving port of Pele** (Obsidian's zero-dependency TS
-  Mermaid renderer) to Rust. It is not a redesign. Every Rust module header says "Port of Pele's
-  `src/<path>.ts`", and the rule is written down in `AGENTS.md` ("Porting from Pele").
+- Ondine is a **file-by-file, behavior-preserving port of the reference implementation** (Obsidian's zero-dependency TS
+  Mermaid renderer) to Rust. It is not a redesign. Every Rust module header says "Port of the reference implementation's
+  `src/<path>.ts`", and the rule is written down in `AGENTS.md` ("Porting from the reference implementation").
 - About 125k lines of Rust: `crates/compiler/src/diagrams` 91k, `svg` 10k, `layout` 9k, `text` 7k,
   `util` 2k. 33 diagram types. Two crates: a pure `compiler` and a thin `wasm` adapter.
 - Correctness is defined **relative to two oracles**. (1) **Mermaid 12.1.0** decides syntax and
-  models: same accept/reject, same detected type, same DB model, checked with fuzzing. (2) **Pele**
+  models: same accept/reject, same detected type, same DB model, checked with fuzzing. (2) **the reference implementation**
   decides output: byte-for-byte SVG parity after a normalization pass. Layout and look deliberately
   differ from Mermaid.
 - Text measurement is a **monospace advance with no font data** (0.6 em, 1.2 em for wide characters,
@@ -22,7 +22,7 @@ Nothing was built or installed; this is a read of the source, docs, and checked-
   results come back in one length-prefixed buffer. The JS glue is about 1 KB gzip.
 - Size: flowchart-only module is **~137 KB gzip** (nightly `build-std` + `immediate-abort` +
   `wasm-opt -Oz`). The all-types module is ~637 KB gzip. A Node "fast" build is about 1.8x faster
-  than Pele.
+  than the reference implementation.
 - Product framing: **compile ahead of time**. Vite plugin, CLI, remark plugin, and a Cloudflare
   image Worker produce SVG. The browser runtime is only `mount()` (~210 B), and in-browser
   compilation is opt-in.
@@ -35,7 +35,7 @@ rust-toolchain.toml        pinned 1.97.0 + wasm32-unknown-unknown
 clippy.toml                bans std::fs/env/time, HashMap/HashSet, str::replace, str::to_lowercase
 crates/compiler/           "Pure Mermaid-to-SVG compiler" — no I/O, clock, env, threads
   src/lib.rs               pub fn render(source, options_json, now) -> Result<Rendered, Error>
-  src/preprocess.rs        line endings, front matter, directives, comments (port of Pele preprocess.ts)
+  src/preprocess.rs        line endings, front matter, directives, comments (port of the reference implementation's preprocess.ts)
   src/detect.rs            Mermaid's detectors (port of detect.ts)
   src/yaml.rs              small YAML/JSON reader (js-yaml JSON-schema subset); also parses options JSON
   src/error.rs             Code = limit | semantic | syntax | unsupported-diagram, with line/col/snippet
@@ -49,13 +49,13 @@ crates/compiler/           "Pure Mermaid-to-SVG compiler" — no I/O, clock, env
   src/svg/{root,builder,shapes,edges,cluster,theme,title}.rs   SVG emission
   src/text/{label,measure,entities,icons}.rs                   label layout (6.5k lines), monospace widths
   src/util/{url,float,unicode,chars}.rs                        URL sanitizing, float formatting/parsing
-  tests/fixtures/<type>-parse.json                             literals ported from Mermaid's specs (via Pele)
+  tests/fixtures/<type>-parse.json                             literals ported from Mermaid's specs (via the reference implementation)
 crates/wasm/src/lib.rs     bump-arena allocator + exports: reset, alloc, render, (model)
 src/                       TypeScript package: Render.ts, internal/Wasm.ts, compiler/, cli/, remark/, vite/, Mount.ts
 scripts/build-wasm.ts      builds one module per type + all + all.fast + test model module
 scripts/size.ts            gzip budgets
 test/oracles/              Mermaid-as-oracle parity suite (vendored jison grammars)
-test/vectors/              Pele corpus (503 doc examples, 167 samples, 81 layout cases)
+test/vectors/              the reference implementation's corpus (503 doc examples, 167 samples, 81 layout cases)
 bench/                     size.md, speed.md, comparison.md, Chrome/Node harnesses
 .agents/{plan,design}.md   implementation plan and design proposals
 ```
@@ -66,27 +66,27 @@ Per-diagram structure (`crates/compiler/src/diagrams.rs`): each type receives an
 so `--features flowchart` compiles only flowchart, plus shared code and anything it depends on.
 (`agentflow`/`swimlane` pull in `flowchart`, see the comment in `diagrams.rs`.)
 
-## 2. How closely it mirrors Pele: port, not redesign
+## 2. How closely it mirrors the reference implementation: port, not redesign
 
-- `AGENTS.md` § "Porting from Pele" says to **mirror modules**: `src/<path>.ts` becomes
+- `AGENTS.md` § "Porting from the reference implementation" says to **mirror modules**: `src/<path>.ts` becomes
   `crates/compiler/src/<path>.rs`, and functions, constants, algorithms, iteration orders, and
   tie-breaks stay the same. A deliberate difference must be named in a comment.
-- Every module's `//!` header cites the Pele file it ports, for example `layout/layered.rs` ("Port
-  of Pele's `src/layout/layered.ts`") and `flowchart/lexer.rs`. The same holds for `svg/*` and
+- Every module's `//!` header cites the the reference implementation file it ports, for example `layout/layered.rs` ("Port
+  of the reference implementation's `src/layout/layered.ts`") and `flowchart/lexer.rs`. The same holds for `svg/*` and
   `text/label.rs`.
 - **JS semantics are reproduced by hand:** UTF-16 positions for anything that reaches output or
   diagnostics, `Math.round` half-up, stable sort, and insertion-ordered maps (BTreeMap index + Vec).
   See the header of `flowchart/db.rs`.
-- **No regex.** Every Pele RegExp becomes a hand-written matcher with the same semantics. The `regex`
+- **No regex.** Every the reference implementation RegExp becomes a hand-written matcher with the same semantics. The `regex`
   crate is banned for size reasons.
 - The documented deliberate differences are small. Theme variables are `--ondine-*` instead of
   `--pele-*` (`svg/theme.rs`), the default look is monochrome monospace, and the `info` diagram
   draws Ondine's own name (`src/Parity.test.ts`).
 - `.agents/plan.md` gives the history. A PoC wrapped **Merman** and produced a 20 MB playground
-  compiler. The rewrite dropped it for a straight Pele port: "Pele already matches Mermaid's parsers
+  compiler. The rewrite dropped it for a straight the reference implementation port: "the reference implementation already matches Mermaid's parsers
   and draws good layouts, so behavior is ported first and improved later with evidence."
 - `.agents/design.md` lists look changes (orthogonal edges, square label patches, fixed radii) as
-  *proposals* gated on breaking Pele byte-parity. Parity comes first and divergence second.
+  *proposals* gated on breaking the reference implementation byte-parity. Parity comes first and divergence second.
 
 ## 3. Parsing
 
@@ -105,7 +105,7 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
 - Limits are built in. Source is capped at 50k chars, output at 4 MB, and flowchart edges at 5000
   (because `A & B --> C & D` multiplies). See `lib.rs` constants. There are also recursion-depth
   limits (AGENTS.md).
-- Preprocessing (front matter, `%%{init}%%`, comments) and detection are ports of Pele's ports of
+- Preprocessing (front matter, `%%{init}%%`, comments) and detection are ports of the reference implementation's ports of
   Mermaid's own. Config comes back as a generic YAML value tree, and each type reads its own
   section.
 
@@ -114,9 +114,9 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
 - `text/measure.rs`: `width(text, size, style)` sums 600/1000 em per glyph, 1200 for East-Asian
   wide or supplementary characters, and 0 for combining or zero-width characters. **Style (bold or
   italic) is ignored.** No font tables, no canvas, no DOM, and no font metrics embedded in WASM.
-- Pele itself has a pluggable `TextMeasurer`. Ondine uses only Pele's monospace branch
+- The reference implementation itself has a pluggable `TextMeasurer`. Ondine uses only the reference implementation's monospace branch
   (`AGENTS.md` "Text widths"). The parity harness `test/Pele.ts` injects the same measurer into
-  Pele so that the bytes match.
+  The reference implementation so that the bytes match.
 - To make the assumption hold at render time, the root style pins the font:
   `font: <size>px monospace`, letter-spacing and word-spacing normal, kerning and ligatures off
   (`svg/theme.rs::font_style`). The font stack is `ui-monospace, SFMono-Regular, Menlo, ...`,
@@ -129,7 +129,7 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
 
 ## 5. Layout
 
-- `layout/layered.rs` is a Sugiyama-style layered layout ported from Pele. Ranks run down y, and
+- `layout/layered.rs` is a Sugiyama-style layered layout ported from the reference implementation. Ranks run down y, and
   callers rotate for other directions. Its stated priorities are edge distinguishability (`spread`,
   `assign_tracks`), then crossing reduction (`reduce_crossings`), then short and simple edges
   (`align_labels`, `straighten`, `settle`, `snap`), then edges meeting the middle of a side.
@@ -174,11 +174,11 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
   - It tries the first module. If that module reports `unsupported-diagram` with a detected type, it
     lazily instantiates the module for that type. That is how per-type modules get routed.
   - It throws `RenderError` with `code`, `line`, `column`, `snippet`, and `type`.
-- **Options are Pele's `RenderOptions`:** `autoDirection`, `directionBreakpoint`, `fontSize`,
+- **Options are the reference implementation's `RenderOptions`:** `autoDirection`, `directionBreakpoint`, `fontSize`,
   `idPrefix`, `limit`, `maxEdges`, `maxWidth`, `now`, `outputLimit`, `padding`, `responsive`, plus
   link and image controls (`links`, `linkSchemes`, `linkRel`, `images`, `imageSchemes`) parsed in
-  `lib.rs::options_from_json`. Unknown fields are ignored, as in Pele.
-  - **Pele's `measurer` option is not exposed** because measurement is fixed.
+  `lib.rs::options_from_json`. Unknown fields are ignored, as in the reference implementation.
+  - **The reference implementation's `measurer` option is not exposed** because measurement is fixed.
   - Options travel as JSON text and `now` travels separately. The compiler reads no clock, which is
     why gantt output is deterministic.
 - Entry points (`package.json` exports):
@@ -226,7 +226,7 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
     inlined, so rendering is 2–10% slower.
   - It helps only when 2 or more types share a page (-15% to -24%).
   - Dynamic linking is not viable on `wasm32-unknown-unknown`.
-- Speed vs Pele (Node, `bench/speed.md`, O3 module): 1.2x to 2.2x faster per type. Flowchart is 6.5
+- Speed vs the reference implementation (Node, `bench/speed.md`, O3 module): 1.2x to 2.2x faster per type. Flowchart is 6.5
   ms vs 11.7 ms over 174 vectors. The README benchmarks in `mermaid-v13-approches` say "~equal" in
   the browser with the size build, which matches the z-build numbers (12 ms vs 11–12 ms).
 
@@ -243,7 +243,7 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
 - Author styles (`style`, `classDef`, `linkStyle`) still apply. `svg/theme.rs::resolve_style`
   maps a whitelist of shape and text CSS props.
 - Per-diagram config comes from the YAML value tree (for example `useMaxWidth: false` forces a fixed
-  size, `lib.rs`). Pele-documented divergences include not moving `init.config` into the type
+  size, `lib.rs`). Divergences documented by the reference implementation include not moving `init.config` into the type
   section, and some YAML reader differences.
 
 ## 10. Security
@@ -265,15 +265,15 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
 
 | Suite | File | What it checks |
 | --- | --- | --- |
-| Mermaid oracle | `test/oracles/Oracle.test.ts`, `README.md` | Runs real `mermaid@12.1.0` (jsdom) and Ondine's `model` export on 10.7k corpus sources and 2.3k seeded mutations, comparing accept/reject, detected type, and the projected DB model (8.4k models). Every disagreement must be listed in `Divergences.ts` (218 recorded, all shared with Pele). Larger sweeps covered 140k sources. |
+| Mermaid oracle | `test/oracles/Oracle.test.ts`, `README.md` | Runs real `mermaid@12.1.0` (jsdom) and Ondine's `model` export on 10.7k corpus sources and 2.3k seeded mutations, comparing accept/reject, detected type, and the projected DB model (8.4k models). Every disagreement must be listed in `Divergences.ts` (218 recorded, all shared with the reference implementation). Larger sweeps covered 140k sources. |
 | Grammar oracle | `test/oracles/Grammar.test.ts` | 19 **vendored Mermaid jison grammars** (`test/oracles/grammars/*.jison`) and `@mermaid-js/parser` for Langium types, fed directly. |
-| Pele SVG parity | `src/Parity.test.ts` + `test/Pele.ts` | For every vector, Ondine's SVG must **equal Pele's byte-for-byte**. Pele runs with Ondine's monospace measurer, and its output is rewritten (`--pele-*` to `--ondine-*`, radius, series colors). 191k mutated sources were compared. |
+| The reference implementation SVG parity | `src/Parity.test.ts` + `test/Pele.ts` | For every vector, Ondine's SVG must **equal the reference implementation's byte-for-byte**. The reference implementation runs with Ondine's monospace measurer, and its output is rewritten (`--pele-*` to `--ondine-*`, radius, series colors). 191k mutated sources were compared. |
 | Screenshots | `src/Screenshot.test.ts` | Chromium sheets of every vector, light and dark, checked in under `src/__screenshots__`, with a viewBox overflow check. |
-| Rust tests | `crates/compiler/tests/fixtures/<type>-parse.json` + inline `insta` | Parse fixtures ported from Mermaid's specs via Pele. Mocks and private unit tests are banned. |
+| Rust tests | `crates/compiler/tests/fixtures/<type>-parse.json` + inline `insta` | Parse fixtures ported from Mermaid's specs via the reference implementation. Mocks and private unit tests are banned. |
 | Packaging | `scripts/packed-consumer.test.ts`, `test/fixtures/consumer/` | Tests the packed tarball in a Vite consumer. |
-| Benchmarks | `bench/Render.bench.ts`, `bench/chrome/*` | Benchmarks against Pele and Mermaid. |
+| Benchmarks | `bench/Render.bench.ts`, `bench/chrome/*` | Benchmarks against the reference implementation and Mermaid. |
 
-The Pele parity and Mermaid model oracles are the main reasons the port could be done quickly and
+The the reference implementation parity and Mermaid model oracles are the main reasons the port could be done quickly and
 safely. From the oracle README: "No Rust parser needed a fix."
 
 ## 12. What Rust buys beyond speed
@@ -294,7 +294,7 @@ safely. From the oracle README: "No Rust parser needed a fix."
   bundler tree-shaking across a registry.
 - **Linear-memory arena with no GC.** Render time is predictable, but that is mostly a speed
   benefit.
-- **Not bought.** Size is not the win: one flowchart module is about 137 KB gzip, while all of Pele
+- **Not bought.** Size is not the win: one flowchart module is about 137 KB gzip, while all of the reference implementation
   is about 230 KB gzip (`plan.md`). Neither is maintainability: 125k lines with hand-written regex
   replacements.
 - **ASCII as a by-product.** `src/cli/Ascii.ts` rasterizes the compiled SVG into a character grid.
@@ -308,14 +308,14 @@ Ondine is direct evidence that a **well-structured, pure TS renderer can be mech
 Rust in a short time**. The dates suggest weeks rather than months, though this is an inference.
 The vectors were pinned on 17 Oct 2026, the compile-first decision is dated 19 Oct, and v0.0.3 was
 out by 31 Oct. Most of the work was probably agent-driven, given the detailed AGENTS.md porting
-rules. The port reached byte parity and ran 1.2–2.2x faster. What made Pele
+rules. The port reached byte parity and ran 1.2–2.2x faster. What made the reference implementation
 portable, and what a v13 TS core should do on purpose:
 
 1. **A pure-data pipeline: `string -> model -> layout -> string`.** No DOM, no `getBBox`, no D3
    selections, no DOMPurify in the core. Today's Mermaid measures text in the DOM during layout,
    which is the single biggest blocker. Rendering to a DOM tree should be a thin adapter outside
    the core, as Ondine's `mount()` is.
-2. **Pluggable but pure text measurement.** Pele's `TextMeasurer` interface is the right shape. Ship
+2. **Pluggable but pure text measurement.** The reference implementation's `TextMeasurer` interface is the right shape. Ship
    a deterministic default (font-metric tables or monospace), and make browser canvas measurement
    an optional injected adapter. Anything that crosses into WASM later must be callable without a
    JS callback per glyph, or must be replaced with tables.
@@ -349,15 +349,15 @@ portable, and what a v13 TS core should do on purpose:
    type and shipped incrementally. Ondine's `create({modules})` per-type fallback shows how mixed
    TS/WASM coverage could coexist.
 10. **Budget expectations.** WASM does not give a smaller download than a lean TS bundle: 137 KB
-    gzip for flowchart vs about 230 KB for all of Pele. The gains are about 1.5–2x speed in a
+    gzip for flowchart vs about 230 KB for all of the reference implementation. The gains are about 1.5–2x speed in a
     server or Node build, deterministic multi-host output, and native embeddability. The
     browser-size case for Rust is weak unless the core is AOT-compiled at build time, which is
     Ondine's main pitch.
 
 Risks and caveats to carry forward:
 
-- The port pins to Pele's layout quality and look. Mermaid-compatible appearance (themes, the
+- The port pins to the reference implementation's layout quality and look. Mermaid-compatible appearance (themes, the
   `htmlLabels` `foreignObject`, proportional fonts) is explicitly out of scope.
 - Proportional-font measurement in WASM would need embedded metric tables. Ondine avoided that by
   going monospace-only.
-- It is MIT with a Pele notice. Upstream is young (v0.0.3).
+- It is MIT with a the reference implementation notice. Upstream is young (v0.0.3).

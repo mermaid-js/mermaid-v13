@@ -1,4 +1,4 @@
-# Architecture layout: own constraint engine or Pele's grid
+# Architecture layout: own constraint engine or the reference implementation's grid
 
 <!-- cspell:ignore mulberry snet -->
 
@@ -9,9 +9,9 @@ M5 inventory §2 (architecture row), §4 risk 2, §6 Q5. v12 lays architecture o
 Which base do we use for architecture layout in v13?
 
 - **A.** Our own constraint layout at `core/layout/force`, loaded lazily like `tree` (D280): side constraints `L/R/T/B`, groups as compounds, alignment, determinism.
-- **B.** Pele's approach (`src/diagrams/architecture/layout.ts`, pele@1.13.0, MIT), ported with attribution as D66 / O-7 did for `layered`.
+- **B.** The reference implementation's approach (`src/diagrams/architecture/layout.ts`, pele@1.13.0, MIT), ported with attribution as D66 / O-7 did for `layered`.
 
-v12 paths are under `packages/mermaid/src/diagrams/architecture/` at `mermaid@12.2.0`. Pele paths are relative to `/Users/knsv/repos/pele` at `3a2f075`.
+v12 paths are under `packages/mermaid/src/diagrams/architecture/` at `mermaid@12.2.0`. The reference implementation paths are relative to `/Users/knsv/repos/pele` at `3a2f075`.
 
 ## v12 (fcose) behaviour
 
@@ -24,7 +24,7 @@ v12 paths are under `packages/mermaid/src/diagrams/architecture/` at `mermaid@12
 - **Determinism.** Only by swapping the global `Math.random` for mulberry32 during each run (`architectureSeed.ts:13-31`); `seed` defaults to 1, `0` opts out (`src/schemas/config.schema.yaml:1159-1204`). Six of the ten config keys are fcose knobs.
 - **Edges.** Straight, or one bend through cytoscape's midpoint (`svgDraw.ts:94-97`). `{group}` only moves the drawn end by `padding + 4` (`svgDraw.ts:54-71`). A group id as an edge end throws `TypeError` (`architectureDb.ts:225`).
 
-## Pele's approach
+## The reference implementation's approach
 
 - **Algorithm.** Discrete grid placement, no force step (`layout.ts:4-8`). `a:R -- L:b` puts b in the next cell right; a bend steps one cell along the leaving side and one back from the entering side (`:207-211`); like sides stack across (`:203-206`).
 - **Containers.** Each group, innermost first, then the root, is laid out alone by BFS (`:258-346`). A link is lifted to the two children of the lowest common container (`:65-99`). A finished group is a rigid block of cells.
@@ -35,9 +35,9 @@ v12 paths are under `packages/mermaid/src/diagrams/architecture/` at `mermaid@12
 
 ## Measurements
 
-A throwaway Node harness ran the 20 `e2e/diagrams/architecture/*.mmd` files. Pele was bundled from source with esbuild and rendered twice. fcose is v12's constraint code ported line for line onto headless cytoscape 3.34.4 + fcose 2.2.0, with v12 defaults and each file's config, fed by Pele's parser (same `populateDb` order, `db.ts:137-147`). No label styles (they need a canvas); group boxes are children plus `padding`.
+A throwaway Node harness ran the 20 `e2e/diagrams/architecture/*.mmd` files. The reference implementation was bundled from source with esbuild and rendered twice. fcose is v12's constraint code ported line for line onto headless cytoscape 3.34.4 + fcose 2.2.0, with v12 defaults and each file's config, fed by the reference implementation's parser (same `populateDb` order, `db.ts:137-147`). No label styles (they need a canvas); group boxes are children plus `padding`.
 
-| Check | Pele | v12 fcose |
+| Check | The reference implementation | v12 fcose |
 | --- | --- | --- |
 | Renders without error | 20/20 | 20/20 |
 | Identical across two runs | 20/20 (SVG bytes) | 20/20 with `seed: 1`; 4/20 differed with `seed: 0` |
@@ -52,17 +52,17 @@ A throwaway Node harness ran the 20 `e2e/diagrams/architecture/*.mmd` files. Pel
 
 ## Where they differ on the corpus
 
-1. **Deep nesting.** Only the two 12-node, 8-group fixtures differ in order (27/66 and 21/66 pairs agree). Each breaks 2 of 9 facing edges, not the same ones: fcose `web:R--L:pe1`, `pe2:R--L:bus`; Pele `web:B--T:pe2`, `pe2:R--L:bus`. Cause: `snet2` is a rigid block placed by its first link from `snet1`, so the second link cannot hold.
-2. **Fan-in.** Where three services feed one node, v12 aligns 0/3 (the hint drops heuristic alignments, `architectureRenderer.ts:261-270`); Pele aligns the median, 1/3.
-3. **Scale.** fcose springs (120 px in a group, 40 px across) against Pele's cell gap `max(40, 0.75 × iconSize)` and smaller defaults. A three-node chain spans 5 icon widths in fcose, 2 cells in Pele.
-4. **Knobs.** Four fixtures exist to exercise one. Pele renders `randomize: true` byte-identical to its baseline, and `idealEdgeLengthMultiplier: 3` byte-identical to the default chain.
-5. **Edges.** v12 straight or one bend; Pele orthogonal with rounded corners.
+1. **Deep nesting.** Only the two 12-node, 8-group fixtures differ in order (27/66 and 21/66 pairs agree). Each breaks 2 of 9 facing edges, not the same ones: fcose `web:R--L:pe1`, `pe2:R--L:bus`; the reference implementation `web:B--T:pe2`, `pe2:R--L:bus`. Cause: `snet2` is a rigid block placed by its first link from `snet1`, so the second link cannot hold.
+2. **Fan-in.** Where three services feed one node, v12 aligns 0/3 (the hint drops heuristic alignments, `architectureRenderer.ts:261-270`); the reference implementation aligns the median, 1/3.
+3. **Scale.** fcose springs (120 px in a group, 40 px across) against the reference implementation's cell gap `max(40, 0.75 × iconSize)` and smaller defaults. A three-node chain spans 5 icon widths in fcose, 2 cells in the reference implementation.
+4. **Knobs.** Four fixtures exist to exercise one. The reference implementation renders `randomize: true` byte-identical to its baseline, and `idealEdgeLengthMultiplier: 3` byte-identical to the default chain.
+5. **Edges.** v12 straight or one bend; the reference implementation orthogonal with rounded corners.
 
-Not honoured by Pele: the six fcose knobs, shorter edges across groups, and groups that deform to satisfy several links. The #5952 rule holds in Pele by construction.
+Not honoured by the reference implementation: the six fcose knobs, shorter edges across groups, and groups that deform to satisfy several links. The #5952 rule holds in the reference implementation by construction.
 
 ## Comparison
 
-| | A: own `force` engine | B: port Pele's grid |
+| | A: own `force` engine | B: port the reference implementation's grid |
 | --- | --- | --- |
 | Fidelity to v12 semantics | Can target every fcose constraint and flexible groups; pixels still differ without fcose's spectral and spring passes | Matches order on 18/20 files; rigid groups lose some cross-group links; six knobs dropped |
 | Determinism | Must be designed in | By construction |
@@ -87,4 +87,4 @@ Choices: **(a)** B as is; **(b)** B plus a fix for several links between two blo
 3. Side and `align` fields in the shared `LayoutGraph`, or a custom architecture layout?
 4. Do the nested fixtures need (b) before M5 closes?
 5. `architectureTypes.ts:141` puts b above a for `a:R -- T:b`, yet fcose placed all 10 corpus bends in the expected quadrant. Diagonal cells only feed alignments: a latent v12 bug on larger diagrams? Not verified.
-6. An edge to a group id: Pele's semantic error (`db.ts:110-113`) instead of v12's `TypeError`?
+6. An edge to a group id: the reference implementation's semantic error (`db.ts:110-113`) instead of v12's `TypeError`?

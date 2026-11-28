@@ -1,7 +1,7 @@
 # 02 — Pele: files to port
 
 Repo: `/Users/knsv/repos/pele` @ `3a2f075` ("Release: 1.13.0", 2026-10-30), clean working tree. The bench harness pins `pele@1.12.0`.
-Deeper research with more line pointers: `/Users/knsv/repos/mermaid-v13/v13/docs/research/pele.md`. Read it first; this note is the port checklist.
+Deeper research with more line pointers: `/Users/knsv/repos/mermaid-v13/v13/docs/research/reference-implementation.md`. Read it first; this note is the port checklist.
 
 ## License and attribution
 - `LICENSE`: **MIT, "Copyright (c) 2026 kepano"**. `package.json`: `"license": "MIT", "author": "kepano"`, repo `github.com/obsidianmd/pele`.

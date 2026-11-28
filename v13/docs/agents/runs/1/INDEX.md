@@ -1,7 +1,7 @@
 # M1 exploration notes: index
 
 Spec `mermaid-js/mermaid-v13#1`, tickets #2–#24 (`gh issue view -R mermaid-js/mermaid-v13 <n>`). Collected 2026-11-02 at base commit `fa796a943` on branch `mermaid-v13`.
-Domain docs: `/Users/knsv/repos/mermaid-v13/v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md`. Research: `v13/docs/research/{pele,parser-and-tooling,mermaid-current,ondine,mermaid-ascii}.md`. `research/pele.md` already has many Pele line pointers.
+Domain docs: `/Users/knsv/repos/mermaid-v13/v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md`. Research: `v13/docs/research/{reference-implementation,parser-and-tooling,mermaid-current,ondine,mermaid-ascii}.md`. `research/reference-implementation.md` already has many line pointers into the reference implementation.
 
 | File | Topic | Main tickets |
 |---|---|---|
