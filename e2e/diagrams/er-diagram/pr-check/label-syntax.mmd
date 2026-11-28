@@ -1,0 +1,41 @@
+---
+description: >-
+  Every ER label kind written each way the grammar takes (#1368): entity
+  name, alias, attribute cells, comment, relationship label and subgraph title.
+  Only a markdown string "`…`" reads markdown; plain **bold** _ital_ and a code
+  span are drawn as written; the tags draw; a written \n breaks a comment and a
+  relationship label. Bare backticks parse in no ER label, and a \n is a parse
+  error in a name, an alias or a subgraph title, as in v12.
+---
+erDiagram
+  P1["alias **bold** _ital_"] {
+    **type** _name_ "comment **bold** _ital_"
+  }
+  P2["`alias **bold** _ital_`"] {
+    string mdString "`comment **bold** _ital_`"
+  }
+  P3["alias a `code` b"] {
+    string codeSpan "comment a `code` b"
+  }
+  P4["alias <b>bold</b> <i>ital</i><br>alias H<sub>2</sub>O"]
+  P5 {
+    string tags "comment <b>bold</b> <i>ital</i><br>comment H<sub>2</sub>O"
+    string newline "comment one\ntwo"
+  }
+  subgraph S1["subgraph **bold** _ital_"]
+    "entity **bold** _ital_"
+  end
+  subgraph S2["`subgraph **bold** _ital_`"]
+    "`entity **bold** _ital_`"
+  end
+  subgraph S3["subgraph a `code` b"]
+    "entity a `code` b"
+  end
+  subgraph S4["subgraph <b>bold</b> <i>ital</i><br>subgraph H<sub>2</sub>O"]
+    "entity <b>bold</b> <i>ital</i><br>entity H<sub>2</sub>O"
+  end
+  P1 ||--o{ "entity **bold** _ital_" : "relationship **bold** _ital_"
+  P2 ||--o{ "`entity **bold** _ital_`" : "`relationship **bold** _ital_`"
+  P3 ||--o{ "entity a `code` b" : "relationship a `code` b"
+  P4 ||--o{ "entity <b>bold</b> <i>ital</i><br>entity H<sub>2</sub>O" : "relationship <b>bold</b> <i>ital</i><br>relationship H<sub>2</sub>O"
+  P4 ||--o{ P5 : "relationship one\ntwo"

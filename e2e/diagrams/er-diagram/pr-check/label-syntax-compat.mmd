@@ -1,0 +1,41 @@
+---
+description: >-
+  label-syntax.mmd with markdownAlwaysOn: true (#1368), which draws every label
+  as markdown: in every ER label kind the plain **bold** _ital_ rows draw bold
+  and italic and the code-span row draws inline code, so the picture differs
+  from label-syntax.mmd. Markdown strings, tags and \n draw as there.
+config:
+  markdownAlwaysOn: true
+---
+erDiagram
+  P1["alias **bold** _ital_"] {
+    **type** _name_ "comment **bold** _ital_"
+  }
+  P2["`alias **bold** _ital_`"] {
+    string mdString "`comment **bold** _ital_`"
+  }
+  P3["alias a `code` b"] {
+    string codeSpan "comment a `code` b"
+  }
+  P4["alias <b>bold</b> <i>ital</i><br>alias H<sub>2</sub>O"]
+  P5 {
+    string tags "comment <b>bold</b> <i>ital</i><br>comment H<sub>2</sub>O"
+    string newline "comment one\ntwo"
+  }
+  subgraph S1["subgraph **bold** _ital_"]
+    "entity **bold** _ital_"
+  end
+  subgraph S2["`subgraph **bold** _ital_`"]
+    "`entity **bold** _ital_`"
+  end
+  subgraph S3["subgraph a `code` b"]
+    "entity a `code` b"
+  end
+  subgraph S4["subgraph <b>bold</b> <i>ital</i><br>subgraph H<sub>2</sub>O"]
+    "entity <b>bold</b> <i>ital</i><br>entity H<sub>2</sub>O"
+  end
+  P1 ||--o{ "entity **bold** _ital_" : "relationship **bold** _ital_"
+  P2 ||--o{ "`entity **bold** _ital_`" : "`relationship **bold** _ital_`"
+  P3 ||--o{ "entity a `code` b" : "relationship a `code` b"
+  P4 ||--o{ "entity <b>bold</b> <i>ital</i><br>entity H<sub>2</sub>O" : "relationship <b>bold</b> <i>ital</i><br>relationship H<sub>2</sub>O"
+  P4 ||--o{ P5 : "relationship one\ntwo"

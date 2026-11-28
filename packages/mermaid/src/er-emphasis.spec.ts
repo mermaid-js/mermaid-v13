@@ -1,13 +1,15 @@
-// ER labels read Markdown emphasis, as v12 does for every ER label (#754, D565).
+// ER labels read Markdown emphasis in every ER label kind (#754, D565) with
+// `markdownAlwaysOn: true`, which these fixtures set and which draws every label as markdown;
+// by default only a markdown string does (#1368).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawnRuns } from './testing/labels.ts';
 
-const { drawnBy, textOf } = corpusLabels(readFileSync);
+const { drawnBy, svgOf, textOf } = corpusLabels(readFileSync);
 
 const FIXTURE = 'er-diagram/baseline/text/markdown-emphasis.mmd';
 
-describe('Markdown emphasis in ER labels (#754, D565)', () => {
+describe('Markdown emphasis in ER labels (#754, D565, #1368)', () => {
   it('draws bold and italic runs without the markers in every label kind', async () => {
     expect(await drawnBy(FIXTURE, drawnRuns)).toEqual(
       expect.arrayContaining([
@@ -52,5 +54,19 @@ describe('Markdown emphasis in ER labels (#754, D565)', () => {
         'last<i>Name</i>',
       ])
     );
+  });
+
+  it('by default draws plain markers as written and reads only the markdown string', async () => {
+    const path = 'er-diagram/pr-check/label-syntax.mmd';
+    const { svg, warnings } = await svgOf(path);
+    expect(drawnRuns(svg)).toEqual(
+      expect.arrayContaining([
+        'alias **bold** _ital_',
+        'alias <b>bold</b> <i>ital</i>',
+        'relationship **bold** _ital_',
+        'relationship <b>bold</b> <i>ital</i>',
+      ])
+    );
+    expect(warnings.map((w) => w.code)).toEqual(['MARKDOWN_NOT_READ']);
   });
 });

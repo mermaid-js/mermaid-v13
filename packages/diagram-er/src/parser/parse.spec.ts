@@ -187,3 +187,49 @@ describe('probe mode', () => {
     expect(probe).toMatchObject({ expected: [], mode: 'comment' });
   });
 });
+
+describe('markdown strings (#1368)', () => {
+  it('keeps a markdown string in its backticks, as v12 did, and marks it', () => {
+    const { model, diagnostics } = parseEr(
+      [
+        'erDiagram',
+        '  "`N`" ||--o{ E : "`r`"',
+        '  E["`a`"] {',
+        '    string n "`c`"',
+        '  }',
+        '  subgraph S["`t`"]',
+        '    E',
+        '  end',
+        '  subgraph "`U`"',
+        '  end',
+      ].join('\n')
+    );
+    expect(diagnostics).toEqual([]);
+    expect(model.entities[0]).toMatchObject({ name: '`N`', nameMarkdown: true });
+    expect(model.entities[1]).toMatchObject({ alias: '`a`', aliasMarkdown: true });
+    expect(model.entities[1]!.attributes[0]).toMatchObject({
+      comment: '`c`',
+      commentMarkdown: true,
+    });
+    expect(model.relationships[0]).toMatchObject({ label: '`r`', labelMarkdown: true });
+    expect(model.subgraphs.map((s) => [s.title, s.titleMarkdown])).toEqual([
+      ['`t`', true],
+      ['`U`', true],
+    ]);
+  });
+
+  it('marks no other label', () => {
+    const { model } = parseEr(
+      'erDiagram\n  "N" ||--o{ E : "a `r` b"\n  E["a"] {\n    string n "c"\n  }\n  subgraph S["`t`" more]\n  end\n'
+    );
+    const marks = (o: object) => Object.keys(o).filter((k) => k.endsWith('Markdown'));
+    expect(
+      [
+        ...model.entities,
+        ...model.entities.flatMap((e) => e.attributes),
+        ...model.relationships,
+        ...model.subgraphs,
+      ].flatMap(marks)
+    ).toEqual([]);
+  });
+});

@@ -10,6 +10,7 @@ import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import type {
   ErAttribute,
   ErEntity,
@@ -110,11 +111,21 @@ export const genericType = (input: string): string => parseGenericTypes(input);
  */
 export const typeLabel = (input: string): string => parseGenericTypes(input, REFERENCES);
 
+/** A label the parser marked as a markdown string (`"`…`"`), given without its backticks. */
+const MARKDOWN_STRING = { markdown: true } as const;
+
 interface Measure {
   readonly font: FontKey;
   readonly pad: { readonly x: number; readonly y: number };
   readonly rule: number;
-  readonly label: (text: string, f: FontKey, max: number, bits?: number) => MeasuredLabel;
+  /** `markdown`: the label is a markdown string the parser marked, still in its backticks. */
+  readonly label: (
+    text: string,
+    f: FontKey,
+    max: number,
+    bits?: number,
+    markdown?: boolean
+  ) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
 }
 
@@ -171,9 +182,17 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     pad: cellPad(units, length),
     // This is the only place the builder looks at which profile it has.
     rule: units.id === 'cell' ? 1 : 0,
-    // v12 passes every ER label through `createText` with Markdown on (D565).
-    label: (text, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline, markup: 'emphasis' }),
+    label: (text, f, max, bits = 0, markdown = false) => {
+      // A marked label holds its markdown string as v12 kept it, in its backticks.
+      const source = markdown
+        ? readLabel(text.slice(1, -1), MARKDOWN_STRING, ctx)
+        : readLabel(text, undefined, ctx);
+      return layoutLabel(source.text, f, max, measurer, {
+        ...source,
+        style: bits,
+        inline: ctx.inline,
+      });
+    },
     styleOf: styleCache(new Map(model.classes.map((c) => [c.name, c.styles])), (w) => ctx.warn(w)),
   };
   const minWidth = sizeKey(units, length, 'minEntityWidth');
@@ -195,7 +214,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     return {
       id: sg.id,
       subgraph: sg,
-      label: m.label(sg.title, f, Infinity, bits),
+      label: m.label(sg.title, f, Infinity, bits, sg.titleMarkdown),
       style,
       ...(parent !== undefined ? { parent } : {}),
       depth: nest.depthOf(sg.id),
@@ -215,7 +234,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
       relationship: r,
       source,
       target,
-      label: m.label(r.label, m.font, edgeWrap),
+      label: m.label(r.label, m.font, edgeWrap, 0, r.labelMarkdown),
     });
   }
   const graph = layoutGraph(model, { entities, groups, edges }, ctx, length);
@@ -309,7 +328,9 @@ function entityView(
   const classes = ['default', ...entity.classes];
   const style = m.styleOf(classes, entity.styles);
   const [f, bits] = textStyle(style, m.font);
-  const label = m.label(entity.alias || entity.name, f, Infinity, bits);
+  const label = entity.alias
+    ? m.label(entity.alias, f, Infinity, bits, entity.aliasMarkdown)
+    : m.label(entity.name, f, Infinity, bits, entity.nameMarkdown);
   const { pad, rule } = m;
   const base = {
     id: entity.id,
@@ -338,7 +359,7 @@ function entityView(
         m.label(typeLabel(a.type), f, Infinity, bits),
         m.label(a.name, f, Infinity, bits),
         m.label(a.keys.join(','), f, Infinity, bits),
-        m.label(a.comment, f, Infinity, bits),
+        m.label(a.comment, f, Infinity, bits, a.commentMarkdown),
       ] as const
   );
   // A column is in use when some cell in it has text; type and name always are.
