@@ -1,9 +1,10 @@
 // The `tree` engine (D280–D285): LayoutGraph → LayoutModel as a two-sided tidy tree. The root sits
 // in the middle, its first branches run right and the rest left, and each side is a tidy tree whose
-// levels run outwards. Each subtree takes a band across the flow, siblings' bands are
-// stacked, and a parent is centred on its first and last child, so nothing overlaps by construction
-// and the work is linear. Changed from Pele: plain LayoutGraph input with measured sizes, gaps from
-// `spacing` only, edges as route points with ports, and input that is not one tree (D285).
+// levels run outwards. Each subtree takes a band across the flow, siblings' bands are stacked, and
+// a parent is centred on its first and last child, so nothing overlaps by construction and the work
+// is linear. Changed from the reference implementation: plain LayoutGraph input with measured
+// sizes, gaps from `spacing` only, edges as route points with ports, and input that is not one tree
+// (D285).
 import type {
   LayoutEdge,
   LayoutGraph,

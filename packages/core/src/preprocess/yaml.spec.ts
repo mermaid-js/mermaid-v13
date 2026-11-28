@@ -1,7 +1,8 @@
 /**
  * The YAML subset reader. Expected values are js-yaml 4 `load(src, { schema: JSON_SCHEMA })`
- * results (what v12 uses for front matter), captured as literals. Cases from Pele's
- * `tests/util/yaml.test.ts` plus front-matter shapes from v12's `frontmatter.spec.ts`.
+ * results (what v12 uses for front matter), captured as literals. Cases from the reference
+ * implementation's `tests/util/yaml.test.ts` plus front-matter shapes from v12's
+ * `frontmatter.spec.ts`.
  */
 import { describe, expect, it } from 'vitest';
 import { LineIndex } from '../parser-kit/index.ts';

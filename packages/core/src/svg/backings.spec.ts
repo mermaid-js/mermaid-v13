@@ -79,7 +79,7 @@ const HANDWRITTEN: Program[] = [
   (w) => w.leaf('rect', { fill: checkColor('#f9f'), stroke: 'none', 'stroke-width': px(2.5) }),
 ];
 
-// Seeded LCG, as in Pele's fuzz corpus.
+// Seeded LCG, as in the reference implementation's fuzz corpus.
 function random(seed: number): () => number {
   let state = seed >>> 0;
   return () => {

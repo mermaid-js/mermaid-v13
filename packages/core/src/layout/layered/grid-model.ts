@@ -1,5 +1,5 @@
-// Changes from Pele: the grid mode (D78, D140) lives here, split out of `index.ts`, which reaches
-// it through `GridHooks` (grid.ts). The algorithm is unchanged.
+// Changes from the reference implementation: the grid mode (D78, D140) lives here, split out of
+// `index.ts`, which reaches it through `GridHooks` (grid.ts). The algorithm is unchanged.
 // cspell:ignore cnode cnodes
 //
 // What the layered engine does to the model on a grid of character cells: grows the sides that

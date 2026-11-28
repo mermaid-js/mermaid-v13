@@ -9,7 +9,7 @@
  *
  * - The pass runs only when a line's `trim()` is exactly `treeView-beta` and a later content
  *   line (not blank, a comment, a `title`/`accTitle`/`accDescr` line or `│`/`┃`-only) holds a
- *   box glyph. With no glyph anywhere it stops at once (Pele's early exit).
+ *   box glyph. With no glyph anywhere it stops at once (the reference implementation's early exit).
  * - Tabs count four columns. The segment width is the column of the first branch glyph
  *   (`├└┣┗`) past column 0 in a content line, else 4.
  * - Lines up to the header, blank, comment and metadata lines pass. `│`-only lines are dropped.

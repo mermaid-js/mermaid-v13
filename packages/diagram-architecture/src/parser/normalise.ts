@@ -1,9 +1,9 @@
 /**
- * The architecture model as v12's DB built it (`architectureDb.ts`, `architectureParser.ts`):
- * every group, then every service, junction, edge and alignment, each kind in source order, run
- * through v12's checks. Each check v12 threw from is an error diagnostic with v12's message
- * (D504's group-id edge end takes Pele's), placed on the id it is about, and the model goes on
- * (R-PARSE-4):
+ * The architecture model as v12's DB built it (`architectureDb.ts`, `architectureParser.ts`): every
+ * group, then every service, junction, edge and alignment, each kind in source order, run through
+ * v12's checks. Each check v12 threw from is an error diagnostic with v12's message (D504's
+ * group-id edge end takes the reference implementation's), placed on the id it is about, and the
+ * model goes on (R-PARSE-4):
  *
  * - a second declaration of an id is left out; the first stays;
  * - a service, junction or group whose parent is itself, unknown or not a group is kept without a

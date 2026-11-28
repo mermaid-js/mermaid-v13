@@ -2,11 +2,11 @@
  * Flowchart parser: recursive descent over the {@link lex} tokens, producing a
  * {@link FlowModel}, the typed AST, symbols, statement spans and diagnostics (DESIGN §4.3).
  *
- * The grammar is v12's `flow.jison` (LALR); the descent follows Pele's port of it
- * (`src/diagrams/flowchart/parser.ts` @ 3a2f075), so it accepts and rejects what jison does. Unlike
- * jison it does not stop at the first error: it reports it, skips to the next statement boundary
- * and carries on (R-PARSE-4). An unclosed label or string, which swallows the rest of the text, is
- * reported at its opener and lexing restarts on the following line.
+ * The grammar is v12's `flow.jison` (LALR); the descent follows the reference implementation's port
+ * of it (`src/diagrams/flowchart/parser.ts` @ 3a2f075), so it accepts and rejects what jison does.
+ * Unlike jison it does not stop at the first error: it reports it, skips to the next statement
+ * boundary and carries on (R-PARSE-4). An unclosed label or string, which swallows the rest of the
+ * text, is reported at its opener and lexing restarts on the following line.
  *
  * The rules flowchart shares with the grammars cut from it (tokens, errors and recovery,
  * vertices, links, chains, the one-line statements, the header) are the flow family's

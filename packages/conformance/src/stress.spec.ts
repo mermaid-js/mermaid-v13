@@ -7,11 +7,11 @@ import { createMermaid, MermaidError, type InitializeConfig } from 'mermaid';
 import { linearRatio } from './linear-time.ts';
 
 /**
- * Stress suite (R-PARSE-7, R-SEC-5, DESIGN §10), run in PR CI as part of `pnpm test`.
- * Inputs built for worst cases (regex backtracking, quadratic scans, deep recursion,
- * multiplying edges, oversized output), after Pele's `tests/stress.test.ts`. Each one must
- * finish inside the bound and either succeed or fail cleanly: a parse with error
- * diagnostics, or a `MermaidError` other than INTERNAL. Anything else thrown is a crash. The bounds are loose: a
+ * Stress suite (R-PARSE-7, R-SEC-5, DESIGN §10), run in PR CI as part of `pnpm test`. Inputs built
+ * for worst cases (regex backtracking, quadratic scans, deep recursion, multiplying edges,
+ * oversized output), after the reference implementation's `tests/stress.test.ts`. Each one must
+ * finish inside the bound and either succeed or fail cleanly: a parse with error diagnostics, or a
+ * `MermaidError` other than INTERNAL. Anything else thrown is a crash. The bounds are loose: a
  * regression here is seconds or a hang, not milliseconds.
  */
 

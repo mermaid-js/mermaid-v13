@@ -3,14 +3,14 @@
  * the parse state, the token helpers, error reporting and recovery (R-PARSE-4), the token rules
  * and the text of a `@{ … }` block.
  *
- * The grammar is v12's `flow.jison` (LALR); the descent follows Pele's port of it
- * (`src/diagrams/flowchart/parser.ts` at 3a2f075), so it accepts and rejects what jison does.
+ * The grammar is v12's `flow.jison` (LALR); the descent follows the reference implementation's port
+ * of it (`src/diagrams/flowchart/parser.ts` at 3a2f075), so it accepts and rejects what jison does.
  * Unlike jison it does not stop at the first error: it reports it, skips to the next statement
  * boundary and carries on (R-PARSE-4). An unclosed label or string, which swallows the rest of the
- * text, is reported at its opener and lexing restarts on the following line. Changed from Pele
- * besides: one parser for flowchart and the grammars cut from it; each diagram gives it its token
- * kinds, tables, lexer and model builder ({@link FlowParserDialect}) and writes its own block
- * rules.
+ * text, is reported at its opener and lexing restarts on the following line. Changed from the
+ * reference implementation besides: one parser for flowchart and the grammars cut from it; each
+ * diagram gives it its token kinds, tables, lexer and model builder ({@link FlowParserDialect}) and
+ * writes its own block rules.
  */
 // cspell:words LALR
 import {

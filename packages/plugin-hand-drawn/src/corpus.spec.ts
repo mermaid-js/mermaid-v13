@@ -8,7 +8,7 @@
  *   no `Math.random` call, over the hand-drawn corpus and the sketched types' whole corpus with
  *   `handDrawn` on: every fixture folder whose `hand-drawn.txt` says `sketched` (a port adds
  *   that file, so this list never names a type);
- * - v12's XSS sources and Pele's payloads stay inert with it on.
+ * - v12's XSS sources and the reference implementation's payloads stay inert with it on.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';

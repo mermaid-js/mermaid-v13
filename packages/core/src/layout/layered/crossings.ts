@@ -1,5 +1,6 @@
-// Changes from Pele: split out of `compound.ts` (D596): `crossingsOf` runs as separate phases
-// that share one `Segs` record. Its scratch arrays are taken from the same frame. The algorithm is unchanged.
+// Changes from the reference implementation: split out of `compound.ts` (D596): `crossingsOf` runs
+// as separate phases that share one `Segs` record. Its scratch arrays are taken from the same
+// frame. The algorithm is unchanged.
 // cspell:ignore segs
 //
 import { ease, type LayeredOptions } from './layered.ts';

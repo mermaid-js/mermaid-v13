@@ -1,4 +1,5 @@
-// Changes from Pele: split out of `compound.ts` (D596): the types and the state record the phases of `compoundLayout` share. The algorithm is unchanged.
+// Changes from the reference implementation: split out of `compound.ts` (D596): the types and the
+// state record the phases of `compoundLayout` share. The algorithm is unchanged.
 // cspell:ignore lnode lnodes cnode
 //
 import type { LayoutMetrics } from '../units.ts';

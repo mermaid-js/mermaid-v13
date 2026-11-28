@@ -2,13 +2,13 @@
  * Building a render's theme from a `ThemeSpec` and the author's `themeVariables`
  * (DESIGN §8.1, ADR-4).
  *
- * Every variable a renderer asks for is referenced through a short private alias
- * (`var(--_p)`, from Pele's alias layer). The root declares only the aliases used, each as
- * `var(--mermaid-<v12 name>, <fallback>)`: the fallback is the theme value, the author's
- * explicit `themeVariables` value, or the derivation rule compiled to `color-mix(in srgb …)`
- * over other aliases. A host page re-themes by setting `--mermaid-*` and derived colours
- * follow (R-THEME-3, -4). With `cssVariables: false` the same values are written as
- * literals for renderers that do not resolve CSS variables.
+ * Every variable a renderer asks for is referenced through a short private alias (`var(--_p)`, from
+ * the reference implementation's alias layer). The root declares only the aliases used, each as
+ * `var(--mermaid-<v12 name>, <fallback>)`: the fallback is the theme value, the author's explicit
+ * `themeVariables` value, or the derivation rule compiled to `color-mix(in srgb …)` over other
+ * aliases. A host page re-themes by setting `--mermaid-*` and derived colours follow (R-THEME-3,
+ * -4). With `cssVariables: false` the same values are written as literals for renderers that do not
+ * resolve CSS variables.
  */
 import {
   checkColor,

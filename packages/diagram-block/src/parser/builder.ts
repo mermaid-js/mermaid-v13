@@ -17,7 +17,7 @@ import {
 } from './messages.ts';
 import { arrowEnd, arrowStart, classStyles, pattern, thickness } from './text.ts';
 
-/** D445's caps (Pele's limits). */
+/** D445's caps (the reference implementation's limits). */
 export const MAX_SPAN = 1_000;
 export const MAX_SPACE_CELLS = 100_000;
 

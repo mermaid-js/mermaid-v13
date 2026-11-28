@@ -4,12 +4,13 @@
 // out on its own, and a finished group is placed in its parent as one block. Integer arithmetic
 // only: no randomness, no clock.
 //
-// Changed from Pele: plain index input (the caller orders groups parents first and resolves
-// `in`), sides as indexes, edge ends that are groups (a flowchart edge to a subgraph: the link
-// places the group's block), and Pele's closures split into methods of one class. The steps and
-// their order are Pele's, with two additions (D720): a node a later placed link wants on another
-// side moves there when every link into it still holds, and two members of a group that one
-// outside node reaches through two sides are linked to each other the way those sides ask.
+// Changed from the reference implementation: plain index input (the caller orders groups parents
+// first and resolves `in`), sides as indexes, edge ends that are groups (a flowchart edge to a
+// subgraph: the link places the group's block), and the reference implementation's closures split
+// into methods of one class. The steps and their order are the reference implementation's, with two
+// additions (D720): a node a later placed link wants on another side moves there when every link
+// into it still holds, and two members of a group that one outside node reaches through two sides
+// are linked to each other the way those sides ask.
 
 export interface GridInput {
   /** Number of nodes. */

@@ -1,6 +1,6 @@
-// Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
-// noUncheckedIndexedAccess. `NODE_INPUTS`/`EDGE_INPUTS`/`layoutInputs` are new. Length
-// constants come from `opt.metrics` (D77), and `opt.grid` puts the layout on a grid (D140).
+// Changes from the reference implementation: `const enum`s are `as const` objects, and index reads
+// carry `!` for noUncheckedIndexedAccess. `NODE_INPUTS`/`EDGE_INPUTS`/`layoutInputs` are new.
+// Length constants come from `opt.metrics` (D77), and `opt.grid` puts the layout on a grid (D140).
 // `LEdge.heads` is new, and the label rank's `headRoom` shift skips the grid, not `tracks` (D682).
 // The algorithm is otherwise unchanged.
 // cspell:ignore lnode lnodes indeg topo cand maxs Köpf
@@ -202,9 +202,9 @@ export const FEW_ENDS = 16;
 // drawn as one direct curve instead, which keeps huge graphs from exhausting time and memory.
 const MAX_DUMMIES = 20000;
 
-// Length constants come from `LayoutMetrics` (D77): `opt.metrics`, or the px profile's. Their
-// px values are Pele's. `portPitch`/`minPitch`: the room between two edges that meet one side
-// of a node, and the least that keeps their arrowheads apart.
+// Length constants come from `LayoutMetrics` (D77): `opt.metrics`, or the px profile's. Their px
+// values are the reference implementation's. `portPitch`/`minPitch`: the room between two edges
+// that meet one side of a node, and the least that keeps their arrowheads apart.
 
 // Where edges are not given levels, a gap between ranks grows to keep the edges that cross it at
 // least this steep, up to this many times its usual height. Shallower than that, the edges of a

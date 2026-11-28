@@ -29,5 +29,8 @@ export const REQUIREMENT_DUPLICATE = 'REQUIREMENT_DUPLICATE';
  */
 export const REQUIREMENT_SHARED_NAME = 'REQUIREMENT_SHARED_NAME';
 
-/** Style copies one parse may make before the rest are left out (D433, Pele's limit). */
+/**
+ * Style copies one parse may make before the rest are left out (D433, the reference
+ * implementation's limit).
+ */
 export const MAX_STYLE_COPIES = 1_000_000;

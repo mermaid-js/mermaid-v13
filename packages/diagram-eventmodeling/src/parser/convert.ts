@@ -7,8 +7,8 @@
  *   which the common value converter never converted, so v12 stored the raw image, keyword
  *   included. v13 converts them as `common/valueConverter.ts` does every other Langium type's
  *   (then commonDb's setters, which change nothing more).
- * - Data (D523): the text between the braces or quotes, dedented and trimmed (Pele's
- *   `blockText`), where v12 sliced with an off-by-one.
+ * - Data (D523): the text between the braces or quotes, dedented and trimmed (the reference
+ *   implementation's `blockText`), where v12 sliced with an off-by-one.
  *
  * The scans are linear (R-PARSE-7, pitfall 5): v12's `/\s+$/gm` backtracks over a long blank
  * run inside a line, so it is written out by hand here.

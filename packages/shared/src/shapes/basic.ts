@@ -1,9 +1,8 @@
 // The shapes several diagrams draw: v12's bracket syntax (`[ ]`, `( )`, `{ }`, `[/ /]`, …), which
 // flowchart, block and agentflow share, and the lined document and collapsed-group card, which
 // flowchart and agentflow share. Each one's size from its label, its drawer, and how far its
-// outline sits inside the layout box (so edges meet the outline, not the box). Ported from
-// Pele's src/svg/shapes.ts @ 3a2f075,
-// with v12's shape names and the theme's padding and radius tokens.
+// outline sits inside the layout box (so edges meet the outline, not the box), with v12's shape
+// names and the theme's padding and radius tokens.
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
 import {
   box,

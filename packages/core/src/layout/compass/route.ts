@@ -3,11 +3,12 @@
 // a turn midway when they face but are offset, and otherwise a detour between or around the two
 // boxes.
 //
-// Changed from Pele: `route` split into one function per case, with the same cases in the same
-// order; route points with an axis; `clearSpot`, which moves an edge label off any node; and
-// `detour`, which slides a run of a route with two or more bends off a node it would cross (#767,
-// D507, D720), end runs included, and off another edge's run (D721), with `foldJog` turning a
-// detour next to a port into an offset along its side. Pele's router sees only the two end boxes.
+// Changed from the reference implementation: `route` split into one function per case, with the
+// same cases in the same order; route points with an axis; `clearSpot`, which moves an edge label
+// off any node; and `detour`, which slides a run of a route with two or more bends off a node it
+// would cross (#767, D507, D720), end runs included, and off another edge's run (D721), with
+// `foldJog` turning a detour next to a port into an offset along its side. The reference
+// implementation's router sees only the two end boxes.
 import type { Point, RoutePoint } from '../types.ts';
 import type { Rect } from '../layered/end-markers.ts';
 import { METRICS } from './metrics.ts';

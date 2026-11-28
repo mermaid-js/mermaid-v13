@@ -20,8 +20,9 @@ export type EventModelKind = 'ui' | 'pcr' | 'cmd' | 'rmo' | 'evt';
 /** Data written inline after a frame or as a `data` or `note` block (D523). */
 export interface EventModelData {
   /**
-   * The text between the braces or quotes, dedented and trimmed (D523, Pele's `blockText`): what
-   * a box shows, in mono. `#name;` codes are their characters, as v12 drew them.
+   * The text between the braces or quotes, dedented and trimmed (D523, the reference
+   * implementation's `blockText`): what a box shows, in mono. `#name;` codes are their characters,
+   * as v12 drew them.
    */
   readonly text: string;
   /** The data type written between backticks before it (`json`, …); v12 ignored it, and so does the drawing. */

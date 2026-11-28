@@ -1,6 +1,6 @@
-// Changes from Pele: index reads carry `!` for noUncheckedIndexedAccess; `intervalTicks`'
-// estimate takes a month as 365 / 12 days, as v12's `dayjs.duration` did (#379; d3's automatic
-// ticks keep their 30-day month). The axis code is otherwise unchanged.
+// Changes from the reference implementation: index reads carry `!` for noUncheckedIndexedAccess;
+// `intervalTicks`' estimate takes a month as 365 / 12 days, as v12's `dayjs.duration` did (#379;
+// d3's automatic ticks keep their 30-day month). The axis code is otherwise unchanged.
 //
 import { MONTHS, WEEKDAYS } from './dates.ts';
 

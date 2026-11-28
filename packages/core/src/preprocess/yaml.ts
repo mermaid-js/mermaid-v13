@@ -1,10 +1,11 @@
-// D597: this file stays whole as a Pele port; its `complexity` entries in eslint-suppressions.json are deliberate.
+// D597: this file stays whole as a port of the reference implementation; its `complexity` entries
+// in eslint-suppressions.json are deliberate.
 /**
  * A small YAML reader covering what Mermaid feeds to js-yaml with the JSON schema: block and
  * flow collections, quoted and plain scalars, and block scalars. Used for front matter and for
  * flowchart shape data (`@{ … }`).
  *
- * Changes from Pele:
+ * Changes from the reference implementation:
  * - it reads a range of the original source in place, so every diagnostic has a real range;
  * - errors are diagnostics, not exceptions; the first error stops the read (as in js-yaml);
  * - `__proto__`, `constructor` and `prototype` keys are dropped with a warning;

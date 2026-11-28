@@ -1,8 +1,8 @@
 /**
  * Agentflow lexer: a state machine mirroring the start conditions of v12's `agentflow.jison`
- * (DESIGN §4.3). A dialect of the flow family's lexer, which agentflow shares with flowchart
- * (D595, amending D467's copy; itself a port of Pele's, MIT), cut down by the jison diff between
- * `agentflow.jison` and `flow.jison`:
+ * (DESIGN §4.3). A dialect of the flow family's lexer, which agentflow shares with flowchart (D595,
+ * amending D467's copy; itself a port of the reference implementation's), cut down by the jison
+ * diff between `agentflow.jison` and `flow.jison`:
  * - no `subgraph`, `graph`, `flowchart` or `swimlane-beta`; `agentflow-beta` opens the
  *   direction state, and `flow`, `connector`, `global\b[ \t]*` and `end\b[ \t]*` are keywords;
  * - links are `--+[x>]`, `--` (opening edge text, closed by `--+[x>]`) and `-.+-` only: no

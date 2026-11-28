@@ -1,4 +1,5 @@
-// D597: this file stays whole as a Pele port; its `complexity` entries in eslint-suppressions.json are deliberate.
+// D597: this file stays whole as a port of the reference implementation; its `complexity` entries
+// in eslint-suppressions.json are deliberate.
 /**
  * Text helpers of the YAML reader (`yaml.ts`): pure functions over one line or one scalar's
  * text, with no reader state.

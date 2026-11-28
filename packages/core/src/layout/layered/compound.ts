@@ -1,7 +1,7 @@
-// Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
-// noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed arrays, and the
-// layout cache keys on `layoutInputs`. Length constants come from `opt.metrics` (D77). The
-// algorithm is otherwise unchanged.
+// Changes from the reference implementation: `const enum`s are `as const` objects, and index reads
+// carry `!` for noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed
+// arrays, and the layout cache keys on `layoutInputs`. Length constants come from `opt.metrics`
+// (D77). The algorithm is otherwise unchanged.
 // cspell:ignore lnode lnodes cnode
 //
 import { assignEdges, budgetPorts, levelsOf } from './compound-levels.ts';

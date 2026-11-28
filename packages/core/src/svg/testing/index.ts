@@ -1,12 +1,11 @@
 /**
  * Hostile inputs for security tests (`@mermaid-js/core/svg/testing`). Not used at runtime.
  *
- * `PAYLOADS` is Pele's list of strings an attacker might put anywhere a diagram accepts text
- * (tests/support/inert.ts @ 3a2f075).
- * `V12_XSS_CASES` are the attacks from mermaid v12's XSS/GHSA e2e pages
- * (`e2e/platform/xss*.html`, `ghsa*.html`, `css-injection.html`, `e2e/other/pr-check/*.spec.js`):
- * the full flowchart sources for renderer tests, and the hostile parts on their own, by the
- * writer entry point they reach.
+ * `PAYLOADS` is the reference implementation's list of strings an attacker might put anywhere a
+ * diagram accepts text (tests/support/inert.ts @ 3a2f075). `V12_XSS_CASES` are the attacks from
+ * mermaid v12's XSS/GHSA e2e pages (`e2e/platform/xss*.html`, `ghsa*.html`, `css-injection.html`,
+ * `e2e/other/pr-check/*.spec.js`): the full flowchart sources for renderer tests, and the hostile
+ * parts on their own, by the writer entry point they reach.
  */
 
 import type { PathBuilder } from '../path.ts';

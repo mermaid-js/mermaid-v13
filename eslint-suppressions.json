@@ -426,9 +426,6 @@
   "packages/diagram-flowchart/src/parser/model.ts": {
     "@typescript-eslint/no-base-to-string": {
       "count": 6
-    },
-    "tsdoc/syntax": {
-      "count": 1
     }
   },
   "packages/diagram-flowchart/src/parser/parse.spec.ts": {

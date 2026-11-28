@@ -53,7 +53,7 @@ function graph(
 
 const ids = (s: string): LayoutNode[] => s.split(' ').map((id) => node(id));
 
-// The bench fixture from mermaid#8635 / Pele: `n{floor((i-1)/3)} --> n{i}`.
+// The compare fixture from mermaid#8635: `n{floor((i-1)/3)} --> n{i}`.
 function tree(n: number): LayoutGraph {
   const nodes = Array.from({ length: n }, (_, i) => node(`n${i}`, `Node ${i}`));
   const edges = Array.from({ length: n - 1 }, (_, k) => edge(`n${Math.floor(k / 3)}`, `n${k + 1}`));

@@ -1,16 +1,20 @@
 // `compass`'s length constants (pitfall 13): v12's two architecture defaults and the constants of
-// Pele's pixel pass (see `compass.ts`). Nothing else in the engine writes a length.
+// the reference implementation's pixel pass (see `compass.ts`). Nothing else in the engine writes a
+// length.
 
 const ICON_SIZE = 80;
 const PADDING = 40;
 
-/** Every length the engine uses (pitfall 13): v12's two defaults and Pele's constants. */
+/**
+ * Every length the engine uses (pitfall 13): v12's two defaults and the reference implementation's
+ * constants.
+ */
 export const METRICS = {
   /** v12's `architecture.iconSize`: an empty group's cell is this wide. */
   iconSize: ICON_SIZE,
   /** v12's `architecture.padding`, the least gap between cells. */
   padding: PADDING,
-  /** Gap between cells: Pele's `max(40, 0.75 × iconSize)`. */
+  /** Gap between cells: the reference implementation's `max(40, 0.75 × iconSize)`. */
   gap: Math.max(PADDING, Math.round(ICON_SIZE * 0.75)),
   /** An empty group's cell is this tall. */
   emptyHeight: ICON_SIZE / 2,

@@ -1,5 +1,6 @@
-// Changes from Pele: split out of `compound.ts` (D596): the graph `layered` gets for one level, the
-// flat layout that orders the levels together, and the cache of levels laid out. The algorithm is unchanged.
+// Changes from the reference implementation: split out of `compound.ts` (D596): the graph `layered`
+// gets for one level, the flat layout that orders the levels together, and the cache of levels laid
+// out. The algorithm is unchanged.
 // cspell:ignore lnode lnodes cnode
 //
 import type { CEdge } from './compound.ts';

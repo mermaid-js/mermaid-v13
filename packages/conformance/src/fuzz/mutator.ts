@@ -1,10 +1,10 @@
 /**
- * Seeded mutation fuzzing (R-SEC-7, R-TEST-8). The generator and the edit mix are Pele's; the
- * fragments add v13's own hostile strings.
+ * Seeded mutation fuzzing (R-SEC-7, R-TEST-8). The generator and the edit mix are the reference
+ * implementation's; the fragments add v13's own hostile strings.
  */
 import { PAYLOADS } from '@mermaid-js/core/svg/testing';
 
-/** Pele's LCG: the same seed gives the same sequence on every engine. */
+/** The reference implementation's LCG: the same seed gives the same sequence on every engine. */
 export function random(seed: number): () => number {
   let state = seed >>> 0;
   return () => {
@@ -50,7 +50,10 @@ export function mutator(
   };
 }
 
-/** Flowchart tokens and constructs (Pele's list), then preprocess and hostile fragments. */
+/**
+ * Flowchart tokens and constructs (the reference implementation's list), then preprocess and
+ * hostile fragments.
+ */
 export const FLOWCHART_FRAGMENTS: readonly string[] = [
   ...[' ', '\n', ';', '-->', '---', '--', '==>', '===', '==', '-.->', '-.-', '-.', '.->', '~~~'],
   ...['--x', '--o', 'x--', 'o--', '<--', '<-->', '|', '[', ']', '(', ')', '{', '}', '((', '))'],

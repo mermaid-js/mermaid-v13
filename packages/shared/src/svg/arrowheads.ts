@@ -1,6 +1,5 @@
-// Inline end markers (no <defs>/<marker>, DESIGN §7.1): v12's point, circle and cross heads. Ported
-// from Pele's src/svg/edges.ts @ 3a2f075: `marker`, `markerTrim`. The fill-aware casings are left
-// out.
+// Inline end markers (no <defs>/<marker>, DESIGN §7.1): v12's point, circle and cross heads
+// (`marker`, `markerTrim`). The fill-aware casings are left out.
 import type { Theme } from '@mermaid-js/core/theme';
 import type { AllowedAttr, Attrs, SvgWriter } from '@mermaid-js/core/svg';
 

@@ -1,5 +1,6 @@
-// FlowModel → LayoutGraph: resolves group membership, collapsed subgraphs, class styles and
-// edge defaults the way v12's FlowDB.getData did (via Pele's src/diagrams/flowchart/graph.ts
+// FlowModel → LayoutGraph: resolves group membership, collapsed subgraphs, class styles and edge
+// defaults the way v12's FlowDB.getData did (via the reference implementation's
+// src/diagrams/flowchart/graph.ts
 // @ 3a2f075), and measures every label
 // before layout (DESIGN §6.1).
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';

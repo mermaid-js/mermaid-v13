@@ -1,5 +1,6 @@
-// Changes from Pele: split out of `compound.ts` (D596): `place`, which lays every level out and
-// puts the results in the plane in phases, and the pass that reads port hints off the routes.
+// Changes from the reference implementation: split out of `compound.ts` (D596): `place`, which lays
+// every level out and puts the results in the plane in phases, and the pass that reads port hints
+// off the routes.
 // They share the `Compound` record. A level's routes go into the plane straight from its layout's
 // points, not through a map of routes in its box. The algorithm is unchanged.
 // cspell:ignore lnode lnodes cnode

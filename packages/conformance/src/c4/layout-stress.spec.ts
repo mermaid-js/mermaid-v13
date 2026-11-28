@@ -9,13 +9,13 @@ import { cost, MIN_MS, repeatsFor } from './timing.ts';
  * R-SEC-5, D455: the C4 layout's work is bounded. The router and the label placement count the
  * comparisons they make, and once 2,000,000 are spent the relations left go straight and their
  * labels sit at their middle, so past the budget the layout is linear in the diagram's size, and
- * the slowest careful case (long relations across a grid, just under Pele's old up-front estimate
- * `rels · (elements + boundaries + 3·rels) ≤ 2,000,000` at the large size) costs no more than its
- * budget. Shape from `./stress.spec.ts` (#531): n and 8n elements; linear is ~8x, quadratic
- * ~64x, and the bar is 24x. Times are this thread's CPU time, best of five, of the layout alone
- * (each source parsed once), the small layout repeated until it takes at least `MIN_MS`. The
- * router's own cases have shapes too: a hub every element relates to, self-loops and reverse
- * pairs. Not measured on a steady machine.
+ * the slowest careful case (long relations across a grid, just under the reference implementation's
+ * old up-front estimate `rels · (elements + boundaries + 3·rels) ≤ 2,000,000` at the large size)
+ * costs no more than its budget. Shape from `./stress.spec.ts` (#531): n and 8n elements; linear is
+ * ~8x, quadratic ~64x, and the bar is 24x. Times are this thread's CPU time, best of five, of the
+ * layout alone (each source parsed once), the small layout repeated until it takes at least
+ * `MIN_MS`. The router's own cases have shapes too: a hub every element relates to, self-loops and
+ * reverse pairs. Not measured on a steady machine.
  */
 const C = 'C4Context\n';
 /** A shape: its name, its source for n elements, n for the small size, and whether it is past the budget there. */

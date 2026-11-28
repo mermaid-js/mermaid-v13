@@ -1,6 +1,7 @@
-// Changes from Pele: split out of `compound.ts` (D596): the edges between a group and its own member (#198, #415), the band their labels sit in,
-// and the helpers that place them. In px, such an edge ends clear of the other lines ending on the member's top
-// (`freeAcross`, mermaid-js/mermaid#8824). Otherwise the algorithm is unchanged.
+// Changes from the reference implementation: split out of `compound.ts` (D596): the edges between a
+// group and its own member (#198, #415), the band their labels sit in, and the helpers that place
+// them. In px, such an edge ends clear of the other lines ending on the member's top (`freeAcross`,
+// mermaid-js/mermaid#8824). Otherwise the algorithm is unchanged.
 // cspell:ignore lnode lnodes cnode
 //
 import type { CEdge, CNode } from './compound.ts';

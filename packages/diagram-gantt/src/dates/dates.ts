@@ -1,7 +1,8 @@
-// Changes from Pele: the one-entry cache of the compiled parse format is gone (no module state,
-// R-ARCH-4), so `compile` runs per call; index reads carry `!` for noUncheckedIndexedAccess.
-// `readStartDate` and `readEndDate` are new: the written-date branches of v12's `getStartDate`
-// and `getEndDate` (ganttDb.js at fa796a943). The date code is otherwise unchanged.
+// Changes from the reference implementation: the one-entry cache of the compiled parse format is
+// gone (no module state, R-ARCH-4), so `compile` runs per call; index reads carry `!` for
+// noUncheckedIndexedAccess. `readStartDate` and `readEndDate` are new: the written-date branches of
+// v12's `getStartDate` and `getEndDate` (ganttDb.js at fa796a943). The date code is otherwise
+// unchanged.
 // cspell:ignore gggg zzz Mdhmswy
 //
 // The parts of dayjs 1.11 that Mermaid's gantt code relies on, with the plugins it loads (custom parse format,

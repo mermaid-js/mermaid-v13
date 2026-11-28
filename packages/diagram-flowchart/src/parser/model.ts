@@ -1,7 +1,7 @@
 /**
  * FlowModel: the plain-data result of a flowchart parse (DESIGN §4.3), and the builder the parser
- * drives. The builder reproduces what v12's `FlowDB` did with each parsed statement, ported from
- * Pele's `src/diagrams/flowchart/db.ts` @ 3a2f075 and checked against v12.2's `flowDb.ts`.
+ * drives. The builder reproduces what v12's `FlowDB` did with each parsed statement, checked
+ * against v12.2's `flowDb.ts`.
  *
  * Differences from v12's FlowDB: text is kept as written (no sanitising: that happens when
  * SVG is written), links keep the URL as written (checked at render time), callbacks are

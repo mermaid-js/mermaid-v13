@@ -31,7 +31,10 @@ const only = (path: RegExp) => ({
   detail: (detail: string) => detail.split(', ').every((p) => path.test(p)),
 });
 const D523 = only(/^boxes\[\d+\]\.text$/);
-/** D523 with tabs: v13 expands them to 4-column tab stops, Pele's `blockText` keeps them. */
+/**
+ * D523 with tabs: v13 expands them to 4-column tab stops, the reference implementation's
+ * `blockText` keeps them.
+ */
 const D523_TABS = only(/^(?:boxes|dataBlocks)\[\d+\]\.text$/);
 const D522 = only(/^(?:boxes\[\d+\]\.lane|lanes\b.*|relations\[\d+\]\.source)$/);
 const reject = (detail: string) => detail.startsWith('UNCLOSED_DIRECTIVE');

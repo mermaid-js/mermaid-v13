@@ -3,9 +3,9 @@
  *
  * The stripping of control characters, entity codes and escapes that could hide a scheme is a port
  * of @braintree/sanitize-url (https://github.com/braintree/sanitize-url, MIT, (c) 2017 Braintree)
- * as Pele reimplements it (src/util/url.ts @ 3a2f075). On top of that the scheme must be on an
- * allow-list, checked on both the raw and the percent-decoded form, and network paths (`//host`,
- * `\\host`) are refused.
+ * as the reference implementation reimplements it (src/util/url.ts @ 3a2f075). On top of that the
+ * scheme must be on an allow-list, checked on both the raw and the percent-decoded form, and
+ * network paths (`//host`, `\\host`) are refused.
  */
 import { LINK_TARGETS } from './allowlist.ts';
 import type { LinkTarget, SafeUrl, Warn } from './types.ts';

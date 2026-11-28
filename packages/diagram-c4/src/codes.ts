@@ -10,8 +10,8 @@
  */
 export const C4_NAMED_ARGUMENT_MOVED = 'C4_NAMED_ARGUMENT_MOVED';
 /**
- * D452: a `$__proto__` argument (v12 threw a `TypeError`), kept as an unknown name, as Pele keeps
- * it (a warning: Pele accepts it).
+ * D452: a `$__proto__` argument (v12 threw a `TypeError`), kept as an unknown name, as the
+ * reference implementation keeps it (a warning: the reference implementation accepts it).
  */
 export const C4_NAME_RESERVED = 'C4_NAME_RESERVED';
 /**
