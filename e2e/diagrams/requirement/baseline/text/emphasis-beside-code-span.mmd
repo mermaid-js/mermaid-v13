@@ -1,8 +1,10 @@
 ---
 description: >-
-  a name or text value with a code span still reads the bold and italic
-  outside the span; the span draws its backticks and the stars inside it as
-  written (#836, D610)
+  with markdownAlwaysOn every label is markdown (#1368): a name or text value
+  reads its bold and italic, and a code span beside them draws as inline code
+  (was #836, D610, where v12 drew the span as written)
+config:
+  markdownAlwaysOn: true
 ---
 requirementDiagram
 requirement "*italic* beside `**not bold**`" {

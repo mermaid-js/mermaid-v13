@@ -9,11 +9,18 @@
   spec strings and docs examples, and the grammar is in
   [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
   with a range at the token (R-PARSE-4).
-- **Label text** (D564, D610, #763, #836): names, the `text:`, `type:` and `docref:` rows and
-  the other box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or
-  `+ ` is drawn as written. A code span is drawn as written, backticks included:
-  `` "`**bold**`" `` draws `` `**bold**` ``, and bold and italic outside the span are still
-  read. A requirement diagram has no markdown strings.
+- **Label text** (#1368): markdown is read only in a markdown string. A name or an
+  `id:`, `text:`, `type:` or `docref:` value written `` "`**bold** _italic_`" `` is drawn
+  bold and italic, where v12 drew the backticks and the stars as written. Any other name or
+  value is plain text: v12's documented example (`requirement "__test_req__"`,
+  `text: "*italicized text* **bold text**"`, "Markdown Formatting" in v12's
+  requirementDiagram.md) now draws its underscores and stars, and the render gives one
+  `MARKDOWN_NOT_READ` warning. Write a markdown string, or set `markdownAlwaysOn: true`
+  (top level or `requirement.markdownAlwaysOn`), which draws every label as markdown: bold and
+  italic as in v12, and also a code span as inline code and a leading `- ` as a list item,
+  which v12 drew as written. Tags (`<b>`, `<br>`, `<sub>`, …) draw in every label.
+- **Line breaks** (#1368): a written `\n` in a name or a value breaks the line, in both modes;
+  v12 drew it as the two characters.
 - **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
   v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
   now accept. The six forms v12 accepted only because a blank swallowed the next line break

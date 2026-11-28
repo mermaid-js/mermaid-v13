@@ -1,0 +1,60 @@
+---
+description: >-
+  Label syntax with markdownAlwaysOn (#1368): label-syntax.mmd's source with
+  `markdownAlwaysOn: true`, which reads every label as markdown. So the plain
+  `**bold** _ital_` boxes draw bold and italic in every label kind (names, id,
+  text, type, docref) and the code-span boxes draw inline code; markdown
+  strings, tags and the written `\n` draw as in the default mode.
+config:
+  markdownAlwaysOn: true
+---
+requirementDiagram
+  requirement "reqName **bold** _ital_" {
+    id: "id **bold** _ital_"
+    text: "text **bold** _ital_"
+  }
+  element "elementName **bold** _ital_" {
+    type: "type **bold** _ital_"
+    docref: "docref **bold** _ital_"
+  }
+  "elementName **bold** _ital_" - satisfies -> "reqName **bold** _ital_"
+
+  requirement "`reqName **bold** _ital_`" {
+    id: "`id **bold** _ital_`"
+    text: "`text **bold** _ital_`"
+  }
+  element "`elementName **bold** _ital_`" {
+    type: "`type **bold** _ital_`"
+    docref: "`docref **bold** _ital_`"
+  }
+  "`elementName **bold** _ital_`" - satisfies -> "`reqName **bold** _ital_`"
+
+  requirement "reqName a `code` b" {
+    id: "id a `code` b"
+    text: "text a `code` b"
+  }
+  element "elementName a `code` b" {
+    type: "type a `code` b"
+    docref: "docref a `code` b"
+  }
+  "elementName a `code` b" - satisfies -> "reqName a `code` b"
+
+  requirement "reqName <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" {
+    id: "id <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+    text: "text <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  }
+  element "elementName <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" {
+    type: "type <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+    docref: "docref <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  }
+  "elementName <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" - satisfies -> "reqName <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+
+  requirement "reqName one\ntwo" {
+    id: "id one\ntwo"
+    text: "text one\ntwo"
+  }
+  element "elementName one\ntwo" {
+    type: "type one\ntwo"
+    docref: "docref one\ntwo"
+  }
+  "elementName one\ntwo" - satisfies -> "reqName one\ntwo"

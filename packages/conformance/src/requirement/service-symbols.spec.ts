@@ -40,7 +40,7 @@ const NOT_AS_WRITTEN = [
 ];
 
 /** Names written quoted in the corpus that resolve (#199); a change means coverage moved. */
-const QUOTED_RESOLVED = 44;
+const QUOTED_RESOLVED = 64;
 
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const inside = (r: Range, outer: Range) => outer.start <= r.start && r.end <= outer.end;

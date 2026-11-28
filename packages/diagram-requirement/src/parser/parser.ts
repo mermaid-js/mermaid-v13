@@ -41,6 +41,7 @@ import type { KindSet, ParseOptions, ParseResult, Range } from '@mermaid-js/core
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
+  MarkdownField,
   RelationshipKind,
   RequirementDirection,
   RequirementKind,
@@ -58,6 +59,7 @@ import type {
 import { RequirementBuilder } from './builder.ts';
 import type { ElementFields, Ref, RequirementFields } from './builder.ts';
 import { NameIds } from './ids.ts';
+import { markdownOf, markdownString } from './markdown.ts';
 import { symbolsOf } from './symbols.ts';
 import type { Occurrence } from './symbols.ts';
 import { lex, requirementView } from './lexer.ts';
@@ -153,6 +155,8 @@ interface Body<F> {
   fields: Partial<F>;
   /** Keys read so far: a repeated one keeps the first value. */
   seen: Set<string>;
+  /** The kept fields written as a markdown string, in the order read. */
+  markdown: MarkdownField[];
   range: Range;
 }
 
@@ -570,7 +574,7 @@ class RequirementParser {
       if (named) {
         this.recordNames(kind, [node.name]);
         const at = { ast: node.id, range: node.range, nameRange: node.name.range };
-        const fields = body?.fields;
+        const fields = { ...body?.fields, ...markdownOf(node.name, body) };
         if (element) this.db.addElement(node.name.text, at, { ...emptyElement(), ...fields });
         else {
           const k = KIND_OF[keyword.kind] as RequirementKind;
@@ -635,6 +639,7 @@ class RequirementParser {
       nodes: node.fields,
       fields: {},
       seen: new Set(),
+      markdown: [],
       range: { start: open.start, end: open.end },
     };
     node.bodyRange = body.range;
@@ -708,6 +713,7 @@ class RequirementParser {
     if (body.seen.has(field.key)) return;
     body.seen.add(field.key);
     (body.fields as Record<string, string>)[FIELD_SLOT[field.key]] = field.value;
+    if (field.markdown) body.markdown.push(FIELD_SLOT[field.key] as MarkdownField);
   }
 
   /** A field's value: a risk or method in its display form, else a name or text. */
@@ -721,7 +727,8 @@ class RequirementParser {
       return { key: 'verifyMethod', value: METHOD_OF[v.kind] ?? '', range: v.range };
     }
     const v = this.name(TEXT_VALUE);
-    return { key: FIELD_KEY[key.kind] ?? 'text', value: v.text, range: v.range };
+    const k = FIELD_KEY[key.kind] ?? 'text';
+    return { key: k, value: v.text, range: v.range, markdown: markdownString(v) };
   }
 
   // ---- relations and the class shorthand ----------------------------------------------
@@ -910,6 +917,8 @@ interface Field {
   key: RequirementFieldNode['key'];
   value: string;
   range: Range;
+  /** The value was written as a markdown string (`"`…`"`): a name or text only. */
+  markdown?: boolean;
 }
 
 /** What a body of each kind takes: its own keys, and the other kind's (an error with a hint). */

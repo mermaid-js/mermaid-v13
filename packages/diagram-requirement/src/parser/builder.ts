@@ -33,6 +33,7 @@ import {
 import type {
   BoxesByName,
   Element,
+  MarkdownField,
   Relation,
   RelationshipKind,
   Requirement,
@@ -55,12 +56,16 @@ export interface RequirementFields {
   text: string;
   risk: RiskLevel | '';
   verifyMethod: VerifyMethod | '';
+  /** The box's markdown strings, the name included (`RequirementBox.markdown`). */
+  markdown?: MarkdownField[];
 }
 
 /** An element's fields, as its body sets them. */
 export interface ElementFields {
   type: string;
   docRef: string;
+  /** The box's markdown strings, the name included (`RequirementBox.markdown`). */
+  markdown?: MarkdownField[];
 }
 
 /** Where a definition or statement is: its AST id and source range. */

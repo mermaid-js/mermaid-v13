@@ -1,6 +1,8 @@
 // #836, D610: a v12 Markdown label (mindmap, state, requirement, class) that holds a code span
 // still reads the bold and italic outside the span, and draws the span, with the stars inside it,
 // as written. Each type's `baseline/text/emphasis-beside-code-span.mmd` holds the cases.
+// Requirement's fixture sets `markdownAlwaysOn` (#1368): every label is markdown, so its spans
+// are inline code.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
@@ -26,7 +28,6 @@ const spans = (svg: string): string[] =>
 describe.each([
   { type: 'mindmap', dir: 'mindmap' },
   { type: 'state', dir: 'state-diagram-v2' },
-  { type: 'requirement', dir: 'requirement' },
   { type: 'class', dir: 'class-diagram' },
 ])('emphasis beside a code span in $type (#836, D610)', ({ dir }) => {
   it('reads the emphasis outside the span and draws the span as written', async () => {
@@ -43,5 +44,21 @@ describe.each([
     // The character references the label reader adds are drawn as the characters.
     expect(svg).not.toMatch(/&amp;#(42|95);|&#(42|95);/);
     expect(svg).not.toContain('**bold**');
+  });
+});
+
+describe('emphasis beside a code span in requirement, with markdownAlwaysOn (#1368)', () => {
+  it('reads the emphasis outside the span and draws the span as inline code', async () => {
+    const { svg, warnings } = await createMermaid().render('d', fixture('requirement'));
+    expect(warnings).toEqual([]);
+    assertInert(svg);
+    const drawn = spans(svg);
+    expect(drawn).toContain('b:bold');
+    expect(drawn.some((s) => s.endsWith('i:italic'))).toBe(true);
+    // The spans are code: their text without the backticks, the stars inside kept.
+    for (const code of ['code', '**not bold**', 'x_1', 'sim'])
+      expect(drawn.some((s) => s.replace(/^(b:|i:)+/, '') === code)).toBe(true);
+    expect(drawn.join('')).not.toContain('`');
+    expect(svg).not.toMatch(/&amp;#(42|95);|&#(42|95);/);
   });
 });
