@@ -15,11 +15,13 @@
   deterministicIDSeed property (string) 2:11-2:13 "th" -> "deterministicIDSeed: "
   wrap property (boolean) 2:11-2:13 "th" -> "wrap: "
   markdownAutoWrap property (boolean) 2:11-2:13 "th" -> "markdownAutoWrap: "
+  markdownAlwaysOn property (boolean) 2:11-2:13 "th" -> "markdownAlwaysOn: "
 @ 2:30  config: { th, flowchart: { cu| }, darkMode: , fontSize: 1 }
   useWidth property (number) 2:28-2:30 "cu" -> "useWidth: "
   useMaxWidth property (boolean) 2:28-2:30 "cu" -> "useMaxWidth: "
   theme property (string) 2:28-2:30 "cu" -> "theme: "
   layout property (string) 2:28-2:30 "cu" -> "layout: "
+  markdownAlwaysOn property (boolean) 2:28-2:30 "cu" -> "markdownAlwaysOn: "
   titleTopMargin property (integer) 2:28-2:30 "cu" -> "titleTopMargin: "
   subGraphTitleMargin property (object) 2:28-2:30 "cu" -> "subGraphTitleMargin: "
   subGraphTitlePosition property (string) 2:28-2:30 "cu" -> "subGraphTitlePosition: "
