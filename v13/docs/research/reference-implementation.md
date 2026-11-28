@@ -70,7 +70,7 @@ The `Diagram<Model>` interface (`src/types.ts:76-87`) has these members: `{type,
 
 There are 33 `DiagramType`s (`src/detect.ts:1-34`): flowchart, sequence, class, state, er, pie, gantt, gitGraph, mindmap, timeline, journey, xychart, quadrantChart, requirement, c4, sankey, block, packet, kanban, architecture, radar, treemap, info, agentflow, usecase, railroad (4 dialects), treeView, venn, cynefin, wardley, swimlane, ishikawa and eventmodeling. The README and `website/src/content/docs/compatibility.md` claim "every diagram type built into Mermaid 12.1.0". ZenUML and external plugins are not supported (`compatibility.md`).
 
-The detector returns both the the reference implementation type and Mermaid's own id, for example `flowchart-v2` or `flowchart-elk` (`detect.ts:36-78`). `flowchart-elk` is drawn with the reference implementation's own layout.
+The detector returns both the reference implementation's type and Mermaid's own id, for example `flowchart-v2` or `flowchart-elk` (`detect.ts:36-78`). `flowchart-elk` is drawn with the reference implementation's own layout.
 
 ---
 

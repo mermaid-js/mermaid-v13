@@ -71,7 +71,7 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
 - `AGENTS.md` § "Porting from the reference implementation" says to **mirror modules**: `src/<path>.ts` becomes
   `crates/compiler/src/<path>.rs`, and functions, constants, algorithms, iteration orders, and
   tie-breaks stay the same. A deliberate difference must be named in a comment.
-- Every module's `//!` header cites the the reference implementation file it ports, for example `layout/layered.rs` ("Port
+- Every module's `//!` header cites the reference implementation's file it ports, for example `layout/layered.rs` ("Port
   of the reference implementation's `src/layout/layered.ts`") and `flowchart/lexer.rs`. The same holds for `svg/*` and
   `text/label.rs`.
 - **JS semantics are reproduced by hand:** UTF-16 positions for anything that reaches output or
@@ -273,7 +273,7 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
 | Packaging | `scripts/packed-consumer.test.ts`, `test/fixtures/consumer/` | Tests the packed tarball in a Vite consumer. |
 | Benchmarks | `bench/Render.bench.ts`, `bench/chrome/*` | Benchmarks against the reference implementation and Mermaid. |
 
-The the reference implementation parity and Mermaid model oracles are the main reasons the port could be done quickly and
+The reference implementation's parity and Mermaid model oracles are the main reasons the port could be done quickly and
 safely. From the oracle README: "No Rust parser needed a fix."
 
 ## 12. What Rust buys beyond speed
@@ -360,4 +360,4 @@ Risks and caveats to carry forward:
   `htmlLabels` `foreignObject`, proportional fonts) is explicitly out of scope.
 - Proportional-font measurement in WASM would need embedded metric tables. Ondine avoided that by
   going monospace-only.
-- It is MIT with a the reference implementation notice. Upstream is young (v0.0.3).
+- It is MIT with a notice of the reference implementation. Upstream is young (v0.0.3).
