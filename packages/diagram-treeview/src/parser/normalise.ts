@@ -60,6 +60,7 @@ export function buildTree(nodes: readonly TreeViewNodeNode[]): {
       astId: n.id,
       range: Object.freeze({ ...n.range }),
     };
+    if (n.markdown) m.markdown = true;
     // v12's `populate`: `icon()` is `'none'`; an empty class or description is none.
     if (n.icon !== undefined) m.icon = nodeIcon(n.icon);
     if (n.cssClass) m.cssClass = n.cssClass;

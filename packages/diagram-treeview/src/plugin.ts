@@ -43,8 +43,9 @@ function glyphIcons(
  * document. Text output is the lazily loaded `./ascii` entry (#578, D488, manifest key `ascii`,
  * #577), so `formats` lists `ascii` and an SVG render never loads it.
  *
- * `theme` is treeView's own table (`theme/table.ts`, D331, D483). No `labels`: names and
- * descriptions are plain text (D484) and never go through core's label layout.
+ * `theme` is treeView's own table (`theme/table.ts`, D331, D483). No `labels`: a name goes
+ * through core's label handler (#1368) but is laid out without inline boxes, so no `$$` or icon
+ * span in it loads anything; descriptions are plain text (D484).
  * `configDefaults` are the `treeView` section's generated defaults (#577).
  */
 export const treeView = {

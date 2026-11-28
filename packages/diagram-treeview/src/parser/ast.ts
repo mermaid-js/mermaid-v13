@@ -28,6 +28,8 @@ export interface TreeViewNodeNode extends AstNode<'Node'> {
   nameRange: Range;
   /** Whether the name ended with `/`. */
   directory: boolean;
+  /** Set when the name was written as a quoted markdown string (the model's `markdown`). */
+  markdown?: true;
   /** v12's level: the length of the blank run before the name as v12 read it, else 0. */
   level: number;
   /** Where the node sits in the tree: 0 at the top (the model's `depth`). */

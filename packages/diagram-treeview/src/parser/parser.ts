@@ -62,6 +62,7 @@ import {
   descValue,
   iconValue,
   indentValue,
+  markdownName,
   nodeName,
   quotedValue,
   titleValue,
@@ -536,6 +537,7 @@ class TreeViewParser {
       name,
       nameRange,
       directory,
+      ...(quoted && markdownName(name) ? { markdown: true as const } : {}),
       level,
       depth: 0,
     };

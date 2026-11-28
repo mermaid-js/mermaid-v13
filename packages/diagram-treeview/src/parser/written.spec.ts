@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { writtenName } from './convert.ts';
+import { parseTreeView } from './parser.ts';
 import { nameForm, plainlyBare, readsBack, type NameLine } from './written.ts';
 
 // The shared name read-back (#578, D487, D488): the facet's rename and the text output write a
@@ -82,5 +83,33 @@ describe('nameForm', () => {
     expect(nameForm('│', false, '', 'box-top')).toBeUndefined();
     expect(nameForm('│', false, '"', 'box-top')).toBe('"│"');
     expect(nameForm('title.txt', false, '', 'indented')).toBeUndefined();
+  });
+});
+
+describe('markdown strings (#1368)', () => {
+  const model = (line: string) =>
+    parseTreeView(`treeView-beta\n${line}\n`).model.nodes.map((n) => [n.name, n.markdown]);
+
+  it('marks a quoted name wholly in backticks, in either quote, a directory’s `/` aside', () => {
+    expect(model('"`**x**`"')).toEqual([['`**x**`', true]]);
+    expect(model("'`x`'")).toEqual([['`x`', true]]);
+    expect(model('"`src`/"')).toEqual([['`src`', true]]);
+  });
+
+  it('marks no bare name, and no quoted name with other text or a backtick inside', () => {
+    expect(model('`**x**`')).toEqual([['`**x**`', undefined]]);
+    expect(model('"a `x` b"')).toEqual([['a `x` b', undefined]]);
+    expect(model('"`a`b`"')).toEqual([['`a`b`', undefined]]);
+    expect(model('"**x**"')).toEqual([['**x**', undefined]]);
+  });
+
+  it('writes a markdown string in quotes and a plain name in backticks bare, so each reads back', () => {
+    for (const line of LINES) {
+      expect(nameForm('`x`', false, '', line, true)).toBeUndefined();
+      expect(nameForm('`x`', false, '"', line, true)).toBe('"`x`"');
+      expect(nameForm('`x`', true, "'", line, true)).toBe("'`x`/'");
+      expect(nameForm('`x`', false, '', line)).toBe('`x`');
+      expect(nameForm('`x`', false, '"', line)).toBeUndefined();
+    }
   });
 });

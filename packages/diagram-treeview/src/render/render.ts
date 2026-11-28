@@ -98,8 +98,20 @@ function drawRow(
   w.close();
 }
 
-/** One line of plain text at the layout's point, size and style, its blank runs kept. */
+/**
+ * One line of plain text at the layout's point, size and style, its blank runs kept; or a
+ * label's lines of runs (#1368), left-aligned from the point and centred on it.
+ */
 function text(w: SvgWriter, t: TreeViewText, attrs: Attrs): void {
+  if (t.runs) {
+    const box = { ...t.runs, height: t.height, left: true };
+    w.label(box, t.x + t.width / 2, t.y, {
+      ...attrs,
+      'font-size': t.font.size,
+      'font-weight': t.style & Style.Bold ? 'bold' : undefined,
+    });
+    return;
+  }
   w.open('text', {
     ...attrs,
     x: t.x,

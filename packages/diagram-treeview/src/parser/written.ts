@@ -26,8 +26,17 @@ function around(w: string, line: NameLine): { text: string; nodes: number; at: n
   return { text: `treeView-beta\n├── ${w}\n`, nodes: 1, at: 0 };
 }
 
-/** Whether `w`, on `line`, reads back as a node named `name` (a directory when `directory`). */
-export function readsBack(w: string, name: string, directory: boolean, line: NameLine): boolean {
+/**
+ * Whether `w`, on `line`, reads back as a node named `name` (a directory when `directory`), a
+ * markdown string when `markdown` and else not one.
+ */
+export function readsBack(
+  w: string,
+  name: string,
+  directory: boolean,
+  line: NameLine,
+  markdown = false
+): boolean {
   const { text, nodes, at } = around(w, line);
   const r = parseTreeView(text);
   if (r.diagnostics.length > 0 || r.model.nodes.length !== nodes) return false;
@@ -36,6 +45,7 @@ export function readsBack(w: string, name: string, directory: boolean, line: Nam
     n !== undefined &&
     n.name === name &&
     n.directory === directory &&
+    (n.markdown === true) === markdown &&
     n.depth === 0 &&
     n.children.length === (line === 'box-top' ? 1 : 0) &&
     n.icon === undefined &&
@@ -64,17 +74,19 @@ export function plainlyBare(w: string): boolean {
 
 /**
  * `name` (a directory's with its `/`) written bare (`quote` `''`) or in `quote`, if that form
- * reads back on `line`; undefined when it does not, or when the name holds that quote.
+ * reads back on `line`, as a markdown string when `markdown` and else as none; undefined when it
+ * does not, or when the name holds that quote.
  */
 export function nameForm(
   name: string,
   directory: boolean,
   quote: NameQuote,
-  line: NameLine
+  line: NameLine,
+  markdown = false
 ): string | undefined {
   if (quote !== '' && name.includes(quote)) return undefined;
   const bare = writtenName(name, directory);
-  if (quote === '' && plainlyBare(bare)) return bare;
+  if (quote === '' && !markdown && plainlyBare(bare)) return bare;
   const w = `${quote}${bare}${quote}`;
-  return readsBack(w, name, directory, line) ? w : undefined;
+  return readsBack(w, name, directory, line, markdown) ? w : undefined;
 }

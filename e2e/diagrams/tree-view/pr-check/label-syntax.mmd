@@ -1,0 +1,27 @@
+---
+description: >-
+  Node labels follow the label rule (#1368): markdown only in a quoted markdown
+  string, tags draw, a written \n breaks the line and grows its row; plain
+  markdown, bare backticks and a code span are drawn as written, as are file
+  names with underscores. Files and directories, quoted and unquoted.
+---
+treeView-beta
+  plain/
+    unquoted **bold** _ital_
+    "quoted **bold** _ital_"
+  "`md dir **bold** _ital_`/"
+    "`quoted md **bold** _ital_`"
+    '`single md **bold** _ital_`'
+  backticks/
+    `bare **bold** _ital_`
+    code a `code` b
+  "tags <b>bold</b> <i>ital</i>/"
+    unquoted tag<br>next
+    "quoted <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+  breaks/
+    unquoted one\ntwo
+    "quoted one\ntwo"
+    "`md **one**\ntwo`"
+  names/
+    my_file_name.spec.ts
+    __init__.py

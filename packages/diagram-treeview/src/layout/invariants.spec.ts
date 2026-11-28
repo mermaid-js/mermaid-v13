@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
 import { treeViewTestTheme } from '../test-context.ts';
-import type { Measurer } from '@mermaid-js/core/text';
+import type { MeasuredLabel, Measurer } from '@mermaid-js/core/text';
 import { context, halfEm, tree } from './fixtures.ts';
 import { layoutTreeView, type TreeViewLayout } from './index.ts';
 import { treeViewLayoutViolations } from './invariants.ts';
@@ -21,7 +21,12 @@ const model = tree(
   '  c :::highlight ## last'
 );
 
-type Mutable<T> = T extends object ? { -readonly [K in keyof T]: Mutable<T[K]> } : T;
+// A label's runs stay as laid out: their attributes hold branded values.
+type Mutable<T> = T extends MeasuredLabel
+  ? T
+  : T extends object
+    ? { -readonly [K in keyof T]: Mutable<T[K]> }
+    : T;
 
 /** A deep copy of `value`, sharing the model's nodes. */
 function copy(value: unknown, key = ''): unknown {

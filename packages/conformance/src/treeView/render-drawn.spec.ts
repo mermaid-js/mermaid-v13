@@ -123,7 +123,7 @@ describe('treeView render: structure', () => {
     expect(attr(tree, file, 'font-weight')).toBeUndefined();
   });
 
-  it('keeps blank runs and prints every name and description as written (D484)', async () => {
+  it('keeps blank runs and prints every description, and every plain name, as written (D484)', async () => {
     for (const name of ['structure', 'plain-text']) {
       const api = await treeViewApi();
       const source = probe(name);
@@ -131,11 +131,14 @@ describe('treeView render: structure', () => {
       assertInert(svg);
       const model = (await api.prepare(source)).parse.model as TreeViewModel;
       const labels = byClass(tree, 'treeView-node-label');
-      // Entity codes are drawn as their characters (D563).
-      expect(labels.map((l) => textOf(tree, l))).toEqual([
-        '/',
-        ...model.nodes.map((n) => decodeEntities(n.name)),
-      ]);
+      // Entity codes are drawn as their characters (D563). A name follows the label rule
+      // (#1368): a tag is read (`<script>` and its text dropped, `<br>` a line break, drawn as
+      // an empty line's blank); the rest is drawn as written.
+      expect(labels.map((l) => textOf(tree, l))).toEqual(
+        name === 'plain-text'
+          ? ['/', ' ', 'a & b', ' x', 'fa:fa-car', 'javascript:alert(1)']
+          : ['/', ...model.nodes.map((n) => decodeEntities(n.name))]
+      );
       for (const l of labels) expect(attr(tree, l, 'xml:space')).toBe('preserve');
       const descriptions = byClass(tree, 'treeView-node-description').map((d) => textOf(tree, d));
       expect(descriptions).toEqual(
@@ -144,10 +147,9 @@ describe('treeView render: structure', () => {
         )
       );
       if (name === 'plain-text') {
-        expect(svg).not.toMatch(/<script|<img|<br|<tspan/);
-        expect(labels.map((l) => textOf(tree, l))).toContain('<br>x');
+        expect(svg).not.toMatch(/<script|<img|<br/);
         expect(descriptions).toContain('$$x^2$$');
-        expect(svg).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+        expect(svg).toContain('&lt;img src=x onerror=alert(1)&gt;');
       }
     }
   });

@@ -4,7 +4,7 @@
  * D481). Every length is in px, in the diagram's coordinates (treeView draws SVG; the ASCII
  * renderer reads the model). Rectangles have their top-left corner at `x`, `y`.
  */
-import type { FontKey, StyleBits } from '@mermaid-js/core/text';
+import type { FontKey, MeasuredLabel, StyleBits } from '@mermaid-js/core/text';
 import type { Rect } from '@mermaid-js/shared/layout';
 import type { TreeViewNode } from '../model.ts';
 
@@ -15,6 +15,10 @@ export type { Rect };
  * label, `Style.Italic` for a description, else 0): drawn with `dominant-baseline: middle` and
  * `text-anchor: start` at (`x`, `y`), so it spans `x` to `x + width` and is `height` high
  * around `y` (0 high for an empty text, as v12's `getBBox`).
+ *
+ * A node's label in which the label rule read something (a tag, a markdown string, a line
+ * break; #1368) carries its `runs` instead: lines of styled runs drawn left-aligned from `x`,
+ * as a block `height` high centred on `y`; `text` is then what they draw, a line break per line.
  */
 export interface TreeViewText {
   readonly text: string;
@@ -24,6 +28,8 @@ export interface TreeViewText {
   readonly y: number;
   readonly width: number;
   readonly height: number;
+  /** The label as core's label layout laid it out; absent for a label drawn as written. */
+  readonly runs?: MeasuredLabel;
 }
 
 /** A row's icon: the name `resolveIcon` gave (`pack:name`) and its 14 × 14 box. */
