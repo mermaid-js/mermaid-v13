@@ -427,6 +427,8 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/pr-check/elk-fan-in-arrowheads.mmd": 0,
   "flowchart/pr-check/elk-subgraph-title-edge-crossing.mmd": 0,
   "flowchart/pr-check/hyphenated-words-break-at-the-hyphen.mmd": 0,
+  "flowchart/pr-check/label-syntax-compat.mmd": 0,
+  "flowchart/pr-check/label-syntax.mmd": 0,
   "flowchart/pr-check/person-short-label.mmd": 0,
   "flowchart/visual-check/1-should-render-a-simple-flowchart-no-htmllabels.mmd": 0,
   "flowchart/visual-check/1-should-render-a-simple-flowchart.mmd": 0,

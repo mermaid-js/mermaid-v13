@@ -81,7 +81,6 @@ describe('c4-beta through the public API (spec #730)', () => {
       'b08-style-values.mmd': ['C4BETA_STYLE_IGNORED'],
       'b21-tech-on-person.mmd': ['C4BETA_TECHNOLOGY_DROPPED', 'C4BETA_INSTANCES_DROPPED'],
       'b25-step-outside-dynamic.mmd': ['C4BETA_STEP_IGNORED'],
-      'markup-and-quotes-in-every-text.mmd': ['HTML_DROPPED'],
       'style-colour-forms.mmd': ['C4_COLOR_INVALID'],
       'style-colour-misspelt.mmd': ['C4_COLOR_INVALID'],
       'style-line-value-ignored.mmd': ['C4BETA_STYLE_IGNORED'],

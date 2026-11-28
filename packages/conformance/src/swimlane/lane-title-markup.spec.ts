@@ -48,11 +48,12 @@ const within = (n: SvgElement, group: SvgElement): boolean => {
 
 const textOf = (rs: readonly Run[]): string => rs.map((r) => r.text).join('');
 
-async function draw(text: string): Promise<SvgView> {
+/** `text` drawn, with exactly the warnings whose codes are `codes`. */
+async function draw(text: string, codes: readonly string[] = []): Promise<SvgView> {
   const m = createMermaid();
   m.initialize({ deterministic: true });
   const { svg, warnings } = await m.render('s', text);
-  expect(warnings).toEqual([]);
+  expect(warnings.map((w) => w.code)).toEqual(codes);
   return parseSvg(svg);
 }
 
@@ -83,7 +84,8 @@ describe('swimlane lane titles (D710)', () => {
   });
 
   it('leave a flowchart subgraph title as flowchart reads it', async () => {
-    const tree = await draw(SOURCE.replace('swimlane-beta', 'flowchart'));
+    // A plain flowchart title with `**` gives the one MARKDOWN_NOT_READ of the render (#1395).
+    const tree = await draw(SOURCE.replace('swimlane-beta', 'flowchart'), ['MARKDOWN_NOT_READ']);
     // Flowchart's markdown string is the quoted form; bare backticks stay as written.
     expect(textOf(runs(tree, 'bare'))).toBe('`**Bare** lane`');
     expect(textOf(runs(tree, 'quoted'))).toBe('Italic bold lane');
