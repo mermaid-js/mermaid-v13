@@ -7,6 +7,7 @@
 import { cellMeasurer, cellWidth, type CellRect } from '@mermaid-js/core/ascii';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import { layoutLabel, Style, type InlineSpans, type MeasuredLabel } from '@mermaid-js/core/text';
+import { blockLabelSource, type BlockLabelContext, type Labelled } from '../labels.ts';
 import { gridAdvance, gridPosition } from '../layout/grid.ts';
 import { isComposite, type Block, type BlockModel, type BlockType } from '../model.ts';
 import { arrowSides, type ArrowSide } from '../shapes/block-arrow.ts';
@@ -49,7 +50,12 @@ export interface GridOptions {
   /** The cut mark: `…`, or `~` in the `ascii` charset. */
   readonly mark: string;
   readonly inline?: InlineSpans;
+  /** The render the labels are read for: its config, and where the label warning goes. */
+  readonly labels?: BlockLabelContext;
 }
+
+/** What {@link textLabel} reads besides the label. */
+export type TextLabelOptions = Pick<GridOptions, 'inline' | 'labels'>;
 
 /** The cell measurer ignores the font; one key serves every label. */
 const FONT = { family: '', size: 1, weight: 400 } as const;
@@ -61,15 +67,14 @@ export interface TextLabel {
   readonly emphasis: boolean;
 }
 
-export function textLabel(text: string, inline?: InlineSpans): TextLabel {
-  if (text === '') return { lines: [], width: 0, emphasis: false };
-  const m: MeasuredLabel = layoutLabel(
-    text,
-    FONT,
-    Infinity,
-    cellMeasurer,
-    inline ? { inline } : {}
-  );
+/** A block's or an edge's label in cells, read by the label handler as the px layout reads it. */
+export function textLabel(item: Labelled, options: TextLabelOptions = {}): TextLabel {
+  if (item.label === '') return { lines: [], width: 0, emphasis: false };
+  const source = blockLabelSource(item, options.labels);
+  const m: MeasuredLabel = layoutLabel(source.text, FONT, Infinity, cellMeasurer, {
+    ...source,
+    ...(options.inline ? { inline: options.inline } : {}),
+  });
   const lines = m.lines.map((runs) =>
     runs
       .map((r) => r.text)
@@ -117,12 +122,12 @@ interface Grid {
 
 const isSpace = (b: Block): boolean => b.type === 'space';
 
-function nodeOf(block: Block, inline: InlineSpans | undefined): Node {
+function nodeOf(block: Block, options: TextLabelOptions): Node {
   const space = isSpace(block);
   return {
     block,
     frame: !space && isComposite(block),
-    label: space ? textLabel('') : textLabel(block.label, inline),
+    label: textLabel(space ? { label: '' } : block, options),
     span: space ? 1 : block.span,
     cells: space ? Math.max(0, block.cells ?? 1) : 1,
     children: [],
@@ -133,14 +138,14 @@ function nodeOf(block: Block, inline: InlineSpans | undefined): Node {
 }
 
 /** The text tree of `blocks`, and every node in pre-order, without recursion. */
-function tree(blocks: readonly Block[], inline: InlineSpans | undefined) {
-  const roots = blocks.map((b) => nodeOf(b, inline));
+function tree(blocks: readonly Block[], options: TextLabelOptions) {
+  const roots = blocks.map((b) => nodeOf(b, options));
   const order: Node[] = [];
   const stack = [...roots].reverse();
   while (stack.length > 0) {
     const node = stack.pop()!;
     order.push(node);
-    for (const c of node.block.children) node.children.push(nodeOf(c, inline));
+    for (const c of node.block.children) node.children.push(nodeOf(c, options));
     for (let i = node.children.length - 1; i >= 0; i--) stack.push(node.children[i]!);
   }
   return { roots, order };
@@ -336,7 +341,7 @@ function layout(model: BlockModel, t: ReturnType<typeof tree>, o: GridOptions, c
  * `ASCII_TOO_WIDE`, D84).
  */
 export function blockTextGrid(model: BlockModel, options: GridOptions): BlockText {
-  const nodes = tree(model.blocks, options.inline);
+  const nodes = tree(model.blocks, options);
   const { labelCap, minLabel } = BLOCK_TEXT_METRICS;
   const full = layout(model, nodes, options, labelCap);
   const max = options.maxWidth;

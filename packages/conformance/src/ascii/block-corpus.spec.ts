@@ -1,7 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cellWidth, graphemes } from '@mermaid-js/core/ascii';
 import { parseBlock, type BlockModel } from '@mermaid-js/diagram-block';
-import { drawBlockText, type Route, type TextBox } from '@mermaid-js/diagram-block/testing';
+import { preprocess } from '@mermaid-js/core/preprocess';
+import {
+  blockTestConfig,
+  drawBlockText,
+  type Route,
+  type TextBox,
+} from '@mermaid-js/diagram-block/testing';
 import { createMermaid, MermaidError, type TextRenderResult } from 'mermaid';
 import { blockCases, blockCorpus } from '../block/corpus.ts';
 import { nestedComposites } from './block-fuzz.ts';
@@ -45,8 +51,9 @@ async function caseOf(id: string, source: string): Promise<Case> {
     const call = { format: 'ascii', config: { ascii: { charset } } } as const;
     out[charset] = await mermaid.render('b', source, call);
     again[charset] = (await mermaid.render('b', source, call)).text;
+    // The source's own config (its front matter's `markdownAlwaysOn`, #1401) reaches both.
     direct[charset] = drawBlockText(model, {
-      config: { ascii: { charset } } as never,
+      config: blockTestConfig(preprocess(source), { ascii: { charset } }),
       warn: () => {},
     });
   }

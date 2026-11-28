@@ -7,9 +7,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { AstId, AstNode } from '@mermaid-js/core/parser-kit';
 import type { Block, BlockModel } from '../model.ts';
 import { hasTextForm } from './draw.ts';
-import type { BlockText } from './grid.ts';
-import { textLabel } from './grid.ts';
-import type { InlineSpans } from '@mermaid-js/core/text';
+import { textLabel, type BlockText, type TextLabelOptions } from './grid.ts';
 import { asciiDropped } from '@mermaid-js/shared/ascii';
 import type {
   AsciiDroppedWarning as SharedAsciiDroppedWarning,
@@ -66,7 +64,7 @@ export function asciiWarnings(
   grid: BlockText,
   forced: readonly AstId[],
   ast: AstNode | undefined,
-  inline: InlineSpans | undefined
+  labels: TextLabelOptions
 ): AsciiWarning[] {
   const out: AsciiWarning[] = [];
   const dropped = (feature: AsciiDroppedFeature, astIds: string[]): void =>
@@ -79,7 +77,7 @@ export function asciiWarnings(
   }
   const emphasis = grid.boxes.filter((b) => b.emphasis).map((b) => b.ast);
   for (const e of model.edges)
-    if (e.label !== '' && textLabel(e.label, inline).emphasis) emphasis.push(e.ast);
+    if (e.label !== '' && textLabel(e, labels).emphasis) emphasis.push(e.ast);
   if (emphasis.length > 0) dropped('emphasis', emphasis);
   const shapes: string[] = [];
   const shaped: string[] = [];

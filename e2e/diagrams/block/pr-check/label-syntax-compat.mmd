@@ -1,0 +1,46 @@
+---
+description: >-
+  The markdownAlwaysOn twin of label-syntax.mmd: the same block labels with
+  every label read as markdown. The plain rows of shapes, block arrows,
+  composite headers and edge labels draw **bold** and _ital_ as bold and
+  italic, the code-span column draws inline code, and tags and the written
+  backslash-n draw as in the default mode, so the picture differs from
+  label-syntax.mmd.
+config:
+  markdownAlwaysOn: true
+---
+block
+  columns 5
+  s1["shape **bold** _ital_"]
+  s2["`shape **bold** _ital_`"]
+  s3["shape a `code` b"]
+  s4["shape <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+  s5["shape one\ntwo"]
+  r1<["arrow **bold** _ital_"]>(right)
+  r2<["`arrow **bold** _ital_`"]>(right)
+  r3<["arrow a `code` b"]>(right)
+  r4<["arrow <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]>(right)
+  r5<["arrow one\ntwo"]>(right)
+  block:g1["group **bold** _ital_"]
+    i1
+  end
+  block:g2["`group **bold** _ital_`"]
+    i2
+  end
+  block:g3["group a `code` b"]
+    i3
+  end
+  block:g4["group <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"]
+    i4
+  end
+  block:g5["group one\ntwo"]
+    i5
+  end
+  e1 e2 e3 e4 e5
+  space:5
+  f1 f2 f3 f4 f5
+  e1 -- "edge **bold** _ital_" --> f1
+  e2 -- "`edge **bold** _ital_`" --> f2
+  e3 -- "edge a `code` b" --> f3
+  e4 -- "edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" --> f4
+  e5 -- "edge one\ntwo" --> f5

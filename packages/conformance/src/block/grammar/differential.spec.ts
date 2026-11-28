@@ -2,7 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { detectBlock } from '@mermaid-js/diagram-block';
 import { loadOracle } from '../../oracle.ts';
 import { blockSyntaxCorpus } from '../corpus.ts';
-import { handWrittenVerdict, referenceVerdict, v12Syntax } from './reference.ts';
+import {
+  handWrittenVerdict,
+  referenceVerdict,
+  v12Syntax,
+  withoutMarkdownStrings,
+} from './reference.ts';
 
 /**
  * Grammar differential (R-PARSE-9, DESIGN §13): the reference parser generated from
@@ -10,8 +15,11 @@ import { handWrittenVerdict, referenceVerdict, v12Syntax } from './reference.ts'
  * (statement types and source ranges, nested as composites nest), and the grammar agrees with
  * mermaid\@12 on accept/reject of the syntax, over the lexer gate's corpus (v12's TypeError on
  * `style`, which D443 accepts, is not syntax). Unclosed directives are left out, as in the
- * parity suite.
+ * parity suite. The one difference from mermaid\@12 is the markdown string in a label (#1401), which
+ * 12.2.0's grammar rejected and both v13 sides take: mermaid\@12 is asked about the source with
+ * each markdown string written as a string.
  */
+
 describe('block grammar differential', () => {
   it('agrees with the hand-written parser and mermaid@12 over the corpus', async () => {
     const oracle = await loadOracle();
@@ -23,7 +31,7 @@ describe('block grammar differential', () => {
       compared++;
       const ref = referenceVerdict(item.source);
       const hand = handWrittenVerdict(item.source);
-      const v12 = await oracle.parse(item.source);
+      const v12 = await oracle.parse(withoutMarkdownStrings(item.source));
       if (!ref.accepted) rejected++;
       if (v12Syntax(v12) === !ref.accepted) {
         diffs.push(

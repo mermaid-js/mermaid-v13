@@ -1174,5 +1174,277 @@
     "reason": "A `space` over 100,000 cells is cut to 100,000 (D445, R-SEC-5), with one BLOCK_TRUNCATED warning; v12 kept every cell (one cloned block each). This changes accept/reject too: 12.2.0 rejects a spacer over 16,777,214 cells with `Map maximum size exceeded` (its block map holds at most 2^24 entries, the top level and the spacer itself included, so the bound is lower when there are other blocks), as `space:100000000`, which v13 accepts (MIGRATION.md, #554).",
     "owner": "#554",
     "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/block/pr-check/label-syntax.mmd",
+    "inputHash": "sha256:cc1fdcf294f0fa75",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-cases/label-markdown",
+    "inputHash": "sha256:80057e815f3ee6d0",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-cases/arrow-markdown",
+    "inputHash": "sha256:c9c859f5395ca59d",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-cases/edge-labelled-markdown",
+    "inputHash": "sha256:fdf2ba972b203fb9",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax.mmd (commented)",
+    "inputHash": "sha256:3d8e9da042b03aff",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-markdown (commented)",
+    "inputHash": "sha256:0cff0e568a0c1c7f",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/edge-labelled-markdown (commented)",
+    "inputHash": "sha256:2351dc9f442335af",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax.mmd (CR cut)",
+    "inputHash": "sha256:fc95bf2bd23d9079",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/label-markdown (CR cut)",
+    "inputHash": "sha256:a13c90855e3702fd",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-markdown (CR cut)",
+    "inputHash": "sha256:52da6d7d765108a0",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/edge-labelled-markdown (CR cut)",
+    "inputHash": "sha256:248007a64c67734f",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax.mmd (CR cut by a directive)",
+    "inputHash": "sha256:d2f584f593142f23",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/label-markdown (CR cut by a directive)",
+    "inputHash": "sha256:40ecb988023b69dc",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-markdown (CR cut by a directive)",
+    "inputHash": "sha256:d7b28d9cc5426f97",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/edge-labelled-markdown (CR cut by a directive)",
+    "inputHash": "sha256:4a8d3c75d94ae78b",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax.mmd (CRLF)",
+    "inputHash": "sha256:a8a9ddd8e36fde4b",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/label-markdown (CRLF)",
+    "inputHash": "sha256:fcc97994e798a7e3",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-markdown (CRLF)",
+    "inputHash": "sha256:cbc220461a816999",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/edge-labelled-markdown (CRLF)",
+    "inputHash": "sha256:0f76131ea5680931",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax.mmd (tabs)",
+    "inputHash": "sha256:1d1ff59e7e02232e",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/label-markdown (tabs)",
+    "inputHash": "sha256:8b6d48b399655d8f",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-markdown (tabs)",
+    "inputHash": "sha256:a9561af3a3aaaf63",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/edge-labelled-markdown (tabs)",
+    "inputHash": "sha256:62623320ed7856d0",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax.mmd (mid-line directive)",
+    "inputHash": "sha256:3125afd33c1a15e0",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/label-markdown (mid-line directive)",
+    "inputHash": "sha256:e036b69428fdbc7e",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/arrow-markdown (mid-line directive)",
+    "inputHash": "sha256:3b708a40692da618",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/block-cases/edge-labelled-markdown (mid-line directive)",
+    "inputHash": "sha256:1d9b605ade9f55de",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "e2e/diagrams/block/pr-check/label-syntax-compat.mmd",
+    "inputHash": "sha256:958315ca45a70ccf",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax-compat.mmd (commented)",
+    "inputHash": "sha256:6398e7ba6d609a64",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax-compat.mmd (CR cut)",
+    "inputHash": "sha256:61a68c413ddc156e",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax-compat.mmd (CR cut by a directive)",
+    "inputHash": "sha256:d8c22f661477e6c2",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax-compat.mmd (CRLF)",
+    "inputHash": "sha256:e7a4027ee3939177",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax-compat.mmd (tabs)",
+    "inputHash": "sha256:349f6bf558957ae1",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
+  },
+  {
+    "id": "block-gate/e2e/pr-check/label-syntax-compat.mmd (mid-line directive)",
+    "inputHash": "sha256:d051d85edc81c352",
+    "kind": "accept",
+    "reason": "A label may be a markdown string, \"`…`\", in a shape, a block arrow, a composite header or an edge: v12's lexer read it but its grammar rejected it with a parse error; v13 takes it and draws it as markdown (spec #1368, ticket #1401; MIGRATION.md).",
+    "owner": "#1368, #1401",
+    "since": "2026-11-27"
   }
 ]

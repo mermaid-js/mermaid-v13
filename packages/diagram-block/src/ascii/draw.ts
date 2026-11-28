@@ -23,6 +23,7 @@ import {
 import { boxForm, drawLineCells, tee, trimmed } from '@mermaid-js/shared/ascii';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { InlineSpans } from '@mermaid-js/core/text';
+import type { BlockLabelContext } from '../labels.ts';
 import type { BlockArrowType, BlockModel, BlockType } from '../model.ts';
 import type { ArrowSide } from '../shapes/block-arrow.ts';
 import { blockTextGrid, cut, textLabel, type BlockText, type TextBox } from './grid.ts';
@@ -112,6 +113,8 @@ export interface BlockDrawOptions {
   readonly spacing: TextSpacing;
   readonly maxWidth?: number;
   readonly inline?: InlineSpans;
+  /** The render the labels are read for: its config, and where the label warning goes. */
+  readonly labels?: BlockLabelContext;
 }
 
 export interface BlockDrawing {
@@ -359,6 +362,7 @@ export function drawBlock(model: BlockModel, options: BlockDrawOptions): BlockDr
     mark,
     ...(options.maxWidth !== undefined ? { maxWidth: options.maxWidth } : {}),
     ...(options.inline ? { inline: options.inline } : {}),
+    ...(options.labels ? { labels: options.labels } : {}),
   });
   const M = BLOCK_TEXT_METRICS;
   const A = margin(model.edges.length);
@@ -377,7 +381,7 @@ export function drawBlock(model: BlockModel, options: BlockDrawOptions): BlockDr
   const labels = new Labels(sc);
   for (const edge of routed) {
     if (edge.edge.label === '') continue;
-    const line = textLabel(edge.edge.label, options.inline).lines.join(' ');
+    const line = textLabel(edge.edge, options).lines.join(' ');
     labels.place(edge, cut(line, M.labelCap, mark, true));
   }
 

@@ -128,6 +128,8 @@ describe('block grid parity with v12', () => {
         ),
       ].map((f) => `e2e/baseline/${f}.mmd`),
       'e2e/nightly-check/composite-with-a-label.mmd',
+      'e2e/pr-check/label-syntax-compat.mmd',
+      'e2e/pr-check/label-syntax.mmd',
     ]);
     expect(compared).toBeGreaterThan(90);
     // Composites inside composites are in the comparison too.

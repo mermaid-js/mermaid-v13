@@ -63,6 +63,8 @@ e2e/diagrams/block/nightly-check/width-alignment-c-should-be-as-wide-as-the-comp
 e2e/diagrams/block/nightly-check/width-alignment-d-and-e-should-share-available-space.mmd 1 1cf380740285ab05
 e2e/diagrams/block/pr-check/composite-block-with-a-set-width-f-and-g-should-split-the-available-space.mmd 1 52da778686e97e38
 e2e/diagrams/block/pr-check/hexagon-shape-block-should-span-correctly.mmd 1 ca42c9172a418c14
+e2e/diagrams/block/pr-check/label-syntax-compat.mmd 1 bd28ad1f8cdc95e2
+e2e/diagrams/block/pr-check/label-syntax.mmd 1 b0d5c8992887bfe4
 e2e/diagrams/block/pr-check/line-hops.mmd 1 c1ed5d30057129e9
 e2e/diagrams/block/pr-check/look-neo-with-the-neo-dark-theme.mmd 1 73e0a47bdfde148c
 e2e/diagrams/block/pr-check/look-neo-with-the-neo-theme.mmd 1 40d3b43b04438eeb

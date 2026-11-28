@@ -8,7 +8,8 @@ diagrams.
 The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
 parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
 decides what is valid, this file is fixed to match, and the parser must match this file
-(DESIGN §4.4).
+(DESIGN §4.4). One difference is chosen: a label may be a markdown string, which mermaid@12's
+grammar rejected (#1401).
 
 **Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
 matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
@@ -19,7 +20,8 @@ opaque text that no rule takes apart; and a line break appended. Keywords are ca
 **Line breaks mean nothing.** Blanks and line breaks only separate tokens, so statements need
 no separator: `columns 2 a b` on one line is a `columns` statement and two blocks. An id takes
 any character but blanks, `( ) [ ] { } < > - : =`, so `;`, `,`, `.`, `|`, `%`, `#`, quotes and
-Unicode are id characters, and an inline `%%` is not a comment. Labels are always quoted.
+Unicode are id characters, and an inline `%%` is not a comment. Labels are always quoted, as a
+string `"text"` or a markdown string `` "`**text**`" ``.
 
 A block written again merges into the first (its position and span stay). A composite
 `block:id … end` or `block … end` holds at least one statement. A span `:n` goes only after the
@@ -64,8 +66,15 @@ node = NODE_ID [ shape ] ;
 ```
 
 ```ebnf
-shape = NODE_DSTART STR NODE_DEND
-      | BLOCK_ARROW_START STR DIR { DIR } BLOCK_ARROW_END ;
+shape = NODE_DSTART label NODE_DEND
+      | BLOCK_ARROW_START label DIR { DIR } BLOCK_ARROW_END ;
+```
+
+A label: a string, or a markdown string (#1401).
+
+```ebnf
+label = STR
+      | MD_STR ;
 ```
 
 ```ebnf
@@ -74,7 +83,8 @@ Edge @Edge = link ;
 
 ```ebnf
 link = LINK
-     | START_LINK LINK_LABEL STR LINK ;
+     | START_LINK LINK_LABEL STR LINK
+     | START_LINK MD_STR LINK ;
 ```
 
 ```ebnf
@@ -126,7 +136,7 @@ Modes: `INITIAL`, `string`, `md_string`, `NODE`, `BLOCK_ARROW`, `ARROW_DIR`, `LL
 | INITIAL | — | `[\s]+` |  | Blanks and line breaks separate tokens. |
 | INITIAL | COLUMNS | `columns\s+auto\b` |  | `columns n` or `columns auto`: how many columns the level's grid has; the last one wins. |
 | INITIAL | COLUMNS | `columns\s+[\d]+` |  |  |
-| INITIAL | — | `["][`]` | push(md_string) | A markdown string, which block diagrams do not take. |
+| INITIAL | — | `["][`]` | push(md_string) | A markdown string, as a label in a shape, a block arrow or an edge (#1401). |
 | md_string | MD_STR | `[^`"]+` |  |  |
 | md_string | — | `[`]["]` | pop |  |
 | INITIAL | — | `["]` | push(string) | A quoted text: a label, in a shape or an edge. |
