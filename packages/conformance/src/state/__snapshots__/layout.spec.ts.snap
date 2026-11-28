@@ -156,6 +156,8 @@ exports[`layered over parser-produced state graphs > lays out every corpus graph
   "e2e/diagrams/state-diagram-v2/nightly-check/v2-width-of-compound-state-should-grow-with-title-if-title-is-wider.mmd": 0,
   "e2e/diagrams/state-diagram-v2/pr-check/can-have-styles-applied.mmd": 0,
   "e2e/diagrams/state-diagram-v2/pr-check/composite-with-a-loop-starts-on-its-start-state.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/pr-check/label-syntax-compat.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/pr-check/label-syntax.mmd": 0,
   "e2e/diagrams/state-diagram-v2/pr-check/long-word-stays-whole.mmd": 0,
   "e2e/diagrams/state-diagram-v2/pr-check/math-should-render-tex-in-every-state-label.mmd": 0,
   "e2e/diagrams/state-diagram-v2/pr-check/should-render-edge-labels-correctly-with-multiple-transitions.mmd": 0,

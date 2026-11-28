@@ -10,6 +10,7 @@ import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
@@ -17,7 +18,6 @@ import type { StateRenderContext } from './context.ts';
 import { STATE_CURVE } from './curve.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
-import { v12Label, type V12LabelMode } from '@mermaid-js/core/text/v12-label';
 import type { EmbeddedDiagram } from '@mermaid-js/core';
 import { framedSize } from '@mermaid-js/core/svg/framed';
 import {
@@ -113,9 +113,28 @@ export interface StatePrepared {
   regions: ReadonlyMap<string, readonly string[]>;
 }
 
+/** A label as written, and whether the parser found it a markdown string without its quotes. */
+interface Text {
+  readonly text: string;
+  readonly markdown?: boolean;
+}
+
+/** Description `i` of `s`, marked when it was written as `state "`…`" as X` (#1368). */
+const description = (s: StateNode, i: number): Text =>
+  s.markdown?.includes(i)
+    ? { text: s.descriptions[i]!, markdown: true }
+    : { text: s.descriptions[i] ?? '' };
+
+/**
+ * The rows of a state with several descriptions, every one after the first, as one label: a
+ * markdown string when it is one line written as one.
+ */
+const rowsText = (s: StateNode): Text =>
+  s.descriptions.length === 2 ? description(s, 1) : { text: s.descriptions.slice(1).join('\n') };
+
 /** The text a state is labelled with: its one description, else its id. */
-const labelText = (s: StateNode): string =>
-  s.descriptions.length === 1 ? s.descriptions[0]! : s.id;
+const labelText = (s: StateNode): Text =>
+  s.descriptions.length === 1 ? description(s, 0) : { text: s.id };
 
 interface Measure {
   readonly units: UnitProfile;
@@ -125,13 +144,11 @@ interface Measure {
   /** State label wrap width and least label width, in units. */
   readonly wrap: number;
   readonly minWidth: number;
-  /** A measured label, read as v12's Markdown reader did (D564). */
-  readonly label: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
   /**
-   * The measured title or rows of a state with several description lines, which v12 drew
-   * without its Markdown reader.
+   * A measured label, read by core's label handler (#1368): markdown only in a markdown string
+   * (or everywhere with `markdownAlwaysOn`), with the render's warning for markdown outside one.
    */
-  readonly plain: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
+  readonly label: (text: string | Text, style: CheckedStyle, max: number) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
   readonly embed: StateRenderContext['embed'];
   /** A folded block's type label (#670): small capitals, measured at their size. */
@@ -152,15 +169,14 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
   const length = configLengths('state', 'STATE_CONFIG_IGNORED', cfg, stateConfigDefaults, (w) =>
     ctx.warn(w)
   );
-  const measure = (
-    text: string,
-    mode: V12LabelMode | undefined,
-    style: CheckedStyle,
-    max: number
-  ): MeasuredLabel => {
+  const measure = (written: string | Text, style: CheckedStyle, max: number): MeasuredLabel => {
+    const { text, markdown } = typeof written === 'string' ? { text: written } : written;
+    // A marked markdown string still holds its backticks: the handler takes it without them.
+    const label = markdown ? text.trim().slice(1, -1) : text;
+    const source = readLabel(label, { markdown: markdown === true }, ctx);
     const [f, bits] = textStyle(style, m.font);
-    return layoutLabel(text, f, max, ctx.measurer, {
-      ...mode,
+    return layoutLabel(source.text, f, max, ctx.measurer, {
+      ...source,
       style: bits,
       inline: ctx.inline,
       // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
@@ -178,8 +194,7 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
     },
     wrap: fromPx(units, length('wrappingWidth') ?? stateConfigDefaults.wrappingWidth!, 'x'),
     minWidth: fromPx(units, length('minNodeWidth') ?? stateConfigDefaults.minNodeWidth!, 'x'),
-    label: (text, style, max) => measure(...v12Label(text), style, max),
-    plain: (text, style, max) => measure(text, undefined, style, max),
+    label: measure,
     styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), (w) => ctx.warn(w)),
     embed: ctx.embed,
     typeLabel: (type) =>
@@ -435,10 +450,9 @@ function measureState(
   if (s.descriptions.length > 1) {
     // v12 `rectWithTitle`: the first description as the title, a divider, then the other
     // description lines (v12 stateDb `label[0]` and `label.slice(1)`). The id is not drawn.
-    const [title, ...more] = s.descriptions;
     // Both break only at a written `\n`, as v12's `createLabel` (infinite width) did (D731).
-    const label = m.plain(title!, style, Infinity);
-    const rows = m.plain(more.join('\n'), style, Infinity);
+    const label = m.label(description(s, 0), style, Infinity);
+    const rows = m.label(rowsText(s), style, Infinity);
     const wide = label.width > rows.width ? label : rows;
     const box = boxOf(wide, sm.statePad, m, m.cells ? 0 : m.minWidth);
     const tall = m.cells ? label.lines.length + rows.lines.length : label.height + rows.height;

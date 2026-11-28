@@ -1,0 +1,47 @@
+---
+description: >-
+  label-syntax.mmd with markdownAlwaysOn (spec #1368, #1390): every label is
+  markdown, read as a markdown string is, so the plain **bold** _ital_ rows
+  draw bold and italic in every label kind (composite title, state text,
+  description, transition, note), bare backticks and the code span draw
+  inline code, and the picture differs from label-syntax.mmd. Markdown
+  strings, tags and the written backslash-n draw as without the setting.
+config:
+  markdownAlwaysOn: true
+---
+stateDiagram-v2
+  state "composite **bold** _ital_" as C1 {
+    state "state **bold** _ital_" as S1
+    D1: description **bold** _ital_
+    S1 --> D1: transition **bold** _ital_
+    note right of D1: note **bold** _ital_
+  }
+  state "`composite **bold** _ital_`" as C2 {
+    state "`state **bold** _ital_`" as S2
+    D2: "`description **bold** _ital_`"
+    S2 --> D2: "`transition **bold** _ital_`"
+    note right of D2: "`note **bold** _ital_`"
+  }
+  state C3 {
+    D3: `description **bold** _ital_`
+    S3 --> D3: `transition **bold** _ital_`
+    note right of D3: `note **bold** _ital_`
+  }
+  state "composite a `code` b" as C4 {
+    state "state a `code` b" as S4
+    D4: description a `code` b
+    S4 --> D4: transition a `code` b
+    note right of D4: note a `code` b
+  }
+  state "composite <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" as C5 {
+    state "state <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" as S5
+    D5: description <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    S5 --> D5: transition <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    note right of D5: note <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  }
+  state "composite one\ntwo" as C6 {
+    state "state one\ntwo" as S6
+    D6: description one\ntwo
+    S6 --> D6: transition one\ntwo
+    note right of D6: note one\ntwo
+  }

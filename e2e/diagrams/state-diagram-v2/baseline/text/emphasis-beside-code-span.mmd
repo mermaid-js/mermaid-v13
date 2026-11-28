@@ -1,8 +1,10 @@
 ---
 description: >-
-  state text, transition text and notes with a code span still read the bold
-  and italic outside the span; the span draws its backticks and the stars
-  inside it as written (#836, D610)
+  with markdownAlwaysOn, state text, transition text and notes are markdown:
+  bold and italic beside a code span are read, and the span draws as inline
+  code with the stars inside it as written (#836, #1368)
+config:
+  markdownAlwaysOn: true
 ---
 stateDiagram-v2
   s1 : **bold** and `code`

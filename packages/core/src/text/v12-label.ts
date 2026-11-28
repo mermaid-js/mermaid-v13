@@ -4,6 +4,7 @@
 // blank lines between written lines and a break at the end as nothing. A subpath of its own,
 // which only the diagrams with such labels load (D557).
 import type { LabelMarkup } from './label.ts';
+import { withoutBlankLines, withoutEndBreaks } from './label-source.ts';
 
 const RE_LIST_ITEM = /^\s*[-*+] /;
 const RE_TICKS = /`+/g;
@@ -12,21 +13,6 @@ const RE_TICKS = /`+/g;
 // for the inline spans (icons) to find.
 const RE_IN_SPAN = /\$\$[\s\S]*?\$\$|\*|(?<![A-Za-z\d])_|_(?![A-Za-z\d])/g;
 const REFERENCE: Readonly<Record<string, string>> = { '*': '&#42;', _: '&#95;' };
-const RE_BLANK_LINES = /\n\s*\n/g;
-const RE_BR = /^<br\s*\/?>$/i;
-
-/** `text` without the blanks and `<br>`s at its end. */
-function withoutEndBreaks(text: string): string {
-  let end = text.length;
-  for (;;) {
-    while (end > 0 && (text[end - 1] as string) <= ' ') end--;
-    if (text[end - 1] !== '>') break;
-    const open = text.lastIndexOf('<', end - 1);
-    if (open < 0 || !RE_BR.test(text.slice(open, end))) break;
-    end = open;
-  }
-  return end === text.length ? text : text.slice(0, end);
-}
 
 /** The `layoutLabel` options of a v12 Markdown label. */
 export interface V12LabelMode {
@@ -74,7 +60,7 @@ function spansAsText(text: string): string {
  */
 export const v12Label = (text: string): [text: string, mode: V12LabelMode] => {
   const list = RE_LIST_ITEM.test(text);
-  const kept = withoutEndBreaks(text.includes('\n') ? text.replace(RE_BLANK_LINES, '\n') : text);
+  const kept = withoutEndBreaks(withoutBlankLines(text));
   return [
     list ? kept : spansAsText(kept),
     { markup: list ? 'plain' : 'emphasis', backslashBreak: false },

@@ -120,6 +120,11 @@ interface Doc {
 /** The header keyword at the start of the `stateDiagram` token. */
 const RE_HEADER_KEYWORD = /^stateDiagram(?:-v2)?/i;
 
+// The text of a `"…"` token that was a markdown string, `"`…`"` (#1368): one pair of backticks.
+const RE_MARKDOWN_STRING = /^`[^`]*`$/;
+/** Whether the quoted description `descr`, without its quotes, was written as a markdown string. */
+const markdownString = (descr: string): boolean => RE_MARKDOWN_STRING.test(descr.trim());
+
 class StateParser extends StateCursor {
   private readonly pre: PreprocessResult;
   private readonly ids: ParseState['ids'];
@@ -583,14 +588,16 @@ class StateParser extends StateCursor {
     node.description = Array.isArray(description) ? description.join(':') : description;
     doc.nodes.push(node);
     this.st.statement('state', node.range);
-    doc.items.push({
+    const item: StateItem = {
       stmt: 'state',
       id,
       type: 'default',
       description,
       ast: node.id,
       range: node.range,
-    });
+    };
+    if (markdownString(descr)) item.markdown = true;
+    doc.items.push(item);
   }
 
   /** `… { document }`: the `{` is the current token. */
@@ -658,6 +665,7 @@ class StateParser extends StateCursor {
       ast: node.id,
       range: node.range,
     };
+    if (descr !== undefined && markdownString(descr)) item.markdown = true;
     // The last region is the one v12 made up: the builder takes its AST id from here.
     if (split.tail) item.tail = split.tail;
     doc.items.push(item);
