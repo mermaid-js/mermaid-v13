@@ -60,4 +60,4 @@ Paths are relative to the repo root. `t:` stands for `git -C /Users/knsv/repos/m
 
 ## 5. The reference implementation
 
-- No the reference implementation source on this machine: no `pele/src/diagrams/packet/` under `/Users/knsv`. Only `packages/bench/fixtures/pele/` (class, flowchart, sequence `.mmd` + `manifest.json`), no packet. The token table must come from the oracle probe above.
+- No source of the reference implementation on this machine: no `pele/src/diagrams/packet/` under `/Users/knsv`. Only `packages/bench/fixtures/pele/` (class, flowchart, sequence `.mmd` + `manifest.json`), no packet. The token table must come from the oracle probe above.

@@ -77,7 +77,7 @@ so `--features flowchart` compiles only flowchart, plus shared code and anything
 - **JS semantics are reproduced by hand:** UTF-16 positions for anything that reaches output or
   diagnostics, `Math.round` half-up, stable sort, and insertion-ordered maps (BTreeMap index + Vec).
   See the header of `flowchart/db.rs`.
-- **No regex.** Every the reference implementation RegExp becomes a hand-written matcher with the same semantics. The `regex`
+- **No regex.** Every RegExp of the reference implementation becomes a hand-written matcher with the same semantics. The `regex`
   crate is banned for size reasons.
 - The documented deliberate differences are small. Theme variables are `--ondine-*` instead of
   `--pele-*` (`svg/theme.rs`), the default look is monochrome monospace, and the `info` diagram
