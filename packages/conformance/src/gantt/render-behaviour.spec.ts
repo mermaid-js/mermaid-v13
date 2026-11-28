@@ -337,3 +337,102 @@ describe('gantt sections (R-PARSE-8)', () => {
     expect(svg).not.toMatch(/<g\/>|<g><\/g>/);
   });
 });
+
+// D735 (spec #1368 T11): gantt labels go through core's label handler.
+describe('gantt labels draw tags and markdown strings (D735)', () => {
+  const SOURCE = [
+    'title Plan <b>bold</b>',
+    'section Phase<br>one',
+    'Task <b>bold</b> <i>ital</i> :a, 2014-01-01, 3d',
+    '"`Md **strong** _em_`" :b, 2014-01-01, 3d',
+    'Plain **stars** `code` List<T> :c, 2014-01-01, 3d',
+    'Lines one\\ntwo :d, 2014-01-01, 3d',
+  ].join('\n');
+
+  it('draws tags and markdown strings, keeps plain markdown and List<T> as text', async () => {
+    const { svg } = await render(SOURCE);
+    expect(svg).toMatch(/<tspan[^>]*font-weight="bold"[^>]*>bold<\/tspan>/);
+    expect(svg).toMatch(/<tspan[^>]*font-style="italic"[^>]*>ital<\/tspan>/);
+    expect(svg).toMatch(/<tspan[^>]*font-weight="bold"[^>]*>strong<\/tspan>/);
+    expect(svg).toMatch(/<tspan[^>]*font-style="italic"[^>]*>em<\/tspan>/);
+    expect(svg).not.toContain('`Md');
+    expect(svg).toContain('Plain **stars** `code` List&lt;T&gt;');
+    expect(svg).not.toContain('one\\ntwo');
+    expect(svg).toMatch(/>Lines one<\/tspan>/);
+    expect(svg).toMatch(/>two<\/tspan>/);
+    expect(svg).not.toContain('&lt;b&gt;');
+  });
+
+  const ALWAYS = [
+    'title Title **tb** _ti_',
+    'section Section **sb** _si_',
+    'Task **kb** _ki_ :a, 2014-01-01, 3d',
+    'Mile **mb** _mi_ :milestone, m, 2014-01-02, 0d',
+    'Vert **vb** _vi_ :vert, v, 2014-01-03, 0d',
+    'Code a `cc` b :c, 2014-01-01, 3d',
+    'Tags <b>tg</b> one\\ntwo :d, 2014-01-01, 3d',
+    '"`Md **qb**`" :e, 2014-01-01, 3d',
+  ].join('\n');
+  const tspan = (svg: string, attrs: string, text: string): boolean =>
+    new RegExp(`<tspan[^>]*${attrs}[^>]*>\\s*${text}</tspan>`).test(svg);
+
+  for (const [how, config] of [
+    ['globally', { markdownAlwaysOn: true }],
+    ['through the gantt section', { gantt: { markdownAlwaysOn: true } }],
+  ] as const) {
+    it(`draws every label kind as markdown with markdownAlwaysOn set ${how}`, async () => {
+      const { svg } = await render(ALWAYS, config);
+      // Title, section name, task, milestone and vert labels: plain markdown is read.
+      for (const [b, i] of [
+        ['tb', 'ti'],
+        ['sb', 'si'],
+        ['kb', 'ki'],
+        ['mb', 'mi'],
+        ['vb', 'vi'],
+      ])
+        expect([
+          b,
+          tspan(svg, 'font-weight="bold"', b!),
+          tspan(svg, 'font-style="italic"', i!),
+        ]).toEqual([b, true, true]);
+      // A milestone label is italic as a whole (v12), so its `_mi_` shows only as read markers.
+      // The drawn text, not the attributes (a section's `data-id` is its name as written).
+      const drawn = svg.replace(/<[^>]*>/g, '');
+      expect(drawn).not.toContain('**');
+      expect(drawn).not.toMatch(/_[a-z]{2}_/);
+      expect(drawn).not.toContain('`cc`');
+      expect(tspan(svg, 'font-family="[^"]*mono', 'cc')).toBe(true);
+      // Tags, a written \n and a quoted markdown string read as in the default mode.
+      expect(tspan(svg, 'font-weight="bold"', 'tg')).toBe(true);
+      expect(svg).toMatch(/>two<\/tspan>/);
+      expect(tspan(svg, 'font-weight="bold"', 'qb')).toBe(true);
+      expect(svg).not.toContain('`Md');
+    });
+  }
+
+  it('draws plain markdown as written when markdownAlwaysOn is off', async () => {
+    const { svg } = await render(ALWAYS);
+    expect(svg).toContain('Task **kb** _ki_');
+    expect(svg).toContain('Code a `cc` b');
+  });
+
+  // D732: markdown in a plain label is drawn as written, and the render says so once.
+  const codes = (warnings: readonly Warning[]): string[] =>
+    warnings.map((w) => w.code).filter((c) => c === 'MARKDOWN_NOT_READ');
+
+  it('warns MARKDOWN_NOT_READ once for plain markdown in several label kinds', async () => {
+    const { warnings } = await render(ALWAYS);
+    expect(codes(warnings)).toEqual(['MARKDOWN_NOT_READ']);
+  });
+
+  it('gives no MARKDOWN_NOT_READ with markdownAlwaysOn, nor for markdown strings', async () => {
+    expect(codes((await render(ALWAYS, { markdownAlwaysOn: true })).warnings)).toEqual([]);
+    const quoted = [
+      'title "`Title **tb**`"',
+      'section "`Section **sb**`"',
+      '"`Task **kb**`" :a, 2014-01-01, 3d',
+      'Plain snake_case <b>tag</b> :b, 2014-01-01, 3d',
+    ].join('\n');
+    expect(codes((await render(quoted)).warnings)).toEqual([]);
+  });
+});

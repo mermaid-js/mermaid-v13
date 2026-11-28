@@ -27,6 +27,17 @@ describe('architecture config statuses (#618)', () => {
 
   it('honours what the renderer reads, and ignores the rest', () => {
     const honoured = Object.keys(statuses).filter((k) => statuses[k] === 'honoured');
-    expect(honoured.sort()).toEqual(['iconSize', 'layout', 'padding', 'theme', 'useMaxWidth']);
+    // `markdownAlwaysOn` is inherited from `BaseDiagramConfig` and, like `theme` and `layout`,
+    // folded onto the top level by core's config resolution (#1387); the label handler reads it.
+    // Architecture's labels reach the handler with #1407 (T14): until then the key changes nothing
+    // here.
+    expect(honoured.sort()).toEqual([
+      'iconSize',
+      'layout',
+      'markdownAlwaysOn',
+      'padding',
+      'theme',
+      'useMaxWidth',
+    ]);
   });
 });

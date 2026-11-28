@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { MermaidError, type Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { inlineSpans, tableMeasurer } from '@mermaid-js/core/text';
+import { inlineSpans, Style, tableMeasurer, type MeasuredLabel } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { GanttModel } from '../model.ts';
 import { parseGantt } from '../parser/index.ts';
@@ -29,12 +29,12 @@ interface Run {
 function lay(
   f: LayoutFixture | GanttModel,
   gantt: Record<string, unknown> = {},
-  extra: { now?: number; availableWidth?: number } = {}
+  extra: { now?: number; availableWidth?: number; config?: Partial<ResolvedConfig> } = {}
 ): Run {
   const warnings: Warning[] = [];
   const model = 'model' in f ? f.model() : f;
   const layout = layoutGantt(model, {
-    config: { gantt } as ResolvedConfig,
+    config: { ...extra.config, gantt } as ResolvedConfig,
     measurer: tableMeasurer,
     theme: createTheme(spec),
     warn: (w) => warnings.push(w),
@@ -44,6 +44,8 @@ function lay(
   expect(ganttLayoutViolations(layout)).toEqual([]);
   return { layout, warnings };
 }
+
+const lineTexts = (t: MeasuredLabel): string[] => t.lines.map((l) => l.map((r) => r.text).join(''));
 
 const two = (): LayoutFixture =>
   fixture().addSection('A').addTask('a', 'a,2014-01-01,2d').addTask('b', 'b,after a,2d');
@@ -105,23 +107,18 @@ describe('gantt layout follows ganttRenderer.js', () => {
     expect(plain.label.text.lines[0]![0]!.style).toBe(0);
   });
 
-  it('shows markup in task labels as written, decodes entities, and breaks section titles on <br>', () => {
+  it('breaks section titles on <br> and decodes entities, a <tag> code as text (D563)', () => {
     // The model holds an entity code as `&name;` (`#amp;` and a typed `&amp;` alike, D563).
     const { layout } = lay(
       fixture()
         .addSection('One<br>Two</br>Three')
-        .addTask('a <b>b</b> &amp; &#35;c &lt;i&gt;\\n', 'a,2014-01-01,1d')
+        .addTask('a &amp; &#35;c &lt;i&gt; List<T>', 'a,2014-01-01,1d')
     );
     const text = layout.bars[0]!.label.text;
-    expect(text.lines.map((l) => l.map((r) => r.text).join(''))).toEqual([
-      'a <b>b</b> & #c <i>\\n',
-    ]);
+    expect(lineTexts(text)).toEqual(['a & #c <i> List<T>']);
+    expect(text.lines.flat().every((r) => r.style === 0)).toBe(true);
     const section = layout.sections[0]!;
-    expect(section.text.lines.map((l) => l.map((r) => r.text).join(''))).toEqual([
-      'One',
-      'Two',
-      'Three',
-    ]);
+    expect(lineTexts(section.text)).toEqual(['One', 'Two', 'Three']);
     expect([section.x, section.y, section.lineHeight]).toEqual([10, 62, 11]);
   });
 
@@ -592,10 +589,10 @@ describe('final review fixes', () => {
   });
 
   it('shows a math span as written when no inline provider takes it', () => {
-    const { layout } = lay(fixture().addTask('$$<b>x</b>$$ & y', 'a,2014-01-01,1d'));
-    const runs = layout.bars[0]!.label.text.lines.flat();
-    expect(runs.map((r) => r.text).join('')).toBe('$$<b>x</b>$$ & y');
-    expect(runs.every((r) => r.style === 0)).toBe(true);
+    const { layout } = lay(fixture().addTask('$$x^2 \\neq y$$ & y', 'a,2014-01-01,1d'));
+    const text = layout.bars[0]!.label.text;
+    expect(lineTexts(text)).toEqual(['$$x^2 \\neq y$$ & y']);
+    expect(text.lines.flat().every((r) => r.style === 0)).toBe(true);
   });
 
   it('passes a math span an inline provider takes through untouched', () => {
@@ -636,6 +633,152 @@ describe('final review fixes', () => {
     ]);
   });
 });
+
+// D735 (spec #1368 T11): the title, section names and task labels go through core's label
+// handler. Tags draw, a quoted markdown string is markdown, a written `\n` breaks, and all else
+// is plain text. With `markdownAlwaysOn` every label is markdown, quoted or not.
+describe('gantt labels follow the label handler (D735)', () => {
+  const runs = (t: MeasuredLabel): [string, number][][] =>
+    t.lines.map((l) => l.map((r) => [r.text, r.style] as [string, number]));
+  const B = Style.Bold;
+  const I = Style.Italic;
+  const labelled = (label: string): LayoutFixture =>
+    fixture()
+      .setDiagramTitle(`title ${label}`)
+      .addSection(`section ${label}`)
+      .addTask(`task ${label}`, 'a,2014-01-01,1d');
+  const texts = (layout: GanttLayout): MeasuredLabel[] => [
+    layout.title!.text,
+    layout.sections[0]!.text,
+    layout.bars[0]!.label.text,
+  ];
+
+  for (const markdownAlwaysOn of [false, true]) {
+    const config = { markdownAlwaysOn };
+    describe(`markdownAlwaysOn: ${markdownAlwaysOn}`, () => {
+      it('draws the common tags in the title, section names and task labels', () => {
+        const { layout } = lay(labelled('<b>b</b> <i>i</i><br>H<sub>2</sub>O'), {}, { config });
+        for (const [kind, t] of ['title', 'section', 'task'].map(
+          (k, i) => [k, texts(layout)[i]!] as const
+        )) {
+          expect(runs(t)[0]).toEqual([
+            [`${kind} `, 0],
+            ['b', B],
+            [' ', 0],
+            ['i', I],
+          ]);
+          expect(lineTexts(t)[1]).toBe('H2O');
+        }
+      });
+
+      it('reads a quoted markdown string as markdown, without its wrapper', () => {
+        const { layout } = lay(
+          fixture()
+            .setDiagramTitle('"`title **b** _i_`"')
+            .addSection('"`section **b** _i_`"')
+            .addTask('"`task **b** _i_`" ', 'a,2014-01-01,1d'),
+          {},
+          { config }
+        );
+        for (const t of texts(layout)) {
+          const [first, bold, gap, ital] = runs(t)[0]!;
+          expect(first![0]).toMatch(/^(title|section|task) $/);
+          expect([bold, gap, ital]).toEqual([
+            ['b', B],
+            [' ', 0],
+            ['i', I],
+          ]);
+        }
+      });
+
+      it('breaks a written \\n in the title, section names and task labels', () => {
+        const { layout } = lay(labelled('one\\ntwo'), {}, { config });
+        expect(texts(layout).map(lineTexts)).toEqual([
+          ['title one', 'two'],
+          ['section one', 'two'],
+          ['task one', 'two'],
+        ]);
+      });
+    });
+  }
+
+  it('draws plain markdown, bare backticks and a code span as written by default', () => {
+    for (const label of ['**b** _i_', '`**b** _i_`', 'a `code` b', 'List<T>']) {
+      const { layout, warnings } = lay(labelled(label));
+      // D732: plain markdown is drawn as written, with one warning for the three labels.
+      expect(warnings.map((w) => w.code)).toEqual(
+        label === '**b** _i_' ? ['MARKDOWN_NOT_READ'] : []
+      );
+      for (const t of texts(layout)) {
+        expect(lineTexts(t)).toHaveLength(1);
+        expect(lineTexts(t)[0]).toMatch(new RegExp(`${escapeRe(label)}$`));
+        expect(t.lines.flat().every((r) => r.style === 0)).toBe(true);
+      }
+    }
+  });
+
+  describe('with markdownAlwaysOn every label is markdown', () => {
+    const config = { markdownAlwaysOn: true };
+
+    it('draws plain **b** _i_ bold and italic in the title, section names and task labels', () => {
+      const { layout } = lay(labelled('**b** _i_'), {}, { config });
+      for (const t of texts(layout)) {
+        expect(runs(t)[0]!.slice(1)).toEqual([
+          ['b', B],
+          [' ', 0],
+          ['i', I],
+        ]);
+      }
+    });
+
+    it('draws a code span as inline code, and keeps List<T> as text', () => {
+      const { layout } = lay(labelled('a `code` b List<T>'), {}, { config });
+      for (const t of texts(layout)) {
+        expect(lineTexts(t)).toHaveLength(1);
+        const code = t.lines[0]!.find((r) => r.text === 'code');
+        expect(code?.style).toBe(Style.Mono);
+        expect(lineTexts(t)[0]).toMatch(/a code b List<T>$/);
+      }
+    });
+
+    it('places a task label of inline code or a list item sanely in its bar', () => {
+      const plain = lay(fixture().addTask('a code b', 'a,2014-01-01,30d')).layout.bars[0]!;
+      for (const label of ['a `code` b', '- item one']) {
+        const bar = lay(fixture().addTask(label, 'a,2014-01-01,30d'), {}, { config }).layout
+          .bars[0]!;
+        expect(bar.label.text.lines).toHaveLength(1);
+        expect(bar.label.side).toBe('inside');
+        expect(bar.label.y).toBeCloseTo(plain.label.y);
+        expect(bar.label.text.width).toBeGreaterThan(0);
+        expect(bar.label.text.width).toBeLessThan(bar.width);
+      }
+    });
+  });
+
+  it('centres a task label of several lines on its bar, and lifts a title of several', () => {
+    const single = lay(labelled('one')).layout;
+    const double = lay(labelled('one<br>two')).layout;
+    const [a, b] = [single.bars[0]!.label, double.bars[0]!.label];
+    expect(b.text.lines).toHaveLength(2);
+    // The block's middle is where the one line's middle is.
+    expect(b.y - b.text.baseline + b.text.height / 2).toBeCloseTo(
+      a.y - a.text.baseline + a.text.height / 2
+    );
+    // The title's last line sits where a one-line title sits, so it never covers the chart.
+    const [t1, t2] = [single.title!, double.title!];
+    expect(t2.y + t2.text.lineHeight).toBeCloseTo(t1.y);
+    expect(double.bounds.y).toBeLessThan(single.bounds.y);
+  });
+
+  it('measures an axis label as written: the axis format is no label', () => {
+    const width = (axisFormat: string): number =>
+      lay(fixture().addTask('t', 'a,2014-01-01,1d').setAxisFormat(axisFormat)).layout.bottomAxis
+        .ticks[0]!.width;
+    expect(width('%d<br>x')).toBeGreaterThan(width('%dx'));
+  });
+});
+
+const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 type RawGlob = (
   pattern: string,

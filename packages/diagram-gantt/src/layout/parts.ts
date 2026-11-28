@@ -172,7 +172,7 @@ function ticksFor(c: Chart, warn: Warn): GanttTick[] {
   return ticks.times.map((time) => {
     const label = tickLabel(format, time);
     const x = c.scale(time) + env.leftPadding;
-    return { time, x, label, width: env.label(label, env.fonts.tick).width };
+    return { time, x, label, width: env.tickLabel(label).width };
   });
 }
 
@@ -242,12 +242,17 @@ export function todayOf(c: Chart, now: number): GanttToday | undefined {
   return today;
 }
 
-/** The title at `w / 2` on `titleTopMargin`; none when empty (v12 drew an empty `<text>`). */
+/**
+ * The title at `w / 2` on `titleTopMargin`; none when empty (v12 drew an empty `<text>`). A title
+ * of several lines (D735) grows upward, its last line where a one-line title sits, so it never
+ * covers the chart; the bounds grow to hold it.
+ */
 export function titleOf(c: Chart): PlacedText | undefined {
   const raw = c.model.title;
   if (raw === undefined || raw.trim() === '') return undefined;
   const text = c.env.label(raw, c.env.fonts.title);
-  const title: PlacedText = { x: c.w / 2, y: c.env.titleTopMargin, anchor: 'middle', text };
+  const y = c.env.titleTopMargin - Math.max(0, text.lines.length - 1) * text.lineHeight;
+  const title: PlacedText = { x: c.w / 2, y, anchor: 'middle', text };
   c.bounds.text(title);
   return title;
 }

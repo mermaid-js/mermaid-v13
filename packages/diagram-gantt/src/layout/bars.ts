@@ -117,8 +117,15 @@ function labelOf(c: Chart, s: Span): GanttTaskLabel {
   let x = (endX - startX) / 2 + startX + lp;
   if (tw > endX - startX)
     x = outside(endX) === 'left' ? startX + lp - m.labelGap : endX + lp + m.labelGap;
+  // A label of several lines (D735) is centred on the bar as its one line would be: its first
+  // baseline is lifted by half the extra lines. A third line reaches into the rows beside it.
+  const lift = (Math.max(0, text.lines.length - 1) * text.lineHeight) / 2;
   const y =
-    s.row * c.gap + env.barHeight / 2 + (env.fontSize / 2 - m.labelBaselineLift) + env.topPadding;
+    s.row * c.gap +
+    env.barHeight / 2 +
+    (env.fontSize / 2 - m.labelBaselineLift) +
+    env.topPadding -
+    lift;
   return { x, y, anchor: ANCHORS[side], side, text };
 }
 

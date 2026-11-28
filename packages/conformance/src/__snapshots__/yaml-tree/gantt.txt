@@ -12,7 +12,7 @@ e2e/diagrams/gantt/baseline/features/today-marker-off.mmd 1 a45a96b4596d99d1
 e2e/diagrams/gantt/baseline/features/today-marker-style.mmd 1 8c76c8eb3c48c137
 e2e/diagrams/gantt/baseline/features/top-axis.mmd 1 45a445f38bf2c673
 e2e/diagrams/gantt/baseline/text/entity-codes.mmd 1 e9ec07f19d0ca07f
-e2e/diagrams/gantt/baseline/text/escapes.mmd 1 58be80fc819b9ad8
+e2e/diagrams/gantt/baseline/text/escapes.mmd 1 0e41fa6f538230ca
 e2e/diagrams/gantt/baseline/text/labels-outside.mmd 1 ebdc449b1ca946a2
 e2e/diagrams/gantt/baseline/text/section-line-breaks.mmd 1 2ebd81a43252a8b2
 e2e/diagrams/gantt/baseline/text/title-and-accessibility.mmd 1 1fb34b86f2b63ea1
@@ -76,6 +76,8 @@ e2e/diagrams/gantt/nightly-check/should-warn-about-unknown-ids-in-an-after-state
 e2e/diagrams/gantt/nightly-check/should-warn-about-unknown-ids-in-an-until-statement.mmd 1 1c5aebeb1b7c881d
 e2e/diagrams/gantt/nightly-check/should-warn-when-a-milestone-is-declared-without-a-duration-issue-4121.mmd 1 f443ce8392dd39cb
 e2e/diagrams/gantt/nightly-check/should-work-when-end-date-is-the-31st.mmd 1 b333b2f9680711d9
+e2e/diagrams/gantt/pr-check/label-syntax-compat.mmd 1 2030b3e5db55aa92
+e2e/diagrams/gantt/pr-check/label-syntax.mmd 1 485d3e8befc8a09a
 e2e/diagrams/gantt/pr-check/multiple-dependencies-syntax.mmd 1 8cec229e52f5ab61
 e2e/diagrams/gantt/pr-check/should-render-a-gantt-chart-usemaxwidth-false.mmd 1 6944a1cc37bb4062
 e2e/diagrams/gantt/pr-check/should-render-a-gantt-chart.mmd 1 cc2c3d3dc9e0604f
