@@ -1,0 +1,23 @@
+---
+description: >-
+  The markdownAlwaysOn twin of label-syntax.mmd: the same node labels with the setting on, so
+  every name is markdown. The plain **bold** _ital_ names draw bold and italic, the bare
+  backticks and the code span draw inline code; tags and \n draw as in the default mode, and
+  the value after each label stays plain. The picture differs from label-syntax.mmd.
+config:
+  markdownAlwaysOn: true
+---
+sankey-beta
+
+node src **bold** _ital_,hub,10
+"`node src md **bold** _ital_`",hub,10
+`node src bare **bold** _ital_`,hub,10
+node src a `code` b,hub,10
+node src <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O,hub,10
+node src one\ntwo,hub,10
+hub,node dst **bold** _ital_,10
+hub,"`node dst md **bold** _ital_`",10
+hub,`node dst bare **bold** _ital_`,10
+hub,node dst a `code` b,10
+hub,node dst <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O,10
+hub,node dst one\ntwo,10

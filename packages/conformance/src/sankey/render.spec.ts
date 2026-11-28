@@ -73,8 +73,8 @@ beforeAll(async () => {
 
 describe('sankey render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, every linkColor mode and both label styles', () => {
-    // The 18 restored fixtures and the 9 baselines (#503), and D690's.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(28);
+    // The 18 restored fixtures, the 9 baselines (#503), D690's, and #1368's two label fixtures.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(30);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(rejected.size).toBeLessThan(corpus.length / 2);
     expect(cases.length).toBeGreaterThan(80 * (THEMES.length + CONFIGS.length));

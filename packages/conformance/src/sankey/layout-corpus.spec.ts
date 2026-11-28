@@ -56,8 +56,8 @@ describe('sankey layout invariants on parser-produced fixtures', () => {
     const failures: string[] = [];
     let nodes = 0;
     for (const item of corpus) nodes += violations(item.source, item.id, failures);
-    // The 18 restored fixtures and the 9 baselines (#503), and D690's.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(28);
+    // The 18 restored fixtures, the 9 baselines (#503), D690's, and #1368's two label fixtures.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(30);
     expect(nodes).toBeGreaterThan(3000);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 300_000);

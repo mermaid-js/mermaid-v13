@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import {
   sankey,
   SANKEY_COLOR_INVALID,
@@ -274,5 +275,37 @@ describe('sankey diagrams through the public API (#503)', () => {
     expect(dark).not.toBe(light);
     expect(await themed('default')).toBe(light);
     expect(await themed('dark')).toBe(dark);
+  });
+});
+
+describe('sankey labels and the markdown warning (#1368, #1402)', () => {
+  const PLAIN = 'sankey\n**Solar** power,_Grid_,40\n__Gas__ plant,_Grid_,60\n_Grid_,*Homes*,100\n';
+  const STRINGS = 'sankey\n"`**Solar**`",Grid,40\nGrid,"`_Homes_`",40\n';
+  const notRead = (r: { warnings: readonly { code: string }[] }) =>
+    r.warnings.map((w) => w.code).filter((c) => c === MARKDOWN_NOT_READ.code);
+
+  it('warns once for several plain names that hold markdown, drawn as written', async () => {
+    const r = await createMermaid().render('s16', PLAIN);
+    expect(notRead(r)).toEqual([MARKDOWN_NOT_READ.code]);
+    expect(r.svg).toContain('**Solar** power 40');
+  });
+
+  it('draws every name as markdown with markdownAlwaysOn, globally or for sankey, no warning', async () => {
+    const m = createMermaid();
+    const global = await m.render('s17', `---\nconfig:\n  markdownAlwaysOn: true\n---\n${PLAIN}`);
+    const section = await m.render('s18', withInit({ markdownAlwaysOn: true }, PLAIN));
+    for (const r of [global, section]) {
+      expect(notRead(r)).toEqual([]);
+      expect(r.svg).toMatch(/font-weight="bold">Solar</);
+      expect(r.svg).toMatch(/font-style="italic">Homes</);
+      // No drawn text keeps a marker; the names (data-id) do, as written.
+      expect(r.svg).not.toMatch(/>[^<]*\*\*[^<]*</);
+    }
+  });
+
+  it('gives no warning for names written as markdown strings', async () => {
+    const r = await createMermaid().render('s19', STRINGS);
+    expect(notRead(r)).toEqual([]);
+    expect(r.svg).toMatch(/font-style="italic">Homes</);
   });
 });

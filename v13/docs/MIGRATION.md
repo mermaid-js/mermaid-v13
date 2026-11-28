@@ -2495,9 +2495,20 @@ value wins in every theme, as in v12, and `boundaryWidth: 0` stays 0. The length
   such row. Zero links are still drawn 1 px wide, as in v12. A value with text after its number
   (`1 2`, `1;`) is still read by `parseFloat`, with one `SANKEY_VALUE_TRAILING_TEXT` warning
   per such value.
-- **Labels** (D395) read as v12 drew them, one line `<name> <value>`, and the front-matter
+- **Labels** (D395) are drawn as v12 drew them, one line `<name> <value>`, and the front-matter
   `title` is the accessible name, never drawn (D396): see
-  [Sankey SVG structure](#sankey-svg-structure).
+  [Sankey SVG structure](#sankey-svg-structure). Node names now follow the label rule of every
+  diagram type (#1368), where v12 drew each name as written: the tags `<b>`, `<i>`, `<u>`,
+  `<s>`, `<sub>`, `<sup>` draw and entities decode; `<br>`, a written `\n` and a line break
+  inside a quoted name break the line; and a name written as a quoted markdown string,
+  `` "`**Revenue**`" `` (CSV quotes around backticks), is drawn as markdown. Plain `**x**`,
+  bare backticks and code spans are still drawn as written, with one `MARKDOWN_NOT_READ`
+  warning per render when a plain name holds an emphasis pair. `markdownAlwaysOn: true`
+  (globally or as `sankey.markdownAlwaysOn`) draws every name as markdown, quoted or not; the
+  value after it stays plain. The name as written stays the node's
+  identity, so `` "`a`" `` and `` `a` `` name the same node, which takes the first one's
+  reading. The value after a name stays plain text, on the label's last line. A label of
+  several lines is centred on its node as a block, its lines aligned left.
 - **Config.** The `sankey` section is honoured with v12's defaults: `width` (600), `height`
   (400), `linkColor` (`gradient`), `nodeAlignment` (`justify`), `nodeWidth` (10), `nodePadding`
   (12), `showValues` (true), `prefix` and `suffix` (empty), `labelStyle` (`legacy`),
@@ -2538,6 +2549,7 @@ first-appearance order and links in row order, as in v12.
 | `linkColor: source`, `target` or a CSS colour stroked the path as given, the literal unchecked | The same strokes; a value that is none of the three modes and fails the colour check draws the default gradient, with one `SANKEY_COLOR_INVALID` warning | R-SEC-2, D690 |
 | `style="mix-blend-mode: multiply"` on each `g.link`, and again in `.link` in the `<style>` | `style="mix-blend-mode:multiply"` on each `g.link` only: crossing links still darken where they overlap, and on dark pages too | D392 |
 | Labels: `id\n<prefix><value><suffix>` set with d3 `.text()`, drawn on one line; `dy="0em"`, or `dy="0.35em"` with `showValues: false`; `fill` from the root `<style>` (`textColor`) | The same one line with a blank between the name and the value (D395); `dy` in px (`0`, or `4.9`, 0.35 × 14); `fill` on `g.node-labels`, the theme's `textColor` | D395, D152 |
+| Each name drawn as written with d3 `.text()`: tags, a markdown string, `<br>` and a written `\n` were text, a line break inside a quoted name a space | A label that is one line of plain text is still one `text` at v12's anchor. A label with tags, a quoted markdown string or line breaks is drawn by core's label writer: a `text` with `xml:space="preserve"` holding a `tspan` per line and per styled run, its lines aligned left in a block that ends `labelGap` from the node (one line keeps v12's baseline; more lines are centred on the node) | The label rule (#1368, D709, D710) |
 | `labelStyle: outlined`: `.sankey-label-bg` stroked `mainBkg` (`|| background || '#fff'`), 4 px, round joins, `paint-order: stroke`, under `.sankey-label-fg` filled `textColor` | The background text carries `stroke` (`mainBkg`), `stroke-width="4"` and `stroke-linejoin="round"` as attributes, with no `paint-order`: the foreground text drawn over it gives the same picture | Allow-list (no `paint-order`), D215 |
 | `.node rect { shape-rendering: crispEdges }` | Not written: the allow-list has no `shape-rendering`, so node edges are anti-aliased | Allow-list |
 | Node fills: a `nodeColors` entry as written, else the next of d3's `schemeTableau10`; an entry that was no colour (a number, `red;x`, `redd`) drew the node black, and links stroked from it black or not at all, and took no slot | The same for an entry that passes the colour check; any other entry is dropped and the node takes the next Tableau10 slot, as if it were not listed, so later nodes may take other slots than in v12 | D152, R-SEC-2, D690, spec #427 §Integration |
