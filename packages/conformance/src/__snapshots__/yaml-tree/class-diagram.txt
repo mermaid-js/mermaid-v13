@@ -29,9 +29,9 @@ e2e/diagrams/class-diagram/baseline/relationships/two-self-loops.mmd 1 fe675912a
 e2e/diagrams/class-diagram/baseline/relationships/two-way-and-lollipop.mmd 1 18b3d101d2a9ca53
 e2e/diagrams/class-diagram/baseline/styles/classdef-and-style.mmd 1 656c1d57f5025e48
 e2e/diagrams/class-diagram/baseline/styles/hide-empty-members.mmd 1 5b0591c99bd026d9
-e2e/diagrams/class-diagram/baseline/text/emphasis-beside-code-span.mmd 1 212953c062a7da83
-e2e/diagrams/class-diagram/baseline/text/labels-and-markdown.mmd 1 dcfc4ae4dd2c2859
-e2e/diagrams/class-diagram/baseline/text/list-markers-backticks-and-entities.mmd 1 f169c33b5efd8a9c
+e2e/diagrams/class-diagram/baseline/text/emphasis-beside-code-span.mmd 1 2db8384b427bd65e
+e2e/diagrams/class-diagram/baseline/text/labels-and-markdown.mmd 1 e9338c0254852fb2
+e2e/diagrams/class-diagram/baseline/text/list-markers-backticks-and-entities.mmd 1 d21982596c4ff33e
 e2e/diagrams/class-diagram/baseline/text/unicode.mmd 1 2bd40d344c34833b
 e2e/diagrams/class-diagram/baseline/themes/base.mmd 1 24e34fda7b0a85d7
 e2e/diagrams/class-diagram/baseline/themes/dark.mmd 1 98114b011cc4b9ea
@@ -146,8 +146,8 @@ e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-clas
 e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdef-definitions.mmd 1 0c0b678b043cc0a9
 e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd 1 039bd26385678234
 e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd 1 03fb1654de2c3ab6
-e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-markdown-styling-without-htmllabels.mmd 1 468a75a5b1721856
-e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-markdown-styling.mmd 1 0fa11012555b9439
+e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-markdown-styling-without-htmllabels.mmd 1 a7f1ff1195ab34fc
+e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-markdown-styling.mmd 1 b355557729a2450d
 e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-no-attributes-only-methods.mmd 1 fe96ed70d445c24f
 e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-no-members-if-hideemptymembersbox-is-enabled.mmd 1 4d91c28e8caa094b
 e2e/diagrams/class-diagram/nightly-check/dagre/dagre-should-render-a-simple-class-diagram-with-no-members.mmd 1 a0ee3f0db582ca29
@@ -210,8 +210,8 @@ e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-cla
 e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdef-definitions.mmd 1 639e40ce8e43766d
 e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd 1 6217454694ff56d7
 e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd 1 2343ffc554aad1e0
-e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-markdown-styling-without-htmllabels.mmd 1 70e00947c9127465
-e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-markdown-styling.mmd 1 54e621b3da93e0e1
+e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-markdown-styling-without-htmllabels.mmd 1 825c856ba92edf06
+e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-markdown-styling.mmd 1 762d9ba1d865b8b2
 e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-no-attributes-only-methods.mmd 1 af1943d3b91c17c0
 e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-no-members-if-hideemptymembersbox-is-enabled.mmd 1 d03f090705bff5d5
 e2e/diagrams/class-diagram/nightly-check/handdrawn/hd-should-render-a-simple-class-diagram-with-no-members.mmd 1 70e7b1d5e053bd54
@@ -258,8 +258,8 @@ e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-wi
 e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdef-definitions.mmd 1 b7bc35df2da06110
 e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied-without-htmllabels.mmd 1 2e3fb905927cb5c6
 e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-classdefs-being-applied.mmd 1 84b89cdadece84f2
-e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-markdown-styling-without-htmllabels.mmd 1 70bfaadf92a88925
-e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-markdown-styling.mmd 1 d5c3396172e1f8b9
+e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-markdown-styling-without-htmllabels.mmd 1 adab2beabad1ae58
+e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-markdown-styling.mmd 1 c7e89ecb5346b990
 e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-no-attributes-only-methods.mmd 1 f368937a2bbcacb1
 e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-no-members-2.mmd 1 213a76060c2806f9
 e2e/diagrams/class-diagram/nightly-check/should-render-a-simple-class-diagram-with-no-members-if-hideemptymembersbox-is-enabled.mmd 1 5329740de4a15b6a
@@ -289,6 +289,8 @@ e2e/diagrams/class-diagram/pr-check/6-should-render-a-simple-class-diagram-with-
 e2e/diagrams/class-diagram/pr-check/dagre-1-1-should-render-a-simple-class-diagram-without-htmllabels.mmd 1 a14363ac2250ec6f
 e2e/diagrams/class-diagram/pr-check/dagre-1-should-render-a-simple-class-diagram.mmd 1 f8a0bc8c96c62dfa
 e2e/diagrams/class-diagram/pr-check/hd-8-should-render-a-simple-class-diagram-with-generic-class-and-relations.mmd 1 fe800884d51dd531
+e2e/diagrams/class-diagram/pr-check/label-syntax-compat.mmd 1 00ab052c8c0aa2fa
+e2e/diagrams/class-diagram/pr-check/label-syntax.mmd 1 7d58518fed42ae29
 e2e/diagrams/class-diagram/pr-check/layout-swimlane-namespaces.mmd 1 88f067ec715edb25
 e2e/diagrams/class-diagram/pr-check/line-hops.mmd 1 f5d33c8f0a902020
 e2e/diagrams/class-diagram/pr-check/math-should-render-tex-in-every-class-label.mmd 1 a2633aa98160f4f2

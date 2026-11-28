@@ -14,7 +14,13 @@ import {
 } from '@mermaid-js/core/layout';
 import { graphSpacing } from '@mermaid-js/shared/layout';
 import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
-import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  type FontKey,
+  type LabelSource,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import {
   namespaceGroups,
   type ClassInterface,
@@ -28,11 +34,11 @@ import {
 } from '../parser/model.ts';
 import { MARKER_ACROSS } from '../render/markers.ts';
 import { CLASS_CURVE } from './curve.ts';
-import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
+import { measureBox, type BoxMetrics, type ClassBoxGeometry, type ReadLabel } from './box.ts';
 import { configDefaults } from '../config-defaults.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import type { ClassLayoutContext } from './context.ts';
-import { v12Label } from '@mermaid-js/core/text/v12-label';
+import type { Warning } from '@mermaid-js/core';
 
 /** A class, as laid out. */
 export interface ClassBoxView extends ClassBoxGeometry {
@@ -58,7 +64,7 @@ export interface NoteView {
   readonly note: ClassNote;
   readonly width: number;
   readonly height: number;
-  /** Markdown (v12 `labelType: 'markdown'`), not wrapped, drawn left-aligned (v12). */
+  /** Not wrapped, drawn left-aligned (v12). */
   readonly label: MeasuredLabel;
   readonly parent?: string;
 }
@@ -116,7 +122,7 @@ export interface ClassEdgeView {
   /** Marker at each end; always `none` on a note edge. */
   readonly startMarker: RelationType;
   readonly endMarker: RelationType;
-  /** The `: label` (markdown, v12). */
+  /** The `: label`. */
   readonly label?: MeasuredLabel;
   /** The multiplicities (`"1"`, `"many"`), placed by the engine (D102). */
   readonly startLabel?: MeasuredLabel;
@@ -161,11 +167,15 @@ interface Build {
   readonly model: ClassModel;
   readonly ctx: ClassLayoutContext;
   readonly units: UnitProfile;
-  /** A note or a relation label: bold and italic are read, as in a class box (D564). */
-  readonly label: (text: string, max?: number) => MeasuredLabel;
-  /** A namespace title or a lollipop interface's name: v12 drew them without its Markdown reader. */
-  readonly plain: (text: string) => MeasuredLabel;
-  /** A multiplicity, in `classTerminalFontSize` (v12 `.edgeTerminals`, 11px). Plain, as in v12. */
+  /**
+   * Reads a label with core's label handler (#1368), giving the render's warning for markdown
+   * outside a markdown string. Every label of the diagram is read so: class box text, notes,
+   * relation labels, multiplicities, namespace titles and interface names.
+   */
+  readonly read: ReadLabel;
+  /** A note, relation label, namespace title or interface name. */
+  readonly label: (text: string, max?: number, markdown?: boolean) => MeasuredLabel;
+  /** A multiplicity, in `classTerminalFontSize` (v12 `.edgeTerminals`, 11px). */
   readonly terminal: (text: string) => MeasuredLabel;
   readonly px: (value: number, axis: 'x' | 'y') => number;
   /** Layout id of the group a class's or note's `parent` namespace is drawn as. */
@@ -202,19 +212,17 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     model,
     conf.hierarchicalNamespaces !== false
   );
+  const warnCtx = { config: ctx.config, inline: ctx.inline, warn: (w: Warning) => ctx.warn?.(w) };
+  const read: ReadLabel = (text, markdown = false) => readLabel(text, { markdown }, warnCtx);
+  const lay = (source: LabelSource, max: number, key = font): MeasuredLabel =>
+    layoutLabel(source.text, key, max, ctx.measurer, { ...source, inline: ctx.inline });
   const build: Build = {
     model,
     ctx,
     units,
-    label: (text, max = Infinity) => {
-      const [shown, mode] = v12Label(text);
-      return layoutLabel(shown, font, max, ctx.measurer, { ...mode, inline: ctx.inline });
-    },
-    plain: (text) => layoutLabel(text, font, Infinity, ctx.measurer, { inline: ctx.inline }),
-    terminal: (text) =>
-      layoutLabel(text, { ...font, size: terminalSize(ctx, font.size) }, Infinity, ctx.measurer, {
-        inline: ctx.inline,
-      }),
+    read,
+    label: (text, max = Infinity, markdown = false) => lay(read(text, markdown), max),
+    terminal: (text) => lay(read(text), Infinity, { ...font, size: terminalSize(ctx, font.size) }),
     px: (value, axis) => fromPx(units, value, axis),
     groupOf: (ns) => {
       const g = parentOf(ns);
@@ -261,7 +269,7 @@ function groupViews(nsGroups: readonly NamespaceGroup[], build: Build): Namespac
       layoutId: `s:${g.id}`,
       id: g.id,
       ...(g.ast !== undefined ? { ast: g.ast } : {}),
-      label: build.plain(g.label),
+      label: g.markdown ? build.label(g.label.slice(1, -1), Infinity, true) : build.label(g.label),
       ...withParent(g.parent === undefined ? undefined : `s:${g.parent}`),
       depth,
     };
@@ -278,7 +286,7 @@ function boxView(node: ClassNode, font: FontKey, metrics: BoxMetrics, build: Bui
     id: node.id,
     ast: node.ast,
     node,
-    ...measureBox(node, font, build.ctx.measurer, metrics, build.ctx.inline),
+    ...measureBox(node, font, build.ctx.measurer, metrics, build.read, build.ctx.inline),
     ...withParent(build.groupOf(node.parent)),
   };
   build.views.set(view.layoutId, view);
@@ -289,7 +297,9 @@ function boxView(node: ClassNode, font: FontKey, metrics: BoxMetrics, build: Bui
 /** The notes, and an edge from each to its class (v12 `edgeNote<i>`) pushed onto `edges`. */
 function noteViews(pad: number, build: Build, edges: ClassEdgeView[]): NoteView[] {
   return build.model.notes.map((note) => {
-    const text = build.label(note.text);
+    const text = note.markdown
+      ? build.label(note.text.slice(1, -1), Infinity, true)
+      : build.label(note.text);
     const view: NoteView = {
       kind: 'note',
       layoutId: `t:${note.id}`,
@@ -323,7 +333,7 @@ function noteViews(pad: number, build: Build, edges: ClassEdgeView[]): NoteView[
 
 function interfaceView(iface: ClassInterface, build: Build): InterfaceView {
   const patch = build.units.builder.labelPatch;
-  const text = build.plain(iface.label);
+  const text = build.label(iface.label);
   const owner = build.classIds.get(iface.classId);
   const view: InterfaceView = {
     kind: 'interface',

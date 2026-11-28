@@ -96,10 +96,11 @@ class C {
     expect(hidden[1]!.compartments.map((c) => c.rows.length)).toEqual([0, 1]);
   });
 
-  it('reads member and name text as markdown, as v12 did', async () => {
+  it('reads member and name text as markdown with markdownAlwaysOn', async () => {
     const box = (
       await lay(
-        'classDiagram\nclass A {\n__boldmethod__()\n_italicmethod_()\n+a<br>b\n+List~T~ items\n}'
+        'classDiagram\nclass A {\n__boldmethod__()\n_italicmethod_()\n+a<br>b\n+List~T~ items\n}',
+        { markdownAlwaysOn: true }
       )
     ).class!.boxes[0]!;
     const [attrs, methods] = box.compartments;

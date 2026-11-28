@@ -27,7 +27,6 @@ describe.each([
   { type: 'mindmap', dir: 'mindmap' },
   { type: 'state', dir: 'state-diagram-v2' },
   { type: 'requirement', dir: 'requirement' },
-  { type: 'class', dir: 'class-diagram' },
 ])('emphasis beside a code span in $type (#836, D610)', ({ dir }) => {
   it('reads the emphasis outside the span and draws the span as written', async () => {
     const { svg, warnings } = await createMermaid().render('d', fixture(dir));
@@ -41,6 +40,23 @@ describe.each([
     expect(drawn.some((s) => s.includes('`**not bold**`'))).toBe(true);
     expect(drawn.some((s) => s.includes('`x_1`'))).toBe(true);
     // The character references the label reader adds are drawn as the characters.
+    expect(svg).not.toMatch(/&amp;#(42|95);|&#(42|95);/);
+    expect(svg).not.toContain('**bold**');
+  });
+});
+
+// Class's fixture sets `markdownAlwaysOn` (#1368, #1389): every label is markdown, so the emphasis
+// outside the span is read and the span is drawn as inline code, the stars inside it as written.
+describe('emphasis beside a code span in class, with markdownAlwaysOn (#836, #1389)', () => {
+  it('reads the emphasis outside the span and draws the span as code', async () => {
+    const { svg, warnings } = await createMermaid().render('d', fixture('class-diagram'));
+    expect(warnings).toEqual([]);
+    assertInert(svg);
+    const drawn = spans(svg);
+    expect(drawn).toContain('b:bold and ');
+    expect(drawn.some((s) => s.endsWith('i:italic'))).toBe(true);
+    const code = [...svg.matchAll(/<tspan[^>]*font-family="monospace"[^>]*>([^<]*)<\/tspan>/g)];
+    expect(code.map((m) => m[1])).toEqual(expect.arrayContaining(['code', '**not bold**', 'x_1']));
     expect(svg).not.toMatch(/&amp;#(42|95);|&#(42|95);/);
     expect(svg).not.toContain('**bold**');
   });

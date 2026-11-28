@@ -8,13 +8,20 @@ import {
   Style,
   type FontKey,
   type InlineSpans,
+  type LabelSource,
   type MeasuredLabel,
   type Measurer,
   type StyleBits,
 } from '@mermaid-js/core/text';
 import type { ClassMember, ClassNode } from '../parser/model.ts';
 import { memberLabel } from '../parser/member.ts';
-import { v12Label } from '@mermaid-js/core/text/v12-label';
+
+/**
+ * Reads one label of a class box as written, with core's label handler (#1368): `markdown`
+ * when the parser marked it as a markdown string and gives it without its backticks. It also
+ * gives the render's warning for markdown outside a markdown string.
+ */
+export type ReadLabel = (label: string, markdown?: boolean) => LabelSource;
 
 /** One line of text in a class box. */
 export interface ClassRow {
@@ -86,12 +93,34 @@ const CLASSIFIER_STYLE: Readonly<Record<string, StyleBits>> = {
 export const classTitle = (node: ClassNode): string =>
   node.type ? `${node.label}&lt;${node.type}&gt;` : node.label;
 
+/** The name row as read: a label marked as a markdown string is read without its backticks. */
+const readTitle = (node: ClassNode, read: ReadLabel): LabelSource =>
+  node.markdown
+    ? read(classTitle({ ...node, label: node.label.slice(1, -1) }), true)
+    : read(classTitle(node));
+
+// A member written wholly as a markdown string after its visibility: `+"`name **b**`"`.
+const RE_MARKDOWN_MEMBER = /^([+\-#~]?)("`[^`]*`")$/;
+
 /**
- * Measures one class box. Text goes through core's label layout in the `emphasis` mode, as
- * v12's `addText` passed it to `createText` with markdown on: `**bold**`, `_italic_`, `<br>`
- * and the HTML subset are read. A generic's brackets come as `&lt;` and `&gt;`, so `List~Data~`
- * is text whatever the type's name (D619); a `<T>` the author types stays text unless `T` is a
- * known tag.
+ * A member row as read. A member written wholly as a markdown string is markdown, with its
+ * visibility in front as written (a markdown escape, so `-` or `+` never starts a list).
+ * Any other member is read as a whole, so a markdown string beside other text is drawn as
+ * written.
+ */
+function readMember(text: string, read: ReadLabel): LabelSource {
+  const md = RE_MARKDOWN_MEMBER.exec(text);
+  if (!md) return read(text);
+  const source = read(md[2] as string);
+  return md[1] ? { ...source, text: `\\${md[1]}${source.text}` } : source;
+}
+
+/**
+ * Measures one class box. Text is read by `read` (core's label handler, #1368) and laid out by
+ * core's label layout: tags and a written `\n` are read everywhere, markdown in a markdown
+ * string, and in every label with `markdownAlwaysOn`. A generic's brackets come as `&lt;` and
+ * `&gt;`, so `List~Data~` is text whatever the type's name (D619); a `<T>` the author types stays
+ * text unless `T` is a known tag.
  *
  * Heights follow v12's `classBox` (P = padding, rows = the compartment's text):
  * - header: P, the annotation and the name, P;
@@ -105,12 +134,11 @@ export function measureBox(
   font: FontKey,
   measurer: Measurer,
   m: BoxMetrics,
+  read: ReadLabel,
   inline?: InlineSpans
 ): ClassBoxGeometry {
-  const measure = (text: string, style: StyleBits): MeasuredLabel => {
-    const [shown, mode] = v12Label(text);
-    return layoutLabel(shown, font, Infinity, measurer, { ...mode, style, inline });
-  };
+  const measure = (source: LabelSource, style: StyleBits): MeasuredLabel =>
+    layoutLabel(source.text, font, Infinity, measurer, { ...source, style, inline });
   // A blank row (`class A[" "]`) still takes a line.
   const { lineHeight } = measurer.metrics(font);
   const tall = (label: MeasuredLabel): number => Math.max(label.height, lineHeight);
@@ -121,12 +149,17 @@ export function measureBox(
   let annotation: (typeof centred)[number] | undefined;
   if (first !== undefined) {
     const text = `«${first}»`;
-    annotation = { text, label: measure(text, 0), style: 0, y };
+    annotation = { text, label: measure(read(text), 0), style: 0, y };
     centred.push(annotation);
     y += tall(annotation.label);
   }
   const title = classTitle(node);
-  const name = { text: title, label: measure(title, Style.Bold), style: Style.Bold, y };
+  const name = {
+    text: title,
+    label: measure(readTitle(node, read), Style.Bold),
+    style: Style.Bold,
+    y,
+  };
   centred.push(name);
   y += tall(name.label) + P;
 
@@ -147,7 +180,7 @@ export function measureBox(
       for (const member of list) {
         const text = memberLabel(member);
         const style = CLASSIFIER_STYLE[member.classifier] ?? 0;
-        const label = measure(text, style);
+        const label = measure(readMember(text, read), style);
         if (rows.length > 0) at += m.rowGap;
         rows.push({
           text,

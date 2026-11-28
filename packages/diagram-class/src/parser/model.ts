@@ -30,6 +30,12 @@ export interface ClassNode {
   ast: AstId;
   /** `class A["label"]`, else the id. */
   label: string;
+  /**
+   * The label was written as a markdown string (`"`…`"`, #1368). The quotes are gone, so the
+   * layout would see bare backticks: this says the label is markdown. `label` keeps its
+   * backticks, as v12's DB did.
+   */
+  markdown?: true;
   /** The generic type of `Name~T~` (`T`), or `''`. Nested generics keep their first part. */
   type: string;
   /** CSS classes in the order given, starting with `default` (`:::`, `cssClass`, clicks). */
@@ -88,6 +94,12 @@ export interface ClassNamespace {
   ast?: AstId;
   /** `namespace A["label"]`, else the last part of the id. */
   label: string;
+  /**
+   * The label was written as a markdown string (`"`…`"`, #1368). The quotes are gone, so the
+   * layout would see bare backticks: this says the label is markdown. `label` keeps its
+   * backticks, as v12's DB did.
+   */
+  markdown?: true;
   /** Qualified id of the enclosing namespace. */
   parent?: string;
   /** Written by the user; false for an ancestor made from a dotted id (`A` of `A.B`). */
@@ -106,6 +118,8 @@ export interface ClassNote {
   /** `note:<ordinal>`. */
   ast: AstId;
   text: string;
+  /** The text was written as a markdown string (`"`…`"`, #1368); `text` keeps its backticks. */
+  markdown?: true;
   /** `note for <class>`: the class name as written (generic type included). */
   class?: string;
   parent?: string;
@@ -187,6 +201,18 @@ export interface BuilderOptions {
 
 const CLASS_ID_PREFIX = 'classId-';
 
+const RE_MARKDOWN_STRING = /^`[^`]*`$/;
+
+/**
+ * Marks `target` as a markdown string when `text`, a quoted string as written between its
+ * quotes, is one: wholly in backticks, with none inside (`"`…`"`, #1368, as core's label
+ * handler reads it).
+ */
+function markMarkdown(target: { markdown?: true }, text: string): void {
+  if (RE_MARKDOWN_STRING.test(text)) target.markdown = true;
+  else delete target.markdown;
+}
+
 /** v12 `splitClassNameAndType`: `A~T~` → `A` and `T` (a `~` at index 0 does not split). */
 export function splitClassName(raw: string): { id: string; type: string } {
   const at = raw.indexOf('~');
@@ -248,7 +274,9 @@ export class ClassBuilder {
 
   setClassLabel(raw: string, label: string): void {
     const node = this.classes.get(splitClassName(raw).id);
-    if (node) node.label = label;
+    if (!node) return;
+    node.label = label;
+    markMarkdown(node, label);
   }
 
   /** `addRelation`, with v12's lollipop handling: the lollipop end becomes an interface. */
@@ -340,6 +368,7 @@ export class ClassBuilder {
   addNote(text: string, ast: AstId, className?: string): string {
     const id = `note${this.notes.length}`;
     const note: ClassNote = { id, ast, text };
+    markMarkdown(note, text);
     if (className !== undefined) note.class = className;
     this.notes.push(note);
     this.noteById.set(id, note);
@@ -442,7 +471,10 @@ export class ClassBuilder {
     if (existing) {
       existing.explicit = true;
       existing.ast ??= ast;
-      if (label) existing.label = label;
+      if (label) {
+        existing.label = label;
+        markMarkdown(existing, label);
+      }
       return qualified;
     }
     const parts = qualified.split('.');
@@ -462,6 +494,7 @@ export class ClassBuilder {
           children: [],
         };
         if (leaf) ns.ast = ast;
+        if (leaf && label) markMarkdown(ns, label);
         if (parentId !== undefined) ns.parent = parentId;
         this.namespaces.set(currentId, ns);
       } else if (leaf) node.explicit = true;
@@ -539,6 +572,8 @@ export interface NamespaceGroup {
   id: string;
   ast?: AstId;
   label: string;
+  /** The label is a markdown string, as {@link ClassNamespace.markdown}. */
+  markdown?: true;
   parent?: string;
 }
 
@@ -559,6 +594,7 @@ export function namespaceGroups(
     if (!hierarchical && !ns.explicit) continue;
     const g: NamespaceGroup = { id: ns.id, label: hierarchical ? ns.label : ns.id };
     if (ns.ast !== undefined) g.ast = ns.ast;
+    if (hierarchical && ns.markdown) g.markdown = true;
     if (hierarchical && ns.parent !== undefined) g.parent = ns.parent;
     groups.push(g);
   }

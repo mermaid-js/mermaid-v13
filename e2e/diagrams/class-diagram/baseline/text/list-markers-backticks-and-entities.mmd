@@ -1,8 +1,11 @@
 ---
 description: >-
-  notes and members draw a leading "- " and backticks as written; relation
-  labels read bold and italic; cardinalities are plain; an unknown entity
-  name stays as written (#763, D561, D564)
+  with markdownAlwaysOn every label is markdown: a note that starts with "- "
+  is a list item, backticks draw inline code, relation labels read bold and
+  italic, cardinalities stay as written, the written \n breaks the note
+  (#1330), and an unknown entity name stays as written (#763, D561, #1368)
+config:
+  markdownAlwaysOn: true
 ---
 classDiagram
   class A["An **important** class"] {

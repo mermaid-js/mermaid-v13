@@ -1,8 +1,11 @@
 ---
 description: >-
-  a class name, member, note or relation label with a code span still reads
-  the bold and italic outside the span; the span draws its backticks and the
-  stars inside it as written (#836, D610)
+  with markdownAlwaysOn every label is markdown: a class name, member, note
+  or relation label with a code span reads the bold and italic outside the
+  span and draws the span as inline code, the stars inside it as written
+  (#836, #1368)
+config:
+  markdownAlwaysOn: true
 ---
 classDiagram
   class A["**bold** and `code`"] {
