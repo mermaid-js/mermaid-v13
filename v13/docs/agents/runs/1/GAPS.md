@@ -63,7 +63,7 @@
 - Argos reference branch must be `mermaid-v13` (not develop). Needs ARGOS_TOKEN secret (human). WebKit smoke unverified locally (launch timeout on this Mac). gallery.yml (Pages on alpha tags) never run.
 - Review pass: codeql.yml triggers on [develop] and the Argos comment/baseline in ci.yml says develop; v13 work lives on mermaid-v13 (R-REL-1). Point both at mermaid-v13.
 ## Added after #17/#20
-- Review pass: add @braintree/sanitize-url's MIT notice to THIRD_PARTY_NOTICES (core/svg/url.ts ports its logic via Pele) — MIT requires it.
+- Review pass: add @braintree/sanitize-url's MIT notice to THIRD_PARTY_NOTICES (core/svg/url.ts ports its logic via the reference implementation) — MIT requires it.
 - #20 human setup (report to maintainer, do not do): RELEASE_BOT_TOKEN (+ branch-protection bypass), MERMAID_CHART_PACKAGES_TOKEN, env `npm-alpha` with NPM_TOKEN, repo var PUBLIC_ALPHA, confirm @mermaid-chart/{core,diagram-flowchart,plugin-interactions} names; publish-fork deep install check after first private alpha.
 - MermaidError has no `limit` field (callers read cause.limit / diagnostics[0].code) — consider adding in review pass.
 ## Added after #16 (DOM adapter merged)

@@ -20,7 +20,7 @@ Integration branch `feature/855_complexity` (from `mermaid-v13` at ce2cb1b04), w
 
 Score: 59 entries at the start, 36 on this branch (layered.ts 29, yaml.ts 4, layered.fixtures.ts, yaml-text.ts and svg/path.ts 1 each; swimlane files left out, as in the one-liner under "Suppression score").
 
-Maintainer decisions (Knut, 2026-11-17): 1 yes, `layered.ts` and `compound.ts` may leave Pele's file shape, each phase file recording the Pele commit it was split from (D596, amends D66); 2 the YAML reader stays whole and both files cite the decision (D597); 3 yes, the readability limits are extended to `tools/*/src` with today's violations entered as suppressions (D598). Decisions 4 and 5 are followed as the spec writes them. X8 records D596 and D597 in `DECISIONS.md`; X9 records D598. D591, D592 and D594 are left to other open PRs. Budgets (Knut, 2026-11-17): core rises to 102,400 B (D599) and `loaded` to 150,528 B (D600); the spec's "no budget change" rule is amended by both. A split costs bytes because locals minify to one letter and the fields of a state record keep their names. Core tickets merge one at a time, each measured after the merge.
+Maintainer decisions (Knut, 2026-11-17): 1 yes, `layered.ts` and `compound.ts` may leave the reference implementation's file shape, each phase file recording the reference implementation's commit it was split from (D596, amends D66); 2 the YAML reader stays whole and both files cite the decision (D597); 3 yes, the readability limits are extended to `tools/*/src` with today's violations entered as suppressions (D598). Decisions 4 and 5 are followed as the spec writes them. X8 records D596 and D597 in `DECISIONS.md`; X9 records D598. D591, D592 and D594 are left to other open PRs. Budgets (Knut, 2026-11-17): core rises to 102,400 B (D599) and `loaded` to 150,528 B (D600); the spec's "no budget change" rule is amended by both. A split costs bytes because locals minify to one letter and the fields of a state record keep their names. Core tickets merge one at a time, each measured after the merge.
 
 ## Pointers per ticket
 
@@ -67,9 +67,9 @@ Common gates for X1 to X8 (run all four, about 50 s together):
 
 - X1 to X3 layout speed, X4 cached `renderSync`, X6 parse and label speed: `pnpm --filter @mermaid-js/bench bench --renderers v13,v13-base,v13-stages --set corpus --reps 10 --base <integration ref>` (Chromium, writes `dist/reports/<stamp>.md`; header in `cli/bench.ts:1-20`). `v13-stages` gives the per-stage split (parse, layout, render). `pnpm --filter @mermaid-js/bench pr --base <ref>` adds CPU instruction counts (Linux `perf` via `BENCH_PERF`), the steadiest numbers on a shared machine. R-PERF-3 and R-PERF-10 (REQUIREMENTS.md:124, :131).
 
-## Pele attribution
+## The reference implementation attribution
 
-- Header text: `core/layout/layered/layered.ts:1-6` ("Ported from Pele ... at 3a2f075", copyright, MIT, "Changes from Pele"); `compound.ts:1-6` (same shape); `layered/index.ts:1-3`; `core/preprocess/yaml.ts:6-7`; `core/svg/inert.ts:7` (follows Pele's test oracle); `core/svg/testing/index.ts:1-9`.
+- Header text: `core/layout/layered/layered.ts:1-6` ("Ported from the reference implementation ... at 3a2f075", copyright, MIT, "Changes from the reference implementation"); `compound.ts:1-6` (same shape); `layered/index.ts:1-3`; `core/preprocess/yaml.ts:6-7`; `core/svg/inert.ts:7` (follows the reference implementation's test oracle); `core/svg/testing/index.ts:1-9`.
 - A file split from a port needs the header and an entry in `packages/core/THIRD_PARTY_NOTICES` (list at :10-24: layered.ts, compound.ts, index.ts, yaml.ts, inert.ts ... are listed by path). `pnpm check:licenses` (tools/release/src/licenses.ts, 0.8 s) fails if a ported file is missing from that list; run it after any split of these files.
 - R-REL-4: REQUIREMENTS.md:320 (MIT attribution in file headers and THIRD_PARTY_NOTICES; verified by the license check). D12 DECISIONS.md:22 (porting allowed with attribution). D66 DECISIONS.md:119 (ported and owned, upstream fixes by hand; the reason X2, X3, X8 need decision 1 and 2).
 - Cited decisions: D140 :150 (port capacity in cells, grid), D179 :274 (text output keeps layered), D532 :810 (swimlane engine as upstream; ranking phases stay whole), D557 :836 (T0 tickets promote shared helpers to core), D583 :876 (core budget 100,352 B, loaded 148,480 B, scratch buffers).
@@ -81,5 +81,5 @@ Common gates for X1 to X8 (run all four, about 50 s together):
 - Import boundaries: new files stay in the same package; relative imports only inside it. `core` and `diagram-*` use no DOM, clock or `console`.
 - `.fallow-baseline/*.json` are keyed by path (see Suppression score). They are generated; do not edit them by hand.
 - No generated files sit beside the touched code. `generated/` folders matter only for X9: `tools/gen-grammar` outputs `packages/*/grammar/generated/**`, so run `pnpm check:grammar` and `pnpm regen`.
-- cspell runs on `packages/**/*.ts` and `tools/**`; Pele-derived headers carry `// cspell:ignore kepano lnode ...` (layered.ts:7). Copy it to split files.
+- cspell runs on `packages/**/*.ts` and `tools/**`; the headers of files derived from the reference implementation carry `// cspell:ignore kepano lnode ...` (layered.ts:7). Copy it to split files.
 - `layOut` memo (`layered.ts:323`) and parallel arrays are #67's: leave them.

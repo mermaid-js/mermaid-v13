@@ -26,7 +26,7 @@ One ticket at a time on the reference machine (D208). Start order: T0, T1, T2, T
 
 ## Measured before the spec (reference machine, `eba5c0e6c`, 2026-11-05)
 
-| | v13 against Pele |
+| | v13 against the reference implementation |
 | --- | --- |
 | Warm geomean, 161 fixtures | 1.45× slower |
 | 14 largest, full sample | 1.45× |
@@ -35,7 +35,7 @@ One ticket at a time on the reference machine (D208). Start order: T0, T1, T2, T
 | 116 tiny, full sample | 1.44× (1.36× with T1 and T2) |
 | perf/huge1 render, fresh page → after the corpus | 2.76× → 5.13× (2.25× → 2.39× with T1) |
 
-The 14 largest are every `perf/` fixture plus `pele/flowchart-500`. The 116 tiny are the fixtures Pele renders in under 0.5 ms.
+The 14 largest are every `perf/` fixture plus `pele/flowchart-500`. The 116 tiny are the fixtures the reference implementation renders in under 0.5 ms.
 
 ## Finish rule
 
@@ -43,7 +43,7 @@ The integration PR stays a draft while tickets land. Run `gh pr ready` on it onl
 
 1. Every ticket is merged into `feature/265_render-speed` (T0 and T1 into `mermaid-v13`).
 2. The close-out bench (T9) has run on the reference machine and its numbers are in the PR description.
-3. The 14 largest are at 1.15× of Pele or better, and render time is independent of page history.
+3. The 14 largest are at 1.15× of the reference implementation or better, and render time is independent of page history.
 4. `pnpm check` is green on the integration branch.
 
 Never merge it.

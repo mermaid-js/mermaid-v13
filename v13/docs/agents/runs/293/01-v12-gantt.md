@@ -140,14 +140,14 @@ The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm
 - visual-check: 8 themes (default, dark, forest, neutral, redux, redux-dark, redux-color, redux-dark-color). **No neo/neo-dark.**
   - 4 classic ones write `dateFormat :YYYY-MM-DD`, `title :…`, `excludes :…`: the format literally starts with `:`, so every date takes the `Date` fallback and the title starts with `:`.
 
-## 7. Pele — `/Users/knsv/repos/pele` at 3a2f075 (HEAD, "Release: 1.13.0", clean)
+## 7. The reference implementation — `/Users/knsv/repos/pele` at 3a2f075 (HEAD, "Release: 1.13.0", clean)
 
 - `src/diagrams/gantt/`: axis, dates, db, index, lexer, parser, render, tokens, types (.ts).
 - `dates.ts` (380 lines, **no imports**) exports: `MONTHS` L6, `WEEKDAYS` L20, `Unit` L25, `isValid` L27, `isoWeekday` L53, `addDays` L57, `add(date, n, unit)` L78, `format(date, tpl)` L119 (`undefined` for unsupported tokens), `isoDate` L215, `parseStrict(input, tpl, now)` L377.
   - `parseStrict` needs `now` for missing fields (L362–375: day/month/year from `now`).
 - `axis.ts` (362 lines) imports only `MONTHS, WEEKDAYS` from `./dates.js` (L1). Exports: `TickUnit` L14 (includes `year`), `autoTicks(start, stop, count)` L196, `intervalTicks(interval, weekday, start, stop, limit)` L216, `timeFormat(spec, date)` L270.
   - `intervalTicks` returns `undefined` over `limit` using `min(step, cycle)·ms`, which is not v12's dayjs-duration estimate (L631–641).
-- Headers: Pele files carry only a descriptive comment (dates L1–4, axis L3–4), no licence line. v13 adds the header.
+- Headers: the reference implementation files carry only a descriptive comment (dates L1–4, axis L3–4), no licence line. v13 adds the header.
 - `tests/gantt/dates.test.ts` (252 lines, 20 `it`): imports `vitest` `{describe, expect, it}`, `axis.js`, `dates.js`, **and `parseDuration` from `src/diagrams/gantt/db.js`** (L4; L170 'reads durations').
   - No `vi`, no `TZ` pin: dates are built with local `new Date(...)` and `NOW = new Date(2031,4,6,9,30,15,250)`.
 - `db.ts` imports `PeleError` (`../../errors.js`), `safeUrl` (`../../util/url.js`), dates, types. `parseDuration` L34.
@@ -166,7 +166,7 @@ The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm
   - Flow: `api.ts:799–802` passes `width: options?.availableWidth` → `contextFor` (L597, `Units.width` L267) → ctx literal L670; used only inside `ctx.layout()` L700–703.
   - DOM: `packages/mermaid/src/dom.ts:182–196` (`clientWidth − padding`).
 - Jison oracle: `packages/conformance/src/jison/{oracle,harvest,types,…}.ts` is merged. `types.ts:116–123` has a **`gantt` descriptor** (probe `gantt\n  title x`, e2e `gantt`, harvest `run` over `parser/gantt.spec.js`, parsers `['parser']`). `smoke.spec.ts:11` lists gantt in M4; `harvest.ts:16` `V12_COMMIT`.
-- Notices: per package, e.g. `packages/diagram-class/THIRD_PARTY_NOTICES` (33 lines: "Pele" section, file list, MIT text) and `packages/core/THIRD_PARTY_NOTICES:4–25`.
+- Notices: per package, e.g. `packages/diagram-class/THIRD_PARTY_NOTICES` (33 lines: "the reference implementation" section, file list, MIT text) and `packages/core/THIRD_PARTY_NOTICES:4–25`.
   - Header form `packages/core/src/layout/layered/layered.ts:1–7`: `// Ported from Pele (https://github.com/obsidianmd/pele), <path> at 3a2f075.` / `// Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/<pkg>.` / `// Changes from Pele: …` / `// cspell:ignore kepano …`.
 - Config: statuses live in `packages/core/schema/config.schema.yaml` (generated into `packages/core/src/config/generated/{keys,defaults,config.type}.ts`; `keys.ts:11` `D_GanttDiagramConfig`).
   - `GanttDiagramConfig` L3501–3637: every key `x-mermaid: { status: pending }` (L3526 … L3636).
@@ -188,7 +188,7 @@ The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm
 8. `RenderOptions` lives in `packages/mermaid/src/api.ts:85`, not core. T0's "`RenderOptions.now`" is a mermaid-package change; only `RenderContext` (`core/src/pipeline/types.ts:50`) is core.
 9. `useWidth`/`useMaxWidth` have no gantt entry in the v13 schema (pending via `BaseDiagramConfig`). T5 must add per-diagram `$ref` overrides like journey L3013–3021, not just flip statuses.
 10. Label placement uses `renderEndTime||endTime` for x but `endTime` for the class (L406 vs L444): with excludes a label can sit inside while classed outside, or the reverse. "Placed by v12's rule" has two rules.
-11. Pele's `dates.test.ts` imports `parseDuration` from Pele's `db.ts` (which needs `PeleError`, `safeUrl`). D1 must repoint that import. Pele files carry no licence header, so the notice comes only from the v13 header and `THIRD_PARTY_NOTICES`. `intervalTicks`' limit test differs from v12's tick estimate (a month of 365/12 days via dayjs duration).
+11. The reference implementation's `dates.test.ts` imports `parseDuration` from the reference implementation's `db.ts` (which needs `PeleError`, `safeUrl`). D1 must repoint that import. The reference implementation files carry no licence header, so the notice comes only from the v13 header and `THIRD_PARTY_NOTICES`. `intervalTicks`' limit test differs from v12's tick estimate (a month of 365/12 days via dayjs duration).
 12. `axisFormat '%d'` for `dateFormat D` compares the **untrimmed** value (`dateFormat  D` with two spaces does not get it). `includes` appears in no corpus file. Exclude matching compares lowercased tokens with `format(dateFormat)`, so a format with capitals (`MMM`) never matches.
 13. Only section indices 0–3 are styled (styles.js); `numberSectionStyles > 4` gives unstyled `section4+` bands and bars in v12.
 14. `vert` tasks join the time domain (L159–167) but take no row. A chart of only vert markers has a domain but zero rows (D277 covers the drawing). The vert bar's class is usually `task vert  task0`, so it is filled `taskBkgColor`.

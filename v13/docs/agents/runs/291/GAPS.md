@@ -36,7 +36,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [x] **Choice:** the TD axis starts below the title when the title spans the axis; v12 started it `2·fontSize` above the content, through any title wider than about 285 px (corpus nightly-check/13 and pr-check/14). Boxes keep their places. MIGRATION.md row owned by #311.
 - LR connector length uses the virtual event heights (no 50 px floor), as v12; it can end above the last event of a long stack of one-line events (it always reaches the first). Kept.
 - LR draws a connector for a period with no events; `disableMulticolor` does nothing when sections exist. Both kept (v12 behaviour).
-- D251 says leading periods take slot 0 "as Pele does"; Pele actually paints them neutral. The decided answer (slot 0) stands.
+- D251 says leading periods take slot 0 "as the reference implementation does"; the reference implementation actually paints them neutral. The decided answer (slot 0) stands.
 - [x] Invariants run on parser-produced models (#336): `packages/conformance/src/timeline/layout-corpus.spec.ts`, the whole gate corpus, both directions, classic and redux, default and changed config.
 
 ### #318 T6 language facet

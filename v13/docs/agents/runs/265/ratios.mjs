@@ -1,7 +1,8 @@
 // Spec #265 A/B ratios (IMPLEMENTER step 5, LEDGER.md) from a bench report: sums of warm time
-// over the fixtures every renderer rendered, the 14 largest and the tiny set (Pele < 0.5 ms).
+// over the fixtures every renderer rendered, the 14 largest and the tiny set (reference < 0.5 ms).
 // Usage: node v13/docs/agents/runs/265/ratios.mjs <report.json> [fixture id ...]
-// The fixture ids print one line each with head/Pele and base/Pele (the page-history check).
+// The fixture ids print one line each with head/reference and base/reference (the page-history
+// check). The reports of that run name the reference implementation's renderer `pele`.
 import { readFileSync } from 'node:fs';
 
 const [file, ...extra] = process.argv.slice(2);
@@ -25,16 +26,16 @@ const row = (name, ids) => {
   const p = sum(pele, ids);
   return `| ${name} (${ids.length}) | ${(h / p).toFixed(2)}× | ${(b / p).toFixed(2)}× | ${(h / b).toFixed(3)} |`;
 };
-console.log('| Fixtures | head / Pele | base / Pele | head / base |');
+console.log('| Fixtures | head / reference | base / reference | head / base |');
 console.log('| --- | --- | --- | --- |');
 console.log(row('All common', common));
 console.log(row('14 largest', largest));
-console.log(row('Tiny, Pele < 0.5 ms', tiny));
+console.log(row('Tiny, reference < 0.5 ms', tiny));
 for (const id of extra) {
   if (!head.has(id) || !pele.has(id)) continue;
   const b = base?.get(id);
   console.log(
-    `${id}: head/Pele ${(head.get(id) / pele.get(id)).toFixed(2)}×` +
-      (b === undefined ? '' : `, base/Pele ${(b / pele.get(id)).toFixed(2)}×`)
+    `${id}: head/reference ${(head.get(id) / pele.get(id)).toFixed(2)}×` +
+      (b === undefined ? '' : `, base/reference ${(b / pele.get(id)).toFixed(2)}×`)
   );
 }

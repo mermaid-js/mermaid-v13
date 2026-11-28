@@ -12,7 +12,7 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | T5 integration | #459 | #457, #463 | merged (ff dd96fc647; CDN core 92,309 B gz, +25 B registry row; package entry 14,421 B gz) |
 | T7 ascii (Should) | #466 | #459 | merged (ff 218d444b9; text path 7,976 B gz; CDN core 92,316 B gz, +7 B `loadAscii`) |
 
-- `01-v12-kanban.md`: pointer notes on v12 grammar, DB, renderer, styles, shapes, corpus, the mindmap lexer to copy, Pele.
+- `01-v12-kanban.md`: pointer notes on v12 grammar, DB, renderer, styles, shapes, corpus, the mindmap lexer to copy, the reference implementation.
 - `02-v13-core.md`: pointer notes on the plugin contract, `custom` ports, conformance wiring, core seams (labels, `checkUrl`, `w.outline`, palette, warnings, config, size guards).
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
 - `GAPS.md`: unmet criteria and choices per ticket.

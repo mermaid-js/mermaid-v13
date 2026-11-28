@@ -14,7 +14,7 @@ Integration branch `feature/426_xychart` (from `mermaid-v13` at 12ba676cb). Draf
 
 No T7 (D320: xychart throws `UnsupportedFormatError` for `ascii`).
 
-- `01-v12-xychart.md`: pointer notes on v12 grammar, DB, chart builder, renderer, config, theme blocks, specs, corpus, Pele.
+- `01-v12-xychart.md`: pointer notes on v12 grammar, DB, chart builder, renderer, config, theme blocks, specs, corpus, the reference implementation.
 - `02-v13-core.md`: pointer notes on the plugin contract, `custom` ports to copy, conformance wiring, theme table and shared palette, size gates, shared files.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
 - `GAPS.md`: unmet criteria and choices per ticket.

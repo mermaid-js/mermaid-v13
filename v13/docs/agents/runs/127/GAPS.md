@@ -23,7 +23,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #148 T5 integration (from #138)
 
-- [x] Done in #148: `private` dropped; the package is published (version `13.0.0-alpha.0`, `THIRD_PARTY_NOTICES` for the Pele-derived `render/edges.ts`), and the pack test lists it.
+- [x] Done in #148: `private` dropped; the package is published (version `13.0.0-alpha.0`, `THIRD_PARTY_NOTICES` for `render/edges.ts`, derived from the reference implementation), and the pack test lists it.
 
 ## Shared source view (from #138, D114)
 

@@ -22,7 +22,7 @@ What changed (public surface)
   statement (the node keeps no data). Later syntax errors in that statement are reported.
 - FlowBuilder.finish(): STYLE_UNKNOWN_NODE is decided after the whole document is parsed. An
   id that names a subgraph (defined before or after) does not warn. The model is unchanged.
-- tools/release licenses.ts: UPSTREAMS (Pele, @braintree/sanitize-url) plus REQUIRED_CREDITS
+- tools/release licenses.ts: UPSTREAMS (the reference implementation, @braintree/sanitize-url) plus REQUIRED_CREDITS
   (core/src/svg/url.ts must credit both). THIRD_PARTY_NOTICES has a sanitize-url section with
   the MIT text.
 - Workflows: codeql, scorecard and renovatebot-config-lint target mermaid-v13. The Argos

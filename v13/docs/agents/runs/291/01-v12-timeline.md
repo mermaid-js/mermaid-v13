@@ -181,7 +181,7 @@ Only `theme-default.js` calls `updateColors()` in its constructor (L144) as well
 - `timeline.spec.js`: 11 `timeline.parse(str)` calls (L17, 25, 33, 41, 50, 65, 84, 108, 133, 157, 175); L151–186 pin trailing spaces in events and `#`/`;` as text in title/section/event.
 - Docs `fa796a943:packages/mermaid/src/docs/syntax/timeline.md`: direction L126–144, disableMulticolor L176/L190, cScale/cScaleLabel overrides L201–224, `<br>` L95.
 
-## 10. Pele — `/Users/knsv/repos/pele/src/diagrams/timeline/` (db.ts, index.ts, lexer.ts, parser.ts, render.ts)
+## 10. The reference implementation — `/Users/knsv/repos/pele/src/diagrams/timeline/` (db.ts, index.ts, lexer.ts, parser.ts, render.ts)
 
 - `lexer.ts:42–134` hand lexer emitting jison names (`TOKEN_NAMES` L23–40); `timeline`/LR/TD word-bounded (L67–79, matches jison's `\b`).
   - Divergence: bare `title` is skipped (L80–87).
@@ -197,7 +197,7 @@ Only `theme-default.js` calls `updateColors()` in its constructor (L144) as well
 3. v13 palettes are literal lists, and the DSL has no hue rotation. Classic `cScale*` must be precomputed literals (they won't follow a user `primaryColor`, unlike base/forest in v12) unless T4a adds a hue function. `cScaleN` overrides are dropped today when the theme has no `cScale` list (`theme.ts:510`).
 4. v12 class names are `section-<slot−1>`: the first section/period is `section--1` (`svgDraw.js:502`). Spec story 14's `section-<n>` should say which numbering v13 keeps.
 5. v12 timeline drops a front-matter `title` (no `setDiagramTitle` on the db namespace). D218/story 8 drawing it is a model-parity divergence to list.
-6. D251 says leading periods go "in slot 0, as Pele does"; Pele actually paints them neutral (`var(--_m)`), not slot 0.
+6. D251 says leading periods go "in slot 0, as the reference implementation does"; the reference implementation actually paints them neutral (`var(--_m)`), not slot 0.
 7. TD sections overlap: the advance subtracts `2·TASK_VERTICAL_GAP`, so the next section starts 30 px above the last row's end. The T3 "no overlaps" invariant departs from v12 here.
 8. TD draws no gradient defs, so under `theme: neo` the gradient outline/rule CSS points at a missing id in TD. LR also skips the gradient for `neutral`.
 9. LR draws a dashed connector for periods with **no** events (`if (task.events)` on an array); TD draws none. `disableMulticolor` has no effect when sections exist.

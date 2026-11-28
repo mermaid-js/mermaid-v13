@@ -15,7 +15,7 @@ Worktrees: ticket branches are checked out one at a time in this session's own w
 | T5 integration | #558 | #556, #557 | merged (ff 813312af7; core 94,429 B gz, block rows +17 B; package entry 20,778 B gz; warm render 118× geomean vs 12.2.0) |
 | T7 ASCII renderer (optional, D320) | #559 | #558 | merged (ff fac2b7f19; package entry 21,039 B gz, `./ascii` 7,009 B gz; text load path 13,232 B gz, the largest type, under the soft 15 KB of D87) |
 
-- `01-v12-block.md`: pointer notes on v12 grammar, DB, layout, renderer, shapes, specs, corpus, Pele.
+- `01-v12-block.md`: pointer notes on v12 grammar, DB, layout, renderer, shapes, specs, corpus, the reference implementation.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
 - `GAPS.md`: unmet criteria and choices per ticket.
 - `tickets/<n>.md`: handoffs.

@@ -104,6 +104,6 @@ Sizes: `parser/requirementDiagram.jison` 267, `requirementDb.ts` 351, `requireme
 - Absent (as the spec says): `accTitle`/`accDescr`, `%%`, CRLF, trailing blanks, `themeVariables`, `<- contains -`.
 - `packages/conformance/src/preprocess.spec.ts:98–100` already lists `visual-check/with-a-theme-default.mmd` as a decided divergence: **v13's preprocess accepts it** (v12 `render()` rejects the leading blank line). Only the title file is a v13 rejection by preprocess.
 
-## 13. Pele
+## 13. The reference implementation
 
 - `/Users/knsv/repos/pele/` **does not exist** on this machine. The only copy is `pele@1.13.0` in `packages/bench/node_modules/pele/` (bench dependency, `packages/bench/package.json:50`): `dist/diagrams/requirement/{db,graph,index,lexer,parser,render,tokens,types}.d.ts`, `dist/esm/diagrams/requirement.js` (a 244 B re-export), `dist/entries/requirement.d.ts`. Types only; read the chunk it re-exports for behaviour. MIT reference (D325), never the oracle.

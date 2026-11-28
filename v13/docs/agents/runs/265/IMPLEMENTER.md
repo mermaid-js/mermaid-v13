@@ -16,9 +16,9 @@
    pnpm --filter @mermaid-js/bench bench --renderers v13,v13-base,pele --base <base sha> --mode report
    ```
 
-   From `packages/bench/dist/reports/latest.json`, report three ratios (head to Pele, base to Pele, head to base) as sums of warm time over: all common fixtures, the 14 largest (`perf/*` plus `pele/flowchart-500`), and the tiny set (fixtures Pele renders in under 0.5 ms in the same run): `node v13/docs/agents/runs/265/ratios.mjs packages/bench/dist/reports/latest.json`. Put the table in the PR description. Report ratios, not milliseconds.
+   From `packages/bench/dist/reports/latest.json`, report three ratios (head to the reference implementation, base to the reference implementation, head to base) as sums of warm time over: all common fixtures, the 14 largest (`perf/*` plus `pele/flowchart-500`), and the tiny set (fixtures the reference implementation renders in under 0.5 ms in the same run): `node v13/docs/agents/runs/265/ratios.mjs packages/bench/dist/reports/latest.json`. Put the table in the PR description. Report ratios, not milliseconds.
 
-   When the base is not the origin (`f208fab9b`, LEDGER.md), run it a second time with `--base f208fab9b`. Add your row to LEDGER.md: head/Pele, the step, "#265 so far" (the last row's value times your step), and since origin.
+   When the base is not the origin (`f208fab9b`, LEDGER.md), run it a second time with `--base f208fab9b`. Add your row to LEDGER.md: head/reference, the step, "#265 so far" (the last row's value times your step), and since origin.
 6. Commit with no AI attribution (no Co-Authored-By, no "Generated with"). Push only to the `mermaid-js` remote. Open a **draft** PR while you work. Mark it ready (`gh pr ready`) when your work is finished, which is how the maintainer finds what to review. An unmet criterion or an open question does not hold it back: write it in the PR body as a reviewer decision. Never merge, and never mark the integration PR ready before INDEX.md's finish rule holds.
 7. Write `v13/docs/agents/runs/265/tickets/<N>.md` in your branch (≤ 40 lines): what changed, the A/B table and the ledger row, anything dropped under the identity gate, unmet criteria. Commit it.
 8. Reply in ≤ 12 lines: branch, head sha, PR, checks, the head-to-base ratio, deviations, unmet criteria.

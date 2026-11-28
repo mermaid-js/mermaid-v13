@@ -1,20 +1,20 @@
-# 02 — Pele: files to port
+# 02 — the reference implementation: files to port
 
 Repo: `/Users/knsv/repos/pele` @ `3a2f075` ("Release: 1.13.0", 2026-10-30), clean working tree. The bench harness pins `pele@1.12.0`.
 Deeper research with more line pointers: `/Users/knsv/repos/mermaid-v13/v13/docs/research/reference-implementation.md`. Read it first; this note is the port checklist.
 
 ## License and attribution
 - `LICENSE`: **MIT, "Copyright (c) 2026 kepano"**. `package.json`: `"license": "MIT", "author": "kepano"`, repo `github.com/obsidianmd/pele`.
-- **Pele files have no per-file license headers.** They open straight with a plain `//` prose comment that says what the module does (e.g. `layered.ts:1-27` ranked aesthetic-goal list, `yaml.ts:1-2`), or with imports. DESIGN §6.2 says to **keep the ranked-goal header** of `layered.ts`.
-- R-REL-4 / D-log asks for attribution. The suggested form below is an inference: add a header line such as `// Ported from Pele (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano), src/layout/layered.ts @ 3a2f075.`, and add Pele's MIT text to a `THIRD_PARTY_NOTICES`/`LICENSE` section of `@mermaid-js/core`.
+- **The reference implementation files have no per-file license headers.** They open straight with a plain `//` prose comment that says what the module does (e.g. `layered.ts:1-27` ranked aesthetic-goal list, `yaml.ts:1-2`), or with imports. DESIGN §6.2 says to **keep the ranked-goal header** of `layered.ts`.
+- R-REL-4 / D-log asks for attribution. The suggested form below is an inference: add a header line such as `// Ported from Pele (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano), src/layout/layered.ts @ 3a2f075.`, and add the reference implementation's MIT text to a `THIRD_PARTY_NOTICES`/`LICENSE` section of `@mermaid-js/core`.
 
 ## Conventions that clash with this repo's lint
-- Pele uses **`const enum`** a lot (`layout/layered.ts:29 Kind`, `layout/compound.ts:147 Style`, `text/measurer.ts:3 Style`, `diagrams/flowchart/tokens.ts:1 T`, `lexer.ts` `const enum S`). The repo's eslint `TSEnumDeclaration` ban (`/Users/knsv/repos/mermaid-v13/eslint.config.js:236-247`) also matches const enums. Convert them to `as const` objects of numbers plus a union type, or to plain `const X = 0` numbers.
-- Imports use `.js` suffixes (ESM, the same style as this repo). Pele has zero runtime dependencies.
+- The reference implementation uses **`const enum`** a lot (`layout/layered.ts:29 Kind`, `layout/compound.ts:147 Style`, `text/measurer.ts:3 Style`, `diagrams/flowchart/tokens.ts:1 T`, `lexer.ts` `const enum S`). The repo's eslint `TSEnumDeclaration` ban (`/Users/knsv/repos/mermaid-v13/eslint.config.js:236-247`) also matches const enums. Convert them to `as const` objects of numbers plus a union type, or to plain `const X = 0` numbers.
+- Imports use `.js` suffixes (ESM, the same style as this repo). The reference implementation has zero runtime dependencies.
 
-## Port list (DESIGN §4–§8 → Pele source)
+## Port list (DESIGN §4–§8 → the reference implementation source)
 
-| v13 target (ticket) | Pele file | Key exports / lines | Tests to bring |
+| v13 target (ticket) | The reference implementation file | Key exports / lines | Tests to bring |
 |---|---|---|---|
 | YAML subset reader (#5) | `src/util/yaml.ts` (470) | `parseYaml(src)` :452; `MAX_DEPTH = 64` :12; `class Incomplete` (non-Error throw) :8; `YamlValue` type :4. Covers what js-yaml `JSON_SCHEMA` gets from Mermaid: block/flow collections, quoted/plain/block scalars. `__proto__` keys are written with `Object.defineProperty` (:15-16), so the prototype cannot be polluted (DESIGN §4.1 asks for this) | `tests/util/yaml.test.ts` (62) |
 | Preprocess reference (#5) | `src/preprocess.ts` (247) | `preprocess` :138-183, `cleanupComments` :27, `normalizeLineBreaks` :34, `dropColorSemicolons` :196-234 (linear rewrite of Mermaid's backtracking regex), `encodeEntities` :237-247 | `tests/util/preprocess.test.ts` |
@@ -43,14 +43,14 @@ Deeper research with more line pointers: `/Users/knsv/repos/mermaid-v13/v13/docs
 - `mutator(corpus, fragments, rnd)`: 1–3 edits per sample. Each edit is one of: insert a fragment (35%), delete 1–3 chars (25%), splice ≤20 chars from another corpus entry (15%), duplicate ≤6 chars (15%), or replace a char with a fragment (10%).
 - Use: `tests/flowchart/oracle.test.ts`. It has a `FRAGMENTS` list of ~130 flowchart tokens, `corpus.length > 300`, and `FUZZ` env (default 5000 mutated inputs). It compares **tokens, accept/reject and model calls** against the oracle.
 
-## Pele's own oracle: an alternative that needs no DOM (relevant to #4 / #8)
+## The reference implementation's own oracle: an alternative that needs no DOM (relevant to #4 / #8)
 - `tests/support/jison.ts`: `buildParser(grammarPath)` builds the parser in-process with the `jison` npm package (`new jison.Generator(grammar, {moduleType:'js','token-stack':true})`).
 - `tests/support/oracle.ts`: `createOracle(grammarPath)` → `{parser, methods (yy.* names scraped from grammar), tokens(src, yy), parse(src, yy)}`; `recordingYy` records every `yy.*` call; `mergeTokens`.
 - `tests/support/flow-oracle.ts`: vendored grammar `tests/compat/flowchart/upstream/flow.jison`; `prepare()` = the `}\s*\n` rewrite; `oracleTokens/peleTokens`, `oracleParse/peleParse` (`destructLink` stubbed, `addSubGraph` returns `SG<n>`).
-- `scripts/sync-specs.mjs <mermaid checkout at tag> [suite]` copies v12 specs into `tests/compat/<type>/`, rewrites imports to an adapter, vendors grammars into `upstream/`, and writes `SKIPPED.md` (suite descriptors in `scripts/suites/*.mjs`). Flowchart adapter: `tests/compat/flowchart/adapter.ts` (exposes `FlowDB`/`setConfig`/`log` with v12 names over Pele's `FlowDb`). Flowchart skips (`tests/compat/flowchart/SKIPPED.md`): only 2, one of which is DOMPurify's `<`→`&lt;` serialisation.
+- `scripts/sync-specs.mjs <mermaid checkout at tag> [suite]` copies v12 specs into `tests/compat/<type>/`, rewrites imports to an adapter, vendors grammars into `upstream/`, and writes `SKIPPED.md` (suite descriptors in `scripts/suites/*.mjs`). Flowchart adapter: `tests/compat/flowchart/adapter.ts` (exposes `FlowDB`/`setConfig`/`log` with v12 names over the reference implementation's `FlowDb`). Flowchart skips (`tests/compat/flowchart/SKIPPED.md`): only 2, one of which is DOMPurify's `<`→`&lt;` serialisation.
 
-## Bench fixtures (the "#8635 / Pele set", R-PERF-6)
-`scripts/bench-mermaid.mjs:29-80`. These are the fixtures #8635 used ("the ones Pele uses in its Mermaid comparison"):
+## Bench fixtures (the "#8635 / the reference implementation set", R-PERF-6)
+`scripts/bench-mermaid.mjs:29-80`. These are the fixtures #8635 used ("the ones the reference implementation uses in its Mermaid comparison"):
 - `tree(n)`: `flowchart TD` + `n{floor((i-1)/3)}[Node …] --> n{i}[Node i]` for i < n (fan-out 3). Used for **50** and **500** nodes.
 - 7-node flowchart (Start / Is it working? / Ship it / Debug / Fix / Celebrate / Done), a `sequenceDiagram` (Alice/Bob, loop), and a `classDiagram` (Animal/Dog/Cat/Bird).
 - Plus `tests/corpus/flowchart-docs.json`. `scripts/bench.mjs` adds `mesh(n, extra)` random graphs (seeded LCG).

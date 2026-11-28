@@ -111,6 +111,6 @@ Elsewhere at fa796a943: `packages/mermaid/src/docs/syntax/venn.md` (150 lines), 
 - Themes: `nightly-check/9-…dark-theme`, `three-sets-redux-color-theme`, `three-sets-redux-dark-color-theme` and `explicit-set-style-over-redux-palette`.
 - Registry row: **`packages/mermaid/src/generated/registry.gen.ts:148`** `{ type: 'venn', pattern: /^\s*venn-beta/ }`, after railroadPeg L147 and before wardley L149. The spec's `:103` is stale. Its source is `tools/gen-config/src/registry.ts:61`.
 
-## 12. Pele
+## 12. The reference implementation
 
-There is **no Pele install in this worktree**. `pele@1.13.0` is a devDependency of `packages/bench/package.json:44` and is installed in `.claude/worktrees/t486/node_modules/.pnpm/pele@1.13.0` (also in `.tmp/{wt-272,perf-verify,t423rf-e2e}`). Only `dist/diagrams/venn/*.d.ts` (`db`, `layout`, `lexer`, `parser`, `render`, `types`) is readable. The JS is a minified chunk (`dist/esm/diagrams/venn.js` → `chunks/55GM72UB.js`). MIT.
+There is **no the reference implementation install in this worktree**. `pele@1.13.0` is a devDependency of `packages/bench/package.json:44` and is installed in `.claude/worktrees/t486/node_modules/.pnpm/pele@1.13.0` (also in `.tmp/{wt-272,perf-verify,t423rf-e2e}`). Only `dist/diagrams/venn/*.d.ts` (`db`, `layout`, `lexer`, `parser`, `render`, `types`) is readable. The JS is a minified chunk (`dist/esm/diagrams/venn.js` → `chunks/55GM72UB.js`). MIT.

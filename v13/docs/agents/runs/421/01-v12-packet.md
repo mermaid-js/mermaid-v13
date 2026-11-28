@@ -58,6 +58,6 @@ Paths are relative to the repo root. `t:` stands for `git -C /Users/knsv/repos/m
 - **Labels** `layoutLabel` `core/src/text/label.ts:86`; pie `diagram-pie/src/layout/layout.ts:49-50`; journey `diagram-journey/src/layout/env.ts:81` (`maxWidth` from the box, the shape for fit-to-field).
 - **ASCII** `core/src/ascii/index.ts:5-18`: `Canvas` (`canvas.ts:13`), `drawBox` (`draw.ts:58`), `drawText` (`draw.ts:15`), `junction` (`glyphs.ts:170`), `ascii`/`unicode` glyphs, `asciiOptions`, `cellMeasurer`. Model: `diagram-er/package.json:19-22` (`./ascii`), :53-58 (`formats`, `"ascii"` key), `src/plugin.ts:23-24`, `src/ascii.ts:10-21`.
 
-## 5. Pele
+## 5. The reference implementation
 
-- No Pele source on this machine: no `pele/src/diagrams/packet/` under `/Users/knsv`. Only `packages/bench/fixtures/pele/` (class, flowchart, sequence `.mmd` + `manifest.json`), no packet. The token table must come from the oracle probe above.
+- No the reference implementation source on this machine: no `pele/src/diagrams/packet/` under `/Users/knsv`. Only `packages/bench/fixtures/pele/` (class, flowchart, sequence `.mmd` + `manifest.json`), no packet. The token table must come from the oracle probe above.
