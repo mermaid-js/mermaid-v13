@@ -1,9 +1,11 @@
 # Implementer brief (spec #293, M4 gantt port)
 
+`$REF` is the reference implementation's checkout (D770).
+
 - **Ticket:** `gh issue view -R mermaid-js/mermaid-v13 <N>`. **Spec:** #293 (its "Maintainer decisions" are decided: D270–D279). **Docs:** `v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md` (D224–D227 are in pie's block and apply here). **Recipe:** `v13/docs/agents/port-diagram/` (README, parser-method, pitfalls, theming, language).
 - **Notes:** this folder. Read `INDEX.md`, `01-v12-gantt.md`, `GAPS.md` (close the items listed for your ticket) and `tickets/<dep>.md` for each blocker.
 - **Repo rules:** CLAUDE.md. pnpm; no TS enums; no console in shipped packages. `@mermaid-js/diagram-gantt` imports only `@mermaid-js/core` subpaths, never another diagram package. Worked examples: `packages/diagram-timeline` and `packages/diagram-sequence` (custom layout, jison port).
-- **The reference implementation** (`/Users/knsv/repos/pele`, MIT © kepano, commit 3a2f075): `src/diagrams/gantt/` is prior art. `dates.ts` and `axis.ts` are ported (D271) with the notice kept; `db.ts` is a scheduling reference; `render.ts` is not (its look differs from v12). Read it; never edit it.
+- **The reference implementation** (`$REF`, MIT © kepano, commit 3a2f075): `src/diagrams/gantt/` is prior art. `dates.ts` and `axis.ts` are ported (D271) with the notice kept; `db.ts` is a scheduling reference; `render.ts` is not (its look differs from v12). Read it; never edit it.
 - **Worktree:** `/Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N>` on `feature/<N>_<short>`, cut from `feature/293_gantt`. Work only there with absolute paths; stay out of other worktrees. Run `pnpm install` first.
 - **Integration branch:** `feature/293_gantt`, checked out at `/Users/knsv/repos/mermaid-v13/.claude/worktrees/293-gantt-349dd8`. Read only from it; never write there.
 - **Parallel M4 sessions** (gitGraph #292, mindmap #294) touch shared core files: theme vocabulary, the conformance registry, the generated registry and config, `tools/release/src/publish.spec.ts`. Never hand-edit generated files beyond what `gen:*` produces (D112); keep shared edits small and additive. Mindmap's T0 changes core layout selection: keep core edits minimal.

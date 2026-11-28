@@ -1,5 +1,7 @@
 # 06 — Running `mermaid@12` as a DOM-free oracle in Node (tickets #4, #8)
 
+`$REF` is the reference implementation's checkout (D770).
+
 Everything here was **verified on 2026-11-02** with Node and `npm:mermaid@12.2.0` in a scratch project. The scratch install project was session-local and is gone; `packages/conformance/src/oracle.ts` is the maintained version.
 
 ## Installable as an alias? Yes
@@ -39,4 +41,4 @@ d.db.getAccTitle(); d.db.getAccDescription(); d.db.getDiagramTitle()
 - Caution (inference): `mermaid.initialize`/directives mutate global site config in v12. Call `mermaid.mermaidAPI.reset()` (or `globalReset`) between oracle inputs that carry `%%{init}%%`, or the config could leak into the next input.
 
 ## Alternative oracle that needs no npm mermaid at runtime (the reference implementation's approach)
-Build the jison parser in-process from the vendored `flow.jison` (`jison` npm). Drive it with a recording `yy`, then compare token streams, accept/reject and the sequence of `yy.*` calls (`pele/tests/support/{jison,oracle,flow-oracle}.ts`; see 02-reference-port.md). This is stricter at the parser level, but it skips FlowDB's semantic checks (shape validation, `destructLink`, subgraph merging). DESIGN §13.1 chose the `mermaid@12` db route. The reference implementation's route is a cheap extra gate for the lexer (#8).
+Build the jison parser in-process from the vendored `flow.jison` (`jison` npm). Drive it with a recording `yy`, then compare token streams, accept/reject and the sequence of `yy.*` calls (`$REF/tests/support/{jison,oracle,flow-oracle}.ts`; see 02-reference-port.md). This is stricter at the parser level, but it skips FlowDB's semantic checks (shape validation, `destructLink`, subgraph merging). DESIGN §13.1 chose the `mermaid@12` db route. The reference implementation's route is a cheap extra gate for the lexer (#8).

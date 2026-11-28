@@ -1,5 +1,7 @@
 # 01 — v12 treeView pointer notes (spec #518)
 
+`$REF` is the reference implementation's checkout (D770).
+
 **Refs.** Read with `git show fa796a943:<path>`. `M=packages/mermaid/src/diagrams/treeView`, `G=packages/parser/src/language/treeView`, `R=packages/mermaid/src`. `$M` and `$G`, `treeView.test.ts` and `examples/tree-view.ts` are byte-identical to `mermaid@12.2.0` (tree hashes checked in `/Users/knsv/repos/mermaid`). The syntax page differs only by the harvest commit's front matter and beta warning. The schema block is the same text 17 lines lower. Mostly code-read; "probed" marks what was run against 2.0.1 or the 12.2.0 oracle.
 Files: `$M/{boxDrawingPreprocessor,db,detector,diagram,icons,parser,renderer,styles,types}.ts` (840 lines), specs `$M/{boxDrawingPreprocessor,db,icons,parser}.spec.ts`; `$G/{treeView.langium,tokenBuilder,valueConverter,module,index}.ts` (190 lines). Registered at `$R/diagram-api/diagram-orchestration.ts:26,113`, `packages/parser/src/parse.ts:55–58,120`, `langium-config.json:20`.
 
@@ -85,7 +87,7 @@ The flattening was done upstream in v12's own commit `7a38a04a6` ("migrate inlin
 - How the oracle reaches it: `oracle.ts:95` `getDiagramFromText`, then the 12.2.0 chunk `mermaid@12.2.0/…/dist/chunks/mermaid.core/diagram-ODIL2UCW.mjs` (L39 `import { parse } from "@mermaid-js/parser"`, L70 the box pass, which is module-local and not exported, L249–262 `parser.parse`). That calls `mermaid-parser.core.mjs:259–273` `parse`, which uses a private `parsers.treeView` built lazily at L198–202 from its own `createTreeViewServices()`. Interception point for T1: the instance is unreachable, so patch the shared prototype (the `LangiumParser` `parse`, or the `Lexer`'s `tokenize`) from the oracle's own services. Note the prototype is shared by every Langium type, so arm it only during a treeView `input()`.
 - `packages/conformance/src/cli/harvest-v12.ts:39–105` `HARVESTS` (radar L67, treemap L77); header regex L152–154; scripts at `packages/conformance/package.json:15–22`. `PARITY_SUITES` is at `packages/conformance/src/registry.ts:35`.
 - Already present: `packages/core/schema/config.schema.yaml:1171–1173` (`treeView`, `status: pending`), `:5041` the defs; `core/src/config/generated/keys.ts:34`; `mermaid/src/generated/registry.gen.ts:146`, `detectors.gen.ts:31`; `language-service/src/generated/facets.gen.ts:157`; `conformance/src/detection.spec.ts:75`.
-- The reference implementation: **`/Users/knsv/repos/pele` does not exist on this machine**, so the files are unlisted. The four places the spec says the reference implementation is better: linear bare-name lexing (one lookahead per blank run); own-property icon lookups; box-mode column remapping (Q6); an early exit when the text has no box glyph. `v13/docs/research/reference-implementation.md:71,339` mention treeView only in passing.
+- The reference implementation: **`$REF` does not exist on this machine**, so the files are unlisted. The four places the spec says the reference implementation is better: linear bare-name lexing (one lookahead per blank run); own-property icon lookups; box-mode column remapping (Q6); an early exit when the text has no box glyph. `v13/docs/research/reference-implementation.md:71,339` mention treeView only in passing.
 
 ## Traps
 

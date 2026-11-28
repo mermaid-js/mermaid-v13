@@ -1,5 +1,7 @@
 # 01 — v12 gitGraph pointer notes (spec #292)
 
+`$REF` is the reference implementation's checkout (D770).
+
 `L=fa796a943:packages/parser/src/language`, `G=fa796a943:packages/mermaid/src/diagrams/git`, `TH=fa796a943:packages/mermaid/src/themes`. Read with `git show $G/<file>`.
 Oracles: `packages/conformance/node_modules/mermaid-parser-v12` (`@mermaid-js/parser@2.0.1`, `dist/mermaid-parser.core.mjs`, `createGitGraphServices().GitGraph.parser.Lexer`) and `mermaid-v12` through `packages/conformance/src/oracle.ts` (`loadOracle().parse(text, config)` → `db`). Node 24 runs `oracle.ts` directly (type stripping). Facts marked (probed) came from those.
 
@@ -113,7 +115,7 @@ Oracles: `packages/conformance/node_modules/mermaid-parser-v12` (`@mermaid-js/pa
 
 ## 10. The reference implementation
 
-`/Users/knsv/repos/pele/src/diagrams/git/db.ts` (HEAD `3a2f075`, 2026-10-30): `buildGit` L122; `nextId` L138–143: `` `${seq}-${(Math.imul(salt, 0x9e3779b1) >>> 0).toString(16).padStart(8,'0').slice(0,7)}` `` with `salt = seq + 1`, stepping `salt += 0x9e3779b1` while the id is taken. Used for commits L167, merges L207, cherry-picks L237. `titleBefore` in `src/diagrams/common/tokens.ts:141`.
+`$REF/src/diagrams/git/db.ts` (HEAD `3a2f075`, 2026-10-30): `buildGit` L122; `nextId` L138–143: `` `${seq}-${(Math.imul(salt, 0x9e3779b1) >>> 0).toString(16).padStart(8,'0').slice(0,7)}` `` with `salt = seq + 1`, stepping `salt += 0x9e3779b1` while the id is taken. Used for commits L167, merges L207, cherry-picks L237. `titleBefore` in `src/diagrams/common/tokens.ts:141`.
 
 ## 11. Surprises
 

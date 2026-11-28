@@ -1,10 +1,12 @@
 # Implementer brief, spec #525 (architecture)
 
+`$REF` is the reference implementation's checkout (D770).
+
 - Ticket: `gh issue view -R mermaid-js/mermaid-v13 <N>`. Spec: #525 (body and the decision comment; D500–D509 in `v13/docs/DECISIONS.md`). Docs: `v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md`. Recipe: `v13/docs/agents/port-diagram/` (README, parser-method, pitfalls, theming, language). Theme contract: `v13/docs/agents/runs/414/CONTRACT.md`.
 - Notes: this folder. Read `INDEX.md`, `GAPS.md` (close the items listed for your ticket) and `tickets/<dep>.md` for each blocker.
 - Tickets: T0 #590 (compass), T0b #591, T0c #592 (each core ticket is its own PR into `mermaid-v13`, based on `origin/mermaid-v13`, marked ready once CI is green), T1 #594, T2 #599, T3 #607, T4 #614, T5 #618, T6 #619.
 - Integration branch: `feature/525_architecture`. Worktree: `/Users/ashishj/repos/mermaid-v13/.claude/worktrees/arch-t<N>` on `feature/<N>_<short>`. Use absolute paths; stay out of other worktrees. Run `pnpm install` first (Volta: `~/.volta/bin`, `VOLTA_FEATURE_PNPM=1`).
-- References: v12 source `git show fa796a943:packages/mermaid/src/diagrams/architecture/…`, grammar `git show fa796a943:packages/parser/src/language/architecture/…`, config schema `git show fa796a943:packages/mermaid/src/schemas/config.schema.yaml`. The reference implementation (MIT reference, never the oracle, D325): `/Users/knsv/repos/pele/src/diagrams/architecture/`. Worked examples: packet and radar (Langium), pie (`loadLangiumLexerOracle`), treemap/wardley/xychart/sankey/venn (newest ports).
+- References: v12 source `git show fa796a943:packages/mermaid/src/diagrams/architecture/…`, grammar `git show fa796a943:packages/parser/src/language/architecture/…`, config schema `git show fa796a943:packages/mermaid/src/schemas/config.schema.yaml`. The reference implementation (MIT reference, never the oracle, D325): `$REF/src/diagrams/architecture/`. Worked examples: packet and radar (Langium), pie (`loadLangiumLexerOracle`), treemap/wardley/xychart/sankey/venn (newest ports).
 
 1. Confirm your base: `git merge-base --is-ancestor feature/525_architecture HEAD` (T0, T0b, T0c: `origin/mermaid-v13`). If that fails, reset onto it.
 2. Test-first. Test through `createMermaid().render()` / `renderSync()`, except where the ticket names another seam (T0: `compass(graph)`; T3: the built `LayoutGraph`).

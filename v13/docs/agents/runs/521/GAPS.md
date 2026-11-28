@@ -1,10 +1,12 @@
 # Gaps: block port (#521)
 
+`$REF` is the reference implementation's checkout (D770).
+
 Unmet criteria and choices the spec and D-ids leave open, by owning ticket.
 
 ## All tickets
 
-- The reference implementation (`/Users/knsv/repos/pele`) is not on AI-Max, so its block reference (spec "Further Notes", D442, D443, D445) cannot be read. Tickets follow the spec's description of the reference implementation's behaviour and v12 everywhere else.
+- The reference implementation (`$REF`) is not on AI-Max, so its block reference (spec "Further Notes", D442, D443, D445) cannot be read. Tickets follow the spec's description of the reference implementation's behaviour and v12 everywhere else.
 
 - Follow-up (programme level, not this port): the lexer's source-mapping helpers (`v12Text`, `adjacent`, `placeholders`, `view`, `trivia`, `emit`, `dropAt`, `spaces`) are a third copy of venn's and kanban's (review of #553). A parser-kit home for them is a separate change.
 

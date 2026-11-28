@@ -1,5 +1,7 @@
 # 01 — v12 gantt pointer notes (spec #293)
 
+`$REF` is the reference implementation's checkout (D770).
+
 `V=fa796a943:packages/mermaid/src/diagrams/gantt`. Read with `git show $V/<file>`. Files: `ganttDb.js`, `ganttDb.spec.ts`, `ganttDetector.ts`, `ganttDiagram.ts`, `ganttRenderer.js`, `parser/gantt.jison`, `parser/gantt.spec.js`, `styles.js`.
 The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm/mermaid@12.2.0/node_modules/mermaid/dist/chunks/mermaid.core/ganttDiagram-R7GPNTJY.mjs` (L783 compiled `rules`, L784 `conditions`, L93 `yy.TopAxis()`). The worktree has no `node_modules`.
 
@@ -140,7 +142,7 @@ The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm
 - visual-check: 8 themes (default, dark, forest, neutral, redux, redux-dark, redux-color, redux-dark-color). **No neo/neo-dark.**
   - 4 classic ones write `dateFormat :YYYY-MM-DD`, `title :…`, `excludes :…`: the format literally starts with `:`, so every date takes the `Date` fallback and the title starts with `:`.
 
-## 7. The reference implementation — `/Users/knsv/repos/pele` at 3a2f075 (HEAD, "Release: 1.13.0", clean)
+## 7. The reference implementation — `$REF` at 3a2f075 (HEAD, "Release: 1.13.0", clean)
 
 - `src/diagrams/gantt/`: axis, dates, db, index, lexer, parser, render, tokens, types (.ts).
 - `dates.ts` (380 lines, **no imports**) exports: `MONTHS` L6, `WEEKDAYS` L20, `Unit` L25, `isValid` L27, `isoWeekday` L53, `addDays` L57, `add(date, n, unit)` L78, `format(date, tpl)` L119 (`undefined` for unsupported tokens), `isoDate` L215, `parseStrict(input, tpl, now)` L377.
@@ -154,7 +156,7 @@ The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm
   - So the test's `parseDuration` import must be repointed (to v13's schedule) or copied. db.ts does not come along.
 - `tests/compat/gantt/adapter.ts` (110 lines): a `GanttDB extends GanttDb` with v12 getter names, `clear()` = `Object.assign(this, new GanttDb())`; `parser.parse` → `parseGantt`; a `dayjs(text, fmt)` stub for two formats; `convert`.
   - Specs there were ported from mermaid@12.1.0 (`gantt.spec.js` 291 lines, `ganttDb.spec.ts` 622; same 17/28 blocks). `SKIPPED.md` lists none. `tests/gantt/oracle.test.ts`, `stress.test.ts` also exist.
-- Licence: `/Users/knsv/repos/pele/LICENSE`, MIT, "Copyright (c) 2026 kepano", plus a Lucide ISC section (not relevant to gantt). No NOTICE file.
+- Licence: `$REF/LICENSE`, MIT, "Copyright (c) 2026 kepano", plus a Lucide ISC section (not relevant to gantt). No NOTICE file.
 
 ## 8. v13 tree (38d663b44)
 

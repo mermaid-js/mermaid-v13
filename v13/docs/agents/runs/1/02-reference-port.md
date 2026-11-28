@@ -1,6 +1,8 @@
 # 02 — the reference implementation: files to port
 
-Repo: `/Users/knsv/repos/pele` @ `3a2f075` ("Release: 1.13.0", 2026-10-30), clean working tree. The bench harness pins `pele@1.12.0`.
+`$REF` is the reference implementation's checkout (D770).
+
+Repo: `$REF` @ `3a2f075` ("Release: 1.13.0", 2026-10-30), clean working tree. The bench harness pins `pele@1.12.0`.
 Deeper research with more line pointers: `/Users/knsv/repos/mermaid-v13/v13/docs/research/reference-implementation.md`. Read it first; this note is the port checklist.
 
 ## License and attribution

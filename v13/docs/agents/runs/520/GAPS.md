@@ -1,10 +1,12 @@
 # Gaps (spec #520)
 
+`$REF` is the reference implementation's checkout (D770).
+
 Unmet acceptance criteria and open choices, filed under the ticket that owns each one. Choices made without the maintainer (not covered by the spec or a D-id) are marked **Choice** and repeated under "For the maintainer" in the integration PR body.
 
 ## #560 T1 lexer and corpus
 - Note (exploration): the parser spec has 37 `it` plus one `test.each`, 43 run tests (the spec says 38); the DB spec 10, the syntax page 9 examples. Corpus 172 files as the spec says.
-- Note: the reference implementation's source is not on this machine (`/Users/knsv/repos/pele/` is absent); only `pele@1.13.0`'s dist is under `packages/bench/node_modules/pele/dist`. It stays a reference only (D325).
+- Note: the reference implementation's source is not on this machine (`$REF/` is absent); only `pele@1.13.0`'s dist is under `packages/bench/node_modules/pele/dist`. It stays a reference only (D325).
 - **Choice** (D431, for #564; kept after review: "it cannot break a document that renders today"): v12 accepts six forms only because its `\s+` swallows the line break after a blank: `requirement ⏎ a {`, `a - traces ⏎-> b`, `a - ⏎traces -> b`, `risk: ⏎high`, `requirement "a" ⏎{`, `"a" ⏎- traces -> b` (each `⏎` after a blank; `requirement-cases/blank-split-*`). Read literally, D431 rejects them. The lexer gives such a line break its own kind, `NewlineAfterBlank` (`NEWLINE` to the gate), so T2 can take it as a `NEWLINE` only where the grammar needs a line break (D431's five places) and skip it elsewhere (v12's swallow): every document v12 accepts keeps its model, and the five rejections become accepts.
 - **For the maintainer** (D432, read literally after review): a direction token is only `direction`, blanks and `TB|BT|RL|LR` then `\b` at a line start; the rest of the line lexes as usual. So `direction LR <more>` (e.g. `direction LR a - traces -> b`, `direction LR;`) now errors where v12 accepted it and dropped the rest, and `direction BT x direction TB` is BT (v12: TB). No corpus file has text after a direction. An indented direction token no longer holds its leading blanks (image only).
 - **Choice** (D431): the style state is unchanged: a space is skipped and a line break ends the statement as in v12; a tab there is still a lexer error, trailing or not.

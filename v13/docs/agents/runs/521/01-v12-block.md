@@ -1,5 +1,7 @@
 # 01 — v12 block (at `fa796a943`) and the v13 pieces it maps to
 
+`$REF` is the reference implementation's checkout (D770).
+
 Read v12 with `git show fa796a943:packages/mermaid/src/diagrams/block/<file>`. Line numbers are file lines.
 
 ## v12 files (`packages/mermaid/src/diagrams/block/`)
@@ -78,4 +80,4 @@ Flowchart's shape helpers: `Pads` 19-44, `box` 104, `padded` 119, `lean` 127, `c
 - Corpus `e2e/diagrams/block/`: 58 `.mmd` (`nightly-check` 28, `pr-check` 10, `visual-check` 20). No `packages/conformance/corpus/block*` yet.
 - `JISON_TYPES` `packages/conformance/src/jison/types.ts:116-268`; `JisonTypeDescriptor` 67-85; `HarvestMethod` 19-52; kanban 191-199 (`run`), venn 258-267 (`literals`, `yy`).
 - `custom` package layout to copy: `diagram-quadrant` and `diagram-venn` (venn measures labels inside `layout` through `ctx.measurer`, `layout.ts:95-96`, which block needs).
-- The reference implementation is not on this machine (`/Users/knsv/repos/pele` missing).
+- The reference implementation is not on this machine (`$REF` missing).

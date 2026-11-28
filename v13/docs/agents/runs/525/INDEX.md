@@ -1,6 +1,8 @@
 # Pointer index, spec #525 (architecture, `@mermaid-js/diagram-architecture`)
 
-Pointers only. v12 = `git show fa796a943:<path>`; the reference implementation = `/Users/knsv/repos/pele/src/diagrams/architecture/`; everything else is this worktree. `A` = `packages/mermaid/src/diagrams/architecture/`, `PL` = `packages/parser/src/language/architecture/`.
+`$REF` is the reference implementation's checkout (D770).
+
+Pointers only. v12 = `git show fa796a943:<path>`; the reference implementation = `$REF/src/diagrams/architecture/`; everything else is this worktree. `A` = `packages/mermaid/src/diagrams/architecture/`, `PL` = `packages/parser/src/language/architecture/`.
 
 ## 1. v12 sources (fa796a943)
 

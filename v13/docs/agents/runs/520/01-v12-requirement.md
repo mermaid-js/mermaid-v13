@@ -1,5 +1,7 @@
 # 01 — v12 requirement pointer notes (spec #520)
 
+`$REF` is the reference implementation's checkout (D770).
+
 **Refs.** `V=fa796a943:packages/mermaid/src/diagrams/requirement`, `R=fa796a943:packages/mermaid/src`. Read with `git show $V/<file>`. Every file under `$V` and `$R/rendering-util/rendering-elements/shapes/requirementBox.ts` is byte-identical at the 12.2.0 commit `1fb786986` (the harvest reads `fa796a943`, `packages/conformance/src/jison/harvest.ts:16`). `markers.js` differs by 86 added lines elsewhere (L993+), not in the requirement markers; the syntax page differs by 4 lines (a front-matter `description`), so its line numbers shift by 4.
 Oracle dist: `packages/conformance/node_modules/mermaid-v12/dist/chunks/mermaid.core/requirementDiagram-EQYSW5RA.mjs` (12.2.0, installed in this worktree).
 Sizes: `parser/requirementDiagram.jison` 267, `requirementDb.ts` 351, `requirementRenderer.ts` 39, `styles.js` 124, `types.ts` 51, `requirementDetector.ts` 24, `requirementDiagram.ts` 15; specs `parser/requirementDiagram.spec.js` 850, `requirementDb.spec.ts` 107.
@@ -106,4 +108,4 @@ Sizes: `parser/requirementDiagram.jison` 267, `requirementDb.ts` 351, `requireme
 
 ## 13. The reference implementation
 
-- `/Users/knsv/repos/pele/` **does not exist** on this machine. The only copy is `pele@1.13.0` in `packages/bench/node_modules/pele/` (bench dependency, `packages/bench/package.json:50`): `dist/diagrams/requirement/{db,graph,index,lexer,parser,render,tokens,types}.d.ts`, `dist/esm/diagrams/requirement.js` (a 244 B re-export), `dist/entries/requirement.d.ts`. Types only; read the chunk it re-exports for behaviour. MIT reference (D325), never the oracle.
+- `$REF/` **does not exist** on this machine. The only copy is `pele@1.13.0` in `packages/bench/node_modules/pele/` (bench dependency, `packages/bench/package.json:50`): `dist/diagrams/requirement/{db,graph,index,lexer,parser,render,tokens,types}.d.ts`, `dist/esm/diagrams/requirement.js` (a 244 B re-export), `dist/entries/requirement.d.ts`. Types only; read the chunk it re-exports for behaviour. MIT reference (D325), never the oracle.

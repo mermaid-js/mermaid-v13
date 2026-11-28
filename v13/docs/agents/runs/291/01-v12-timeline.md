@@ -1,5 +1,7 @@
 # 01 — v12 timeline pointer notes (spec #291)
 
+`$REF` is the reference implementation's checkout (D770).
+
 `V=fa796a943:packages/mermaid/src/diagrams/timeline`, `TH=fa796a943:packages/mermaid/src/themes`. Read with `git show $V/<file>`.
 v12.2.0 dist (the oracle) matches: `node_modules/.pnpm/mermaid@12.2.0/node_modules/mermaid/dist/chunks/mermaid.core/timeline-definition-JXYKGLGB.mjs`.
 Probe results below marked (probed) came from running that chunk's parser with `parser.yy = diagram.db` in node.
@@ -181,7 +183,7 @@ Only `theme-default.js` calls `updateColors()` in its constructor (L144) as well
 - `timeline.spec.js`: 11 `timeline.parse(str)` calls (L17, 25, 33, 41, 50, 65, 84, 108, 133, 157, 175); L151–186 pin trailing spaces in events and `#`/`;` as text in title/section/event.
 - Docs `fa796a943:packages/mermaid/src/docs/syntax/timeline.md`: direction L126–144, disableMulticolor L176/L190, cScale/cScaleLabel overrides L201–224, `<br>` L95.
 
-## 10. The reference implementation — `/Users/knsv/repos/pele/src/diagrams/timeline/` (db.ts, index.ts, lexer.ts, parser.ts, render.ts)
+## 10. The reference implementation — `$REF/src/diagrams/timeline/` (db.ts, index.ts, lexer.ts, parser.ts, render.ts)
 
 - `lexer.ts:42–134` hand lexer emitting jison names (`TOKEN_NAMES` L23–40); `timeline`/LR/TD word-bounded (L67–79, matches jison's `\b`).
   - Divergence: bare `title` is skipped (L80–87).
