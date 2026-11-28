@@ -9,12 +9,14 @@
  * - circles are inside the chart's box, `width × (height − titleHeight)`;
  * - text: each text node's cell centre (where its label is centred) is inside its area's inner
  *   circle, each cell is inside the area's grid and the cells do not overlap. Whole cells are
- *   not checked against the inner circle: v12's grid is the `1.9 · r` square about it, so every
- *   cell's corners reach past it. Two of v12's own rules put a cell centre past the circle too,
- *   when the circle is small for the canvas width: the grid's least size (`80s × 60s`) and its
- *   move down (`min(32s, r / 4)`, `30s`, and a label's lines below its first, D613); a centre is
- *   let past for those only (GAPS #491);
+ *   not checked against the inner circle: v12's grid, which an area keeps when it has no label
+ *   and its nodes meet none (D750), is the `1.9 · r` square about it, so every cell's corners
+ *   reach past it. Two rules put a cell centre past the circle too, when the circle is small for
+ *   the canvas width or the nodes: the grid's least size (`80s × 60s`) and its move down (v12's
+ *   `min(32s, r / 4)` and `30s`, and D750's start below the labels); a centre is let past for
+ *   those only (GAPS #491);
  * - the labels of different areas do not overlap (a repeated area's copies share one place);
+ * - no text node's label meets a set or overlap label, its own area's or a neighbour's (D750);
  * - everything drawn is inside `bounds`.
  */
 import { idsKey, setIdOf, type VennModel } from '../model.ts';
@@ -43,6 +45,7 @@ export function vennLayoutViolations(model: VennModel, layout: VennLayout): stri
   circlesProportional(model, layout, eps, out);
   textInInnerCircles(layout, eps, out);
   labelsApart(layout, eps, out);
+  textClearOfLabels(layout, eps, out);
   for (const [what, box] of drawnBoxes(layout)) {
     if (!inside(box, layout.bounds, eps)) {
       out.push(`${what} ${printed(box)} is outside the bounds ${printed(layout.bounds)}`);
@@ -99,8 +102,8 @@ function circlesProportional(
 function textInInnerCircles(layout: VennLayout, eps: number, out: string[]): void {
   for (const t of layout.textAreas) {
     const { radius } = t.inner;
-    // v12 makes the grid at least 80s × 60s, and moves it down by the label offset (and D613 by
-    // a label's extra lines).
+    // v12 makes the grid at least 80s × 60s, and moves it down by the label offset (and D750
+    // below the labels).
     const leastSize =
       t.grid.width > VENN_METRICS.textBoxFactor * radius + eps ||
       t.grid.height > VENN_METRICS.textBoxFactor * radius + eps;
@@ -140,4 +143,18 @@ function labelsApart(layout: VennLayout, eps: number, out: string[]): void {
       }
     }
   });
+}
+
+/** No text node's label on a set or overlap label, its own area's or a neighbour's (D750). */
+function textClearOfLabels(layout: VennLayout, eps: number, out: string[]): void {
+  // A repeated area's copies share one label.
+  const labels = new Map<string, Rect>();
+  for (const a of layout.areas) if (a.label) labels.set(a.sets.join(' ∩ '), a.label);
+  for (const t of layout.textAreas) {
+    for (const n of t.nodes) {
+      for (const [name, label] of labels) {
+        if (overlaps(n.label, label, eps)) out.push(`text node ${n.id} meets the label of ${name}`);
+      }
+    }
+  }
 }

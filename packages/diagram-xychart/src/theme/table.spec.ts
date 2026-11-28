@@ -5,7 +5,14 @@
 // winning. The v12 oracle comparison in all eleven themes is
 // `packages/conformance/src/xychart/theme.spec.ts`.
 import { describe, expect, it } from 'vitest';
-import { createTheme, loadTheme, THEME_NAMES, type ThemeName } from '@mermaid-js/core/theme';
+import {
+  contrastRatio,
+  createTheme,
+  loadTheme,
+  parseColor,
+  THEME_NAMES,
+  type ThemeName,
+} from '@mermaid-js/core/theme';
 import { xychart } from '../plugin.ts';
 import { theme as table } from './table.ts';
 import { THEME_VARIABLES } from './vocabulary.ts';
@@ -13,14 +20,18 @@ import { THEME_VARIABLES } from './vocabulary.ts';
 const COLOURS = Object.keys(THEME_VARIABLES).filter((n) => THEME_VARIABLES[n]!.kind === 'color');
 const TEXT = COLOURS.filter((n) => n !== 'xyChartBackgroundColor');
 
+/** The dark redux and neo themes, whose data labels take a dark ink inside the bars (D749). */
+const DARK_INK: readonly ThemeName[] = ['redux-dark', 'redux-dark-color', 'neo-dark'];
+
 const resolve = async (name: ThemeName, themeVariables?: Record<string, unknown>) =>
   createTheme(await loadTheme(name), { diagram: table, cssVariables: false, themeVariables });
 
 describe('xychart theme table', () => {
-  it("is the plugin's table, under the xyChart section, with v12's thirteen keys nested", () => {
+  it("is the plugin's table, under the xyChart section, with v12's thirteen keys and v13's outside-label key nested", () => {
     expect(xychart.theme).toBe(table);
     expect(table.section).toBe('xyChart');
-    expect(Object.keys(table.vars)).toHaveLength(13);
+    expect(Object.keys(table.vars)).toHaveLength(14);
+    expect(table.vars.xyChartDataLabelOutsideColor!.nested).toBe('dataLabelOutsideColor');
     expect(table.vars.xyChartPlotColorPalette).toMatchObject({
       kind: 'palette',
       nested: 'plotColorPalette',
@@ -32,7 +43,10 @@ describe('xychart theme table', () => {
     '%s: text and axis colours are primaryTextColor, the background background',
     async (name) => {
       const t = await resolve(name);
-      for (const n of TEXT) expect(t.value(n), n).toBe(t.value('primaryTextColor'));
+      const text = DARK_INK.includes(name)
+        ? TEXT.filter((n) => n !== 'xyChartDataLabelColor')
+        : TEXT;
+      for (const n of text) expect(t.value(n), n).toBe(t.value('primaryTextColor'));
       expect(t.value('xyChartBackgroundColor')).toBe(t.value('background'));
       expect(t.palette('xyChartPlotColorPalette')).toEqual(t.palette('plotColorArray'));
       expect(t.palette('xyChartPlotColorPalette')).toHaveLength(10);
@@ -94,4 +108,78 @@ describe('xychart theme table', () => {
     const shared = await resolve('neo', { plotColorArray: '#444444' });
     expect(shared.palette('xyChartPlotColorPalette')).toEqual(['#444444']);
   });
+
+  it.each(DARK_INK)(
+    "%s: data labels take v12's dark ink #131300, AA on every palette slot (D749)",
+    async (name) => {
+      const t = await resolve(name);
+      expect(t.value('xyChartDataLabelColor')).toBe('#131300');
+      const ink = parseColor(t.value('xyChartDataLabelColor'))!;
+      for (const slot of t.palette('xyChartPlotColorPalette'))
+        expect(contrastRatio(ink, parseColor(slot)!), slot).toBeGreaterThanOrEqual(4.5);
+    }
+  );
+
+  it.each(DARK_INK)(
+    '%s: the canvas text stays the label ink where it reads on the first bar colour (D749)',
+    async (name) => {
+      const t = await resolve(name, { plotColorArray: ['#202020', '#303030'] });
+      expect(t.value('xyChartDataLabelColor')).toBe(t.value('primaryTextColor'));
+    }
+  );
+
+  it.each(DARK_INK)(
+    "%s: inside labels read the author's own first bar colour, AA on a dark palette (D749)",
+    async (name) => {
+      for (const vars of [
+        { xyChart: { plotColorPalette: '#1e293b, #334155' } },
+        { xyChartPlotColorPalette: ['#1e293b', '#334155'] },
+      ]) {
+        const t = await resolve(name, vars);
+        const first = parseColor(t.palette('xyChartPlotColorPalette')[0]!)!;
+        const ink = parseColor(t.value('xyChartDataLabelColor'))!;
+        expect(contrastRatio(ink, first)).toBeGreaterThanOrEqual(4.5);
+        expect(t.value('xyChartDataLabelColor')).toBe(t.value('primaryTextColor'));
+      }
+    }
+  );
+
+  it.each(DARK_INK)("%s: an author's dataLabelColor still wins (D749)", async (name) => {
+    expect(
+      (await resolve(name, { xyChart: { dataLabelColor: '#ffeeaa' } })).value(
+        'xyChartDataLabelColor'
+      )
+    ).toBe('#ffeeaa');
+    expect(
+      (await resolve(name, { xyChartDataLabelColor: '#aaeeff' })).value('xyChartDataLabelColor')
+    ).toBe('#aaeeff');
+  });
+
+  it.each(DARK_INK)(
+    '%s: labels outside the bars keep the canvas text, AA on the canvas (D749)',
+    async (name) => {
+      const t = await resolve(name);
+      expect(t.value('xyChartDataLabelOutsideColor')).toBe(t.value('primaryTextColor'));
+      const ink = parseColor(t.value('xyChartDataLabelOutsideColor'))!;
+      const canvas = parseColor(t.value('xyChartBackgroundColor'))!;
+      expect(contrastRatio(ink, canvas)).toBeGreaterThanOrEqual(4.5);
+    }
+  );
+
+  it.each(DARK_INK)(
+    "%s: an author's dataLabelColor sets both, the outside key only the outside labels (D749)",
+    async (name) => {
+      const both = await resolve(name, { xyChartDataLabelColor: '#ffeeaa' });
+      expect(both.value('xyChartDataLabelOutsideColor')).toBe('#ffeeaa');
+      const own = await resolve(name, {
+        xyChartDataLabelColor: '#ffeeaa',
+        xyChartDataLabelOutsideColor: '#aaeeff',
+      });
+      expect(own.value('xyChartDataLabelColor')).toBe('#ffeeaa');
+      expect(own.value('xyChartDataLabelOutsideColor')).toBe('#aaeeff');
+      const outside = await resolve(name, { xyChart: { dataLabelOutsideColor: '#aaeeff' } });
+      expect(outside.value('xyChartDataLabelColor')).toBe('#131300');
+      expect(outside.value('xyChartDataLabelOutsideColor')).toBe('#aaeeff');
+    }
+  );
 });

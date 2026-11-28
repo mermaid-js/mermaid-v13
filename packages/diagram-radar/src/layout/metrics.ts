@@ -25,6 +25,11 @@ export interface RadarMetrics {
    * right edge (D614, #846); v12 had no such rule.
    */
   readonly legendLabelGap: number;
+  /**
+   * When the title meets an axis label (#1257: a top label of several lines grows up into
+   * it), the title moves up to this far above the label's top (D739); v12 had no such rule.
+   */
+  readonly titleLabelGap: number;
 }
 
 export const RADAR_METRICS: RadarMetrics = {
@@ -34,6 +39,7 @@ export const RADAR_METRICS: RadarMetrics = {
   legendTextGap: 4,
   legendFactor: 3 / 4,
   legendLabelGap: 4,
+  titleLabelGap: 4,
 };
 
 /** v12 writes `radarCurve-0`…`radarCurve-11`: a curve takes slot `index mod 12` (D353). */

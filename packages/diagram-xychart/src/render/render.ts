@@ -154,7 +154,8 @@ function drawPlots(layout: XyChartLayout, paint: Paints, w: SvgWriter): void {
 
 /**
  * v12 `BarPlot` and the renderer's data labels: each bar filled and stroked in the plot's
- * colour, stroke width 0; then the plot's own values (D382) in `xyChartDataLabelColor`.
+ * colour, stroke width 0; then the plot's own values (D382) in `xyChartDataLabelColor`, or in
+ * `xyChartDataLabelOutsideColor` when they sit outside the bars (D749).
  */
 function drawBars(plot: XyBarPlotLayout, paint: Paints, w: SvgWriter): void {
   const fill = paint.plot(plot.index);
@@ -173,7 +174,8 @@ function drawBars(plot: XyBarPlotLayout, paint: Paints, w: SvgWriter): void {
     });
   // The layout chooses each data label's baseline (`hanging` inside a vertical bar,
   // `withDataLabels`); this draws it.
-  for (const t of plot.dataLabels) drawText(w, t, { fill: paint.dataLabel, 'data-id': id });
+  const label = plot.dataLabelsOutside ? paint.dataLabelOutside : paint.dataLabel;
+  for (const t of plot.dataLabels) drawText(w, t, { fill: label, 'data-id': id });
   w.close();
 }
 

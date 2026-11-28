@@ -124,6 +124,26 @@ describe('XY charts through the public API (#513)', () => {
       expect(r.warnings, body).toEqual([]);
     }
   });
+
+  it('draws the data labels of every bar plot at one size (#1308, D748)', async () => {
+    const text = [
+      'xychart',
+      '  x-axis [mon, tue, wed, thu, fri, sat, sun]',
+      '  y-axis -20 --> 40',
+      '  bar first [12.5, -8, 22, 31, 18, 5, -15]',
+      '  bar second [3, 9, -4, 14, 27, 33, 21]',
+      '  line trend [10, 4, 12, 25, 20, 18, -2]',
+      '',
+    ].join('\n');
+    const r = await createMermaid().render('x', withConfig('    showDataLabel: true\n', text));
+    const sizes = (plot: number) =>
+      [...r.svg.matchAll(new RegExp(`<g class="bar-plot-${plot}"[^]*?</g>`, 'g'))].flatMap(([g]) =>
+        [...g.matchAll(/<text [^>]*font-size="([^"]*)"/g)].map((t) => t[1])
+      );
+    expect(sizes(0).length).toBeGreaterThan(0);
+    expect(sizes(1).length).toBeGreaterThan(0);
+    expect(new Set([...sizes(0), ...sizes(1)]).size).toBe(1);
+  });
 });
 
 describe('the xyChart config section through render() (#513, D387)', () => {

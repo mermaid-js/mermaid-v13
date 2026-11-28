@@ -17,9 +17,10 @@ e2e/diagrams/packet/baseline/themes/redux-color.mmd 1 541c566e9fbefb62
 e2e/diagrams/packet/baseline/themes/redux-dark-color.mmd 1 868b19955ebd030e
 e2e/diagrams/packet/baseline/themes/redux-dark.mmd 1 94debb227e5ad8f0
 e2e/diagrams/packet/baseline/themes/redux.mmd 1 e8ccd391f5189c90
-e2e/diagrams/packet/nightly-check/label-four-lines-overflows.mmd 1 c5c411eee5091747
-e2e/diagrams/packet/nightly-check/label-three-lines-shrinks.mmd 1 143989cdc0386271
-e2e/diagrams/packet/nightly-check/label-two-lines-fits.mmd 1 6a1fab4abb58de1c
+e2e/diagrams/packet/nightly-check/bit-numbers-crowded.mmd 1 74d8c75a304adfb2
+e2e/diagrams/packet/nightly-check/label-four-lines-grows-row.mmd 1 4c89cdbf69fc15d5
+e2e/diagrams/packet/nightly-check/label-three-lines-grows-row.mmd 1 d83bab10209827d2
+e2e/diagrams/packet/nightly-check/label-two-lines-fits.mmd 1 c7d2a1a68e498711
 e2e/diagrams/packet/pr-check/should-render-a-complex-packet-diagram-with-showbits-false.mmd 1 021ba81ba3ba29a9
 e2e/diagrams/packet/pr-check/should-render-a-complex-packet-diagram.mmd 1 b17757d0103c6843
 e2e/diagrams/packet/pr-check/should-render-a-packet-diagram-with-descending-bit-order.mmd 1 40b7d792898a9591

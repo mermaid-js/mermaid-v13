@@ -104,10 +104,16 @@ export interface XyBarPlotLayout {
   readonly bars: readonly XyBar[];
   /**
    * `showDataLabel`: one label per bar with room for it, each the plot's own value (D382), all
-   * at one font size, the smallest that fits them (D611); none when no bar has room
+   * at one font size for every bar plot of the chart, the smallest that fits them (D611, D748);
+   * none when no bar has room
    * (`XYCHART_LABEL_TOO_SMALL`).
    */
   readonly dataLabels: readonly XyText[];
+  /**
+   * `showDataLabelOutsideBar`: the labels sit on the canvas beside their bars, so the renderer
+   * draws them in `xyChartDataLabelOutsideColor` (D749). Absent when they are inside the bars.
+   */
+  readonly dataLabelsOutside?: true;
 }
 
 /** One point of a line: data point `datum` of its plot. */

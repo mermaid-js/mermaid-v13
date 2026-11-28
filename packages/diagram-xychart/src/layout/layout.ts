@@ -12,7 +12,8 @@
  * - a missing value draws no bar, point or label (`XYCHART_MISSING_VALUE`); an empty range maps
  *   every value to the axis middle (`XYCHART_EMPTY_RANGE`); one warning per kind (D383);
  * - a bar with no room for its data label gets none, and the others are drawn at the smallest
- *   size that fits them; `XYCHART_LABEL_TOO_SMALL` when no bar of a plot has room (D611);
+ *   size that fits them, one size for every bar plot of the chart; `XYCHART_LABEL_TOO_SMALL`
+ *   when no bar of the chart has room (D611, D748);
  * - a legend name of several lines (D385) pushes the rows after it down by its extra lines;
  * - by the T3 invariant ("bars inside the plot box from axis to value"), not a D-id: a bar is
  *   held inside the plot box, where v12 drew a value past an end of the range with a negative
@@ -38,6 +39,7 @@ import type {
   XyChartLayout,
   XyLinePlotLayout,
   XyLinePoint,
+  XyPlotLayout,
   XyText,
 } from './types.ts';
 import { Legend } from './legend.ts';
@@ -139,18 +141,16 @@ export function layoutXyChart(model: XyChartModel, ctx: XyChartLayoutContext): X
       [...missing]
     );
   const labelled = options.showDataLabel
-    ? plots.map((p) =>
-        p.kind === 'bar' ? withDataLabels(p, options, horizontal, family, texts) : p
-      )
+    ? withDataLabels(plots, options, horizontal, family, texts)
     : plots;
-  const tooSmall = labelled.filter(
-    (p) => p.kind === 'bar' && p.dataLabels.length === 0 && p.bars.length > 0
+  const barPlots = labelled.filter(
+    (p): p is XyBarPlotLayout => p.kind === 'bar' && p.bars.length > 0
   );
-  if (options.showDataLabel && tooSmall.length > 0)
+  if (options.showDataLabel && barPlots.length > 0 && barPlots.every((p) => !p.dataLabels.length))
     warn(
       XYCHART_LABEL_TOO_SMALL,
       'No bar has room for a data label: none are drawn',
-      tooSmall.map((p) => p.ast)
+      barPlots.map((p) => p.ast)
     );
 
   const layout: UnboundedLayout = {
@@ -373,24 +373,55 @@ function linePlot(
   };
 }
 
+/** A bar's data label text and the largest font size it fits at, over 0. */
+interface Fitted {
+  readonly bar: XyBar;
+  readonly text: string;
+  readonly size: number;
+}
+
 /**
  * v12's data labels (`xychartRenderer.ts:102-226`), each bar plot with its own values (D382):
  * every bar with an area may get one; each tries font sizes down from a start until its text
  * fits by the 0.7 character-width approximation. A bar whose fitted size is under 1 px has no
- * room and gets no label; the others all take the smallest of their sizes (D611, #537: v12 took
- * the smallest over every bar and wrote a size of 0 or less). None when no bar has room
- * (`XYCHART_LABEL_TOO_SMALL`).
+ * room and gets no label; the others, in every bar plot of the chart, all take the smallest of
+ * their sizes (D611, D748; #537: v12 took the smallest over every bar of a plot and wrote a size
+ * of 0 or less). None when no bar has room (`XYCHART_LABEL_TOO_SMALL`).
  */
 function withDataLabels(
-  layout: XyBarPlotLayout,
+  plots: readonly XyPlotLayout[],
   options: XyChartOptions,
   horizontal: boolean,
   family: string,
   texts: TextMeasure
-): XyBarPlotLayout {
+): XyPlotLayout[] {
+  const fitted = plots.map((p) => (p.kind === 'bar' ? fittedLabels(p, horizontal) : []));
+  const size = fitted.flat().reduce((min, item) => Math.min(min, item.size), Infinity);
+  if (size === Infinity) return [...plots];
+  const font: FontKey = { family, size, weight: NORMAL_WEIGHT };
+  const outside = options.showDataLabelOutsideBar;
+  const margin = dataLabelMargin;
+  return plots.map((p, i) => {
+    const items = fitted[i]!;
+    if (p.kind !== 'bar' || items.length === 0) return p;
+    const dataLabels = items.map(({ bar, text }) => {
+      const m = texts.plain(text, font);
+      if (horizontal) {
+        const x = outside ? bar.x + bar.width + margin : bar.x + bar.width - margin;
+        return place(m, { x, y: bar.y + bar.height / 2 }, outside ? 'start' : 'end', 'middle');
+      }
+      const at: Point = { x: bar.x + bar.width / 2, y: outside ? bar.y - margin : bar.y + margin };
+      return place(m, at, 'middle', outside ? 'alphabetic' : 'hanging');
+    });
+    return outside ? { ...p, dataLabels, dataLabelsOutside: true } : { ...p, dataLabels };
+  });
+}
+
+/** The bars of one plot that have room for their data label, each with its fitted size. */
+function fittedLabels(layout: XyBarPlotLayout, horizontal: boolean): Fitted[] {
   const char = dataLabelCharWidth;
   const margin = dataLabelMargin;
-  const items = layout.bars
+  return layout.bars
     .filter((b) => b.width > 0 && b.height > 0)
     .map((bar) => {
       const text = String(bar.value);
@@ -406,20 +437,6 @@ function withDataLabels(
       return { bar, text, size: Math.floor(fitted) };
     })
     .filter((item) => item.size > 0);
-  if (items.length === 0) return layout;
-  const size = items.reduce((min, item) => Math.min(min, item.size), Infinity);
-  const font: FontKey = { family, size, weight: NORMAL_WEIGHT };
-  const outside = options.showDataLabelOutsideBar;
-  const dataLabels = items.map(({ bar, text }) => {
-    const m = texts.plain(text, font);
-    if (horizontal) {
-      const x = outside ? bar.x + bar.width + margin : bar.x + bar.width - margin;
-      return place(m, { x, y: bar.y + bar.height / 2 }, outside ? 'start' : 'end', 'middle');
-    }
-    const at: Point = { x: bar.x + bar.width / 2, y: outside ? bar.y - margin : bar.y + margin };
-    return place(m, at, 'middle', outside ? 'alphabetic' : 'hanging');
-  });
-  return { ...layout, dataLabels };
 }
 
 /**

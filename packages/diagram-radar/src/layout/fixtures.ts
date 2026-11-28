@@ -116,6 +116,14 @@ export const FIXTURES: Readonly<Record<string, RadarModel>> = {
     ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((n) => axis(n, n === 'b' ? 'Axis label 1' : n)),
     [curve('x', [1, 2, 3, 4, 5, 1, 2, 3]), curve('y', [2, 3, 4, 5, 1, 2, 3, 4])]
   ),
+  // #1257 and its comment case: a two-line top label grows up from its `auto` baseline into a
+  // two-line title at the canvas top, so the title moves up clear of it (D739).
+  titleOnLabel: model(
+    [axis('a', 'First<br>axis'), axis('b', 'Second<br/>axis'), axis('c', 'Third')],
+    [curve('x', [1, 2, 3], 'Series<br>one')],
+    {},
+    { title: 'Line one<br>Line two' }
+  ),
   // showLegend false: no rows.
   noLegend: model(abc, [curve('c1', [1, 2, 3])], { showLegend: false }),
   // Long labels and title, wider than the 50 px margins (D354); labels through core label

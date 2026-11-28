@@ -156,8 +156,13 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
     swatchSize: theme.number('radarLegendBoxSize'),
     axisLabels: spokes.map((spoke) => spoke.label),
   });
-  // The title (`:41-45`): middle-anchored at the canvas top, `hanging`.
-  const title = titleText && placeAt(titleText, { x: center.x, y: 0 }, 'middle', 'hanging');
+  const title =
+    titleText &&
+    titleOf(
+      titleText,
+      center,
+      spokes.map((spoke) => spoke.label)
+    );
 
   const box = new Box();
   box.add({
@@ -292,6 +297,22 @@ function legendRowsAt(parts: LegendParts, x: number): RadarLegendRow[] {
     y += legendRow + extraLines(label);
     return row;
   });
+}
+
+/**
+ * The title (`:41-45`): middle-anchored on the centre at the canvas top, `hanging`. When its
+ * box, all its lines, meets an axis label (#1257: a top label of several lines grows up from
+ * its `auto` baseline into it), it moves up to `titleLabelGap` above that label's top, again
+ * until it meets none (D739); the bounds grow with it (D354). With no overlap it is where v12
+ * put it.
+ */
+function titleOf(text: MeasuredLabel, center: Point, axisLabels: readonly Rect[]): PlacedLabel {
+  let title = placeAt(text, { x: center.x, y: 0 }, 'middle', 'hanging');
+  for (;;) {
+    const hit = axisLabels.find((label) => meets(title, label));
+    if (!hit) return title;
+    title = { ...title, y: hit.y - RADAR_METRICS.titleLabelGap - title.height };
+  }
 }
 
 /** Two boxes share area; boxes that only touch do not. */

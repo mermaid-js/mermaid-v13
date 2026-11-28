@@ -171,6 +171,26 @@ describe('colours (D381, D382, D384)', () => {
     expect(svg).toMatch(/>low<\/text>.*>peak<\/text>/);
   });
 
+  it('draws labels outside the bars in their own colour, inside ones in the data-label colour (D749)', async () => {
+    const fills = async (outside: boolean, themeVariables: Record<string, string>) => {
+      const { svg } = await renderXyChartForTest(CHART, {
+        ...LITERAL,
+        config: {
+          theme: 'redux-dark',
+          xyChart: { showDataLabel: true, showDataLabelOutsideBar: outside },
+          themeVariables,
+        },
+      });
+      return [...new Set(elements(group(svg, 'bar-plot-1'), 'text').map((t) => t.fill))];
+    };
+    // The theme's own inks: v12's #131300 on the light bars, the canvas text beside them.
+    expect(await fills(false, {})).toEqual(['#131300']);
+    expect(await fills(true, {})).toEqual(['#e0dfdf']);
+    const own = { xyChartDataLabelColor: '#ab0000', xyChartDataLabelOutsideColor: '#00ab00' };
+    expect(await fills(false, own)).toEqual(['#ab0000']);
+    expect(await fills(true, own)).toEqual(['#00ab00']);
+  });
+
   it('places data labels outside bars and in horizontal charts as v12 did', async () => {
     const outside = await renderXyChartForTest(CHART, {
       config: { xyChart: { showDataLabel: true, showDataLabelOutsideBar: true } },

@@ -14,12 +14,18 @@ export interface PacketMetrics {
   readonly bitsPadding: number;
   /** Bit numbers' baseline sits this far above the row (`renderer.ts:90`). */
   readonly bitNumberGap: number;
+  /**
+   * The least room between two bit numbers' boxes in a row (D747, #1268): an end number closer
+   * than this to another number is dropped. v13's own; below v12's default `paddingX` (5).
+   */
+  readonly bitNumberSpace: number;
 }
 
 export const PACKET_METRICS: PacketMetrics = {
   margin: 1,
   bitsPadding: 10,
   bitNumberGap: 2,
+  bitNumberSpace: 2,
 };
 
 /** The CSS weight packet text is measured and drawn at: v12 sets none, so normal. */

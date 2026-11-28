@@ -30,7 +30,9 @@
  *                       light/dark rule for v, or the author's override of v, does not count
  *   slot(p, 5, b)       palette p's slot 5 as a literal colour when p is non-empty (the theme's
  *                       list, or the author's), else b: a role colour that follows per-item
- *                       colour where a theme turns it on and its fallback elsewhere (D474)
+ *                       colour where a theme turns it on and its fallback elsewhere (D474);
+ *                       p may be a diagram table's palette variable, read as palette() reads
+ *                       it (D545, D749)
  *
  * `cScale3`, `bkgColorArray2` and any other palette name with a slot number read that entry of
  * the palette (D258, D332), as a literal colour, except `seriesColorArray<n>`, which reads as

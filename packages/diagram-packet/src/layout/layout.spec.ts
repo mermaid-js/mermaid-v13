@@ -7,6 +7,7 @@ import { packet as plugin } from '../plugin.ts';
 import { FIXTURES, model, REGISTER } from './fixtures.ts';
 import { layoutPacket, type PacketLayout } from './index.ts';
 import { packetLayoutViolations } from './invariants.ts';
+import { PACKET_METRICS } from './metrics.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -233,38 +234,134 @@ describe('packet layout: labels wider than their field (D343)', () => {
   });
 });
 
-describe('packet layout: labels taller than their row (D343, #774)', () => {
-  // A 16-bit piece is 507 px wide, so only the height binds. A line is 1.2 of the size: 14.4 px
-  // at 12 px, 12 px at 10 px.
-  const tall = (lines: number, packet: Readonly<PacketDiagramConfig> = {}) =>
-    lay(model([[0, 15, Array.from({ length: lines }, (_, i) => `l${i}`).join('<br>')]]), packet)
-      .rows[0]!.pieces[0]!.label;
+describe('packet layout: a row grows to fit its tallest label (D740, #1267)', () => {
+  // A 16-bit piece is 507 px wide, so only the height counts. A line is 1.2 of the size: 14.4 px
+  // at 12 px. pY = 5 + 10 with showBits.
+  const lines = (n: number) => Array.from({ length: n }, (_, i) => `l${i}`).join('<br>');
+  const tall = (n: number, packet: Readonly<PacketDiagramConfig> = {}, title?: string) =>
+    lay(
+      model(
+        [
+          [0, 15, lines(n)],
+          [16, 31, 'ok'],
+          [32, 63, 'next'],
+        ],
+        title ? { title } : {}
+      ),
+      packet
+    );
 
-  it('keeps the label size while the lines fit the row', () => {
+  it('keeps the row height and the label size while the lines fit the row', () => {
     // Two lines are 28.8 px, inside the 32 px row.
     const l = tall(2);
-    expect(l.font.size).toBe(12);
-    expect(l.height).toBeCloseTo(28.8);
+    const p = l.rows[0]!.pieces[0]!;
+    expect([p.label.font.size, p.box.height, l.rows[0]!.height, l.rows[1]!.y]).toEqual([
+      12, 32, 32, 62,
+    ]);
+    expect(p.label.height).toBeCloseTo(28.8);
   });
 
-  it('shrinks a label of more lines than fit until it fits the row', () => {
-    // Three lines are 43.2 px at 12 px; a 40 px row fits them at 11.11 px.
-    const l = tall(3, { rowHeight: 40 });
-    expect(l.font.size).toBeCloseTo(100 / 9);
-    expect(l.height).toBeCloseTo(40);
-  });
-
-  it('stops at the bit-number size, then overflows the row, centred on it', () => {
-    // Four lines are 48 px at 10 px, 8 px past the 32 px row (top at y 15) on each side.
+  it('grows the row to its tallest label at the label size, every piece of it', () => {
+    // Four lines are 57.6 px at 12 px.
     const l = tall(4);
-    expect([l.font.size, l.height, l.y]).toEqual([10, 48, 15 - 8]);
+    const [a, b] = l.rows[0]!.pieces;
+    expect(a!.label.font.size).toBe(12);
+    expect(a!.label.height).toBeCloseTo(57.6);
+    expect(l.rows[0]!.height).toBeCloseTo(57.6);
+    expect([a!.box.y, b!.box.y]).toEqual([15, 15]);
+    expect(a!.box.height).toBeCloseTo(57.6);
+    expect(b!.box.height).toBeCloseTo(57.6);
+    // The four lines fill the box; the one-line label is centred on the grown row.
+    expect(a!.label.y).toBeCloseTo(15);
+    expect(b!.label.y + b!.label.height / 2).toBeCloseTo(15 + 28.8);
   });
 
-  it('shrinks by the larger of the two overflows', () => {
-    // A 27 px one-bit piece: "abcd<br>abcd<br>abcd" is 24 px wide and 43.2 px tall at 12 px.
-    const l = lay(model([[0, 0, 'abcd<br>abcd<br>abcd']]), { rowHeight: 40 }).rows[0]!.pieces[0]!
-      .label;
-    expect(l.font.size).toBeCloseTo(100 / 9);
+  it('places the next rows, their bit numbers and the canvas below the grown row', () => {
+    const l = tall(4);
+    // Row 1 starts pY below row 0's bottom: 15 + 57.6 + 15.
+    expect(l.rows[1]!.y).toBeCloseTo(87.6);
+    expect(l.rows[1]!.height).toBe(32);
+    expect(l.rows[1]!.pieces[0]!.box.height).toBe(32);
+    expect(l.rows[1]!.pieces[0]!.bitNumbers[0]!.y).toBeCloseTo(85.6);
+    // The canvas ends pY below the last row, as v12's does.
+    expect(l.height).toBeCloseTo(87.6 + 32 + 15);
+    expect(l.bounds.height).toBeCloseTo(l.height);
+  });
+
+  it('puts the title in the row below the grown rows', () => {
+    const l = tall(4, { showBits: false }, 'Title');
+    // pY = 5: rows at 5 and 5 + 57.6 + 5; the title row is rowHeight + pY below the last row.
+    expect(l.rows[1]!.y).toBeCloseTo(67.6);
+    expect(l.height).toBeCloseTo(67.6 + 32 + 5 + 32);
+    const t = l.title!;
+    expect(t.y + t.text.lineHeight / 2).toBeCloseTo(l.height - 37 / 2);
+  });
+
+  it('still shrinks a label to fit the width, and grows the row to what that leaves', () => {
+    // A 27 px one-bit piece: "abcd<br>abcd<br>abcd" is 24 px wide, so it keeps 12 px and the
+    // row grows to 43.2 px; "abcde<br>abcde" is 30 px wide, so it shrinks to 10.8 px and its
+    // 25.92 px fit the 32 px row.
+    const grown = lay(model([[0, 0, 'abcd<br>abcd<br>abcd']])).rows[0]!;
+    expect(grown.pieces[0]!.label.font.size).toBe(12);
+    expect(grown.height).toBeCloseTo(43.2);
+    const narrow = lay(model([[0, 0, 'abcde<br>abcde']])).rows[0]!;
+    expect(narrow.pieces[0]!.label.font.size).toBeCloseTo(10.8);
+    expect(narrow.height).toBe(32);
+  });
+
+  it('grows a row lower than one line of its label', () => {
+    const l = lay(model([[0, 15, 'one']]), { rowHeight: 4 });
+    expect(l.rows[0]!.pieces[0]!.label.font.size).toBe(12);
+    expect(l.rows[0]!.height).toBeCloseTo(14.4);
+  });
+});
+
+describe('packet layout: crowded bit numbers (D747, #1268)', () => {
+  /** Each piece's bit numbers in a row, as text. */
+  const numbers = (l: PacketLayout, r = 0) =>
+    l.rows[r]!.pieces.map((p) => p.bitNumbers.map((b) => b.text));
+  /** Two 16-bit fields: 15's box ends `paddingX` before 16's starts. */
+  const halves = model([
+    [0, 15, 'a'],
+    [16, 31, 'b'],
+  ]);
+
+  it('drops an end number that meets a start number, its own or the next field’s', () => {
+    // halfEm: a 3-digit number is 15 px wide, a 2-bit piece 19 px at bitWidth 12.
+    const { model: m, config } = FIXTURES.crowded!;
+    const l = lay(m, config);
+    expect(numbers(l, 6)).toEqual([
+      ['96'],
+      ['98'],
+      ['100'],
+      ['102'],
+      ['104'],
+      ['105'],
+      ['106', '111'],
+    ]);
+    // The rows of one wide field keep both numbers.
+    expect(numbers(l, 0)).toEqual([['0', '15']]);
+  });
+
+  it('keeps start numbers, so 15 and 16 no longer run together with paddingX 0', () => {
+    expect(numbers(lay(halves, { paddingX: 0 }))).toEqual([['0'], ['16', '31']]);
+    // Descending: the left field is bar (15-8), so its end number 8 goes.
+    expect(numbers(lay(twoFields(16), { paddingX: 0, bitOrder: 'descending' }))).toEqual([
+      ['7', '0'],
+      ['15'],
+    ]);
+  });
+
+  it('keeps an end number exactly the minimum gap clear of the next, and drops a closer one', () => {
+    const at = (paddingX: number) => numbers(lay(halves, { paddingX }))[0];
+    expect(at(PACKET_METRICS.bitNumberSpace)).toEqual(['0', '15']);
+    expect(at(PACKET_METRICS.bitNumberSpace - 0.5)).toEqual(['0']);
+  });
+
+  it('keeps every number with the default config', () => {
+    const l = lay(FIXTURES.tcp!.model, {}, undefined, tableMeasurer);
+    for (const p of l.rows.flatMap((r) => r.pieces))
+      expect(p.bitNumbers).toHaveLength(p.bits === 1 ? 1 : 2);
   });
 });
 
@@ -333,8 +430,11 @@ describe('packet layout: config and theme', () => {
 });
 
 describe('packet layout: positions do not depend on measurements', () => {
-  // Measurements only shrink labels (D343) and grow the bounds (D344): two measurers that
-  // disagree on every width and line height give the same boxes and anchor points.
+  // Measurements shrink labels (D343), grow the bounds (D344), grow a row to a label taller
+  // than it (D740) and drop an end number that would meet the next (D747): while every label
+  // fits its row, two measurers that disagree on every width and line height give the same boxes
+  // and anchor points, and every end number `wide` keeps
+  // is where the table measurer puts it.
   const wide: Measurer = {
     id: 'wide',
     width: (text, font) => text.length * font.size * 1.7,
@@ -350,25 +450,45 @@ describe('packet layout: positions do not depend on measurements', () => {
       r.pieces.map((p) => ({
         box: p.box,
         label: [p.label.x + p.label.width / 2, p.label.y + p.label.height / 2],
-        bits: p.bitNumbers.map((b) => [b.x, b.y, b.anchor]),
+        bits: p.bitNumbers.filter((b) => b.role === 'start').map((b) => [b.x, b.y, b.anchor]),
       }))
     ),
     title: l.title && [l.title.x + l.title.width / 2, titlePoint(l)],
   });
-  // A title line taller than the row pitch sits on the last row (`tiny`'s 1 px rows): the one
-  // place a measurement moves something, so it is compared as that rule, not as a point.
+  // A title line taller than the row pitch sits on the last row: a measurement moves it, so it
+  // is compared as that rule, not as a point.
   const titlePoint = (l: PacketLayout) => {
     const t = l.title!;
     const last = l.rows[l.rows.length - 1];
-    if (last && t.y === last.y + l.options.rowHeight) return 'on the last row';
+    if (last && t.y === last.y + last.height) return 'on the last row';
     return t.y + t.text.lineHeight / 2;
   };
+  // Labels taller than their rows in one measurer or both: `breaks` (two lines, 45.6 px in
+  // `wide`), `tallLabel` and `tiny` (1 px rows).
+  const growing = new Set(['breaks', 'tallLabel', 'tiny']);
+  const grows = (l: PacketLayout) => l.rows.some((r) => r.height !== l.options.rowHeight);
 
-  it.each(Object.keys(FIXTURES))('%s', (name) => {
+  it.each(Object.keys(FIXTURES).filter((n) => !growing.has(n)))('%s', (name) => {
     const { model: m, config } = FIXTURES[name]!;
     const a = lay(m, config, undefined, tableMeasurer);
     const b = lay(m, config, undefined, wide);
     expect(points(b)).toEqual(points(a));
+    const ends = (l: PacketLayout) =>
+      l.rows.flatMap((r) =>
+        r.pieces.flatMap((p) =>
+          p.bitNumbers.filter((n) => n.role === 'end').map((n) => [n.bit, n.x, n.y] as const)
+        )
+      );
+    const all = new Set(ends(a).map((e) => e.join()));
+    for (const e of ends(b)) expect(all).toContain(e.join());
+    expect(packetLayoutViolations(m, b)).toEqual([]);
+  });
+
+  it.each([...growing])('%s grows its rows, and holds the invariants in both', (name) => {
+    const { model: m, config } = FIXTURES[name]!;
+    const b = lay(m, config, undefined, wide);
+    expect(grows(b)).toBe(true);
+    expect(packetLayoutViolations(m, lay(m, config, undefined, tableMeasurer))).toEqual([]);
     expect(packetLayoutViolations(m, b)).toEqual([]);
   });
 

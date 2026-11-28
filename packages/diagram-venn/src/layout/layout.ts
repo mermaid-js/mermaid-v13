@@ -39,8 +39,10 @@ import { boxUnion, drawnBoxes, overlaps } from './geometry.ts';
 import { NORMAL_WEIGHT, VENN_METRICS } from './metrics.ts';
 import { vennStyles } from './styles.ts';
 import type {
+  Circle,
   PlacedLabel,
   Point,
+  Rect,
   VennAreaLayout,
   VennDebugShapes,
   VennLayout,
@@ -359,7 +361,7 @@ function placeCentred(text: MeasuredLabel, x: number, y: number): PlacedLabel {
 /** What the text grid reads. */
 interface GridParts {
   readonly scale: number;
-  /** The placed labels, by area: a grid moves down below its own (D613). */
+  /** The placed labels, by area: a grid starts below its own and those it meets (D750). */
   readonly labels: ReadonlyMap<string, PlacedLabel | undefined>;
   readonly font: FontKey;
   readonly measure: Measure;
@@ -367,10 +369,9 @@ interface GridParts {
 }
 
 /**
- * v12 `renderTextNodes`: each area's text nodes in a grid about its text centre. The grid also
- * moves down by what the area's placed label reaches below a one-line label centred where
- * {@link placeLabels} centres it (D613, #770): v12 drew every label on one line, and its offset
- * is for that line.
+ * v12 `renderTextNodes`: each area's text nodes in a grid about its text centre. In an area
+ * with a placed label the grid starts below that label and every other one it would meet, and
+ * stays inside the inner circle where its nodes fit (D750, {@link clearGrid}).
  */
 function textAreasOf(
   model: VennModel,
@@ -410,53 +411,164 @@ function textAreasOf(
       ? Math.min(m.labelOffsetMax * scale, innerRadius * m.labelOffsetFactor)
       : 0;
     const fewOffset = nodes.length <= m.fewNodes ? m.fewNodesOffset * scale : 0;
-    const linesOffset = belowOneLine(parts.labels.get(key), centre);
-    const startX = centre.x - innerWidth / 2;
-    const startY = centre.y - innerHeight / 2 + labelOffsetBase + fewOffset + linesOffset;
+    const inner = { x: centre.x, y: centre.y, radius: innerRadius };
+    const v12Grid = {
+      x: centre.x - innerWidth / 2,
+      y: centre.y - innerHeight / 2 + labelOffsetBase + fewOffset,
+      width: innerWidth,
+      height: innerHeight,
+    };
     const cols = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
     const rows = Math.max(1, Math.ceil(nodes.length / cols));
-    const cellWidth = innerWidth / cols;
-    const cellHeight = innerHeight / rows;
-
-    const placed: VennTextNodeLayout[] = nodes.map((node, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + cellWidth * (col + 1 / 2);
-      const y = startY + cellHeight * (row + 1 / 2);
-      const boxWidth = cellWidth * m.cellFactor;
-      const boxHeight = cellHeight * m.cellFactor;
-      const text = parts.measure(node.label ?? node.id, parts.font, boxWidth);
-      const style = parts.styles.get(idsKey([node.id]));
-      return {
-        ast: node.ast,
-        id: node.id,
-        cell: {
-          x: startX + cellWidth * col,
-          y: startY + cellHeight * row,
-          width: cellWidth,
-          height: cellHeight,
-        },
-        box: { x: x - boxWidth / 2, y: y - boxHeight / 2, width: boxWidth, height: boxHeight },
-        label: placeCentred(text, x, y),
-        ...(style ? { style } : {}),
-      };
-    });
-    out.push({
-      sets: area.sets,
-      inner: { x: centre.x, y: centre.y, radius: innerRadius },
-      grid: { x: startX, y: startY, width: innerWidth, height: innerHeight },
-      nodes: placed,
-    });
+    const cells = { inner, v12: v12Grid, nodes, cols, rows, own: parts.labels.get(key) };
+    const v12Nodes = placeNodes(cells, v12Grid, parts);
+    const cleared = clearGrid(cells, v12Nodes, parts);
+    const grid = cleared?.grid ?? v12Grid;
+    const placed = cleared ? placeNodes(cleared.cells, grid, parts) : v12Nodes;
+    out.push({ sets: area.sets, inner, grid, nodes: placed });
   }
   return out;
 }
 
+/** One area's text nodes and what their grid is made from. */
+interface GridCells {
+  readonly inner: Readonly<Circle>;
+  /** v12's grid: its width caps the new one, its top is the highest the new one starts. */
+  readonly v12: Rect;
+  readonly nodes: VennModel['textNodes'];
+  readonly cols: number;
+  readonly rows: number;
+  /** The area's placed label, if any. */
+  readonly own: PlacedLabel | undefined;
+}
+
+/** `cells`' nodes in `grid`, row by row, each wrapped to its box (90 % of its cell). */
+function placeNodes(cells: GridCells, grid: Rect, parts: GridParts): VennTextNodeLayout[] {
+  const { cellFactor } = VENN_METRICS;
+  const cellWidth = grid.width / cells.cols;
+  const cellHeight = grid.height / cells.rows;
+  return cells.nodes.map((node, i) => {
+    const col = i % cells.cols;
+    const row = Math.floor(i / cells.cols);
+    const x = grid.x + cellWidth * (col + 1 / 2);
+    const y = grid.y + cellHeight * (row + 1 / 2);
+    const boxWidth = cellWidth * cellFactor;
+    const boxHeight = cellHeight * cellFactor;
+    const text = parts.measure(node.label ?? node.id, parts.font, boxWidth);
+    const style = parts.styles.get(idsKey([node.id]));
+    return {
+      ast: node.ast,
+      id: node.id,
+      cell: {
+        x: grid.x + cellWidth * col,
+        y: grid.y + cellHeight * row,
+        width: cellWidth,
+        height: cellHeight,
+      },
+      box: { x: x - boxWidth / 2, y: y - boxHeight / 2, width: boxWidth, height: boxHeight },
+      label: placeCentred(text, x, y),
+      ...(style ? { style } : {}),
+    };
+  });
+}
+
 /**
- * How far `label`'s bottom lies below that of a one-line label centred on the floored `centre`,
- * as {@link placeLabels} centres it; 0 for a one-line label in its place, or no label.
+ * D750: the grid of an area with a placed label, or of one whose nodes in v12's grid meet a
+ * label, with its {@link fewerColumns}; undefined for any other area, which keeps v12's grid.
+ * It starts `labelTextGap` below the area's own label (or the labels its nodes met), and below
+ * every label its node boxes would then meet, and is {@link fitted} under that line. Only the
+ * boxes count: an empty cell or the room between boxes may lie on a label, so a grid moves
+ * down only for a label that one of its nodes would meet.
  */
-function belowOneLine(label: PlacedLabel | undefined, centre: Point): number {
-  if (!label) return 0;
-  const oneLine = Math.floor(centre.y) + label.text.lineHeight / 2;
-  return Math.max(0, label.y + label.height - oneLine);
+function clearGrid(
+  v12Cells: GridCells,
+  v12Nodes: readonly VennTextNodeLayout[],
+  parts: GridParts
+): { cells: GridCells; grid: Rect } | undefined {
+  const gap = VENN_METRICS.labelTextGap * parts.scale;
+  const labels = [...parts.labels.values()].filter((l): l is PlacedLabel => l !== undefined);
+  const first = v12Cells.own
+    ? [v12Cells.own]
+    : labels.filter((l) => v12Nodes.some((n) => overlaps(n.label, l)));
+  if (first.length === 0) return undefined;
+  const cells = fewerColumns(v12Cells, parts);
+  const below = (met: readonly PlacedLabel[]): number =>
+    Math.max(...met.map((l) => l.y + l.height + gap));
+  let grid = fitted(cells, Math.max(cells.v12.y, below(first)), parts);
+  // Each pass starts the grid below a label a node box met, so it meets that one no more.
+  for (;;) {
+    const boxes = placeNodes(cells, grid, parts).map((n) => n.box);
+    const met = labels.filter((l) => boxes.some((b) => overlaps(b, l)));
+    if (met.length === 0) return { cells, grid };
+    grid = fitted(cells, below(met), parts);
+  }
+}
+
+/**
+ * The grid whose top is `top`, centred on the inner circle, each row as high as its tallest
+ * node over `cellFactor`. It starts at v12's width and narrows to the inner circle's chord at
+ * its edge farther from the centre, pass by pass (narrower boxes wrap the nodes onto more
+ * lines), while every node still fits its box and the grid stays above the circle's bottom:
+ * then its cells are inside the inner circle.
+ */
+function fitted(cells: GridCells, top: number, parts: GridParts): Rect {
+  const m = VENN_METRICS;
+  const { scale } = parts;
+  const least = { width: m.textBoxMinWidth * scale, height: m.textBoxMinHeight * scale };
+  const fit = (width: number): { height: number; fits: boolean } => {
+    const { texts, fits } = boxed(cells, cells.cols, width, parts);
+    const tallest = Math.max(...texts.map((t) => t.height));
+    return { height: Math.max(least.height, (cells.rows * tallest) / m.cellFactor), fits };
+  };
+  let width = cells.v12.width;
+  let { height } = fit(width);
+  for (let pass = 0; pass < m.gridPasses; pass++) {
+    const next = Math.max(least.width, Math.min(width, chord(cells.inner, top, height)));
+    if (next >= width) break;
+    const at = fit(next);
+    // Narrower boxes that push the grid past the circle's bottom gain nothing.
+    if (!at.fits || top + at.height > cells.inner.y + cells.inner.radius) break;
+    width = next;
+    height = at.height;
+  }
+  return { x: cells.inner.x - width / 2, y: top, width, height };
+}
+
+/**
+ * `cells` in as many columns as v12's, or fewer, as the widest word of any node (its width
+ * wrapped at 0) then fits its box at v12's width: a word wider than its box would run into its
+ * neighbours. One column when none fits.
+ */
+function fewerColumns(cells: GridCells, parts: GridParts): GridCells {
+  const word = Math.max(
+    ...cells.nodes.map((n) => parts.measure(n.label ?? n.id, parts.font, 0).width)
+  );
+  const room = Math.floor((cells.v12.width * VENN_METRICS.cellFactor) / word);
+  const cols = Math.max(1, Math.min(cells.cols, room));
+  if (cols === cells.cols) return cells;
+  return { ...cells, cols, rows: Math.ceil(cells.nodes.length / cols) };
+}
+
+/** `cells`' nodes wrapped to their boxes in a grid `width` wide of `cols` columns. */
+function boxed(
+  cells: GridCells,
+  cols: number,
+  width: number,
+  parts: GridParts
+): { texts: MeasuredLabel[]; fits: boolean } {
+  const box = (width / cols) * VENN_METRICS.cellFactor;
+  const texts = cells.nodes.map((n) => parts.measure(n.label ?? n.id, parts.font, box));
+  return { texts, fits: texts.every((t) => t.width <= box) };
+}
+
+/**
+ * The width of `inner` at the edge of a band from `top`, `height` high, farther from its
+ * centre; at the top edge when the band reaches past the circle.
+ */
+function chord(inner: Readonly<Circle>, top: number, height: number): number {
+  const r = inner.radius;
+  const d0 = top - inner.y;
+  const d1 = d0 + height;
+  const far = d1 <= r ? Math.max(Math.abs(d0), d1) : Math.abs(d0);
+  return 2 * Math.sqrt(Math.max(0, r * r - far * far));
 }

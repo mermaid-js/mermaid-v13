@@ -68,8 +68,40 @@ describe('packet layout invariants (R-LAYOUT-3)', () => {
       (l: PacketLayout) => (w(l).rows[0]!.pieces[0]!.bitNumbers[0]!.y += 3),
       /bit number/,
     ],
+    [
+      'bit numbers that crowd each other',
+      (l: PacketLayout) => (w(l).rows[0]!.pieces[0]!.bitNumbers[1]!.box.x += 4),
+      /bit numbers .* are not apart/,
+    ],
+    [
+      'a dropped start number',
+      (l: PacketLayout) => w(l).rows[0]!.pieces[1]!.bitNumbers.shift(),
+      /bit numbers/,
+    ],
+    [
+      'a label line outside its box',
+      (l: PacketLayout) => (w(l).rows[0]!.pieces[0]!.box.height -= 20),
+      /line outside its box/,
+    ],
+    [
+      'a row lower than its tallest label',
+      (l: PacketLayout) => {
+        const row = w(l).rows[0]!;
+        row.height -= 20;
+        for (const p of row.pieces) {
+          p.box.height -= 20;
+          p.label.y -= 10;
+        }
+      },
+      /tallest label/,
+    ],
   ] as const)('finds %s', (_, edit, message) => {
-    const f = _ === 'a title over the rows' ? FIXTURES.tcpNoBits! : tcp;
+    const f =
+      _ === 'a title over the rows'
+        ? FIXTURES.tcpNoBits!
+        : _.includes('label')
+          ? FIXTURES.tallLabel!
+          : tcp;
     expect(broken(edit, f).join('\n')).toMatch(message);
   });
 
