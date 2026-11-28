@@ -1,0 +1,66 @@
+---
+description: >-
+  The markdownAlwaysOn twin of label-syntax.mmd: the same usecase labels (actor,
+  round and square use case, note, association edge label, boundary title, each
+  written the six ways) with markdownAlwaysOn set (#1368, #1398). Every label
+  is then markdown: the plain **bold** _ital_ rows draw bold and italic and the
+  code-span row draws inline code, so the picture differs from label-syntax.mmd.
+  Bare backticks are a code span here. Tags and the written break draw as there.
+config:
+  markdownAlwaysOn: true
+---
+usecase-beta
+  direction LR
+  systemBoundary B1["boundary **bold** _ital_"]
+    actor A1("actor **bold** _ital_")
+    U1("usecase **bold** _ital_")
+    S1[square **bold** _ital_]
+  end
+  A1 -- "edge **bold** _ital_" --> U1
+  A1 --> S1
+  note for U1 "note **bold** _ital_"
+
+  systemBoundary B2["`boundary **bold** _ital_`"]
+    actor A2("`actor **bold** _ital_`")
+    U2("`usecase **bold** _ital_`")
+    S2["`square **bold** _ital_`"]
+  end
+  A2 -- "`edge **bold** _ital_`" --> U2
+  A2 --> S2
+  note for U2 "`note **bold** _ital_`"
+
+  systemBoundary B3[`boundary **bold** _ital_`]
+    actor A3(`actor **bold** _ital_`)
+    U3(`usecase **bold** _ital_`)
+    S3[`square **bold** _ital_`]
+  end
+  A3 -- `edge **bold** _ital_` --> U3
+  A3 --> S3
+  note for U3 `note **bold** _ital_`
+
+  systemBoundary B4["boundary a `code` b"]
+    actor A4("actor a `code` b")
+    U4("usecase a `code` b")
+    S4[square a `code` b]
+  end
+  A4 -- "edge a `code` b" --> U4
+  A4 --> S4
+  note for U4 "note a `code` b"
+
+  systemBoundary B5["boundary <b>bold</b> <i>ital</i> H<sub>2</sub>O"]
+    actor A5("actor <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O")
+    U5("usecase <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O")
+    S5[square <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+  end
+  A5 -- "edge <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O" --> U5
+  A5 --> S5
+  note for U5 "note <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O"
+
+  systemBoundary B6["boundary six"]
+    actor A6("actor one\ntwo")
+    U6("usecase one\ntwo")
+    S6[square one\ntwo]
+  end
+  A6 -- "edge one\ntwo" --> U6
+  A6 --> S6
+  note for U6 "note one\ntwo"

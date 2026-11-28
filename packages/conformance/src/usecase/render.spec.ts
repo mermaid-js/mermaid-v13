@@ -67,7 +67,7 @@ beforeAll(async () => {
 
 describe('usecase render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every kind of element', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(62);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(64);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const all = cases.map((c) => c.rendered.svg).join('');
@@ -122,7 +122,8 @@ describe('usecase render properties over the parsed corpus', () => {
       expect(c.rendered.svg, c.id).not.toMatch(/<img\b/);
       const handlers = c.tree.find((n, t) => t.getAttr(n, 'onerror') !== undefined);
       expect(handlers, c.id).toEqual([]);
-      // Shown as text, escaped, as v12 escaped plain labels; the accessible name keeps it too.
+      // A tag core does not draw is shown as text, escaped, as v12 escaped plain labels (only
+      // the drawn tags are read, #1398); the accessible name keeps it too.
       expect(c.rendered.svg, c.id).toContain('&lt;img src=x');
       expect(c.rendered.svg, c.id).toContain(
         'aria-label="use case &lt;img src=x onerror=alert(1)&gt;"'

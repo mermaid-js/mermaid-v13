@@ -10,13 +10,17 @@ import { labelledEdge } from '@mermaid-js/shared/layout';
 import { curveResolver, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
 import {
   fontSizePx,
+  labelSource,
   layoutLabel,
   Style,
   type FontKey,
+  type LabelSource,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import { readLabel } from '@mermaid-js/core/text/markdown-warning';
 import { USECASE_STYLE_IGNORED } from '../codes.ts';
 import {
   FONT_WEIGHT,
@@ -249,7 +253,10 @@ const sideways = (d: UsecaseModel['direction']): boolean => d === 'LR' || d === 
 interface Measure {
   /** The font a label is drawn in: `font` with the style's size, weight. */
   font(font: FontKey, style: CheckedStyle): FontKey;
-  /** Measures `text` in `font` (already styled, see `font`), wrapped at `max`. */
+  /**
+   * Measures `text` in `font` (already styled, see `font`), wrapped at `max`: a label of `type`
+   * as {@link usecaseLabelSource} reads it, or, with no `type`, a text drawn as written.
+   */
   label(
     text: string,
     font: FontKey,
@@ -289,12 +296,52 @@ const styleBits = (style: CheckedStyle): number =>
   style.text['font-style'] === 'italic' ? Style.Italic : 0;
 
 /**
- * A plain label as text: v12 escaped `&`, `<` and `>` in every plain label, stereotype, JSON cell
- * and edge label (`usecaseRenderer.ts` `escapePlainLabel`), so its markup showed as written.
- * Core's label layout decodes the entities back to those characters, as text, so `<b>` and
- * `<img …>` stay text and only Markdown labels read the HTML subset.
+ * The tags core's label layout draws (D566, D710): `<br>` and the style tags with their aliases
+ * (core's `TAG_STYLE`, `core/src/text/label.ts`, which core does not export). `layout.spec.ts`
+ * checks that core draws each of them.
  */
-const escapePlain = (text: string): string =>
+export const DRAWN_TAGS: ReadonlySet<string> = new Set(
+  'br b strong i em u ins s strike del sub sup'.split(' ')
+);
+
+// Anything shaped like a tag, as core's label layout finds one (`RE_TAG`).
+const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)((?:\s[^<>]*)?\/?)>/g;
+
+/**
+ * `text` with every tag but the drawn ones written as text: core would drop a known HTML tag it
+ * does not draw (`<img>`, `<span>`, `<a>`, `<script>` with what it holds), and a label must never
+ * lose what was written that way. As v12 escaped it, it shows as written, and stays text (D471).
+ */
+const drawnTagsOnly = (text: string): string =>
+  text.includes('<')
+    ? text.replace(RE_TAG, (m, close: string, name: string, rest: string) =>
+        DRAWN_TAGS.has(name.toLowerCase()) ? m : `&lt;${close}${name}${rest}&gt;`
+      )
+    : text;
+
+/** The handler's options for a label of `type`: the parser's mark for a markdown string. */
+const optionsOf = (type: UsecaseLabelType) => ({ markdown: type === 'markdown' });
+
+/**
+ * How an actor, use case, note, boundary or association label is read (#1368, #1398): core's
+ * label handler, with the parser's mark for a markdown string. Markdown is read only there, or in
+ * every label with `markdownAlwaysOn`; in every label the drawn tags ({@link DRAWN_TAGS}) draw,
+ * any other tag shows as written, entities decode and a written `\n` breaks the line. No warning:
+ * the layout's read ({@link measureFor}) gives that; this one is for the accessible names.
+ */
+export const usecaseLabelSource = (
+  text: string,
+  type: UsecaseLabelType,
+  config: ResolvedConfig
+): LabelSource => labelSource(drawnTagsOnly(text), optionsOf(type), config);
+
+/**
+ * A text drawn as written: a stereotype, an include or extend label, a JSON table's id or cell,
+ * the title. v12 escaped `&`, `<` and `>` in each (`usecaseRenderer.ts` `escapePlainLabel`), and
+ * they stay so: core's label layout decodes the entities back to those characters, as text, so
+ * the `<<` of the `ascii` charset's `<<s>>` is never a tag.
+ */
+const asWritten = (text: string): string =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Builds the measure: styled fonts (one warning per size it cannot use), labels, styles. */
@@ -318,14 +365,19 @@ function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
       }
       return { ...font, weight };
     },
-    label: (text, font, max, style, type = 'text') =>
-      layoutLabel(type === 'markdown' ? text : escapePlain(text), font, max, ctx.measurer, {
-        markdown: type === 'markdown',
+    label(text, font, max, style, type) {
+      // The label read, with the render's markdown warning (once per render).
+      const source = type
+        ? readLabel(drawnTagsOnly(text), optionsOf(type), ctx)
+        : { text: asWritten(text) };
+      return layoutLabel(source.text, font, max, ctx.measurer, {
+        ...source,
         style: styleBits(style),
         inline: ctx.inline,
         // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
         keepWords: ctx.units?.id !== 'cell',
-      }),
+      });
+    },
     styleOf: styleCache(new Map(model.classDefs.map((c) => [c.id, c.styles])), (w) => ctx.warn(w), [
       'default',
     ]),
@@ -620,8 +672,8 @@ function blank(label: MeasuredLabel): boolean {
 }
 
 /**
- * A relationship's edge. Include and extend labels are plain text whatever the model says (v12
- * forced `labelType: 'text'` on them, `usecaseDb.ts:267-268`).
+ * A relationship's edge. Include and extend labels are drawn as written whatever the model says
+ * (v12 forced `labelType: 'text'` on them, `usecaseDb.ts:267-268`).
  */
 function relationView(
   r: UsecaseRelationship,
@@ -633,7 +685,7 @@ function relationView(
   const text = relationText(r, sizing.quotes);
   const style = measure.styleOf(r.classes, r.styles);
   const font = measure.font(parts.fonts.edge, style);
-  const type = r.type === 'association' ? r.labelType : 'text';
+  const type = r.type === 'association' ? (r.labelType ?? 'text') : undefined;
   const label =
     text === undefined ? undefined : measure.label(text, font, sizing.edgeWrap, style, type);
   return {

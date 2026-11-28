@@ -14,7 +14,7 @@ import type { UsecaseModel } from '../model.ts';
 import { drawBoundaries } from './boundaries.ts';
 import type { UsecaseRenderContext } from './context.ts';
 import { drawEdgeLabels, drawEdges } from './edges.ts';
-import { spoken } from './accessible-names.ts';
+import { speaker, type Speak } from './accessible-names.ts';
 import { drawNodes } from './nodes.ts';
 import { paints } from './paint.ts';
 import { fontAttrs, type Scene } from './scene.ts';
@@ -28,6 +28,7 @@ export function renderUsecase(
 ): void {
   const p = layout.usecase ?? prepareUsecase(model, ctx);
   const paint = paints(model, p, ctx);
+  const speak = speaker(ctx);
   const scene: Scene = {
     w,
     model,
@@ -36,7 +37,8 @@ export function renderUsecase(
     ctx,
     paint,
     fontOf: fontAttrs(paint),
-    spokenOf: spokenLabels(p),
+    spokenOf: spokenLabels(p, speak),
+    speak,
   };
   const { width, band } = openRoot(scene);
   drawTitle(scene, width);
@@ -53,12 +55,12 @@ export function renderUsecase(
 }
 
 /** The spoken label of every actor, use case and JSON table, by model id. */
-function spokenLabels(p: UsecasePrepared): Map<string, string> {
+function spokenLabels(p: UsecasePrepared, speak: Speak): Map<string, string> {
   const out = new Map<string, string>();
   for (const v of p.nodes.values()) {
-    if (v.kind === 'actor') out.set(v.actor.id, spoken(v.actor.label, v.actor.labelType));
+    if (v.kind === 'actor') out.set(v.actor.id, speak(v.actor.label, v.actor.labelType));
     else if (v.kind === 'usecase')
-      out.set(v.useCase.id, spoken(v.useCase.label, v.useCase.labelType));
+      out.set(v.useCase.id, speak(v.useCase.label, v.useCase.labelType));
     else if (v.kind === 'json') out.set(v.table.id, v.table.id);
   }
   return out;

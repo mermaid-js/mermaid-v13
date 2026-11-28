@@ -2,51 +2,63 @@
  * Accessible names (`aria-label`) of every element and relationship, as v12's renderer wrote
  * them (`usecaseRenderer.ts:46-84`), such as "business hollow actor Customer, stereotype Human",
  * "use case Login", "Note for Login: …", "Payload: region: eu; …", "package system boundary
- * Shop" and "include from Login to Pay". A Markdown label is named by its words, as
- * `markdownToLines` gave them, a line at a time.
+ * Shop" and "include from Login to Pay". A label is named by the words it draws, a line at a
+ * time: without its tags, Markdown markers and character references (#1398).
  */
-import type {
-  ActorView,
-  BoundaryView,
-  JsonTableView,
-  NoteView,
-  RelationEdgeView,
-  UseCaseView,
+import { layoutLabel, type FontKey } from '@mermaid-js/core/text';
+import {
+  usecaseLabelSource,
+  type ActorView,
+  type BoundaryView,
+  type JsonTableView,
+  type NoteView,
+  type RelationEdgeView,
+  type UseCaseView,
 } from '../layout/prepare.ts';
 import type { UsecaseLabelType } from '../model.ts';
+import type { UsecaseRenderContext } from './context.ts';
 
-/** Markdown's emphasis and code markers: `**`, `__`, `*`, backticks, and `_` beside a space. */
-const MARKERS = /\*+|`+|(?<=^|\s)_+|_+(?=\s|$)/g;
+/** A label's text for assistive technology: the words it draws, a line at a time. */
+export type Speak = (text: string, type: UsecaseLabelType) => string;
+
+/** Any font: only the words of the laid-out lines are read, never their widths. */
+const FONT: FontKey = { family: 'sans-serif', size: 16, weight: 400 };
 
 /**
- * A label's text for assistive technology: as written, or a Markdown label's words without
- * their markers, a line at a time (v12 `markdownToLines`, words joined by a space).
+ * Reads labels as the layout does ({@link usecaseLabelSource}) and lays them out unwrapped, so a name has
+ * the lines the label was written with. A Markdown line's words are joined by one space, as
+ * v12's `markdownToLines` gave them.
  */
-export function spoken(text: string, type: UsecaseLabelType): string {
-  if (type !== 'markdown') return text;
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.replace(MARKERS, '').replace(/\s+/g, ' ').trim())
-    .join('\n');
+export function speaker(ctx: Pick<UsecaseRenderContext, 'config' | 'measurer'>): Speak {
+  return (text, type) => {
+    const source = usecaseLabelSource(text, type, ctx.config);
+    const { lines } = layoutLabel(source.text, FONT, Infinity, ctx.measurer, source);
+    return lines
+      .map((runs) => {
+        const line = runs.map((r) => r.text).join('');
+        return type === 'markdown' ? line.replace(/\s+/g, ' ').trim() : line;
+      })
+      .join('\n');
+  };
 }
 
-export function actorName(v: ActorView): string {
+export function actorName(speak: Speak, v: ActorView): string {
   const a = v.actor;
   const variant = a.type !== 'normal' ? `${a.type} ` : '';
   const business = a.business ? 'business ' : '';
   const stereotype = a.stereotype !== undefined ? `, stereotype ${a.stereotype}` : '';
-  return `${business}${variant}actor ${spoken(a.label, a.labelType)}${stereotype}`;
+  return `${business}${variant}actor ${speak(a.label, a.labelType)}${stereotype}`;
 }
 
-export function useCaseName(v: UseCaseView): string {
+export function useCaseName(speak: Speak, v: UseCaseView): string {
   const u = v.useCase;
   const stereotype = u.stereotype !== undefined ? `, stereotype ${u.stereotype}` : '';
-  return `${u.business ? 'business ' : ''}use case ${spoken(u.label, u.labelType)}${stereotype}`;
+  return `${u.business ? 'business ' : ''}use case ${speak(u.label, u.labelType)}${stereotype}`;
 }
 
 /** `target` is the spoken label of the element the note is for. */
-export function noteName(v: NoteView, target: string): string {
-  return `Note for ${target}: ${spoken(v.note.label, v.note.labelType)}`;
+export function noteName(speak: Speak, v: NoteView, target: string): string {
+  return `Note for ${target}: ${speak(v.note.label, v.note.labelType)}`;
 }
 
 export function jsonName(v: JsonTableView): string {
@@ -54,17 +66,22 @@ export function jsonName(v: JsonTableView): string {
   return rows ? `${v.table.id}: ${rows}` : v.table.id;
 }
 
-export function boundaryName(v: BoundaryView): string {
+export function boundaryName(speak: Speak, v: BoundaryView): string {
   const b = v.boundary;
-  return `${b.type} system boundary ${spoken(b.label, b.labelType)}`;
+  return `${b.type} system boundary ${speak(b.label, b.labelType)}`;
 }
 
 /** `source` and `target` are the spoken labels of its ends. */
-export function relationName(v: RelationEdgeView, source: string, target: string): string {
+export function relationName(
+  speak: Speak,
+  v: RelationEdgeView,
+  source: string,
+  target: string
+): string {
   const r = v.relationship;
   const relation =
     r.type === 'association' && r.label && v.label
-      ? `association ${spoken(r.label, r.labelType ?? 'text')}`
+      ? `association ${speak(r.label, r.labelType ?? 'text')}`
       : r.type;
   return `${relation} from ${source} to ${target}`;
 }

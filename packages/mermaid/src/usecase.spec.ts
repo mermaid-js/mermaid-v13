@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { usecase } from '@mermaid-js/diagram-usecase';
 import { createMermaid, MermaidError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
@@ -326,5 +327,73 @@ describe('usecase under a classic theme with a primaryColor override (#773)', ()
     const { svg } = await createMermaid().render('u773', text);
     expect(rootVar(svg, '_mb')).toBe('#ececff');
     expect(svg).not.toContain('--mermaid-primaryColor');
+  });
+});
+
+describe('usecase labels: markdown strings, markdownAlwaysOn and the warning (#1368, #1398)', () => {
+  const fixture = (name: string): string =>
+    readFileSync(
+      new URL(`../../../e2e/diagrams/usecase/pr-check/${name}.mmd`, import.meta.url),
+      'utf8'
+    );
+  // Every label kind with a plain `**bold** _ital_`: boundary, actor, round and square use case,
+  // association edge label, note.
+  const KINDS = [
+    'usecase-beta',
+    '  systemBoundary B["boundary **bold** _ital_"]',
+    '    actor A("actor **bold** _ital_")',
+    '    U("usecase **bold** _ital_")',
+    '    S[square **bold** _ital_]',
+    '  end',
+    '  A -- "edge **bold** _ital_" --> U',
+    '  A --> S',
+    '  note for U "note **bold** _ital_"',
+    '',
+  ].join('\n');
+  const count = (svg: string, re: RegExp): number => [...svg.matchAll(re)].length;
+  const BOLD = /font-weight="bold"[^>]*>bold</g;
+  const ITALIC = /font-style="italic"[^>]*>ital</g;
+
+  it('draws plain markers as written and warns once; a markdown string does not warn', async () => {
+    const m = createMermaid();
+    const r = await m.render('ul1', KINDS);
+    expect(count(r.svg, BOLD)).toBe(0);
+    // Drawn as written (in the text, not counting the accessible names).
+    expect(count(r.svg, />[^<]*\*\*bold\*\*[^<]*</g)).toBe(6);
+    expect(codes(r).filter((c) => c === MARKDOWN_NOT_READ.code)).toHaveLength(1);
+    const quoted = KINDS.replace(/"([a-z]+ \*\*bold\*\* _ital_)"/g, '"`$1`"').replace(
+      'S[square **bold** _ital_]',
+      'S["`square **bold** _ital_`"]'
+    );
+    const q = await m.render('ul2', quoted);
+    expect(count(q.svg, BOLD)).toBe(6);
+    expect(codes(q)).not.toContain(MARKDOWN_NOT_READ.code);
+  });
+
+  it('draws every label kind as markdown with markdownAlwaysOn, global or in the usecase section', async () => {
+    for (const config of [{ markdownAlwaysOn: true }, { usecase: { markdownAlwaysOn: true } }]) {
+      const m = createMermaid();
+      m.initialize(config);
+      const r = await m.render('ul3', KINDS);
+      const name = JSON.stringify(config);
+      expect(count(r.svg, BOLD), name).toBe(6);
+      expect(count(r.svg, ITALIC), name).toBe(6);
+      expect(r.svg, name).not.toContain('**');
+      expect(codes(r), name).toEqual([]);
+      // The text output follows the drawing: the markers are gone there too.
+      const t = await m.render('ul4', KINDS, { format: 'ascii' });
+      expect(t.text, name).not.toMatch(/\*\*|_ital_/);
+      expect(t.text, name).toContain('note bold ital');
+    }
+  });
+
+  it('draws the compatibility twin of label-syntax.mmd with markdown in the plain rows', async () => {
+    const m = createMermaid();
+    const plain = await m.render('ul5', fixture('label-syntax'));
+    const always = await m.render('ul6', fixture('label-syntax-compat'));
+    expect(always.svg).not.toBe(plain.svg);
+    expect(count(always.svg, BOLD)).toBeGreaterThan(count(plain.svg, BOLD));
+    expect(codes(plain)).toContain(MARKDOWN_NOT_READ.code);
+    expect(codes(always)).not.toContain(MARKDOWN_NOT_READ.code);
   });
 });
