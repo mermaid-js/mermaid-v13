@@ -3,7 +3,7 @@
     "id": "e2e/nightly-check/parser-inline-data.mmd",
     "inputHash": "sha256:3899c686192e9de3",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -35,7 +35,7 @@
     "id": "v12-specs/eventmodeling.test.ts#1",
     "inputHash": "sha256:a2005e915d162e82",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -43,7 +43,7 @@
     "id": "eventmodeling-cases/inline-dquote",
     "inputHash": "sha256:8bc1b707e740328c",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -51,7 +51,7 @@
     "id": "eventmodeling-cases/inline-squote",
     "inputHash": "sha256:f2b67137e519fffd",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -59,7 +59,7 @@
     "id": "eventmodeling-cases/inline-dquote-greedy",
     "inputHash": "sha256:49cb63c439c30b40",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -67,7 +67,7 @@
     "id": "eventmodeling-cases/inline-quote-run",
     "inputHash": "sha256:711011e616e95cb6",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -75,7 +75,7 @@
     "id": "eventmodeling-cases/inline-typed-all",
     "inputHash": "sha256:c6191e238e8c0ce6",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -99,7 +99,7 @@
     "id": "e2e/nightly-check/parser-inline-data.mmd (CRLF)",
     "inputHash": "sha256:a51cd72b93ba2407",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -131,7 +131,7 @@
     "id": "v12-specs/eventmodeling.test.ts#1 (CRLF)",
     "inputHash": "sha256:b6521f982d8fb898",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -139,7 +139,7 @@
     "id": "eventmodeling-cases/inline-dquote (CRLF)",
     "inputHash": "sha256:44694295af509d81",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -147,7 +147,7 @@
     "id": "eventmodeling-cases/inline-squote (CRLF)",
     "inputHash": "sha256:aefe80440b9162f8",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -155,7 +155,7 @@
     "id": "eventmodeling-cases/inline-dquote-greedy (CRLF)",
     "inputHash": "sha256:bc5558bd51272582",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -163,7 +163,7 @@
     "id": "eventmodeling-cases/inline-quote-run (CRLF)",
     "inputHash": "sha256:d850889f186d2b28",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -171,7 +171,7 @@
     "id": "eventmodeling-cases/inline-typed-all (CRLF)",
     "inputHash": "sha256:0a17fb71c9fbd5bd",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -195,7 +195,7 @@
     "id": "e2e/nightly-check/parser-inline-data.mmd (commented)",
     "inputHash": "sha256:874129b42d1fabde",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -227,7 +227,7 @@
     "id": "v12-specs/eventmodeling.test.ts#1 (commented)",
     "inputHash": "sha256:e1d5ef89b6d342b2",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -235,7 +235,7 @@
     "id": "eventmodeling-cases/inline-quote-run (commented)",
     "inputHash": "sha256:607eb615b55b010a",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -243,7 +243,7 @@
     "id": "eventmodeling-cases/inline-typed-all (commented)",
     "inputHash": "sha256:30ac7d6fff26b3c2",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
@@ -267,7 +267,7 @@
     "id": "e2e/diagrams/eventmodeling/nightly-check/parser-inline-data.mmd",
     "inputHash": "sha256:3899c686192e9de3",
     "kind": "model",
-    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (Pele's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
+    "reason": "Data text (D523): v12 sliced inline data with an off-by-one (`{a:1}` showed `a:`) and showed quoted inline data (`\"…\"`, `'…'`) as an empty box; v13 shows the text between the braces or quotes, dedented and trimmed (the reference implementation's `blockText`). Only box data text differs; listed in `DIFFERENCES` (T5).",
     "owner": "#602",
     "since": "2026-11-09"
   },
