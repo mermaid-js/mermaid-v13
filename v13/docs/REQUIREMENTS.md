@@ -300,7 +300,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-REL-1 | Development happens on branch `mermaid-v13`. v12 continues on `develop`. | Must | M1 | D1 | Branch exists |
 | R-REL-2 | Changesets pre-release mode versions the alphas. The release master publishes them (D159); publishing on every merge to `mermaid-v13` waits for CI in the OSS repository. | Must | M1 | D28, D159 | Release workflows, v13/docs/RELEASING.md |
 | R-REL-3 | Public `mermaid@13.0.0-alpha.N` (dist-tag `v13-alpha`) is published to npm from the first alpha (D159). Each release prints R-PERF-1…4 on the last bench report. The gate is enforced once R-PERF-3 holds on CI; until then the release master skips it with a stated reason. | Must | M1 | D28, D159 | `release:publish` (`--gate` or `--skip-gate`) |
-| R-REL-4 | Ported code carries its upstream's attribution, under that upstream's license, in file headers and `THIRD_PARTY_NOTICES`. The reference implementation is credited in the layered engine's header only (D749). | Must | M1 | D12, D749 | License check |
+| R-REL-4 | Ported code carries its upstream's attribution, under that upstream's license, in file headers and `THIRD_PARTY_NOTICES`. The reference implementation is credited in the layered engine's header only (D770). | Must | M1 | D12, D770 | License check |
 | R-REL-5 | Requirements, design, ADRs and tickets cross-reference each other by R-id. | Must | M1 | D36 | Review |
 
 ## 23. v12 track (R-V12)

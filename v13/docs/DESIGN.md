@@ -498,9 +498,9 @@ Ported from mermaid-ascii's canvas, glyph, junction and cell-text code (MIT, att
 
 ### 6.2 `layered` engine (`core/layout/layered`): port per O-7
 
-O-7 is decided (2026-11-02): **port**. The reference implementation's layered layout is ported into core and owned by us, credited in the engine's header (D749). It is not a dependency on the reference implementation's package, because R-PERF-2 forbids runtime dependencies and the changes listed below (v12 config values, `minLen`, routes as data, determinism) need control over the code. The trade-off we accept: upstream fixes don't arrive for free and have to be brought over by hand.
+O-7 is decided (2026-11-02): **port**. The reference implementation's layered layout is ported into core and owned by us, credited in the engine's header (D770). It is not a dependency on the reference implementation's package, because R-PERF-2 forbids runtime dependencies and the changes listed below (v12 config values, `minLen`, routes as data, determinism) need control over the code. The trade-off we accept: upstream fixes don't arrive for free and have to be brought over by hand.
 
-This is a port of the reference implementation's `layout/layered.ts` and `layout/compound.ts`, with its credit (D749) and its ranked aesthetic-goal header kept:
+This is a port of the reference implementation's `layout/layered.ts` and `layout/compound.ts`, with its credit (D770) and its ranked aesthetic-goal header kept:
 
 - DFS cycle removal in declaration order;
 - longest-path ranking with a balancing pass, giving labelled edges a middle rank;
