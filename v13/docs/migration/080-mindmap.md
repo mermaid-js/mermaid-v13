@@ -55,13 +55,22 @@
   v12 drew it. Themes with outlined mindmap nodes (the redux and neo families) keep their own
   outline in the sketch (#1243, #1256).
 - **Labels** are SVG text, measured in the theme's font, instead of HTML in `<foreignObject>`
-  ([Mindmap SVG structure](#mindmap-svg-structure)). As in v12, every label reads bold, italic
-  and `<br>` line breaks without backticks, and a label that starts with `- `, `* ` or `+ ` is
-  drawn as written (D564, #763). A code span (``[`a **b**`]``) is drawn as written, backticks
-  included, and bold and italic outside it are still read (D610, #836). Only a markdown string
-  (`` "`…`" ``) has bullet lists and inline code, which v12 did not draw (D56). A written `\n`
-  is text. A word wider than `maxNodeWidth` stays
-  whole and the node grows to hold it, as v12's HTML labels did (#649).
+  ([Mindmap SVG structure](#mindmap-svg-structure)). Markdown is read in a markdown string
+  (`` "`…`" ``) only, as in every diagram type (#1368). v12 read bold and italic in every node
+  label without backticks; v13 draws plain `**bold**` and `_italic_` as written, and the render
+  gives one `MARKDOWN_NOT_READ` warning. Write the label as a markdown string, or set
+  `markdownAlwaysOn: true` (or `mindmap.markdownAlwaysOn`), which draws every label as
+  markdown, read like a markdown string. That is not v12's reading: a code span
+  (``[`a **b**`]``, or ``a `code` b``) is then drawn as inline code, and a label that starts
+  with `- `, `* ` or `+ ` as a list item, where v12 drew both as written (D564, D610, #763,
+  #836). Without the setting, a label wholly in backticks without quotes is drawn as written,
+  as in v12. A markdown string written as a whole node line, with no shape
+  (`` "`a **b**`" ``), is read as markdown too, where v12 drew its quotes and backticks; the
+  node's id is still the line as written. Only markdown has bullet lists and inline code,
+  which v12 did not draw (D56). `<br>`, `<b>`, `<i>`, `<u>`, `<s>`, `<sub>` and `<sup>`
+  draw, and a written `\n` breaks the line in every label, markdown string or not, where v12
+  showed it as text. A word wider than `maxNodeWidth` stays whole and the node grows to hold
+  it, as v12's HTML labels did (#649).
 - **The default shape per theme family** is a theme flag, not a theme-name check (D288): plain
   nodes are rounded in the redux family and drawn as v12's `defaultMindmapNode` elsewhere, flat
   at the bottom in `neo` and `neo-dark` ([Theme geometry](#theme-geometry)).

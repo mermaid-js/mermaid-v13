@@ -1,6 +1,7 @@
 // Label modes per diagram type (#763, #781, D564). The expected texts are what mermaid 12.2.0
 // draws: its `markdownToHTML` reads bold and italic, and hands back a list item or a code span
-// as written. Bullets and inline code in a mindmap markdown string are v13's own (D56).
+// as written. Bullets and inline code in a mindmap markdown string are v13's own (D56), and so
+// is the mindmap fixture with `markdownAlwaysOn`, where every label is markdown (#1368).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawnRuns } from './testing/labels.ts';
@@ -10,14 +11,14 @@ const { drawnBy, textOf } = corpusLabels(readFileSync);
 const render = (path: string): Promise<string[]> => drawnBy(path, drawnRuns);
 
 describe('label modes per diagram type (#763, D564)', () => {
-  it('mindmap: list markers and unquoted backticks are drawn as written', async () => {
+  it('mindmap with markdownAlwaysOn: list markers are list items, unquoted backticks code (#1368)', async () => {
     const texts = await render('mindmap/baseline/text/list-markers-and-backticks.mmd');
     expect(texts).toEqual([
       'root',
-      '- 5 degrees',
-      '* starred',
-      '- quoted item',
-      '`The dog in **the** hog`',
+      '• 5 degrees',
+      '• starred',
+      '• quoted item',
+      '<code>The dog in **the** hog</code>',
       'The dog in <b>the</b> hog',
       'plain <b>bold</b> and <i>italic</i>',
       '• one item / ◦ two items',

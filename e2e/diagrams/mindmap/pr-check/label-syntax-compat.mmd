@@ -1,0 +1,38 @@
+---
+description: >-
+  label-syntax.mmd with markdownAlwaysOn: every label is markdown, so the
+  plain rows of every node form draw bold and italic and the code-span and
+  bare-backtick rows draw inline code; tags and \n draw as in the default mode
+  (#1368)
+config:
+  markdownAlwaysOn: true
+---
+mindmap
+  root((root **bold** _ital_))
+    square
+      s1[square **bold** _ital_]
+      s2["`square **bold** _ital_`"]
+      s3[`square **bold** _ital_`]
+      s4[square a `code` b]
+      s5[square <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O]
+      s6[square one\ntwo]
+    no shape
+      bare **bold** _ital_
+      "`bare **bold** _ital_`"
+      `bare **bold** _ital_`
+      bare a `code` b
+      bare <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+      bare one\ntwo
+    shapes
+      r1(round **bold** _ital_)
+      r2("`round **bold** _ital_`")
+      r3(round one\ntwo)
+      c1((circle **bold** _ital_))
+      c2(("`circle **bold** _ital_`"))
+      h1{{hexagon **bold** _ital_}}
+      h2{{"`hexagon **bold** _ital_`"}}
+      h3{{hexagon one\ntwo}}
+      k1)cloud **bold** _ital_(
+      k2)"`cloud **bold** _ital_`"(
+      b1))bang **bold** _ital_((
+      b2))"`bang **bold** _ital_`"((

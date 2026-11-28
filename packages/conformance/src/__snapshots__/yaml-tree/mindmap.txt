@@ -55,11 +55,11 @@ e2e/diagrams/mindmap/baseline/syntax/repeated-ids.mmd 1 08c38539a41be519
 e2e/diagrams/mindmap/baseline/syntax/root-on-header-line.mmd 1 d84703f1df8fe2b4
 e2e/diagrams/mindmap/baseline/syntax/tab-indent.mmd 1 878a2b19c794f64d
 e2e/diagrams/mindmap/baseline/text/backtick-label-on-two-lines.mmd 1 348cea5ab132eef4
-e2e/diagrams/mindmap/baseline/text/emphasis-beside-code-span.mmd 1 7a1bf85821c9ad5a
+e2e/diagrams/mindmap/baseline/text/emphasis-beside-code-span.mmd 1 85c35d5685d50139
 e2e/diagrams/mindmap/baseline/text/front-matter-title.mmd 1 b2846dfeb2cff0c6
-e2e/diagrams/mindmap/baseline/text/list-markers-and-backticks.mmd 1 f9842b22f40b048d
+e2e/diagrams/mindmap/baseline/text/list-markers-and-backticks.mmd 1 c1236aa6634b41f3
 e2e/diagrams/mindmap/baseline/text/markdown-and-strings.mmd 1 7f5a037a6e7d5f82
-e2e/diagrams/mindmap/baseline/text/markdown-in-plain-labels.mmd 1 57087520528ae80f
+e2e/diagrams/mindmap/baseline/text/markdown-in-plain-labels.mmd 1 48b5ad9f1ae33442
 e2e/diagrams/mindmap/baseline/themes/base.mmd 1 b5ee72175dc21037
 e2e/diagrams/mindmap/baseline/themes/dark.mmd 1 f2b62b7d77a3fdb6
 e2e/diagrams/mindmap/baseline/themes/default.mmd 1 490b79c53828f35c
@@ -104,4 +104,6 @@ e2e/diagrams/mindmap/pr-check/5-tidy-tree-should-keep-root-edges-connected-to-a-
 e2e/diagrams/mindmap/pr-check/6-should-centre-svg-text-labels-in-all-node-shapes-issue-8387.mmd 1 468efd2129f3a2cb
 e2e/diagrams/mindmap/pr-check/depth-colors.mmd 1 8ceb4b3ff9bddcd2
 e2e/diagrams/mindmap/pr-check/formatted-label-with-linebreak-and-a-wrapping-label-and-emojis.mmd 1 d290d5c4cf995ef6
+e2e/diagrams/mindmap/pr-check/label-syntax-compat.mmd 1 b6a7ec6358c0105c
+e2e/diagrams/mindmap/pr-check/label-syntax.mmd 1 7001889ea7c20ad7
 e2e/diagrams/mindmap/pr-check/simple-mindmap.mmd 1 e9595157ca394732

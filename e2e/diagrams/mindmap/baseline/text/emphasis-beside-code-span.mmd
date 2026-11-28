@@ -1,7 +1,10 @@
 ---
 description: >-
-  a label with a code span still reads the bold and italic outside the span;
-  the span draws its backticks and the stars inside it as written (#836, D610)
+  with markdownAlwaysOn, a label with a code span reads the bold and italic
+  outside the span and draws the span as inline code, the stars inside it as
+  written (#836, #1368)
+config:
+  markdownAlwaysOn: true
 ---
 mindmap
   root["**bold** and `code`"]

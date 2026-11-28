@@ -33,7 +33,7 @@ function rng(seed: number): () => number {
   };
 }
 
-const WORDS = ['a', 'idea', 'mindmap', 'Long text that wraps over lines', '**bold**', 'x<br>y'];
+const WORDS = ['a', 'idea', 'mindmap', 'Long text that wraps over lines', '<b>bold</b>', 'x<br>y'];
 
 function randomMindmap(n: number, seed: number): FixtureNode[] {
   const r = rng(seed);

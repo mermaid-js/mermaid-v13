@@ -19,6 +19,8 @@ export interface FixtureNode {
   readonly shape?: MindmapShape;
   readonly depth: number;
   readonly icon?: string;
+  /** The label was a markdown string, as the parser marks it. */
+  readonly markdown?: true;
 }
 
 /**
@@ -45,6 +47,7 @@ export function fixtureModel(nodes: readonly FixtureNode[]): MindmapModel {
       children: children[i]!,
       classes: [],
       ...(n.icon ? { icon: { text: n.icon, range: { start: 0, end: 0 } } } : {}),
+      ...(n.markdown ? { markdown: true as const } : {}),
     });
   });
   const sections = mindmapSections(out, 'branch');

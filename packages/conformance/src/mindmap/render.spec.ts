@@ -80,8 +80,8 @@ describe('mindmap render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every shape and icon references', () => {
     // 85 fixtures, #328's 4 icon baselines, the corpus cleanup's 14, #649's long word and
     // #781's 2 label-mode baselines, #783's icon text, #836's emphasis beside a code span and
-    // #837's attribute quotes.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(109);
+    // #837's attribute quotes, and #1391's label syntax pair.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(111);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const shapes = new Set(cases.flatMap((c) => c.r.layout.mindmap.nodes.map((n) => n.shape)));
     expect([...shapes].sort()).toEqual(

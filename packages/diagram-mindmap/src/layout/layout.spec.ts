@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { tree } from '@mermaid-js/core/layout/tree';
 import type { MindmapShape } from '../model.ts';
-import { contextFor, fixtureModel, themeNamed } from './fixtures.ts';
+import { contextFor, fixtureModel, themeNamed, type FixtureNode } from './fixtures.ts';
 import { layoutMindmap } from './layout.ts';
 
 /** The one node of a root-only mindmap, laid out with `config` over the defaults. */
@@ -16,6 +16,18 @@ async function only(label: string, shape: MindmapShape, config = {}, icon?: stri
 }
 
 const size = (n: { width: number; height: number }) => [n.width, n.height];
+
+/** The node of a root-only mindmap with `node`, laid out with `config` over the defaults. */
+async function labelled(node: Omit<FixtureNode, 'depth'>, config = {}) {
+  const ctx = contextFor(tree, await themeNamed(), config);
+  return layoutMindmap(fixtureModel([{ ...node, depth: 0 }]), ctx).mindmap.nodes[0]!;
+}
+
+/** Each line of a node's label as `text:style` runs. */
+const lines = (n: { label: { lines: { text: string; style: number }[][] } }) =>
+  n.label.lines.map((l) => l.map((r) => `${r.text}:${r.style}`));
+
+const ALWAYS = { markdownAlwaysOn: true };
 
 describe('shape sizes at default config (v12 formulas, padding 10)', () => {
   it('default: label + 4·padding wide, label + padding high (defaultMindmapNode.ts)', async () => {
@@ -101,10 +113,9 @@ describe('labels', () => {
     }
   });
 
-  it('are markdown: `**x**` is bold, line breaks start lines', async () => {
-    const n = await only('**bold** text<br>two', 'default');
-    expect(n.label.lines).toHaveLength(2);
-    expect(n.label.lines[0]![0]!.text).toBe('bold');
+  it('break at <br> and draw the tags', async () => {
+    const n = await only('<b>bold</b> text<br>two', 'default');
+    expect(lines(n)).toEqual([['bold:1', ' text:0'], ['two:0']]);
   });
 
   it("keep v12's multi-line text without the blank lines round it", async () => {
@@ -131,6 +142,55 @@ describe('labels', () => {
     );
     layoutMindmap(fixtureModel([{ label: 'a', depth: 0 }]), ctx);
     expect(seen[0]).toBe(`${t.value('fontFamily')}/${t.number('fontSize')}/400`);
+  });
+});
+
+// Markdown is read in a markdown string only (#1368). With `markdownAlwaysOn` every label is
+// markdown, read like a markdown string. Tags and a written `\n` draw the same in both modes.
+// The `mindmap.markdownAlwaysOn` form, folded in by the render, is in conformance's
+// `mindmap/labels.spec.ts`.
+describe('label syntax (#1368)', () => {
+  const BI = [['bold:1', ' :0', 'ital:2']];
+  const SHAPES = ['default', 'rect', 'rounded', 'circle', 'cloud', 'bang', 'hexagon'] as const;
+
+  it('draws plain markdown as written by default, as markdown with markdownAlwaysOn', async () => {
+    for (const shape of SHAPES) {
+      const plain = { label: '**bold** _ital_', shape };
+      expect(lines(await labelled(plain)), shape).toEqual([['**bold** _ital_:0']]);
+      expect(lines(await labelled(plain, ALWAYS)), shape).toEqual(BI);
+    }
+  });
+
+  it('reads a marked markdown string as markdown in both modes', async () => {
+    const md = { label: '**bold** _ital_', shape: 'rect' as const, markdown: true as const };
+    for (const config of [{}, ALWAYS]) expect(lines(await labelled(md, config))).toEqual(BI);
+  });
+
+  it('draws tags the same in both modes', async () => {
+    const tags = { label: '<b>bold</b> <i>ital</i>', shape: 'rect' as const };
+    for (const config of [{}, ALWAYS]) expect(lines(await labelled(tags, config))).toEqual(BI);
+  });
+
+  it('reads a quoted markdown string on a node with no shape as markdown', async () => {
+    const n = await labelled({ label: '"`**bold** x`"' });
+    expect(lines(n)).toEqual([['bold:1', ' x:0']]);
+  });
+
+  it('draws bare backticks as written by default, as inline code with markdownAlwaysOn', async () => {
+    const bare = { label: '`a **b**`', shape: 'rect' as const };
+    expect(lines(await labelled(bare))).toEqual([['`a **b**`:0']]);
+    expect(lines(await labelled(bare, ALWAYS))).toEqual([['a **b**:4']]);
+  });
+
+  it('breaks at a written \\n in both modes', async () => {
+    for (const config of [{}, ALWAYS]) {
+      expect(lines(await labelled({ label: 'one\\ntwo', shape: 'rect' }, config))).toEqual([
+        ['one:0'],
+        ['two:0'],
+      ]);
+      const md = { label: 'one\\n**two**', shape: 'rect' as const, markdown: true as const };
+      expect(lines(await labelled(md, config))).toEqual([['one:0'], ['two:1']]);
+    }
   });
 });
 

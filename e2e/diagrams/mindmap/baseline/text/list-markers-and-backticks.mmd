@@ -1,8 +1,10 @@
 ---
 description: >-
-  a label starting with "- " or "* " and an unquoted backtick label draw as
-  written; emphasis is read without backticks; only a markdown string has
-  bullets and inline code (#763, D564)
+  with markdownAlwaysOn every label is markdown: a label starting with "- " or
+  "* " is a list item, an unquoted backtick label is inline code, and emphasis
+  is read without backticks, as in a markdown string (#763, #1368)
+config:
+  markdownAlwaysOn: true
 ---
 mindmap
   root

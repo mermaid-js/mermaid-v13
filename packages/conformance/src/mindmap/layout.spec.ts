@@ -4,6 +4,7 @@ import { layered, pxProfile, validateLayout, type LayoutEngine } from '@mermaid-
 import { tree } from '@mermaid-js/core/layout/tree';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
+import { MARKDOWN_NOT_READ } from '@mermaid-js/core/text/markdown-warning';
 import { createTheme, isThemeName, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
 import {
   layoutMindmap,
@@ -56,6 +57,12 @@ const ENGINES: readonly [string, () => LayoutEngine][] = [
   ['elk', () => elk],
 ];
 
+/**
+ * The sources with a plain label holding an emphasis pair, which give `MARKDOWN_NOT_READ`
+ * (#1368): only the label fixture, whose plain rows show it.
+ */
+const MARKDOWN_SOURCES = ['e2e/pr-check/label-syntax.mmd'];
+
 async function laidOut(f: Fixture, engine: LayoutEngine) {
   const warnings: string[] = [];
   const layout = layoutMindmap(f.model, {
@@ -85,13 +92,18 @@ describe('mindmap layout over parser-produced fixtures', () => {
     '%s: no NaN or overlaps, edges on their boxes, labels and icons inside their shapes',
     async (name, engineOf) => {
       const engine = engineOf();
+      const markdown: string[] = [];
       for (const f of fixtures) {
         const { layout, warnings } = await laidOut(f, engine);
         expect(validateLayout(layout.mindmap.graph, layout), f.id).toEqual([]);
         expect(mindmapProblems(layout), f.id).toEqual([]);
         if (name === 'tree') expect(treeProblems(layout.mindmap.graph, layout), f.id).toEqual([]);
-        expect(warnings, f.id).toEqual([]);
+        const other = warnings.filter((code) => code !== MARKDOWN_NOT_READ.code);
+        expect(other, f.id).toEqual([]);
+        if (other.length < warnings.length) markdown.push(f.id);
       }
+      // Markdown in a plain label warns (#1368): only these sources hold it.
+      expect(markdown).toEqual(MARKDOWN_SOURCES);
     },
     120_000
   );
