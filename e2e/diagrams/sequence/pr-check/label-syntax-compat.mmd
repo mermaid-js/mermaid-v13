@@ -1,0 +1,72 @@
+---
+description: >-
+  Twin of label-syntax.mmd with markdownAlwaysOn (#1368, #1400): every
+  sequence label is markdown, so the plain **bold** _ital_ rows of the title,
+  box, alias, name, message, note and block titles draw bold and italic, the code
+  span rows draw inline code and bare backticks a code span; markdown
+  strings, tags and a written \n draw as in label-syntax.mmd.
+config:
+  markdownAlwaysOn: true
+---
+sequenceDiagram
+  title title **bold** _ital_
+  participant P1 as alias **bold** _ital_
+  participant P2 as "`alias **bold** _ital_`"
+  participant P3 as `alias **bold** _ital_`
+  participant P4 as alias a `code` b
+  participant P5 as alias <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  participant P6 as alias one\ntwo
+  box box **bold** _ital_
+    participant name **bold** _ital_
+  end
+  box "`box **bold** _ital_`"
+    participant "`name **bold** _ital_`"
+  end
+  box `box **bold** _ital_`
+    participant `name **bold** _ital_`
+  end
+  box box a `code` b
+    participant name a `code` b
+  end
+  box box <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    participant name
+  end
+  box box one\ntwo
+    participant name one\ntwo
+  end
+  P1->>P2: message **bold** _ital_
+  P2->>P3: "`message **bold** _ital_`"
+  P3->>P4: `message **bold** _ital_`
+  P4->>P5: message a `code` b
+  P5->>P6: message <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  P6->>P1: message one\ntwo
+  Note over P1: note **bold** _ital_
+  Note over P2: "`note **bold** _ital_`"
+  Note over P3: `note **bold** _ital_`
+  Note over P4: note a `code` b
+  Note over P5: note <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+  Note over P6: note one\ntwo
+  loop loop **bold** _ital_
+    P1->>P6: ok
+  end
+  alt "`alt **bold** _ital_`"
+    P1->>P6: ok
+  else `else **bold** _ital_`
+    P6->>P1: ok
+  end
+  opt opt a `code` b
+    P1->>P6: ok
+  end
+  par par <b>bold</b> <i>ital</i><br>next H<sub>2</sub>O
+    P1->>P6: ok
+  and and one\ntwo
+    P6->>P1: ok
+  end
+  critical "`critical **bold** _ital_`"
+    P1->>P6: ok
+  option option **bold** _ital_
+    P6->>P1: ok
+  end
+  break break one\ntwo
+    P1->>P6: ok
+  end

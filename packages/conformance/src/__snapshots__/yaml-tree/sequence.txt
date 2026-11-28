@@ -20,7 +20,7 @@ e2e/diagrams/sequence/baseline/participants/symbols.mmd 9 2c7e2a5476599484
 e2e/diagrams/sequence/baseline/text/line-breaks-and-unicode.mmd 1 13067537742f72b5
 e2e/diagrams/sequence/baseline/text/title-and-accessibility.mmd 1 6fe1421bad6368d8
 e2e/diagrams/sequence/baseline/text/wrapping.mmd 1 c14146399d96914d
-e2e/diagrams/sequence/baseline/text/written-backslash-n.mmd 1 497adac6880e6606
+e2e/diagrams/sequence/baseline/text/written-backslash-n.mmd 1 bf929f5115b2894c
 e2e/diagrams/sequence/baseline/themes/base.mmd 2 a93df12414be09d1
 e2e/diagrams/sequence/baseline/themes/dark.mmd 2 00a34133df4fb595
 e2e/diagrams/sequence/baseline/themes/default.mmd 2 eb88d484c9a4d079
@@ -218,6 +218,8 @@ e2e/diagrams/sequence/nightly-check/v2-classic-with-different-font-settings.mmd 
 e2e/diagrams/sequence/nightly-check/v2-complex-sequence-with-all-features.mmd 7 1a57732e252c6f88
 e2e/diagrams/sequence/nightly-check/v2-with-wrapped-messages-and-notes.mmd 1 737e6a1bbdaa0359
 e2e/diagrams/sequence/nightly-check/wrap-in-span-narrowed-by-activations.mmd 1 4f492100be2c2984
+e2e/diagrams/sequence/pr-check/label-syntax-compat.mmd 1 02b0eaf395d48d53
+e2e/diagrams/sequence/pr-check/label-syntax.mmd 1 7c549715c359200c
 e2e/diagrams/sequence/pr-check/math-should-render-tex-in-every-sequence-label.mmd 1 35ee97248131ed25
 e2e/diagrams/sequence/pr-check/should-handle-complex-interactions-between-different-participant-types.mmd 8 0c19288254158b2c
 e2e/diagrams/sequence/pr-check/should-render-a-sequence-diagram-with-various-participant-types.mmd 9 8200d3f59f2da4a1
